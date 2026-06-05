@@ -1,0 +1,49 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(adb reverse tcp:5000 tcp:5000)",
+      "PowerShell(adb reverse --list)",
+      "PowerShell($adb = Join-Path $env:LOCALAPPDATA \"Android\\\\Sdk\\\\platform-tools\\\\adb.exe\"; if \\(Test-Path $adb\\) { Write-Output \"FOUND: $adb\" } else { Write-Output \"Not in default SDK path, searching flutter...\"; $fl = \\(Get-Command flutter\\).Source; Write-Output \"flutter at: $fl\" })",
+      "PowerShell($adb = \"C:\\\\Users\\\\photo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\"; & $adb reverse tcp:5000 tcp:5000; Write-Output \"--- reverse list ---\"; & $adb reverse --list)",
+      "PowerShell($adb = \"C:\\\\Users\\\\photo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\"; & $adb -s a5178cb4 shell screencap -p /sdcard/cp_screen.png; & $adb -s a5178cb4 pull /sdcard/cp_screen.png \"c:\\\\Users\\\\photo\\\\Desktop\\\\ClickerPro_Project\\\\clicker_pro\\\\flutter_screen_now.png\"; & $adb -s a5178cb4 shell rm /sdcard/cp_screen.png)",
+      "PowerShell($adb = \"C:\\\\Users\\\\photo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\"; & $adb -s a5178cb4 shell input tap 540 880; Start-Sleep -Milliseconds 700; & $adb -s a5178cb4 shell screencap -p /sdcard/cp4.png; & $adb -s a5178cb4 pull /sdcard/cp4.png \"c:\\\\Users\\\\photo\\\\Desktop\\\\ClickerPro_Project\\\\clicker_pro\\\\flutter_screen_now.png\" | Out-Null; & $adb -s a5178cb4 shell rm /sdcard/cp4.png; Write-Output \"done\")",
+      "PowerShell($adb = \"C:\\\\Users\\\\photo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\"; & $adb -s a5178cb4 shell input tap 540 2190; Start-Sleep -Milliseconds 900; & $adb -s a5178cb4 shell screencap -p /sdcard/cp5.png; & $adb -s a5178cb4 pull /sdcard/cp5.png \"c:\\\\Users\\\\photo\\\\Desktop\\\\ClickerPro_Project\\\\clicker_pro\\\\flutter_screen_now.png\" | Out-Null; & $adb -s a5178cb4 shell rm /sdcard/cp5.png; Write-Output \"done\")",
+      "PowerShell($adb = \"C:\\\\Users\\\\photo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\"; & $adb -s a5178cb4 shell input tap 540 282; Start-Sleep -Milliseconds 500; & $adb -s a5178cb4 shell input text \"test@test.com\"; Start-Sleep -Milliseconds 300; & $adb -s a5178cb4 shell input tap 540 390; Start-Sleep -Milliseconds 500; & $adb -s a5178cb4 shell input text \"password123\"; Start-Sleep -Milliseconds 300; & $adb -s a5178cb4 shell input keyevent KEYCODE_BACK; Write-Output \"filled\")",
+      "PowerShell($adb = \"C:\\\\Users\\\\photo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\"; & $adb -s a5178cb4 shell input tap 540 432; Start-Sleep -Seconds 3; & $adb -s a5178cb4 shell screencap -p /sdcard/cp7.png; & $adb -s a5178cb4 pull /sdcard/cp7.png \"c:\\\\Users\\\\photo\\\\Desktop\\\\ClickerPro_Project\\\\clicker_pro\\\\flutter_screen_now.png\" | Out-Null; & $adb -s a5178cb4 shell rm /sdcard/cp7.png; Write-Output \"done\")",
+      "PowerShell($adb = \"C:\\\\Users\\\\photo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\"; & $adb -s a5178cb4 shell am force-stop com.clickerpro.app; Start-Sleep -Milliseconds 500; & $adb -s a5178cb4 shell monkey -p com.clickerpro.app -c android.intent.category.LAUNCHER 1 2>$null | Out-Null; Start-Sleep -Seconds 4; & $adb -s a5178cb4 shell screencap -p /sdcard/cp8.png; & $adb -s a5178cb4 pull /sdcard/cp8.png \"c:\\\\Users\\\\photo\\\\Desktop\\\\ClickerPro_Project\\\\clicker_pro\\\\flutter_screen_now.png\" | Out-Null; & $adb -s a5178cb4 shell rm /sdcard/cp8.png; Write-Output \"done\")",
+      "PowerShell($adb = \"C:\\\\Users\\\\photo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\"; & $adb -s a5178cb4 shell input tap 853 2080; Start-Sleep -Milliseconds 1200; & $adb -s a5178cb4 shell screencap -p /sdcard/cp9.png; & $adb -s a5178cb4 pull /sdcard/cp9.png \"c:\\\\Users\\\\photo\\\\Desktop\\\\ClickerPro_Project\\\\clicker_pro\\\\flutter_screen_now.png\" | Out-Null; & $adb -s a5178cb4 shell rm /sdcard/cp9.png; Write-Output \"done\")",
+      "PowerShell($adb = \"C:\\\\Users\\\\photo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\"; & $adb -s a5178cb4 shell uiautomator dump /sdcard/ui.xml 2>$null | Out-Null; & $adb -s a5178cb4 pull /sdcard/ui.xml \"c:\\\\Users\\\\photo\\\\Desktop\\\\ClickerPro_Project\\\\clicker_pro\\\\ui_dump.xml\" | Out-Null; & $adb -s a5178cb4 shell rm /sdcard/ui.xml; Write-Output \"done\")",
+      "PowerShell($adb = \"C:\\\\Users\\\\photo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\"; & $adb -s a5178cb4 shell input tap 540 1130; Start-Sleep -Milliseconds 600; & $adb -s a5178cb4 shell input text \"owner@clickerpro.app\"; Start-Sleep -Milliseconds 400; & $adb -s a5178cb4 shell input tap 540 1380; Start-Sleep -Milliseconds 600; & $adb -s a5178cb4 shell input text \"Password123\"; Start-Sleep -Milliseconds 400; Write-Output \"filled credentials\")",
+      "PowerShell($adb = \"C:\\\\Users\\\\photo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\"; Write-Output \"--- Phone reaching backend via adb reverse ---\"; & $adb -s a5178cb4 shell \"curl -s -m 5 -X POST http://127.0.0.1:5000/api/auth/login -H 'Content-Type: application/json' -d '{\\\\\"email\\\\\":\\\\\"x@y.com\\\\\",\\\\\"password\\\\\":\\\\\"z\\\\\"}'\"; Write-Output \"\"; Write-Output \"--- exit ---\")",
+      "PowerShell($body = '{\"email\":\"test@example.com\",\"password\":\"Password123\"}'; try { $r = Invoke-WebRequest -Uri \"http://127.0.0.1:5000/api/auth/login\" -Method POST -ContentType \"application/json\" -Body $body -TimeoutSec 8 -UseBasicParsing; Write-Output \"STATUS $\\($r.StatusCode\\): $\\($r.Content\\)\" } catch { $resp = $_.Exception.Response; if \\($resp\\) { $sr = New-Object System.IO.StreamReader\\($resp.GetResponseStream\\(\\)\\); Write-Output \"STATUS $\\([int]$resp.StatusCode\\): $\\($sr.ReadToEnd\\(\\)\\)\" } else { Write-Output \"ERR: $\\($_.Exception.Message\\)\" } })",
+      "PowerShell($body = '{\"fullName\":\"Test Owner\",\"name\":\"Test Owner\",\"email\":\"owner@clickerpro.app\",\"phone\":\"01700000000\",\"password\":\"Password123\",\"role\":\"owner\"}'; try { $r = Invoke-WebRequest -Uri \"http://127.0.0.1:5000/api/auth/register\" -Method POST -ContentType \"application/json\" -Body $body -TimeoutSec 8 -UseBasicParsing; Write-Output \"STATUS $\\($r.StatusCode\\): $\\($r.Content\\)\" } catch { $resp = $_.Exception.Response; if \\($resp\\) { $sr = New-Object System.IO.StreamReader\\($resp.GetResponseStream\\(\\)\\); Write-Output \"STATUS $\\([int]$resp.StatusCode\\): $\\($sr.ReadToEnd\\(\\)\\)\" } else { Write-Output \"ERR: $\\($_.Exception.Message\\)\" } })",
+      "Bash(flutter analyze *)",
+      "Bash(npx prisma *)",
+      "Bash(Get-Process -Name node -ErrorAction SilentlyContinue)",
+      "Bash(Stop-Process -Force)",
+      "Bash(Start-Sleep -Seconds 2)",
+      "Bash(Write-Host \"Stopped\")",
+      "PowerShell(Get-Process -Name node -ErrorAction SilentlyContinue)",
+      "PowerShell(Stop-Process -Force)",
+      "Bash(python -c \"import PIL; print\\('Pillow', PIL.__version__\\)\")",
+      "Bash(pip install *)",
+      "Bash(python _make_icon.py)",
+      "Bash(python _prep_icon.py)",
+      "Bash(dart run *)",
+      "Bash(python -c ' *)",
+      "Bash(curl -s http://localhost:5000/health)",
+      "Bash(\"C:\\\\Users\\\\photo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" reverse *)",
+      "Bash(flutter build *)",
+      "Bash(\"C:\\\\Users\\\\photo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" -s a5178cb4 install -r \"C:\\\\Users\\\\photo\\\\Desktop\\\\ClickerPro_Project\\\\clicker_pro\\\\build\\\\app\\\\outputs\\\\flutter-apk\\\\app-release.apk\")",
+      "Bash(\"C:\\\\Users\\\\photo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" -s a5178cb4 shell monkey -p com.clickerpro.app -c android.intent.category.LAUNCHER 1)",
+      "Bash(\"C:\\\\Users\\\\photo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" -s a5178cb4 shell screencap -p /sdcard/s.png)",
+      "Bash(\"C:\\\\Users\\\\photo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" -s a5178cb4 pull /sdcard/s.png \"C:\\\\Users\\\\photo\\\\Desktop\\\\ClickerPro_Project\\\\_shot.png\")",
+      "Bash(\"C:\\\\Users\\\\photo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" -s a5178cb4 shell \"screencap -p /sdcard/s.png\")",
+      "PowerShell(& \"C:\\\\Users\\\\photo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" -s a5178cb4 pull /sdcard/s.png \"C:\\\\Users\\\\photo\\\\Desktop\\\\ClickerPro_Project\\\\_shot.png\")",
+      "Bash(\"C:\\\\Users\\\\photo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" -s a5178cb4 shell input keyevent KEYCODE_HOME)"
+    ]
+  },
+  "disabledMcpjsonServers": [
+    "jetro"
+  ]
+}

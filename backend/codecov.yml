@@ -1,0 +1,47 @@
+# codecov.yml — backend
+#
+# Mirrors `package.json → jest.coverageThreshold` so PR diff comments
+# reflect the same quality bar that gates the build locally।  See
+# https://docs.codecov.com/docs/codecovyml-reference for the full schema।
+
+coverage:
+  precision: 2
+  round: down
+  range: "65...90"
+
+  status:
+    project:
+      default:
+        # Whole-project floor — Jest's "./" gate (85% stmt) is the
+        # authoritative source; Codecov's threshold here just gives a
+        # tiny breathing room (1%) for transient lcov-diff noise।
+        target: 84%
+        threshold: 1%
+        if_ci_failed: error
+        only_pulls: false
+    patch:
+      default:
+        # New code in the diff must hit 85% — pairs nicely with our
+        # per-controller floors (most ride at 80–95%)।
+        target: 85%
+        threshold: 0%
+        if_ci_failed: error
+
+# Codecov annotates the PR with a single comment summarising changes
+# in coverage and the worst-affected files।
+comment:
+  layout: "reach,diff,flags,tree"
+  behavior: default
+  require_changes: false
+
+flags:
+  backend:
+    paths:
+      - src/
+
+ignore:
+  - "tests/**"
+  - "node_modules/**"
+  - "coverage/**"
+  - "prisma/migrations/**"
+  - "**/*.test.js"

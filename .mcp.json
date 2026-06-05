@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "jetro": {
+      "type": "stdio",
+      "command": "C:\\Users\\photo\\.jetro\\runtime\\node-win32-x64.exe",
+      "args": [
+        "C:\\Users\\photo\\.jetro\\mcp-server\\index.js"
+      ],
+      "env": {
+        "JET_WORKSPACE": "c:\\Users\\photo\\Desktop\\ClickerPro_Project",
+        "JET_API_URL": "https://api.jetro.ai",
+        "PATH": "C:\\Users\\photo\\.jetro\\runtime;C:\\Python314\\Scripts\\;C:\\Python314\\;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Git\\cmd;C:\\xampp\\php;C:\\ProgramData\\ComposerSetup\\bin;C:\\Program Files\\nodejs\\;C:\\ProgramData\\chocolatey\\bin;C:\\Program Files\\nodejs;C:\\Users\\photo\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\photo\\.local\\bin;C:\\Users\\photo\\AppData\\Roaming\\Composer\\vendor\\bin;C:\\Users\\photo\\AppData\\Roaming\\npm;C:\\Users\\photo\\AppData\\Local\\Programs\\Ollama;C:\\Users\\photo\\AppData\\Local\\Programs\\Antigravity\\bin;C:\\Users\\photo\\AppData\\Local\\Programs\\Microsoft VS Code\\bin;C:\\src\\flutter\\bin;C:\\Users\\photo\\AppData\\Local\\Programs\\Kiro\\bin;C:\\Users\\photo\\AppData\\Local\\Programs\\Windsurf\\bin;C:\\Users\\photo\\AppData\\Local\\Programs\\cursor\\resources\\app\\bin;C:\\Users\\photo\\AppData\\Local\\Python\\bin"
+      }
+    }
+  }
+}

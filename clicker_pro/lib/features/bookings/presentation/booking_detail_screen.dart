@@ -1,0 +1,1106 @@
+// lib/features/bookings/presentation/booking_detail_screen.dart
+//
+// Read-only booking detail surface. Renders the eight sections in the
+// order pinned by Requirement 5.2 — header, client info, schedule,
+// package, payment summary, assignments, status timeline, re-edit
+// requests (placeholder for the next slice).
+//
+// Capability gating:
+//   • Edit (app bar)             — `Capability.editBooking`
+//   • Advance status (FAB)       — `Capability.advanceBookingStatus`
+//   • Cancel (overflow)          — `Capability.cancelBooking`
+//   • Payment summary card       — `shouldShowPayment(role, hide, can)`
+//   • Assignments payout column  — same predicate as above
+//   • Assignments self-only      — Freelancer role
+//
+// The booking is delivered by the family-keyed `BookingDetailController`
+// which handles local-first load + background remote refresh +
+// transition + cancel. The screen never reads from the repository
+// directly; it only invokes the controller's actions.
+//
+// Source of truth: `.kiro/specs/bookings-module/design.md` →
+// "Booking Detail Screen". Validates Requirements 5.1–5.11, 3.4, 3.5,
+// 3.7, 3.8, 7.1.
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../../../core/booking_status/booking_status.dart';
+import '../../../core/booking_status/booking_status_machine.dart';
+import '../../../core/format/booking_format.dart';
+import '../../../core/navigation/route_names.dart';
+import '../../../core/pdf/pdf_export.dart';
+import '../../../core/role/capability.dart';
+import '../../../shared/states/error_state.dart';
+import '../../../shared/states/lens_loader.dart';
+import '../../../shared/states/offline_banner.dart';
+import '../../../shared/widgets/status_conflict_listener.dart';
+import '../../../theme/app_colors.dart';
+import '../../auth/domain/user_role.dart';
+import '../../settings/application/language_controller.dart';
+import '../application/booking_detail_controller.dart';
+import '../application/booking_providers.dart';
+import 'widgets/delivery_checklist_sheet.dart';
+import '../domain/booking.dart';
+import '../domain/booking_detail_envelope.dart';
+import 'booking_list_screen.dart' show shouldShowPayment;
+import 'widgets/assignments_section.dart';
+import 'widgets/booking_status_badge.dart';
+import 'widgets/detail_section.dart';
+import 'widgets/payment_summary_card.dart';
+import 'widgets/re_edit_section.dart';
+import 'widgets/status_timeline.dart';
+import 'widgets/task_progress_section.dart';
+
+class BookingDetailScreen extends ConsumerWidget {
+  const BookingDetailScreen({super.key, required this.bookingId});
+
+  final String bookingId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final detailAsync = ref.watch(bookingDetailControllerProvider(bookingId));
+    final policy = ref.watch(bookingsPolicyProvider);
+    final currentUserId = ref.watch(bookingsCurrentUserIdProvider) ?? '';
+    final lang = ref
+        .watch(languageControllerProvider)
+        .maybeWhen(data: (c) => c, orElse: () => 'en');
+
+    return StatusConflictListener(
+      child: Scaffold(
+        backgroundColor: AppColors.voidBlack,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppColors.film),
+            onPressed: () => Navigator.of(context).maybePop(),
+          ),
+          title: const Text(
+            'Booking',
+            style: TextStyle(
+              color: AppColors.film,
+              fontFamily: 'Poppins',
+              fontSize: 22,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          actions: [
+            if (policy.can(Capability.editBooking))
+              IconButton(
+                tooltip: 'Edit',
+                icon: const Icon(Icons.edit_outlined, color: AppColors.gold),
+                onPressed: () async {
+                  await Navigator.of(
+                    context,
+                  ).pushNamed(RouteNames.bookingEdit, arguments: bookingId);
+                  // After returning, refresh the detail in case the user
+                  // saved changes.
+                  if (!context.mounted) return;
+                  await ref
+                      .read(bookingDetailControllerProvider(bookingId).notifier)
+                      .refresh();
+                },
+              ),
+            PopupMenuButton<_DetailMenuAction>(
+              icon: const Icon(Icons.more_vert, color: Colors.white),
+              color: AppColors.voidElevated,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+                side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+              ),
+              itemBuilder: (_) {
+                final canCancel = policy.can(Capability.cancelBooking);
+                return [
+                  if (canCancel)
+                    const PopupMenuItem(
+                      value: _DetailMenuAction.cancel,
+                      child: Text(
+                        'Cancel booking',
+                        style: TextStyle(color: AppColors.red),
+                      ),
+                    ),
+                  const PopupMenuItem(
+                    value: _DetailMenuAction.refresh,
+                    child: Text(
+                      'Refresh from server',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ];
+              },
+              onSelected: (action) async {
+                switch (action) {
+                  case _DetailMenuAction.cancel:
+                    await _handleCancel(context, ref);
+                    break;
+                  case _DetailMenuAction.refresh:
+                    await ref
+                        .read(
+                          bookingDetailControllerProvider(bookingId).notifier,
+                        )
+                        .refresh();
+                    break;
+                }
+              },
+            ),
+          ],
+        ),
+        floatingActionButton: detailAsync.maybeWhen(
+          data: (envelope) {
+            final next = BookingStatusMachine.nextForward(
+              envelope.booking.status,
+            );
+            if (next == null) return null;
+            if (!policy.can(Capability.advanceBookingStatus)) return null;
+            if (!BookingStatusMachine.canRoleApply(
+              policy.role,
+              envelope.booking.status,
+              next,
+            )) {
+              return null;
+            }
+            return FloatingActionButton.extended(
+              backgroundColor: AppColors.orange,
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.arrow_forward_rounded),
+              label: Text('Move to ${_titleCase(next.name)}'),
+              onPressed: () => _handleAdvance(context, ref, next),
+            );
+          },
+          orElse: () => null,
+        ),
+        body: SafeArea(
+          child: Column(
+            children: [
+              const OfflineBanner(),
+              Expanded(
+                child: RefreshIndicator(
+                  color: AppColors.orange,
+                  backgroundColor: AppColors.voidElevated,
+                  onRefresh: () => ref
+                      .read(bookingDetailControllerProvider(bookingId).notifier)
+                      .refresh(),
+                  child: detailAsync.when(
+                    loading: () => const _ScrollableSlot(child: LensLoader()),
+                    error: (err, _) => _ScrollableSlot(
+                      child: ErrorState(
+                        message: 'Could not load this booking.',
+                        onRetry: () => ref.invalidate(
+                          bookingDetailControllerProvider(bookingId),
+                        ),
+                      ),
+                    ),
+                    data: (envelope) => _DetailBody(
+                      envelope: envelope,
+                      policy: ref.watch(bookingsPolicyProvider),
+                      currentUserId: currentUserId,
+                      lang: lang,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleAdvance(
+    BuildContext context,
+    WidgetRef ref,
+    BookingStatus to,
+  ) async {
+    try {
+      await ref
+          .read(bookingDetailControllerProvider(bookingId).notifier)
+          .transitionStatus(to);
+      if (!context.mounted) return;
+      _showSnack(context, 'Status updated to ${_titleCase(to.name)}.');
+    } catch (e) {
+      if (!context.mounted) return;
+      _showSnack(context, 'Could not update status: $e');
+    }
+  }
+
+  Future<void> _handleCancel(BuildContext context, WidgetRef ref) async {
+    final reason = await _CancelReasonDialog.show(context);
+    if (reason == null || reason.isEmpty) return;
+    try {
+      await ref
+          .read(bookingDetailControllerProvider(bookingId).notifier)
+          .cancel(reason);
+      if (!context.mounted) return;
+      _showSnack(context, 'Booking cancelled.');
+    } catch (e) {
+      if (!context.mounted) return;
+      _showSnack(context, 'Could not cancel: $e');
+    }
+  }
+
+  void _showSnack(BuildContext context, String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: AppColors.voidElevated,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Body
+// ─────────────────────────────────────────────────────────────────────
+
+class _DetailBody extends StatelessWidget {
+  const _DetailBody({
+    required this.envelope,
+    required this.policy,
+    required this.currentUserId,
+    required this.lang,
+  });
+
+  final BookingDetailEnvelope envelope;
+  final dynamic policy; // RolePolicy — typed dynamic to avoid extra import
+  final String currentUserId;
+  final String lang;
+
+  @override
+  Widget build(BuildContext context) {
+    final booking = envelope.booking;
+    final canViewPayments = policy.can(Capability.viewBookingPayments) as bool;
+    final showPayment = shouldShowPayment(
+      role: policy.role as UserRole,
+      hidePaymentFromTeam: booking.hidePaymentFromTeam,
+      canViewPayments: canViewPayments,
+    );
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        _HeaderCard(booking: booking, lang: lang),
+        if (envelope.client != null)
+          DetailSection(
+            title: 'Client',
+            child: Column(
+              children: [
+                DetailRow(
+                  icon: Icons.person_outline_rounded,
+                  label: 'Name',
+                  value: envelope.client!.name,
+                ),
+                DetailRow(
+                  icon: Icons.phone_outlined,
+                  label: 'Phone',
+                  value: envelope.client!.phone,
+                  valueColor: AppColors.teal,
+                  onTap: () =>
+                      launchUrl(Uri.parse('tel:${envelope.client!.phone}')),
+                ),
+                if (envelope.client!.email != null)
+                  DetailRow(
+                    icon: Icons.email_outlined,
+                    label: 'Email',
+                    value: envelope.client!.email,
+                  ),
+                if (envelope.client!.address != null)
+                  DetailRow(
+                    icon: Icons.place_outlined,
+                    label: 'Address',
+                    value: envelope.client!.address,
+                  ),
+                if (booking.eventType.requiresBrideGroom) ...[
+                  if (booking.brideName != null)
+                    DetailRow(
+                      icon: Icons.favorite_outline,
+                      label: 'Bride',
+                      value: booking.brideName,
+                    ),
+                  if (booking.groomName != null)
+                    DetailRow(
+                      icon: Icons.favorite_outline,
+                      label: 'Groom',
+                      value: booking.groomName,
+                    ),
+                ],
+              ],
+            ),
+          ),
+        DetailSection(
+          title: 'Schedule',
+          child: Column(
+            children: [
+              DetailRow(
+                icon: Icons.event_outlined,
+                label: 'Date',
+                value: BookingFormat.dateTime(booking.date, lang: lang),
+              ),
+              DetailRow(
+                icon: Icons.schedule_outlined,
+                label: 'Time',
+                value: '${booking.startTime} – ${booking.endTime}',
+              ),
+              DetailRow(
+                icon: Icons.brightness_4_outlined,
+                label: 'Shift',
+                value: booking.shift.name,
+              ),
+              DetailRow(
+                icon: Icons.place_outlined,
+                label: 'Venue',
+                value: booking.venue,
+              ),
+              DetailRow(
+                icon: Icons.wb_sunny_outlined,
+                label: 'Outdoor',
+                value: booking.outdoor ? 'Yes' : 'No',
+              ),
+              if (booking.coverageHours != null)
+                DetailRow(
+                  icon: Icons.hourglass_empty_rounded,
+                  label: 'Coverage',
+                  value: '${booking.coverageHours} h',
+                ),
+            ],
+          ),
+        ),
+        if (envelope.package != null || booking.customPrice != null)
+          DetailSection(
+            title: 'Package',
+            child: Column(
+              children: [
+                DetailRow(
+                  icon: Icons.inventory_2_outlined,
+                  label: 'Name',
+                  value: envelope.package?.name ?? 'Custom',
+                ),
+                if (showPayment)
+                  DetailRow(
+                    icon: Icons.payments_outlined,
+                    label: 'Price',
+                    value: BookingFormat.money(
+                      envelope.package?.basePrice ?? booking.customPrice ?? 0,
+                      lang: lang,
+                      bnNumerals: lang == 'bn',
+                    ),
+                    valueColor: AppColors.gold,
+                  ),
+                if (booking.driveLink != null)
+                  DetailRow(
+                    icon: Icons.cloud_outlined,
+                    label: 'Drive link',
+                    value: booking.driveLink,
+                    valueColor: AppColors.indigo,
+                    onTap: () => _openLink(booking.driveLink!),
+                  ),
+              ],
+            ),
+          ),
+        if (showPayment) PaymentSummaryCard(bookingId: booking.id),
+        AssignmentsSection(
+          assignments: envelope.assignments,
+          currentUserId: currentUserId,
+          currentRole: policy.role as UserRole,
+          showPayout: showPayment,
+          chiefUserId: booking.chiefPhotographerUserId,
+        ),
+        TaskProgressSection(
+          bookingId: booking.id,
+          assignments: envelope.assignments,
+          taskProgress: envelope.taskProgress,
+        ),
+        StatusTimeline(entries: envelope.statusHistory),
+        ReEditSection(booking: booking, requests: envelope.reEditRequests),
+        _InvoiceAction(booking: booking, envelope: envelope, lang: lang),
+        _QuickActionsSection(booking: booking, envelope: envelope),
+        if (booking.notes != null && booking.notes!.isNotEmpty)
+          DetailSection(
+            title: 'Notes',
+            child: Text(
+              booking.notes!,
+              style: TextStyle(
+                color: AppColors.film.withValues(alpha: 0.9),
+                fontSize: 13.5,
+                height: 1.45,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Future<void> _openLink(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+}
+
+class _HeaderCard extends StatelessWidget {
+  const _HeaderCard({required this.booking, required this.lang});
+
+  final Booking booking;
+  final String lang;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.orange,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.orange.withValues(alpha: 0.25),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  booking.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'Poppins',
+                    fontSize: 24,
+                    fontWeight: FontWeight.w600,
+                    height: 1.1,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              BookingStatusBadge(booking.status, size: BadgeSize.lg),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '${BookingFormat.dateTime(booking.date, lang: lang)} · ${_titleCase(booking.shift.name)} shift · ${booking.startTime}–${booking.endTime}',
+            style: TextStyle(
+              color: AppColors.filmDim.withValues(alpha: 0.9),
+              fontSize: 12.5,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CancelReasonDialog extends StatefulWidget {
+  const _CancelReasonDialog();
+
+  static Future<String?> show(BuildContext context) => showDialog<String>(
+    context: context,
+    builder: (_) => const _CancelReasonDialog(),
+  );
+
+  @override
+  State<_CancelReasonDialog> createState() => _CancelReasonDialogState();
+}
+
+class _CancelReasonDialogState extends State<_CancelReasonDialog> {
+  final _controller = TextEditingController();
+  String? _error;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 420),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.voidElevated,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Cancel booking',
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 22,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Please share why this booking is being cancelled. This will be added to the status history.',
+              style: TextStyle(
+                color: AppColors.filmDim.withValues(alpha: 0.85),
+                fontSize: 12.5,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _controller,
+              maxLines: 4,
+              maxLength: 500,
+              autofocus: true,
+              style: const TextStyle(color: Colors.white, fontSize: 13.5),
+              decoration: InputDecoration(
+                hintText: 'Reason for cancellation',
+                hintStyle: TextStyle(
+                  color: AppColors.filmMuted.withValues(alpha: 0.7),
+                ),
+                errorText: _error,
+                filled: true,
+                fillColor: Colors.black.withValues(alpha: 0.04),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color: Colors.black.withValues(alpha: 0.08),
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color: Colors.black.withValues(alpha: 0.08),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: AppColors.orange),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pop(null),
+                    child: const Text(
+                      'Back',
+                      style: TextStyle(color: AppColors.filmDim),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.red,
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: _onConfirm,
+                    child: const Text('Cancel booking'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _onConfirm() {
+    final value = _controller.text.trim();
+    if (value.isEmpty) {
+      setState(() => _error = 'Reason cannot be empty.');
+      return;
+    }
+    Navigator.of(context).pop(value);
+  }
+}
+
+class _ScrollableSlot extends StatelessWidget {
+  const _ScrollableSlot({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
+      children: [
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: Center(child: child),
+        ),
+      ],
+    );
+  }
+}
+
+enum _DetailMenuAction { cancel, refresh }
+
+// ─────────────────────────────────────────────────────────────────────
+// Invoice Action — opens auto-generated invoice bottom sheet
+// ─────────────────────────────────────────────────────────────────────
+
+class _InvoiceAction extends StatelessWidget {
+  const _InvoiceAction({
+    required this.booking,
+    required this.envelope,
+    required this.lang,
+  });
+
+  final Booking booking;
+  final BookingDetailEnvelope envelope;
+  final String lang;
+
+  @override
+  Widget build(BuildContext context) {
+    return DetailSection(
+      title: 'Invoice',
+      child: SizedBox(
+        width: double.infinity,
+        child: FilledButton.icon(
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.teal,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          icon: const Icon(Icons.receipt_long_rounded, size: 18),
+          label: const Text('View Invoice'),
+          onPressed: () => _showInvoiceSheet(context),
+        ),
+      ),
+    );
+  }
+
+  void _showInvoiceSheet(BuildContext context) {
+    final chiefName = _resolveChiefName();
+    final teamNames = envelope.assignments
+        .map((a) => '${_titleCase(a.role.name)} (${a.userId})')
+        .join(', ');
+    final teamNo = envelope.assignments.length.toString();
+
+    final total = booking.customPrice ?? envelope.package?.basePrice ?? 0.0;
+    final advance = envelope.payments.fold<double>(0, (s, p) => s + p.amount);
+    final due = total - advance;
+
+    final dateStr = BookingFormat.dateTime(booking.date, lang: lang);
+    final lines = <String>[
+      'DATE: $dateStr',
+      'TIME: ${booking.startTime} – ${booking.endTime}',
+      'EVENT: ${_titleCase(booking.eventType.name)}',
+      'CLIENT: ${envelope.client?.name ?? '—'}',
+      'PHONE: ${envelope.client?.phone ?? '—'}',
+      'VENUE: ${booking.venue ?? '—'}',
+      'CHIEF: $chiefName',
+      'TEAM: $teamNames',
+      'TEAM NO: $teamNo',
+      'TOTAL: ${BookingFormat.money(total, lang: lang, bnNumerals: lang == 'bn')}',
+      'ADVANCE: ${BookingFormat.money(advance, lang: lang, bnNumerals: lang == 'bn')}',
+      'DUE: ${BookingFormat.money(due, lang: lang, bnNumerals: lang == 'bn')}',
+    ];
+    final invoiceText = lines.join('\n');
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) =>
+          _InvoiceSheet(invoiceText: invoiceText, bookingTitle: booking.title),
+    );
+  }
+
+  String _resolveChiefName() {
+    if (booking.chiefPhotographerUserId == null) return '—';
+    for (final a in envelope.assignments) {
+      if (a.userId == booking.chiefPhotographerUserId) {
+        return '${_titleCase(a.role.name)} (${a.userId})';
+      }
+    }
+    return booking.chiefPhotographerUserId!;
+  }
+}
+
+class _InvoiceSheet extends StatelessWidget {
+  const _InvoiceSheet({required this.invoiceText, required this.bookingTitle});
+
+  final String invoiceText;
+  final String bookingTitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      decoration: BoxDecoration(
+        color: AppColors.voidElevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 36,
+              height: 4,
+              margin: const EdgeInsets.only(top: 12),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Invoice',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.close,
+                      color: AppColors.filmDim,
+                      size: 20,
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.03),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+              ),
+              child: Text(
+                invoiceText,
+                style: const TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 12.5,
+                  color: AppColors.film,
+                  height: 1.6,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _ShareButton(
+                      icon: Icons.copy_rounded,
+                      label: 'Copy',
+                      onTap: () {
+                        Clipboard.setData(ClipboardData(text: invoiceText));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Invoice copied to clipboard.'),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _ShareButton(
+                      icon: Icons.chat_rounded,
+                      label: 'WhatsApp',
+                      color: const Color(0xFF25D366),
+                      onTap: () => launchUrl(
+                        Uri.parse(
+                          'https://wa.me/?text=${Uri.encodeComponent('$bookingTitle\n\n$invoiceText')}',
+                        ),
+                        mode: LaunchMode.externalApplication,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _ShareButton(
+                      icon: Icons.messenger_outline_rounded,
+                      label: 'Messenger',
+                      color: AppColors.indigo,
+                      // The Facebook sharer URL drops plain text and often
+                      // fails to open Messenger. The system share sheet is
+                      // reliable and lists Messenger among the targets.
+                      onTap: () => SharePlus.instance.share(
+                        ShareParams(text: '$bookingTitle\n\n$invoiceText'),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ShareButton extends StatelessWidget {
+  const _ShareButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final resolvedColor = color ?? AppColors.teal;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: resolvedColor.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: resolvedColor.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16, color: resolvedColor),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: resolvedColor,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Quick Actions — WhatsApp share + Delivery checklist
+// ─────────────────────────────────────────────────────────────────────
+
+class _QuickActionsSection extends StatelessWidget {
+  const _QuickActionsSection({required this.booking, required this.envelope});
+
+  final Booking booking;
+  final BookingDetailEnvelope envelope;
+
+  @override
+  Widget build(BuildContext context) {
+    return DetailSection(
+      title: 'Actions',
+      child: Column(
+        children: [
+          _ActionTile(
+            icon: Icons.share_rounded,
+            iconColor: const Color(0xFF25D366),
+            title: 'Share on WhatsApp',
+            subtitle: 'Send booking summary to client',
+            onTap: () => _shareWhatsApp(context),
+          ),
+          Container(
+            height: 1,
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            color: Colors.black.withValues(alpha: 0.04),
+          ),
+          _ActionTile(
+            icon: Icons.picture_as_pdf_outlined,
+            iconColor: AppColors.teal,
+            title: 'Export PDF',
+            subtitle: 'Save or share booking summary',
+            onTap: () => _exportPdf(context),
+          ),
+          Container(
+            height: 1,
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            color: Colors.black.withValues(alpha: 0.04),
+          ),
+          _ActionTile(
+            icon: Icons.checklist_rounded,
+            iconColor: AppColors.gold,
+            title: 'Delivery Checklist',
+            subtitle: 'Track delivery progress',
+            onTap: () => showModalBottomSheet<void>(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: AppColors.voidLight,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              builder: (_) => DeliveryChecklistSheet(bookingId: booking.id),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _shareWhatsApp(BuildContext context) {
+    final clientPhone = envelope.client?.phone ?? '';
+    final text = StringBuffer()
+      ..writeln('*${booking.title}*')
+      ..writeln('Date: ${BookingFormat.dateTime(booking.date, lang: 'en')}')
+      ..writeln('Time: ${booking.startTime} – ${booking.endTime}')
+      ..writeln('Venue: ${booking.venue ?? '—'}')
+      ..writeln('Status: ${_titleCase(booking.status.name)}');
+    final url = clientPhone.isNotEmpty
+        ? 'https://wa.me/$clientPhone?text=${Uri.encodeComponent(text.toString())}'
+        : 'https://wa.me/?text=${Uri.encodeComponent(text.toString())}';
+    launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> _exportPdf(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final client = envelope.client;
+    try {
+      await PdfExporter.share(
+        PdfDocumentData(
+          documentTitle: 'Booking Summary',
+          fileName: 'booking_${booking.id}',
+          subtitle: booking.title,
+          companyName: client?.name ?? '',
+          companyPhone: client?.phone ?? '',
+          summary: [
+            PdfRow(
+              'Date',
+              BookingFormat.dateTime(booking.date, lang: 'en'),
+            ),
+            PdfRow('Time', '${booking.startTime} – ${booking.endTime}'),
+            PdfRow('Venue', booking.venue?.isNotEmpty == true
+                ? booking.venue!
+                : '—'),
+            PdfRow('Status', _titleCase(booking.status.name), emphasize: true),
+          ],
+          footnote: 'Generated by Clicker Pro',
+        ),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('PDF তৈরি করা যায়নি: $e')),
+      );
+    }
+  }
+}
+
+class _ActionTile extends StatelessWidget {
+  const _ActionTile({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              alignment: Alignment.center,
+              child: Icon(icon, size: 18, color: iconColor),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: AppColors.filmDim.withValues(alpha: 0.8),
+                      fontSize: 11.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.filmMuted.withValues(alpha: 0.5),
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _titleCase(String input) {
+  if (input.isEmpty) return input;
+  // splits camelCase / lower into Title Case ("inProgress" → "In Progress")
+  final spaced = input.replaceAllMapped(
+    RegExp(r'([a-z])([A-Z])'),
+    (m) => '${m.group(1)} ${m.group(2)}',
+  );
+  return spaced
+      .split(' ')
+      .where((p) => p.isNotEmpty)
+      .map((p) => p[0].toUpperCase() + p.substring(1))
+      .join(' ');
+}

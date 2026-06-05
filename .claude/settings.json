@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"C:/Users/photo/AppData/Local/Android/Sdk/platform-tools/adb.exe\" -s a5178cb4 logcat \"flutter:E\" \"*:F\")"
+    ]
+  }
+}

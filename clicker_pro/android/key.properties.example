@@ -1,0 +1,14 @@
+# android/key.properties.example
+#
+# Copy this file to `android/key.properties` and fill in the values
+# below.  The real `key.properties` MUST NOT be committed; it is
+# already listed in `android/.gitignore`.
+#
+# To generate a fresh keystore:
+#   keytool -genkey -v -keystore ~/keystores/clicker_pro.jks \
+#     -keyalg RSA -keysize 2048 -validity 10000 -alias clickerpro
+
+storeFile=../../keystores/clicker_pro.jks
+storePassword=change-me
+keyAlias=clickerpro
+keyPassword=change-me

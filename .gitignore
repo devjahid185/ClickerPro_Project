@@ -1,0 +1,25 @@
+# ── Secrets / signing — NEVER commit ─────────────────────────────
+keystores/
+*.jks
+*.keystore
+**/key.properties
+**/.env
+.env
+
+# ── Backend ──────────────────────────────────────────────────────
+backend/node_modules/
+backend/.env
+backend/dist/
+
+# ── Flutter / Dart ───────────────────────────────────────────────
+clicker_pro/.dart_tool/
+clicker_pro/build/
+clicker_pro/.flutter-plugins
+clicker_pro/.flutter-plugins-dependencies
+clicker_pro/android/.gradle/
+clicker_pro/android/local.properties
+clicker_pro/ios/Pods/
+
+# ── OS / editor ──────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
