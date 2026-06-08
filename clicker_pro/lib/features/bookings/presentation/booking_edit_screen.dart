@@ -237,7 +237,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                     loc.bookings_save,
                     style: TextStyle(
                       color: flash > 0
-                          ? Color.lerp(Colors.white, AppColors.teal, flash)
+                          ? Color.lerp(AppColors.film, AppColors.teal, flash)
                           : AppColors.orange,
                       fontFamily: 'Montserrat',
                       fontSize: 12,
@@ -532,7 +532,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
         LensPickerRow(
           label: 'Client',
           icon: Icons.person_outline_rounded,
-          valueText: _clientLabel(draft.clientId),
+          valueText: _clientLabel(draft),
           placeholder: 'Pick or create a client',
           errorText: _validation.errorFor(BookingField.client),
           onTap: () => _pickClient(draft, controller),
@@ -765,7 +765,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                         _packageLabel(draft) ?? 'Pick a package',
                         style: TextStyle(
                           color: _packageLabel(draft) != null
-                              ? Colors.white
+                              ? AppColors.film
                               : AppColors.filmMuted.withValues(alpha: 0.7),
                           fontSize: 13.5,
                           fontWeight: FontWeight.w500,
@@ -1290,11 +1290,30 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     });
   }
 
-  String? _clientLabel(String? clientId) {
-    if (clientId == null) return null;
+  String? _clientLabel(BookingDraft draft) {
+    final clientId = draft.clientId;
+    // No linked client id: fall back to the booking's own client name/phone.
+    if (clientId == null || clientId.isEmpty) {
+      final name = draft.clientName?.trim();
+      if (name != null && name.isNotEmpty) {
+        final phone = draft.clientPhone?.trim();
+        return (phone != null && phone.isNotEmpty) ? '$name · $phone' : name;
+      }
+      return null;
+    }
     final clientAsync = ref.watch(clientByIdProvider(clientId));
     final c = clientAsync.value;
-    if (c == null) return clientId;
+    // BUG-FIX: a clientId that resolves to no client (e.g. a stale/placeholder
+    // id like 'pending' on older rows) must NOT be shown raw. Prefer the
+    // booking's own clientName/clientPhone; only then give nothing.
+    if (c == null) {
+      final name = draft.clientName?.trim();
+      if (name != null && name.isNotEmpty) {
+        final phone = draft.clientPhone?.trim();
+        return (phone != null && phone.isNotEmpty) ? '$name · $phone' : name;
+      }
+      return null;
+    }
     return '${c.name} · ${c.phone}';
   }
 
@@ -1951,7 +1970,7 @@ class _ModePill extends StatelessWidget {
               label,
               style: TextStyle(
                 color: selected
-                    ? Colors.white
+                    ? AppColors.teal
                     : AppColors.filmDim.withValues(alpha: 0.85),
                 fontSize: 13,
                 fontWeight: selected ? FontWeight.w600 : FontWeight.w500,

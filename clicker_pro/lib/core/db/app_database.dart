@@ -97,7 +97,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -134,6 +134,20 @@ class AppDatabase extends _$AppDatabase {
       if (from <= 4 && to >= 5) {
         await m.addColumn(bookingsTable, bookingsTable.clientName);
         await m.addColumn(bookingsTable, bookingsTable.clientPhone);
+      }
+      // v5 → v6: BUG-FIX — repair bookings whose clientId points at a row that
+      // doesn't exist in clients_table (e.g. the placeholder 'pending', or ids
+      // dropped during an incomplete v4→v5 sync). With the FK reference on
+      // bookings.clientId such a dangling id corrupts the row and crashes the
+      // booking editor ("Could not open the booking editor"). Null it out — the
+      // booking keeps its clientName/clientPhone, so no client info is lost.
+      // Runs for devices already on v5 AND for fresh upgrades passing through.
+      if (from <= 5 && to >= 6) {
+        await customStatement(
+          "UPDATE bookings_table SET client_id = NULL "
+          "WHERE client_id IS NOT NULL "
+          "AND client_id NOT IN (SELECT id FROM clients_table)",
+        );
       }
     },
   );

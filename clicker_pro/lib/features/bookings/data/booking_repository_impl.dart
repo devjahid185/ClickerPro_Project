@@ -197,7 +197,9 @@ class BookingRepositoryImpl implements BookingRepository {
       }
       final result = await _api.list(filter ?? const BookingFilter());
       for (final booking in result.items) {
-        await _bookings.upsert(_bookingToCompanion(booking, pending: false));
+        await _bookings.upsert(
+          await _bookingToCompanion(booking, pending: false),
+        );
       }
     } on ApiException catch (e, st) {
       AppLogger.w('booking', 'refreshFromRemote failed: ${e.message}');
@@ -217,7 +219,7 @@ class BookingRepositoryImpl implements BookingRepository {
     }
 
     final stamped = booking.copyWith(updatedAt: DateTime.now(), pending: true);
-    await _bookings.upsert(_bookingToCompanion(stamped, pending: true));
+    await _bookings.upsert(await _bookingToCompanion(stamped, pending: true));
 
     final isCreate = booking.remoteId == null;
     try {
@@ -225,7 +227,7 @@ class BookingRepositoryImpl implements BookingRepository {
           ? await _api.create(stamped)
           : await _api.patch(booking.remoteId!, stamped.toJson());
       final synced = remote.copyWith(pending: false);
-      await _bookings.upsert(_bookingToCompanion(synced, pending: false));
+      await _bookings.upsert(await _bookingToCompanion(synced, pending: false));
       return synced;
     } catch (e, st) {
       AppLogger.w('booking', 'save remote failed; queued in outbox: $e');
@@ -338,7 +340,7 @@ class BookingRepositoryImpl implements BookingRepository {
   /// dedupe-keyed by their id.
   Future<void> _upsertEnvelope(BookingDetailEnvelope envelope) async {
     await _bookings.upsert(
-      _bookingToCompanion(envelope.booking, pending: false),
+      await _bookingToCompanion(envelope.booking, pending: false),
     );
     final client = envelope.client;
     if (client != null) {
@@ -521,10 +523,22 @@ class BookingRepositoryImpl implements BookingRepository {
 
   // ── Domain → Companion mapping ──────────────────────────────────────
 
-  BookingsTableCompanion _bookingToCompanion(
+  /// Returns [id] only if it refers to a real row in clients_table; otherwise
+  /// null. Guards against dangling/placeholder client ids (e.g. 'pending' or
+  /// ids dropped during sync) that would violate the bookings.clientId foreign
+  /// key and crash the booking editor. clientName/clientPhone still carry the
+  /// human-readable client info, so nulling the id loses nothing the form needs.
+  Future<String?> _validClientId(String? id) async {
+    if (id == null || id.isEmpty) return null;
+    final row = await _clients.watchById(id).first;
+    return row == null ? null : id;
+  }
+
+  Future<BookingsTableCompanion> _bookingToCompanion(
     Booking b, {
     required bool pending,
-  }) {
+  }) async {
+    final safeClientId = await _validClientId(b.clientId);
     return BookingsTableCompanion(
       id: Value(b.id),
       remoteId: Value(b.remoteId),
@@ -540,7 +554,7 @@ class BookingRepositoryImpl implements BookingRepository {
       outdoor: Value(b.outdoor),
       brideName: Value(b.brideName),
       groomName: Value(b.groomName),
-      clientId: Value(b.clientId),
+      clientId: Value(safeClientId),
       clientName: Value(b.clientName),
       clientPhone: Value(b.clientPhone),
       packageId: Value(b.packageId),

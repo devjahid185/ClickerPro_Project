@@ -1228,7 +1228,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     fontFamily: AppText.brand.fontFamily,
                     fontSize: 22,
                     fontWeight: FontWeight.w600,
-                    color: isCancel ? AppColors.red : Colors.white,
+                    color: isCancel ? AppColors.red : AppColors.film,
                     height: 1,
                   ),
                 ),
