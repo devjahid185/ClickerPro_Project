@@ -31,7 +31,11 @@ import '../../features/announcements/presentation/announcements_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/dashboard/presentation/dashboard_customize_screen.dart';
 import '../../features/expenses/presentation/expenses_screen.dart';
+import '../../features/freelancer/presentation/fl_availability_screen.dart';
+import '../../features/freelancer/presentation/fl_checkin_screen.dart';
 import '../../features/freelancer/presentation/fl_earnings_screen.dart';
+import '../../features/freelancer/presentation/fl_leave_request_screen.dart';
+import '../../features/freelancer/presentation/fl_work_history_screen.dart';
 import '../../features/gear/presentation/gear_screen.dart';
 import '../../features/help/presentation/help_screen.dart';
 import '../../features/legal/presentation/data_export_screen.dart';
@@ -65,7 +69,14 @@ import '../../features/finance/presentation/cash_flow_screen.dart';
 import '../../features/petty_cash/presentation/petty_cash_screen.dart';
 import '../../features/followup/presentation/followup_screen.dart';
 import '../../features/home_widget/presentation/widget_settings_screen.dart';
+import '../../features/auth/domain/otp_purpose.dart';
+import '../../features/auth/presentation/otp_screen.dart';
+import '../../features/auth/presentation/reset_password_screen.dart';
+import '../../features/bookings/presentation/re_edit_requests_screen.dart';
+import '../../features/broadcasts/presentation/broadcasts_screen.dart';
+import '../../features/performance/presentation/performance_screen.dart';
 import '../../features/security/presentation/security_settings_screen.dart';
+import '../../features/payments/presentation/payment_entry_screen.dart';
 import '../../theme/app_colors.dart';
 import 'route_names.dart';
 
@@ -89,6 +100,27 @@ class AppRouter {
         return lensPageRoute<void>(const RegisterScreen());
       case RouteNames.forgot:
         return lensPageRoute<void>(const ForgotPasswordScreen());
+      case RouteNames.otp:
+        final args = settings.arguments;
+        if (args is Map<String, String>) {
+          return lensPageRoute<void>(
+            OtpScreen(
+              identifier: args['identifier'] ?? '',
+              purpose: OtpPurpose.fromString(args['purpose']),
+            ),
+          );
+        }
+        return lensPageRoute<void>(
+          _ComingSoonRoute(name: 'OTP (missing args)'),
+        );
+      case RouteNames.resetPassword:
+        final token = settings.arguments;
+        if (token is String && token.isNotEmpty) {
+          return lensPageRoute<void>(ResetPasswordScreen(token: token));
+        }
+        return lensPageRoute<void>(
+          _ComingSoonRoute(name: 'Reset Password (missing token)'),
+        );
       case RouteNames.acceptInvite:
         return lensPageRoute<void>(const ManagerInviteScreen());
       case RouteNames.dashboard:
@@ -151,6 +183,14 @@ class AppRouter {
         return lensPageRoute<void>(const FlEarningsScreen());
       case RouteNames.freelancerBadges:
         return lensPageRoute<void>(const FlBadgesScreen());
+      case RouteNames.freelancerAvailability:
+        return lensPageRoute<void>(const FlAvailabilityScreen());
+      case RouteNames.freelancerCheckin:
+        return lensPageRoute<void>(const FlCheckinScreen());
+      case RouteNames.freelancerLeave:
+        return lensPageRoute<void>(const FlLeaveRequestScreen());
+      case RouteNames.freelancerWorkHistory:
+        return lensPageRoute<void>(const FlWorkHistoryScreen());
       case RouteNames.teamSalarySheet:
         return lensPageRoute<void>(const SalarySheetScreen());
 
@@ -232,8 +272,16 @@ class AppRouter {
         return lensPageRoute<void>(const FollowupScreen());
       case RouteNames.widgetSettings:
         return lensPageRoute<void>(const WidgetSettingsScreen());
+      case RouteNames.performance:
+        return lensPageRoute<void>(const PerformanceScreen());
+      case RouteNames.reEditRequests:
+        return lensPageRoute<void>(const ReEditRequestsScreen());
+      case RouteNames.calendarSync:
+        return lensPageRoute<void>(const CalendarSyncSettings());
       case RouteNames.paymentEntry:
-        return lensPageRoute<void>(_ComingSoonRoute(name: 'Payment Entry'));
+        return lensPageRoute<void>(const PaymentEntryScreen());
+      case RouteNames.broadcasts:
+        return lensPageRoute<void>(const BroadcastsScreen());
       case RouteNames.securitySettings:
         return lensPageRoute<void>(const SecuritySettingsScreen());
       // bookings / calendar / finance / team are stubs in this slice. Phase 2

@@ -19,6 +19,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+
 import '../../../core/providers.dart';
 import '../../../core/storage/kv_store.dart';
 import '../../../screens/dashboard_screen.dart';
@@ -74,6 +77,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _googleLoading = false;
+  bool _appleLoading = false;
   DateTime? _pendingDeleteUntil;
 
   // ─── Error shake (Task 20.7 / MOD-06) ───────────────────────────
@@ -167,6 +172,72 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     Navigator.of(
       context,
     ).push(slideFromRightRoute(const ManagerInviteScreen()));
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _googleLoading = true);
+    try {
+      final googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) {
+        setState(() => _googleLoading = false);
+        return;
+      }
+      final auth = await googleUser.authentication;
+      final idToken = auth.idToken;
+      if (idToken == null) throw Exception('No ID token');
+
+      await ref
+          .read(sessionControllerProvider.notifier)
+          .loginWithGoogle(idToken);
+
+      if (!mounted) return;
+      final session = ref.read(sessionControllerProvider);
+      if (session.hasValue && session.value != null) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+          (route) => false,
+        );
+        return;
+      }
+      _showError('Google sign-in failed. Please try again.');
+    } catch (_) {
+      if (mounted) _showError('Google sign-in failed. Please try again.');
+    } finally {
+      if (mounted) setState(() => _googleLoading = false);
+    }
+  }
+
+  Future<void> _handleAppleSignIn() async {
+    setState(() => _appleLoading = true);
+    try {
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+      final idToken = credential.identityToken;
+      if (idToken == null) throw Exception('No identity token');
+
+      await ref
+          .read(sessionControllerProvider.notifier)
+          .loginWithApple(idToken);
+
+      if (!mounted) return;
+      final session = ref.read(sessionControllerProvider);
+      if (session.hasValue && session.value != null) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+          (route) => false,
+        );
+        return;
+      }
+      _showError('Apple sign-in failed. Please try again.');
+    } catch (_) {
+      if (mounted) _showError('Apple sign-in failed. Please try again.');
+    } finally {
+      if (mounted) setState(() => _appleLoading = false);
+    }
   }
 
   void _showError(String message) {
@@ -288,23 +359,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             color: AppColors.filmDim.withValues(alpha: 0.7),
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 100),
-                          height: 1,
-                          color: AppColors.accent.withValues(alpha: 0.2),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          t('subtitle'),
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppColors.filmDim.withValues(alpha: 0.8),
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-
                         const SizedBox(height: 40),
 
                         if (_pendingDeleteUntil != null) ...[
@@ -401,6 +455,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           ],
                         ),
                         const SizedBox(height: 18),
+
+                        // ── SOCIAL LOGIN BUTTONS ──────────────────
+                        _SocialButton(
+                          label: lang == 'bn'
+                              ? 'Google দিয়ে লগইন'
+                              : 'Continue with Google',
+                          icon: _kGoogleIcon,
+                          loading: _googleLoading,
+                          onTap: _handleGoogleSignIn,
+                        ),
+                        const SizedBox(height: 10),
+                        _SocialButton(
+                          label: lang == 'bn'
+                              ? 'Apple দিয়ে লগইন'
+                              : 'Continue with Apple',
+                          icon: _kAppleIcon,
+                          loading: _appleLoading,
+                          onTap: _handleAppleSignIn,
+                        ),
+
+                        const SizedBox(height: 20),
 
                         // ── REGISTER LINK ─────────────────────────
                         Row(
@@ -734,6 +809,152 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                   ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ─── Google SVG path (G mark) ─────────────────────────────────────────────
+const _kGoogleIcon = _GoogleIcon();
+const _kAppleIcon = _AppleIcon();
+
+class _GoogleIcon extends StatelessWidget {
+  const _GoogleIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 20,
+      height: 20,
+      child: CustomPaint(painter: _GooglePainter()),
+    );
+  }
+}
+
+class _GooglePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width;
+    // Blue
+    canvas.drawArc(
+      Rect.fromLTWH(0, 0, s, s),
+      -1.05,
+      2.1,
+      false,
+      Paint()
+        ..color = const Color(0xFF4285F4)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = s * 0.18,
+    );
+    // Red
+    canvas.drawArc(
+      Rect.fromLTWH(0, 0, s, s),
+      1.05,
+      2.3,
+      false,
+      Paint()
+        ..color = const Color(0xFFEA4335)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = s * 0.18,
+    );
+    // Yellow
+    canvas.drawArc(
+      Rect.fromLTWH(0, 0, s, s),
+      3.35,
+      0.75,
+      false,
+      Paint()
+        ..color = const Color(0xFFFBBC05)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = s * 0.18,
+    );
+    // Green
+    canvas.drawArc(
+      Rect.fromLTWH(0, 0, s, s),
+      4.1,
+      0.9,
+      false,
+      Paint()
+        ..color = const Color(0xFF34A853)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = s * 0.18,
+    );
+    // Horizontal bar
+    final paint = Paint()
+      ..color = const Color(0xFF4285F4)
+      ..strokeWidth = s * 0.18
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(
+      Offset(s * 0.5, s * 0.5),
+      Offset(s * 0.95, s * 0.5),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _AppleIcon extends StatelessWidget {
+  const _AppleIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Icon(Icons.apple, size: 22, color: AppColors.film);
+  }
+}
+
+// ─── Social button ────────────────────────────────────────────────────────
+class _SocialButton extends StatelessWidget {
+  const _SocialButton({
+    required this.label,
+    required this.icon,
+    required this.loading,
+    required this.onTap,
+  });
+
+  final String label;
+  final Widget icon;
+  final bool loading;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: loading ? null : onTap,
+      child: Container(
+        height: 50,
+        decoration: BoxDecoration(
+          color: AppColors.voidElevated,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.glassBorder),
+        ),
+        child: loading
+            ? const Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.accent,
+                  ),
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  icon,
+                  const SizedBox(width: 10),
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      color: AppColors.film,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
       ),
     );
   }

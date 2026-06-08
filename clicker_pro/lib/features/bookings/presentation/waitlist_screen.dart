@@ -252,7 +252,12 @@ class WaitlistScreen extends ConsumerWidget {
           ),
         ),
       ),
-    );
+    ).whenComplete(() {
+      // Dispose the sheet's controllers once it closes to avoid a leak.
+      nameCtrl.dispose();
+      phoneCtrl.dispose();
+      noteCtrl.dispose();
+    });
   }
 }
 

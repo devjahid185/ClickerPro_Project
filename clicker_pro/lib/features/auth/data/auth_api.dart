@@ -178,4 +178,32 @@ class AuthApi {
     final r = await _client.post('/api/account/export') as Map<String, dynamic>;
     return r['downloadUrl'] as String;
   }
+
+  Future<({String token, Map<String, dynamic> user})> loginWithGoogle(
+    String idToken,
+  ) async {
+    final r = await _client.post(
+      '/api/auth/google',
+      body: {'idToken': idToken},
+      authenticated: false,
+    ) as Map<String, dynamic>;
+    return (
+      token: r['token'] as String,
+      user: (r['user'] as Map).cast<String, dynamic>(),
+    );
+  }
+
+  Future<({String token, Map<String, dynamic> user})> loginWithApple(
+    String identityToken,
+  ) async {
+    final r = await _client.post(
+      '/api/auth/apple',
+      body: {'identityToken': identityToken},
+      authenticated: false,
+    ) as Map<String, dynamic>;
+    return (
+      token: r['token'] as String,
+      user: (r['user'] as Map).cast<String, dynamic>(),
+    );
+  }
 }

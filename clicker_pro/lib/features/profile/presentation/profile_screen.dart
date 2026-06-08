@@ -1258,6 +1258,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         _showSnack('Could not add gear');
       }
     }
+    // Dialog has closed and the controller's text has been consumed above;
+    // dispose it to avoid a leak.
+    controller.dispose();
   }
 
   // ── Change role flow ──────────────────────────────────────────

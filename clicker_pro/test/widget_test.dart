@@ -67,6 +67,12 @@ class _StubAuthRepo implements AuthRepository {
     required String password,
   }) => throw UnimplementedError();
   @override
+  Future<Session> loginWithGoogle({required String idToken}) =>
+      throw UnimplementedError();
+  @override
+  Future<Session> loginWithApple({required String identityToken}) =>
+      throw UnimplementedError();
+  @override
   Future<UserModel> changeRole(dynamic newRole) => throw UnimplementedError();
   @override
   Future<DateTime> requestDeleteAccount() => throw UnimplementedError();

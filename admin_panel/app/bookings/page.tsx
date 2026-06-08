@@ -63,7 +63,7 @@ export default function BookingsPage() {
   return (
     <Shell>
       <h1 className="page-title">Bookings</h1>
-      <p className="page-sub">{total} bookings across all studios</p>
+      <p className="page-sub">{total} bookings across all businesses</p>
 
       <div className="toolbar">
         <input
@@ -91,7 +91,7 @@ export default function BookingsPage() {
           <thead>
             <tr>
               <th>Booking</th>
-              <th>Studio / Owner</th>
+              <th>Business / Owner</th>
               <th>Client</th>
               <th>Date</th>
               <th>Status</th>

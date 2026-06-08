@@ -42,6 +42,9 @@ abstract class AuthRepository {
     required String password,
   });
 
+  Future<Session> loginWithGoogle({required String idToken});
+  Future<Session> loginWithApple({required String identityToken});
+
   Future<UserModel> changeRole(UserRole newRole);
 
   Future<DateTime> requestDeleteAccount();

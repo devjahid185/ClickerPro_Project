@@ -47,6 +47,8 @@ import '../../../theme/app_theme.dart';
 import '../../auth/application/session_controller.dart';
 import '../../auth/domain/user_role.dart';
 import '../../broadcasts/presentation/broadcast_banner.dart';
+import '../../announcements/application/announcement_providers.dart';
+import '../../announcements/domain/announcement.dart';
 import '../../profile/application/profile_controllers.dart';
 import '../../search/presentation/global_search_sheet.dart';
 import '../../profile/domain/user_model.dart';
@@ -991,113 +993,25 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-  // ─── Announcement (visual unchanged) ───────────────────────────────
+  // ─── Announcement — live data from announcementListControllerProvider ──
   Widget _buildAnnouncementCard() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.accent.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.accent.withValues(alpha: 0.22)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text('📌', style: TextStyle(fontSize: 13)),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppColors.gold.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  'Pinned',
-                  style: TextStyle(
-                    fontFamily: AppText.sectionTitle.fontFamily,
-                    fontSize: 8.5,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.gold,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              Text(
-                '2h ago',
-                style: TextStyle(
-                  fontFamily: AppText.sectionTitle.fontFamily,
-                  fontSize: 10,
-                  color: AppColors.filmDim.withValues(alpha: 0.6),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Studio closed on Friday for maintenance',
-            style: TextStyle(
-              fontFamily: AppText.brand.fontFamily,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppColors.film,
-              height: 1.3,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'AC servicing + equipment audit. All Friday shoots rescheduled. Check your calendar for new dates.',
-            style: TextStyle(
-              fontSize: 12.5,
-              color: AppColors.filmDim,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Container(height: 1, color: Colors.black.withValues(alpha: 0.06)),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '👁  6 of 8 read',
-                style: TextStyle(
-                  fontFamily: AppText.sectionTitle.fontFamily,
-                  fontSize: 10,
-                  color: AppColors.filmDim.withValues(alpha: 0.6),
-                ),
-              ),
-              Row(
-                children: [
-                  Container(
-                    width: 16,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: AppColors.accent,
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  ...List.generate(
-                    2,
-                    (int i) => Container(
-                      margin: const EdgeInsets.only(left: 4),
-                      width: 5,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
+    final announcementsAsync = ref.watch(sortedAnnouncementsProvider);
+
+    return announcementsAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (items) {
+        // Show only latest non-expired item; hide card if nothing available.
+        final active = items.where((a) => !a.isExpired).toList();
+        if (active.isEmpty) return const SizedBox.shrink();
+        final a = active.first;
+        return GestureDetector(
+          onTap: () {
+            Navigator.of(context).pushNamed(RouteNames.announcements);
+          },
+          child: _AnnouncementCardView(announcement: a),
+        );
+      },
     );
   }
 
@@ -1339,6 +1253,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   // ─── Weather card (visual unchanged) ───────────────────────────────
   Widget _buildWeatherCard() {
+    final now = DateTime.now();
+    final hour = now.hour;
+    // Simple time-based weather hint
+    final (emoji, condition, temp) = hour < 6
+        ? ('🌙', 'CLEAR NIGHT', '24')
+        : hour < 10
+        ? ('🌤', 'MORNING SUN', '26')
+        : hour < 15
+        ? ('☀️', 'MOSTLY SUNNY', '32')
+        : hour < 18
+        ? ('⛅', 'PARTLY CLOUDY', '30')
+        : ('🌇', 'EVENING', '28');
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -1348,7 +1274,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       ),
       child: Row(
         children: [
-          Text('⛅', style: TextStyle(fontSize: 36)),
+          Text(emoji, style: const TextStyle(fontSize: 36)),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -1363,13 +1289,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       color: AppColors.film,
                     ),
                     children: [
-                      TextSpan(text: '28'),
-                      TextSpan(text: '°', style: TextStyle(fontSize: 16)),
+                      TextSpan(text: temp),
+                      const TextSpan(
+                        text: '°',
+                        style: TextStyle(fontSize: 16),
+                      ),
                     ],
                   ),
                 ),
                 Text(
-                  'PARTLY CLOUDY',
+                  condition,
                   style: TextStyle(
                     fontFamily: AppText.sectionTitle.fontFamily,
                     fontSize: 9,
@@ -1383,23 +1312,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
+              const Text(
                 'Dhaka, BD',
                 style: TextStyle(
-                  fontFamily: AppText.brand.fontFamily,
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: AppColors.film,
                 ),
               ),
               const SizedBox(height: 2),
-              Text(
-                '💧 72% Humidity',
-                style: TextStyle(
-                  fontFamily: AppText.sectionTitle.fontFamily,
-                  fontSize: 10,
-                  color: AppColors.indigo,
-                ),
+              const Text(
+                '💧 Humidity varies',
+                style: TextStyle(fontSize: 10, color: AppColors.indigo),
               ),
             ],
           ),
@@ -1528,6 +1452,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     Navigator.pop(context);
                     _pushNamed(RouteNames.bookings);
                   }),
+                  _sbItem(Icons.edit_note_outlined, 'Re-edit Requests', () {
+                    Navigator.pop(context);
+                    _pushNamed(RouteNames.reEditRequests);
+                  }),
                   _sbItem(Icons.chat_bubble_outline, 'Team Chat', () {
                     Navigator.pop(context);
                     _pushNamed(RouteNames.chat);
@@ -1540,10 +1468,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     Navigator.pop(context);
                     _pushNamed(RouteNames.announcements);
                   }),
+                  _sbItem(Icons.cell_tower_outlined, 'Platform Updates', () {
+                    Navigator.pop(context);
+                    _pushNamed(RouteNames.broadcasts);
+                  }),
                   _sbGroup('FINANCE'),
                   _sbItem(Icons.payments_outlined, 'Payments', () {
                     Navigator.pop(context);
-                    _pushNamed(RouteNames.finance);
+                    _pushNamed(RouteNames.paymentEntry);
                   }),
                   _sbItem(Icons.receipt_long_outlined, 'Invoices', () {
                     Navigator.pop(context);
@@ -1557,9 +1489,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     Navigator.pop(context);
                     _pushNamed(RouteNames.reports);
                   }),
+                  _sbItem(Icons.insights_outlined, 'Performance', () {
+                    Navigator.pop(context);
+                    _pushNamed(RouteNames.performance);
+                  }),
                   _sbItem(Icons.calculate_outlined, 'Tax / VAT (NBR)', () {
                     Navigator.pop(context);
                     _pushNamed(RouteNames.finance);
+                  }),
+                  _sbItem(Icons.timeline_outlined, 'Cash Flow', () {
+                    Navigator.pop(context);
+                    _pushNamed(RouteNames.cashFlow);
+                  }),
+                  _sbItem(Icons.receipt_long_outlined, 'Petty Cash Book', () {
+                    Navigator.pop(context);
+                    _pushNamed(RouteNames.pettyCash);
                   }),
                   _sbGroup('OPERATIONS'),
                   _sbItem(Icons.task_alt, 'Daily Tasks', () {
@@ -1582,6 +1526,80 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     Navigator.pop(context);
                     _pushNamed(RouteNames.packages);
                   }),
+                  _sbItem(Icons.follow_the_signs_outlined, 'Client Follow-up', () {
+                    Navigator.pop(context);
+                    _pushNamed(RouteNames.followup);
+                  }),
+                  _sbItem(Icons.alarm_outlined, 'Reminders', () {
+                    Navigator.pop(context);
+                    _pushNamed(RouteNames.reminders);
+                  }),
+                  _sbItem(Icons.hourglass_empty_outlined, 'Waitlist', () {
+                    Navigator.pop(context);
+                    _pushNamed(RouteNames.waitlist);
+                  }),
+                  _sbItem(Icons.home_outlined, 'Home Widget', () {
+                    Navigator.pop(context);
+                    _pushNamed(RouteNames.widgetSettings);
+                  }),
+                  _sbItem(Icons.calendar_month_outlined, 'Calendar Sync', () {
+                    Navigator.pop(context);
+                    _pushNamed(RouteNames.calendarSyncSettings);
+                  }),
+                  Container(
+                    height: 1,
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
+                    color: Colors.black.withValues(alpha: 0.05),
+                  ),
+                  _sbGroup('FREELANCER'),
+                  _sbItem(Icons.account_balance_wallet_outlined, 'My Earnings', () {
+                    Navigator.pop(context);
+                    _pushNamed(RouteNames.freelancerEarnings);
+                  }),
+                  _sbItem(Icons.military_tech_outlined, 'My Badges', () {
+                    Navigator.pop(context);
+                    _pushNamed(RouteNames.freelancerBadges);
+                  }),
+                  _sbItem(Icons.event_available_outlined, 'My Availability', () {
+                    Navigator.pop(context);
+                    _pushNamed(RouteNames.freelancerAvailability);
+                  }),
+                  _sbItem(Icons.login_outlined, 'Check-In', () {
+                    Navigator.pop(context);
+                    _pushNamed(RouteNames.freelancerCheckin);
+                  }),
+                  _sbItem(Icons.beach_access_outlined, 'Leave Request', () {
+                    Navigator.pop(context);
+                    _pushNamed(RouteNames.freelancerLeave);
+                  }),
+                  _sbItem(Icons.history_outlined, 'Work History', () {
+                    Navigator.pop(context);
+                    _pushNamed(RouteNames.freelancerWorkHistory);
+                  }),
+                  Container(
+                    height: 1,
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
+                    color: Colors.black.withValues(alpha: 0.05),
+                  ),
+                  _sbGroup('ADMIN'),
+                  _sbItem(Icons.backup_outlined, 'Backup & Restore', () {
+                    Navigator.pop(context);
+                    _pushNamed(RouteNames.backup);
+                  }),
+                  _sbItem(Icons.history_edu_outlined, 'Audit Log', () {
+                    Navigator.pop(context);
+                    _pushNamed(RouteNames.auditLog);
+                  }),
+                  _sbItem(Icons.bug_report_outlined, 'Crash Reports', () {
+                    Navigator.pop(context);
+                    _pushNamed(RouteNames.crashSettings);
+                  }),
                   Container(
                     height: 1,
                     margin: const EdgeInsets.symmetric(
@@ -1598,6 +1616,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   _sbItem(Icons.settings_outlined, 'Settings', () {
                     Navigator.pop(context);
                     _pushNamed(RouteNames.settings);
+                  }),
+                  _sbItem(Icons.security_outlined, 'Security', () {
+                    Navigator.pop(context);
+                    _pushNamed(RouteNames.securitySettings);
                   }),
                   _sbItem(Icons.privacy_tip_outlined, 'Privacy Policy', () {
                     Navigator.pop(context);
@@ -1957,6 +1979,99 @@ class _AnimatedBrand extends StatelessWidget {
               letterSpacing: 1.0,
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Announcement Card View ───────────────────────────────────────────────────
+
+class _AnnouncementCardView extends StatelessWidget {
+  const _AnnouncementCardView({required this.announcement});
+
+  final Announcement announcement;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.accent.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.accent.withValues(alpha: 0.22)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              if (announcement.pinned) ...[
+                const Icon(Icons.push_pin, size: 13, color: AppColors.gold),
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.gold.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Text(
+                    'PINNED',
+                    style: TextStyle(
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.gold,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ),
+              ],
+              const Spacer(),
+              Text(
+                announcement.timeAgo,
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: AppColors.filmDim,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            announcement.title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppColors.film,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            announcement.body,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 12.5,
+              color: AppColors.filmDim,
+              height: 1.5,
+            ),
+          ),
+          if (announcement.readCount > 0) ...[
+            const SizedBox(height: 10),
+            Container(height: 1, color: Colors.black.withValues(alpha: 0.06)),
+            const SizedBox(height: 8),
+            Text(
+              '${announcement.readCount} read',
+              style: const TextStyle(
+                fontSize: 10,
+                color: AppColors.filmDim,
+              ),
+            ),
+          ],
         ],
       ),
     );

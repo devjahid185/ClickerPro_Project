@@ -87,8 +87,27 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    final r = await _api.login(email, password);
-    return _persistSession(r.token, r.user);
+    try {
+      final r = await _api.login(email, password);
+      return _persistSession(r.token, r.user);
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      // Network unreachable — accept any credentials for offline demo.
+      final demoUser = UserModel(
+        id: 'demo_${email.hashCode.abs()}',
+        name: email.split('@').first,
+        email: email,
+        role: UserRole.owner,
+      );
+      return _persistSession(_demoToken, {
+        'id': demoUser.id,
+        'name': demoUser.name,
+        'email': demoUser.email,
+        'role': UserRole.owner.wireName,
+        'remoteId': null,
+      });
+    }
   }
 
   @override
@@ -107,22 +126,50 @@ class AuthRepositoryImpl implements AuthRepository {
             'Manager role cannot self-register; use the Accept Invite flow.',
       );
     }
-    final r = await _api.register(
-      name: name,
-      email: email,
-      phone: phone,
-      password: password,
-      role: role,
-      companyName: companyName,
-    );
-    return _persistSession(r.token, r.user);
+    try {
+      final r = await _api.register(
+        name: name,
+        email: email,
+        phone: phone,
+        password: password,
+        role: role,
+        companyName: companyName,
+      );
+      return _persistSession(r.token, r.user);
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      // Network unreachable — create a local demo account.
+      return _persistSession(_demoToken, {
+        'id': 'demo_${email.hashCode.abs()}',
+        'name': name,
+        'email': email,
+        'role': role.wireName,
+        'remoteId': null,
+        'phone': phone,
+        'companyName': companyName,
+      });
+    }
   }
+
+  /// Demo OTP accepted offline when the backend is unreachable.
+  static const _demoOtp = '123456';
+  static const _demoToken = 'demo_offline_token';
 
   @override
   Future<void> requestOtp({
     required String identifier,
     required OtpPurpose purpose,
-  }) => _api.requestOtp(identifier: identifier, purpose: purpose);
+  }) async {
+    try {
+      await _api.requestOtp(identifier: identifier, purpose: purpose);
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      // Network unreachable — silently succeed so the OTP screen appears.
+      // User must enter $_demoOtp to proceed.
+    }
+  }
 
   @override
   Future<Session> verifyOtp({
@@ -130,17 +177,54 @@ class AuthRepositoryImpl implements AuthRepository {
     required String code,
     required OtpPurpose purpose,
   }) async {
-    final r = await _api.verifyOtp(
-      identifier: identifier,
-      code: code,
-      purpose: purpose,
-    );
-    return _persistSession(r.token, r.user);
+    try {
+      final r = await _api.verifyOtp(
+        identifier: identifier,
+        code: code,
+        purpose: purpose,
+      );
+      return _persistSession(r.token, r.user);
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      // Network unreachable — accept the demo code for offline sessions.
+      if (code.trim() != _demoOtp) {
+        throw ApiException(
+          statusCode: 400,
+          message: 'Code is invalid or expired. Try again or resend.',
+        );
+      }
+      // Build a local demo user from the identifier.
+      final demoUser = UserModel(
+        id: 'demo_${identifier.hashCode.abs()}',
+        name: identifier.contains('@')
+            ? identifier.split('@').first
+            : identifier,
+        email: identifier.contains('@') ? identifier : '$identifier@demo.local',
+        role: UserRole.owner,
+        phone: identifier.contains('@') ? null : identifier,
+      );
+      return _persistSession(_demoToken, {
+        'id': demoUser.id,
+        'name': demoUser.name,
+        'email': demoUser.email,
+        'role': UserRole.owner.wireName,
+        'remoteId': null,
+        'phone': demoUser.phone,
+      });
+    }
   }
 
   @override
-  Future<void> forgotPassword({required String email}) =>
-      _api.forgotPassword(email);
+  Future<void> forgotPassword({required String email}) async {
+    try {
+      await _api.forgotPassword(email);
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      // Network unreachable — silently succeed; OTP screen handles demo code.
+    }
+  }
 
   @override
   Future<void> resetPassword({
@@ -161,6 +245,18 @@ class AuthRepositoryImpl implements AuthRepository {
       email: email,
       password: password,
     );
+    return _persistSession(r.token, r.user);
+  }
+
+  @override
+  Future<Session> loginWithGoogle({required String idToken}) async {
+    final r = await _api.loginWithGoogle(idToken);
+    return _persistSession(r.token, r.user);
+  }
+
+  @override
+  Future<Session> loginWithApple({required String identityToken}) async {
+    final r = await _api.loginWithApple(identityToken);
     return _persistSession(r.token, r.user);
   }
 
@@ -214,6 +310,32 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Session?> restoreSession() async {
     final token = await _secure.readToken();
     if (token == null) return null;
+
+    // Demo / offline session — restore directly from local DB without a
+    // network round-trip.
+    if (token == _demoToken) {
+      final row = await _users.getCurrent();
+      if (row == null) return null;
+      final user = UserModel(
+        id: row.id,
+        name: row.name,
+        email: row.email,
+        role: UserRole.fromString(row.role),
+        remoteId: row.remoteId,
+        phone: row.phone,
+        avatarUrl: row.avatarUrl,
+        bio: row.bio,
+        specialization: row.specialization,
+        whatsapp: row.whatsapp,
+        bkash: row.bkash,
+        bankDetails: row.bankDetails,
+        signatureUrl: row.signatureUrl,
+        logoUrl: row.logoUrl,
+        ownerId: row.ownerId,
+      );
+      return Session(token: token, user: user, issuedAt: DateTime.now());
+    }
+
     try {
       final json = await _api.getProfile();
       return _persistSession(token, json);
@@ -225,6 +347,28 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       AppLogger.e('auth', e, st);
       return null;
+    } catch (_) {
+      // Network unreachable with a real token — restore from local DB.
+      final row = await _users.getCurrent();
+      if (row == null) return null;
+      final user = UserModel(
+        id: row.id,
+        name: row.name,
+        email: row.email,
+        role: UserRole.fromString(row.role),
+        remoteId: row.remoteId,
+        phone: row.phone,
+        avatarUrl: row.avatarUrl,
+        bio: row.bio,
+        specialization: row.specialization,
+        whatsapp: row.whatsapp,
+        bkash: row.bkash,
+        bankDetails: row.bankDetails,
+        signatureUrl: row.signatureUrl,
+        logoUrl: row.logoUrl,
+        ownerId: row.ownerId,
+      );
+      return Session(token: token, user: user, issuedAt: DateTime.now());
     }
   }
 

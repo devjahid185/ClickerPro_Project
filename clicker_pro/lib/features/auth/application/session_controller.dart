@@ -91,6 +91,24 @@ class SessionController extends AsyncNotifier<Session?> {
     );
   }
 
+  Future<void> loginWithGoogle(String idToken) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+      () => ref
+          .read(authRepositoryProvider)
+          .loginWithGoogle(idToken: idToken),
+    );
+  }
+
+  Future<void> loginWithApple(String identityToken) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+      () => ref
+          .read(authRepositoryProvider)
+          .loginWithApple(identityToken: identityToken),
+    );
+  }
+
   Future<void> changeRole(UserRole newRole) async {
     final updated = await ref.read(authRepositoryProvider).changeRole(newRole);
     final s = state.value;

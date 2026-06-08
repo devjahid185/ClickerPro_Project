@@ -42,16 +42,28 @@ class PettyCashEntry {
   }
 
   factory PettyCashEntry.fromJson(Map<String, dynamic> json) {
+    // Tolerates both local (String id, num amount) and Laravel
+    // (int id, String "350.00" amount) shapes.
     return PettyCashEntry(
-      id: json['id'] as String,
-      title: json['title'] as String,
+      id: json['id'].toString(),
+      title: (json['title'] ?? '') as String,
       category: PettyCashCategory.values.firstWhere(
-        (c) => c.name == json['category'] as String,
+        (c) => c.name == (json['category'] as String? ?? 'misc'),
         orElse: () => PettyCashCategory.misc,
       ),
-      amount: (json['amount'] as num).toDouble(),
+      amount: double.tryParse('${json['amount']}') ?? 0,
       date: DateTime.parse(json['date'] as String),
     );
+  }
+
+  /// Payload for `POST /api/petty-cash` (date as yyyy-MM-dd).
+  Map<String, dynamic> toCreateJson() {
+    return <String, dynamic>{
+      'title': title,
+      'category': category.name,
+      'amount': amount,
+      'date': date.toIso8601String().split('T').first,
+    };
   }
 
   @override

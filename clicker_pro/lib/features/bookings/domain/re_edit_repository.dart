@@ -32,6 +32,9 @@ abstract class ReEditRepository {
     required RolePolicy policy,
   });
 
+  /// Returns every re-edit request across all bookings, ordered by deadline.
+  Future<List<ReEditRequest>> listAll();
+
   /// Transitions the status of an existing re-edit request.
   Future<void> updateStatus({
     required String reEditId,

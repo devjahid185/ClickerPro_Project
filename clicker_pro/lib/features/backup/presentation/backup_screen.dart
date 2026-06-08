@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/providers.dart';
 import '../../../theme/app_colors.dart';
 import '../data/backup_service.dart';
 import '../domain/backup_record.dart';
@@ -39,10 +40,16 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
   Future<void> _backupNow() async {
     setState(() => _isLoading = true);
     try {
+      final db = ref.read(appDatabaseProvider);
+      final databaseContent = <String, dynamic>{
+        'schemaVersion': db.schemaVersion,
+        'exportedAt': DateTime.now().toIso8601String(),
+        'note': 'Clicker Pro local database backup',
+      };
       final record = await ref
           .read(backupServiceProvider)
           .exportDatabase(
-            databaseContent: const {'placeholder': true},
+            databaseContent: databaseContent,
             type: BackupType.manual,
           );
       if (!mounted) return;

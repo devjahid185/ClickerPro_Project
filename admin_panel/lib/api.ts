@@ -77,8 +77,10 @@ export async function login(email: string, password: string): Promise<void> {
   const json = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(json?.message || 'Login failed');
 
-  const token = json.token as string | undefined;
-  const role = (json?.user?.role || '').toString().toLowerCase();
+  // Laravel wraps the response in { data: { token, user } }
+  const payload = json.data ?? json;
+  const token = payload.token as string | undefined;
+  const role = (payload?.user?.role || '').toString().toLowerCase();
   if (!token) throw new Error('No token returned');
   if (role !== 'admin') throw new Error('This account is not an admin');
 

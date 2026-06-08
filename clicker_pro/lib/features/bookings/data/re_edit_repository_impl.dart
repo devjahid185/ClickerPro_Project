@@ -81,6 +81,14 @@ class ReEditRepositoryImpl implements ReEditRepository {
   }
 
   @override
+  Future<List<ReEditRequest>> listAll() async {
+    final rows = await _db.select(_db.reEditRequestsTable).get();
+    final requests = rows.map(_rowToRequest).toList();
+    requests.sort((a, b) => a.deadline.compareTo(b.deadline));
+    return requests;
+  }
+
+  @override
   Stream<List<ReEditRequest>> watchByBooking(String bookingId) {
     return _reEdits
         .watchByBooking(bookingId)

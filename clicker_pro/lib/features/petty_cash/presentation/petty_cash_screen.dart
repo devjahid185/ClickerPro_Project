@@ -2,16 +2,53 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/pdf/pdf_export.dart';
+import '../../../core/providers.dart';
 import '../../../shared/states/empty_state.dart';
+import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
+import '../data/petty_cash_repository.dart';
 import '../domain/petty_cash_entry.dart';
 
-final pettyCashListProvider = StateProvider<List<PettyCashEntry>>(
-  (ref) => <PettyCashEntry>[],
+// ─── Petty Cash Notifier ─────────────────────────────────────────────────────
+//
+// API-backed (GET/POST/DELETE /api/petty-cash) with a SharedPreferences cache
+// so the list still renders offline. On load we try the server first and fall
+// back to cache; mutations hit the server then refresh the cache.
+
+final pettyCashRepositoryProvider = Provider<PettyCashRepository>(
+  (ref) => PettyCashRepository(ref.read(apiClientProvider)),
 );
 
+class _PettyCashNotifier extends AsyncNotifier<List<PettyCashEntry>> {
+  PettyCashRepository get _repo => ref.read(pettyCashRepositoryProvider);
+
+  @override
+  Future<List<PettyCashEntry>> build() => _repo.list();
+
+  Future<void> add(PettyCashEntry entry) async {
+    final created = await _repo.create(entry);
+    final current = state.valueOrNull ?? <PettyCashEntry>[];
+    final next = <PettyCashEntry>[created, ...current];
+    state = AsyncData(next);
+    await _repo.saveCache(next);
+  }
+
+  Future<void> remove(String id) async {
+    await _repo.delete(id);
+    final current = state.valueOrNull ?? <PettyCashEntry>[];
+    final next = <PettyCashEntry>[for (final e in current) if (e.id != id) e];
+    state = AsyncData(next);
+    await _repo.saveCache(next);
+  }
+}
+
+final pettyCashListProvider =
+    AsyncNotifierProvider<_PettyCashNotifier, List<PettyCashEntry>>(
+      _PettyCashNotifier.new,
+    );
+
 final pettyCashBalanceProvider = Provider<double>((ref) {
-  final entries = ref.watch(pettyCashListProvider);
+  final entries = ref.watch(pettyCashListProvider).valueOrNull ?? [];
   return entries.fold<double>(0, (sum, e) => sum + e.amount);
 });
 
@@ -20,7 +57,8 @@ class PettyCashScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final entries = ref.watch(pettyCashListProvider);
+    final async = ref.watch(pettyCashListProvider);
+    final entries = async.valueOrNull ?? [];
     final balance = ref.watch(pettyCashBalanceProvider);
 
     return Scaffold(
@@ -97,30 +135,37 @@ class PettyCashScreen extends ConsumerWidget {
             ),
           ),
           Expanded(
-            child: entries.isEmpty
-                ? ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    children: const [
-                      SizedBox(height: 80),
-                      EmptyState(
-                        icon: Icons.receipt_long_outlined,
-                        message: 'No petty cash entries',
+            child: async.when(
+              loading: () => const Center(child: LensLoader()),
+              error: (_, _) => const Center(
+                child: EmptyState(
+                  icon: Icons.receipt_long_outlined,
+                  message: 'Could not load entries.',
+                ),
+              ),
+              data: (items) => items.isEmpty
+                  ? ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: const [
+                        SizedBox(height: 80),
+                        EmptyState(
+                          icon: Icons.receipt_long_outlined,
+                          message: 'No petty cash entries',
+                        ),
+                      ],
+                    )
+                  : ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+                      itemCount: items.length,
+                      itemBuilder: (_, i) => _PettyCashRow(
+                        entry: items[i],
+                        onDelete: () => ref
+                            .read(pettyCashListProvider.notifier)
+                            .remove(items[i].id),
                       ),
-                    ],
-                  )
-                : ListView.builder(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
-                    itemCount: entries.length,
-                    itemBuilder: (_, i) => _PettyCashRow(
-                      entry: entries[i],
-                      onDelete: () {
-                        ref.read(pettyCashListProvider.notifier).state = entries
-                            .where((e) => e.id != entries[i].id)
-                            .toList();
-                      },
                     ),
-                  ),
+            ),
           ),
         ],
       ),
@@ -328,10 +373,9 @@ class PettyCashScreen extends ConsumerWidget {
                           amount: amount,
                           date: DateTime.now(),
                         );
-                        ref.read(pettyCashListProvider.notifier).state = [
-                          entry,
-                          ...ref.read(pettyCashListProvider),
-                        ];
+                        ref
+                            .read(pettyCashListProvider.notifier)
+                            .add(entry);
                         Navigator.of(ctx).pop();
                       },
                       style: FilledButton.styleFrom(
@@ -354,7 +398,11 @@ class PettyCashScreen extends ConsumerWidget {
           ),
         ),
       ),
-    );
+    ).whenComplete(() {
+      // Dispose the sheet's controllers once it closes to avoid a leak.
+      titleCtrl.dispose();
+      amountCtrl.dispose();
+    });
   }
 }
 

@@ -172,6 +172,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           Navigator.pushNamed(context, RouteNames.help),
                     ),
                     _buildListItem(
+                      label: 'Security',
+                      icon: Icons.security_outlined,
+                      onTap: () => Navigator.pushNamed(
+                        context,
+                        RouteNames.securitySettings,
+                      ),
+                    ),
+                    _buildListItem(
                       label: t('app_privacy'),
                       icon: Icons.privacy_tip_outlined,
                       onTap: () =>
@@ -191,6 +199,46 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                   ]),
 
+                  const SizedBox(height: 30),
+                  _sectionHeader('Advanced'),
+                  _buildSettingsGroup([
+                    _buildListItem(
+                      label: 'Calendar Sync',
+                      icon: Icons.calendar_today_outlined,
+                      onTap: () => Navigator.pushNamed(
+                        context,
+                        RouteNames.calendarSyncSettings,
+                      ),
+                    ),
+                    _buildListItem(
+                      label: 'Home Widget',
+                      icon: Icons.widgets_outlined,
+                      onTap: () => Navigator.pushNamed(
+                        context,
+                        RouteNames.widgetSettings,
+                      ),
+                    ),
+                    _buildListItem(
+                      label: 'Backup & Restore',
+                      icon: Icons.backup_outlined,
+                      onTap: () =>
+                          Navigator.pushNamed(context, RouteNames.backup),
+                    ),
+                    _buildListItem(
+                      label: 'Audit Log',
+                      icon: Icons.history_edu_outlined,
+                      onTap: () =>
+                          Navigator.pushNamed(context, RouteNames.auditLog),
+                    ),
+                    _buildListItem(
+                      label: 'Crash Reports',
+                      icon: Icons.bug_report_outlined,
+                      onTap: () => Navigator.pushNamed(
+                        context,
+                        RouteNames.crashSettings,
+                      ),
+                    ),
+                  ]),
                   const SizedBox(height: 30),
                   _sectionHeader('Account'),
                   _buildSettingsGroup([

@@ -1,0 +1,94 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Event;
+use App\Models\Payment;
+use App\Services\PaymentService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class PaymentController extends Controller
+{
+    public function __construct(private PaymentService $payments)
+    {
+    }
+
+    public function index(Request $request)
+    {
+        $userId = $request->user()->id;
+        $eventIds = Event::where('owner_id', $userId)->pluck('id');
+
+        $q = Payment::whereIn('event_id', $eventIds)
+            ->with('event:id,title,client_id', 'event.client:id,name')
+            ->orderBy('created_at', 'desc');
+
+        if ($request->kind) $q->where('kind', $request->kind);
+        if ($request->method) $q->where('method', $request->method);
+
+        return response()->json(['data' => $q->get()]);
+    }
+
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'event_id' => 'required|integer|exists:events,id',
+            'amount' => 'required|numeric|min:0',
+            'kind' => 'required|string|in:ADVANCE,DUE,EXTRA,PAYOUT',
+            'method' => 'nullable|string|in:CASH,BKASH,NAGAD,BANK,CARD,OTHER',
+            'note' => 'nullable|string',
+            'paid_at' => 'nullable|date',
+        ]);
+
+        // Authorization: the event must belong to the current user.
+        $event = Event::where('owner_id', $request->user()->id)
+            ->find($data['event_id']);
+        if (!$event) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $payment = $this->payments->record($data, $request->user()->id);
+
+        return response()->json(['data' => $payment], 201);
+    }
+
+    public function byEvent(Request $request, $eventId)
+    {
+        // Only the event owner may list its payments.
+        $owns = Event::where('owner_id', $request->user()->id)
+            ->where('id', $eventId)->exists();
+        if (!$owns) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $payments = Payment::where('event_id', $eventId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json(['data' => $payments]);
+    }
+
+    public function earnings(Request $request)
+    {
+        $userId = $request->user()->id;
+
+        $eventIds = Event::where('owner_id', $userId)->pluck('id');
+
+        $earnings = Payment::whereIn('event_id', $eventIds)
+            ->select('kind', DB::raw('SUM(amount) as total'))
+            ->groupBy('kind')
+            ->get()
+            ->keyBy('kind');
+
+        return response()->json([
+            'data' => [
+                'ADVANCE' => $earnings->get('ADVANCE')?->total ?? 0,
+                'DUE' => $earnings->get('DUE')?->total ?? 0,
+                'EXTRA' => $earnings->get('EXTRA')?->total ?? 0,
+                'PAYOUT' => $earnings->get('PAYOUT')?->total ?? 0,
+                'total' => Payment::whereIn('event_id', $eventIds)->sum('amount'),
+            ],
+        ]);
+    }
+}

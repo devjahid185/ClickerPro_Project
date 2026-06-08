@@ -34,6 +34,7 @@ class RouteNames {
 
   static const String finance = '/finance';
   static const String reports = '/reports';
+  static const String performance = '/performance';
   static const String notifications = '/notifications';
   static const String gear = '/gear';
   static const String rent = '/rent';
@@ -42,6 +43,10 @@ class RouteNames {
   static const String announcements = '/announcements';
   static const String freelancerEarnings = '/freelancer/earnings';
   static const String freelancerBadges = '/freelancer/badges';
+  static const String freelancerAvailability = '/freelancer/availability';
+  static const String freelancerCheckin = '/freelancer/checkin';
+  static const String freelancerLeave = '/freelancer/leave';
+  static const String freelancerWorkHistory = '/freelancer/work-history';
   static const String teamSalarySheet = '/team/salary-sheet';
   static const String profile = '/profile';
   static const String settings = '/settings';
@@ -83,6 +88,9 @@ class RouteNames {
 
   // ─── Follow-up module (MOD-65) ───
   static const String followup = '/followup';
+
+  // ─── Platform Broadcasts ───
+  static const String broadcasts = '/broadcasts';
 
   static const String dataExport = '/data-export';
   static const String deleteAccount = '/delete-account';

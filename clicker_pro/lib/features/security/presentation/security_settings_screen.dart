@@ -8,10 +8,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/providers.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_theme.dart';
-import '../data/security_service.dart';
 
 class SecuritySettingsScreen extends ConsumerStatefulWidget {
   const SecuritySettingsScreen({super.key});
@@ -23,6 +24,12 @@ class SecuritySettingsScreen extends ConsumerStatefulWidget {
 
 class _SecuritySettingsScreenState
     extends ConsumerState<SecuritySettingsScreen> {
+  static const _key2FA = 'security_2fa_enabled';
+  static const _keyOnlineStatus = 'security_online_status';
+  static const _keyReadReceipts = 'security_read_receipts';
+  static const _keyProfileVisible = 'security_profile_visible';
+  static const _keyLastLogin = 'security_last_login_ts';
+
   final _currentPwCtrl = TextEditingController();
   final _newPwCtrl = TextEditingController();
   final _confirmPwCtrl = TextEditingController();
@@ -30,6 +37,156 @@ class _SecuritySettingsScreenState
   bool _obscureCurrent = true;
   bool _obscureNew = true;
   bool _obscureConfirm = true;
+  bool _onlineStatus = true;
+  bool _readReceipts = true;
+  bool _profileVisible = true;
+  String _lastLoginStr = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPrefs();
+  }
+
+  Future<void> _loadPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    // Record this session's login time if not set
+    if (!prefs.containsKey(_keyLastLogin)) {
+      await prefs.setString(
+        _keyLastLogin,
+        DateTime.now().toIso8601String(),
+      );
+    }
+    final ts = prefs.getString(_keyLastLogin);
+    String loginStr = 'Unknown';
+    if (ts != null) {
+      final dt = DateTime.tryParse(ts);
+      if (dt != null) {
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        final dtDay = DateTime(dt.year, dt.month, dt.day);
+        final mm = dt.minute.toString().padLeft(2, '0');
+        final period = dt.hour < 12 ? 'AM' : 'PM';
+        final hour12 = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+        if (dtDay == today) {
+          loginStr = 'Today, $hour12:$mm $period';
+        } else {
+          loginStr =
+              '${dt.day}/${dt.month}/${dt.year} $hour12:$mm $period';
+        }
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _twoFactorEnabled = prefs.getBool(_key2FA) ?? false;
+      _onlineStatus = prefs.getBool(_keyOnlineStatus) ?? true;
+      _readReceipts = prefs.getBool(_keyReadReceipts) ?? true;
+      _profileVisible = prefs.getBool(_keyProfileVisible) ?? true;
+      _lastLoginStr = loginStr;
+    });
+
+    // Sync real 2FA status from the backend.
+    try {
+      final r = await ref.read(apiClientProvider).get('/api/security/2fa/status')
+          as Map<String, dynamic>;
+      final enabled = (r['data']?['enabled'] as bool?) ?? false;
+      if (mounted) {
+        setState(() => _twoFactorEnabled = enabled);
+        await prefs.setBool(_key2FA, enabled);
+      }
+    } catch (_) {/* offline — keep cached value */}
+  }
+
+  /// Toggle 2FA: enabling runs setup→verify (code dialog); disabling calls API.
+  Future<void> _handleToggle2FA(bool enable) async {
+    final client = ref.read(apiClientProvider);
+    if (!enable) {
+      try {
+        await client.post('/api/security/2fa/disable');
+        setState(() => _twoFactorEnabled = false);
+        _setPref(_key2FA, false);
+        _showSnack('Two-factor authentication disabled');
+      } catch (_) {
+        _showSnack('Could not disable 2FA');
+      }
+      return;
+    }
+
+    // Enable: fetch a secret/QR, then ask for the 6-digit code to verify.
+    try {
+      final setup = await client.post('/api/security/2fa/setup')
+          as Map<String, dynamic>;
+      final secret = setup['data']?['secret']?.toString() ?? '';
+      if (!mounted) return;
+      final code = await _ask2FACode(secret);
+      if (code == null || code.isEmpty) return;
+      await client.post('/api/security/2fa/verify', body: {'token': code});
+      setState(() => _twoFactorEnabled = true);
+      _setPref(_key2FA, true);
+      _showSnack('Two-factor authentication enabled');
+    } catch (_) {
+      _showSnack('Invalid code — 2FA not enabled');
+    }
+  }
+
+  Future<String?> _ask2FACode(String secret) async {
+    final codeCtrl = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.voidElevated,
+        title: const Text('Enable 2FA',
+            style: TextStyle(color: AppColors.film, fontSize: 18)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Add this secret to your authenticator app (Google Authenticator, Authy), then enter the 6-digit code.',
+              style: TextStyle(color: AppColors.filmMuted, fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            SelectableText(
+              secret,
+              style: const TextStyle(
+                color: AppColors.gold,
+                fontFamily: 'monospace',
+                fontSize: 15,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: codeCtrl,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              style: const TextStyle(color: AppColors.film, fontSize: 18, letterSpacing: 4),
+              decoration: const InputDecoration(
+                hintText: '000000',
+                hintStyle: TextStyle(color: AppColors.filmMuted),
+                counterText: '',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.filmMuted)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(codeCtrl.text.trim()),
+            child: const Text('Verify', style: TextStyle(color: AppColors.orange)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _setPref(String key, bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(key, value);
+  }
 
   @override
   void dispose() {
@@ -106,7 +263,7 @@ class _SecuritySettingsScreenState
                 label: 'Enable 2FA',
                 icon: Icons.shield_outlined,
                 value: _twoFactorEnabled,
-                onChanged: (v) => setState(() => _twoFactorEnabled = v),
+                onChanged: (v) => _handleToggle2FA(v),
                 subtitle: _twoFactorEnabled
                     ? 'Authenticator app active'
                     : 'Add an extra layer of security',
@@ -144,13 +301,13 @@ class _SecuritySettingsScreenState
             _buildSettingsGroup([
               _buildInfoRow(
                 label: 'Last Login',
-                value: 'Today, 09:42 AM',
+                value: _lastLoginStr.isEmpty ? 'This session' : _lastLoginStr,
                 icon: Icons.access_time,
               ),
               _buildInfoRow(
-                label: 'Last IP',
-                value: '103.48.xx.xx',
-                icon: Icons.language,
+                label: 'Device',
+                value: 'This device',
+                icon: Icons.phone_android_outlined,
               ),
             ]),
 
@@ -160,22 +317,31 @@ class _SecuritySettingsScreenState
               _buildToggleRow(
                 label: 'Show online status',
                 icon: Icons.visibility_outlined,
-                value: true,
-                onChanged: (_) {},
+                value: _onlineStatus,
+                onChanged: (v) {
+                  setState(() => _onlineStatus = v);
+                  _setPref(_keyOnlineStatus, v);
+                },
                 subtitle: 'Let team members see when you are active',
               ),
               _buildToggleRow(
                 label: 'Read receipts',
                 icon: Icons.done_all_outlined,
-                value: true,
-                onChanged: (_) {},
+                value: _readReceipts,
+                onChanged: (v) {
+                  setState(() => _readReceipts = v);
+                  _setPref(_keyReadReceipts, v);
+                },
                 subtitle: 'Show when you have read messages',
               ),
               _buildToggleRow(
                 label: 'Profile visibility',
                 icon: Icons.person_outline,
-                value: true,
-                onChanged: (_) {},
+                value: _profileVisible,
+                onChanged: (v) {
+                  setState(() => _profileVisible = v);
+                  _setPref(_keyProfileVisible, v);
+                },
                 subtitle: 'Visible to team members',
               ),
             ]),
@@ -500,7 +666,7 @@ class _SecuritySettingsScreenState
     );
   }
 
-  void _handleChangePassword() {
+  Future<void> _handleChangePassword() async {
     final current = _currentPwCtrl.text.trim();
     final newPw = _newPwCtrl.text.trim();
     final confirm = _confirmPwCtrl.text.trim();
@@ -518,12 +684,18 @@ class _SecuritySettingsScreenState
       return;
     }
 
-    final hashed = SecurityService.hashPassword(newPw);
-    debugPrint('Password hash: $hashed');
-    _currentPwCtrl.clear();
-    _newPwCtrl.clear();
-    _confirmPwCtrl.clear();
-    _showSnack('Password updated successfully');
+    try {
+      await ref.read(apiClientProvider).post(
+        '/api/auth/change-password',
+        body: {'currentPassword': current, 'newPassword': newPw},
+      );
+      _currentPwCtrl.clear();
+      _newPwCtrl.clear();
+      _confirmPwCtrl.clear();
+      _showSnack('Password updated successfully');
+    } catch (e) {
+      _showSnack('Could not update password. Check your current password.');
+    }
   }
 
   void _showSnack(String message) {

@@ -41,16 +41,29 @@ class Followup {
     };
   }
 
+  /// Payload for `POST /api/followups`.
+  Map<String, dynamic> toCreateJson() {
+    return <String, dynamic>{
+      if (bookingId.isNotEmpty) 'event_id': bookingId,
+      'type': type.name,
+      'scheduled_date': scheduledDate.toIso8601String().split('T').first,
+    };
+  }
+
   factory Followup.fromJson(Map<String, dynamic> json) {
+    // Tolerates both local (camelCase, String id) and Laravel
+    // (snake_case, int id/event_id) shapes.
     return Followup(
-      id: json['id'] as String,
-      bookingId: json['bookingId'] as String,
+      id: json['id'].toString(),
+      bookingId: (json['bookingId'] ?? json['event_id'] ?? '').toString(),
       type: FollowupType.values.firstWhere(
-        (e) => e.name == json['type'] as String,
+        (e) => e.name == (json['type'] as String? ?? 'feedback'),
         orElse: () => FollowupType.feedback,
       ),
-      scheduledDate: DateTime.parse(json['scheduledDate'] as String),
-      completed: json['completed'] as bool? ?? false,
+      scheduledDate: DateTime.parse(
+        (json['scheduledDate'] ?? json['scheduled_date']) as String,
+      ),
+      completed: json['completed'] == true || json['completed'] == 1,
     );
   }
 

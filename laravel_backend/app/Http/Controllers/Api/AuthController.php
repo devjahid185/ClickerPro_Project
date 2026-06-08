@@ -1,0 +1,313 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
+use App\Models\LoginActivity;
+use App\Models\OtpCode;
+use App\Models\TeamInviteCode;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+
+class AuthController extends Controller
+{
+    public function register(Request $request)
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'phone' => 'nullable|string|max:30',
+            'password' => 'required|string|min:6',
+            // Self-service signup may only pick a self-service role. ADMIN and
+            // MANAGER are privileged and must NEVER be assignable from public
+            // registration (MANAGER comes via the invite flow). Anything else
+            // falls back to OWNER.
+            'role' => 'nullable|string|in:OWNER,FREELANCER,BOTH',
+        ]);
+
+        // Privilege fields (role/plan/is_active) are guarded, so set them
+        // explicitly with forceFill after building from the safe attributes.
+        $user = new User([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'phone' => $data['phone'] ?? null,
+            'password' => $data['password'],
+            'public_booking_token' => Str::uuid(),
+        ]);
+        $user->forceFill([
+            'role' => $data['role'] ?? 'OWNER',
+            'plan' => 'FREE',
+            'is_active' => true,
+        ])->save();
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json(['data' => ['token' => $token, 'user' => new UserResource($user)]], 201);
+    }
+
+    public function login(Request $request)
+    {
+        $data = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+        ]);
+
+        $user = User::where('email', $data['email'])->first();
+
+        $success = $user && Hash::check($data['password'], $user->password);
+
+        LoginActivity::create([
+            'user_id' => $user?->id,
+            'email' => $data['email'],
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'success' => $success,
+        ]);
+
+        if (!$success) {
+            return response()->json(['message' => 'Invalid credentials'], 401);
+        }
+
+        if (!$user->is_active) {
+            return response()->json(['message' => 'Account is disabled'], 403);
+        }
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json(['data' => ['token' => $token, 'user' => new UserResource($user)]]);
+    }
+
+    public function logout(Request $request)
+    {
+        $request->user()->currentAccessToken()->delete();
+        return response()->json(['message' => 'ok']);
+    }
+
+    public function forgotPassword(Request $request)
+    {
+        $data = $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $user = User::where('email', $data['email'])->first();
+
+        if ($user) {
+            $token = Str::random(60);
+            DB::table('password_reset_tokens')->updateOrInsert(
+                ['email' => $data['email']],
+                ['token' => Hash::make($token), 'created_at' => now()]
+            );
+
+            // Email the reset token out-of-band (log mailer in dev). The token
+            // is valid for 60 minutes (enforced in resetPassword).
+            try {
+                Mail::raw(
+                    "Use this token to reset your ClickerPro password:\n\n{$token}\n\n"
+                    . "It expires in 60 minutes. If you didn't request this, ignore this email.",
+                    function ($message) use ($data) {
+                        $message->to($data['email'])->subject('Reset your ClickerPro password');
+                    }
+                );
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Reset mail send failed: ' . $e->getMessage());
+            }
+        }
+
+        return response()->json(['message' => 'ok']);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $data = $request->validate([
+            'email' => 'required|email',
+            'token' => 'required|string',
+            'password' => 'required|string|min:6',
+        ]);
+
+        $record = DB::table('password_reset_tokens')->where('email', $data['email'])->first();
+
+        if (!$record || !Hash::check($data['token'], $record->token)) {
+            return response()->json(['message' => 'Invalid or expired token'], 422);
+        }
+
+        // SECURITY: reject tokens older than 60 minutes. Previously a reset
+        // token never expired, so a leaked/old token stayed usable forever.
+        $createdAt = $record->created_at ? \Illuminate\Support\Carbon::parse($record->created_at) : null;
+        if (!$createdAt || $createdAt->lt(now()->subMinutes(60))) {
+            DB::table('password_reset_tokens')->where('email', $data['email'])->delete();
+            return response()->json(['message' => 'Invalid or expired token'], 422);
+        }
+
+        $user = User::where('email', $data['email'])->first();
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        $user->update(['password' => $data['password']]);
+        DB::table('password_reset_tokens')->where('email', $data['email'])->delete();
+
+        return response()->json(['message' => 'ok']);
+    }
+
+    public function changePassword(Request $request)
+    {
+        // Accept both camelCase (web/mobile) and snake_case payloads.
+        $current = $request->input('currentPassword', $request->input('current_password'));
+        $new = $request->input('newPassword', $request->input('new_password'));
+
+        if (!$current || !$new || strlen($new) < 6) {
+            return response()->json(['message' => 'New password must be at least 6 characters'], 422);
+        }
+
+        $user = $request->user();
+
+        if (!Hash::check($current, $user->password)) {
+            return response()->json(['message' => 'Current password is incorrect'], 422);
+        }
+
+        $user->update(['password' => $new]);
+
+        return response()->json(['message' => 'ok']);
+    }
+
+    public function requestOtp(Request $request)
+    {
+        $data = $request->validate([
+            'email' => 'required|email',
+            'purpose' => 'required|string',
+        ]);
+
+        $user = User::where('email', $data['email'])->first();
+        if (!$user) {
+            return response()->json(['message' => 'ok']);
+        }
+
+        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        OtpCode::create([
+            'user_id' => $user->id,
+            'code' => $code,
+            'purpose' => $data['purpose'],
+            'expires_at' => now()->addMinutes(10),
+            'used' => false,
+        ]);
+
+        // Deliver the OTP out-of-band via the configured mailer. With
+        // MAIL_MAILER=log (dev) it is written to storage/logs/laravel.log;
+        // in production set real SMTP creds in .env and the same code emails it.
+        // SECURITY: the code is never returned in the HTTP response.
+        try {
+            Mail::raw(
+                "Your ClickerPro verification code is: {$code}\n\n"
+                . "It expires in 10 minutes. If you didn't request this, ignore this email.",
+                function ($message) use ($user) {
+                    $message->to($user->email)->subject('Your ClickerPro verification code');
+                }
+            );
+        } catch (\Throwable $e) {
+            // Never let a mail failure break OTP issuance; log and continue.
+            \Illuminate\Support\Facades\Log::warning('OTP mail send failed: ' . $e->getMessage());
+        }
+
+        return response()->json(['message' => 'ok']);
+    }
+
+    public function verifyOtp(Request $request)
+    {
+        $data = $request->validate([
+            'email' => 'required|email',
+            'code' => 'required|string',
+            'purpose' => 'required|string',
+        ]);
+
+        $user = User::where('email', $data['email'])->first();
+        if (!$user) {
+            return response()->json(['message' => 'Invalid OTP'], 422);
+        }
+
+        // Find the latest active OTP for this user+purpose (independent of the
+        // submitted code) so we can count failed attempts against it and lock
+        // it after too many tries — preventing brute-force of the 6-digit code.
+        $otp = OtpCode::where('user_id', $user->id)
+            ->where('purpose', $data['purpose'])
+            ->where('used', false)
+            ->where('expires_at', '>=', now())
+            ->latest()
+            ->first();
+
+        if (!$otp) {
+            return response()->json(['message' => 'Invalid or expired OTP'], 422);
+        }
+
+        // Lock out after 5 failed attempts; the user must request a new code.
+        if ($otp->attempts >= 5) {
+            $otp->update(['used' => true]); // invalidate so it can't be ground further
+            return response()->json(['message' => 'Too many attempts. Request a new OTP.'], 429);
+        }
+
+        if (!hash_equals((string) $otp->code, (string) $data['code'])) {
+            $otp->increment('attempts');
+            return response()->json(['message' => 'Invalid or expired OTP'], 422);
+        }
+
+        $otp->update(['used' => true]);
+
+        return response()->json(['message' => 'ok']);
+    }
+
+    public function acceptInvite(Request $request)
+    {
+        // The invitee registers a NEW manager account by redeeming a code.
+        // SECURITY: the account is created from the validated signup fields —
+        // we never trust a client-supplied user_id (which previously let an
+        // attacker promote an arbitrary existing account to MANAGER).
+        $data = $request->validate([
+            'code' => 'required|string',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:6',
+        ]);
+
+        $invite = TeamInviteCode::where('code', $data['code'])
+            ->whereNull('used_by')
+            ->first();
+
+        if (!$invite) {
+            return response()->json(['message' => 'Invalid or already used invite code'], 422);
+        }
+
+        if ($invite->expires_at && $invite->expires_at->isPast()) {
+            return response()->json(['message' => 'Invite code has expired'], 422);
+        }
+
+        $invitee = new User([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => $data['password'],
+            'public_booking_token' => Str::uuid(),
+        ]);
+        // Privilege fields are guarded — set explicitly for this trusted flow.
+        $invitee->forceFill([
+            'role' => 'MANAGER',
+            'plan' => 'FREE',
+            'is_active' => true,
+            'manager_permissions' => ['ownerId' => $invite->owner_id],
+        ])->save();
+
+        $invite->update([
+            'used_by' => $invitee->id,
+            'used_at' => now(),
+        ]);
+
+        // Issue a token so the new manager is logged in immediately — matches
+        // the existing register/login response shape the clients expect.
+        $token = $invitee->createToken('auth_token')->plainTextToken;
+
+        return response()->json(['message' => 'ok', 'data' => ['token' => $token, 'user' => new UserResource($invitee)]]);
+    }
+}

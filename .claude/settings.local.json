@@ -40,7 +40,9 @@
       "Bash(\"C:\\\\Users\\\\photo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" -s a5178cb4 pull /sdcard/s.png \"C:\\\\Users\\\\photo\\\\Desktop\\\\ClickerPro_Project\\\\_shot.png\")",
       "Bash(\"C:\\\\Users\\\\photo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" -s a5178cb4 shell \"screencap -p /sdcard/s.png\")",
       "PowerShell(& \"C:\\\\Users\\\\photo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" -s a5178cb4 pull /sdcard/s.png \"C:\\\\Users\\\\photo\\\\Desktop\\\\ClickerPro_Project\\\\_shot.png\")",
-      "Bash(\"C:\\\\Users\\\\photo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" -s a5178cb4 shell input keyevent KEYCODE_HOME)"
+      "Bash(\"C:\\\\Users\\\\photo\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" -s a5178cb4 shell input keyevent KEYCODE_HOME)",
+      "PowerShell(php --version)",
+      "PowerShell(composer --version)"
     ]
   },
   "disabledMcpjsonServers": [

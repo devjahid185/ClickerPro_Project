@@ -1,72 +1,83 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/pdf/pdf_export.dart';
+import '../../../shared/states/empty_state.dart';
+import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
+import '../application/team_providers.dart';
 import '../domain/salary_entry.dart';
+import '../domain/team_member.dart';
 
-class SalarySheetScreen extends StatefulWidget {
+class SalarySheetScreen extends ConsumerStatefulWidget {
   const SalarySheetScreen({super.key});
 
   @override
-  State<SalarySheetScreen> createState() => _SalarySheetScreenState();
+  ConsumerState<SalarySheetScreen> createState() => _SalarySheetScreenState();
 }
 
-class _SalarySheetScreenState extends State<SalarySheetScreen> {
-  late SalarySheet _sheet;
-  String _selectedMonth = 'Jun 2026';
+class _SalarySheetScreenState extends ConsumerState<SalarySheetScreen> {
+  SalarySheet? _sheet;
+  String _selectedMonth = _currentMonthLabel();
 
-  final List<String> _months = [
-    'Jan 2026',
-    'Feb 2026',
-    'Mar 2026',
-    'Apr 2026',
-    'May 2026',
-    'Jun 2026',
-  ];
+  static String _currentMonthLabel() {
+    final now = DateTime.now();
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return '${months[now.month - 1]} ${now.year}';
+  }
 
-  @override
-  void initState() {
-    super.initState();
-    _sheet = SalarySheet(
-      month: _selectedMonth,
-      totalEvents: 24,
-      totalEarned: 48000,
-      totalPaid: 32000,
-      totalDue: 16000,
-      entries: const [
-        SalaryEntry(
-          memberId: 'm1',
-          memberName: 'Rahim Uddin',
-          eventsCount: 8,
-          ratePerEvent: 2500,
-          totalEarned: 20000,
-          totalPaid: 15000,
-          totalDue: 5000,
-        ),
-        SalaryEntry(
-          memberId: 'm2',
-          memberName: 'Karim Hassan',
-          eventsCount: 6,
-          ratePerEvent: 2000,
-          totalEarned: 12000,
-          totalPaid: 12000,
-          totalDue: 0,
-        ),
-        SalaryEntry(
-          memberId: 'm3',
-          memberName: 'Jamal Ahmed',
-          eventsCount: 5,
-          ratePerEvent: 3000,
-          totalEarned: 15000,
-          totalPaid: 5000,
-          totalDue: 10000,
-        ),
-      ],
+  List<String> get _months {
+    final now = DateTime.now();
+    const mNames = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return List.generate(6, (i) {
+      final d = DateTime(now.year, now.month - 5 + i, 1);
+      return '${mNames[d.month - 1]} ${d.year}';
+    });
+  }
+
+  SalarySheet _buildSheet(List<TeamMember> members, String month) {
+    if (members.isEmpty) {
+      return SalarySheet(
+        month: month,
+        totalEvents: 0,
+        totalEarned: 0,
+        totalPaid: 0,
+        totalDue: 0,
+        entries: const [],
+      );
+    }
+    // Placeholder per-member data until payout API is wired.
+    final entries = members.map((m) {
+      return SalaryEntry(
+        memberId: m.userId,
+        memberName: m.fullName.isNotEmpty ? m.fullName : m.email,
+        eventsCount: 0,
+        ratePerEvent: 0,
+        totalEarned: 0,
+        totalPaid: 0,
+        totalDue: 0,
+      );
+    }).toList();
+    return SalarySheet(
+      month: month,
+      totalEvents: 0,
+      totalEarned: 0,
+      totalPaid: 0,
+      totalDue: 0,
+      entries: entries,
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final membersAsync = ref.watch(teamMembersProvider);
+
     return Scaffold(
       backgroundColor: AppColors.voidBlack,
       appBar: AppBar(
@@ -91,33 +102,56 @@ class _SalarySheetScreenState extends State<SalarySheetScreen> {
               Icons.picture_as_pdf_outlined,
               color: AppColors.gold,
             ),
-            onPressed: _exportPdf,
+            onPressed: _sheet != null ? _exportPdf : null,
           ),
         ],
       ),
-      body: Column(
-        children: [
-          _buildMonthFilter(),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-              children: [
-                _buildSummaryHeader(),
-                const SizedBox(height: 20),
-                _buildSectionHeader('TEAM MEMBERS'),
-                const SizedBox(height: 10),
-                ..._sheet.entries.map(
-                  (entry) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: _SalaryMemberCard(entry: entry),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                _buildMarkAllPaidButton(),
-              ],
-            ),
+      body: membersAsync.when(
+        loading: () => const Center(child: LensLoader()),
+        error: (_, _) => const Center(
+          child: EmptyState(
+            icon: Icons.people_outline,
+            message: 'Could not load team members.',
           ),
-        ],
+        ),
+        data: (members) {
+          final sheet = _sheet ?? _buildSheet(members, _selectedMonth);
+          if (_sheet == null) {
+            WidgetsBinding.instance.addPostFrameCallback(
+              (_) => setState(() => _sheet = sheet),
+            );
+          }
+          return Column(
+            children: [
+              _buildMonthFilter(),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                  children: [
+                    _buildSummaryHeader(sheet),
+                    const SizedBox(height: 20),
+                    _buildSectionHeader('TEAM MEMBERS'),
+                    const SizedBox(height: 10),
+                    if (sheet.entries.isEmpty)
+                      const EmptyState(
+                        icon: Icons.people_outline,
+                        message: 'No team members yet.',
+                      )
+                    else
+                      ...sheet.entries.map(
+                        (entry) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _SalaryMemberCard(entry: entry),
+                        ),
+                      ),
+                    const SizedBox(height: 20),
+                    if (sheet.entries.isNotEmpty) _buildMarkAllPaidButton(sheet),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -166,7 +200,7 @@ class _SalarySheetScreenState extends State<SalarySheetScreen> {
     );
   }
 
-  Widget _buildSummaryHeader() {
+  Widget _buildSummaryHeader(SalarySheet sheet) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -178,7 +212,7 @@ class _SalarySheetScreenState extends State<SalarySheetScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _sheet.month.toUpperCase(),
+            sheet.month.toUpperCase(),
             style: TextStyle(
               fontFamily: 'Poppins',
               fontSize: 10,
@@ -190,23 +224,23 @@ class _SalarySheetScreenState extends State<SalarySheetScreen> {
           const SizedBox(height: 12),
           Row(
             children: [
-              _summaryStat('EVENTS', '${_sheet.totalEvents}', AppColors.teal),
+              _summaryStat('EVENTS', '${sheet.totalEvents}', AppColors.teal),
               const SizedBox(width: 16),
               _summaryStat(
                 'EARNED',
-                _formatMoney(_sheet.totalEarned),
+                _formatMoney(sheet.totalEarned),
                 AppColors.gold,
               ),
               const SizedBox(width: 16),
               _summaryStat(
                 'PAID',
-                _formatMoney(_sheet.totalPaid),
+                _formatMoney(sheet.totalPaid),
                 AppColors.green,
               ),
               const SizedBox(width: 16),
               _summaryStat(
                 'DUE',
-                _formatMoney(_sheet.totalDue),
+                _formatMoney(sheet.totalDue),
                 AppColors.coral,
               ),
             ],
@@ -246,8 +280,8 @@ class _SalarySheetScreenState extends State<SalarySheetScreen> {
     );
   }
 
-  Widget _buildMarkAllPaidButton() {
-    final hasOutstanding = _sheet.hasOutstanding;
+  Widget _buildMarkAllPaidButton(SalarySheet sheet) {
+    final hasOutstanding = sheet.hasOutstanding;
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
@@ -272,6 +306,8 @@ class _SalarySheetScreenState extends State<SalarySheetScreen> {
   }
 
   void _markAllPaid() {
+    final sheet = _sheet;
+    if (sheet == null) return;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -281,7 +317,7 @@ class _SalarySheetScreenState extends State<SalarySheetScreen> {
           style: TextStyle(color: AppColors.film),
         ),
         content: Text(
-          'Mark all ${_sheet.entries.length} members as paid for ${_sheet.month}?',
+          'Mark all ${sheet.entries.length} members as paid for ${sheet.month}?',
           style: const TextStyle(color: AppColors.filmDim),
         ),
         actions: [
@@ -300,12 +336,12 @@ class _SalarySheetScreenState extends State<SalarySheetScreen> {
             onPressed: () {
               setState(() {
                 _sheet = SalarySheet(
-                  month: _sheet.month,
-                  totalEvents: _sheet.totalEvents,
-                  totalEarned: _sheet.totalEarned,
-                  totalPaid: _sheet.totalEarned,
+                  month: sheet.month,
+                  totalEvents: sheet.totalEvents,
+                  totalEarned: sheet.totalEarned,
+                  totalPaid: sheet.totalEarned,
                   totalDue: 0,
-                  entries: _sheet.entries
+                  entries: sheet.entries
                       .map(
                         (e) =>
                             e.copyWith(totalPaid: e.totalEarned, totalDue: 0),
@@ -329,20 +365,22 @@ class _SalarySheetScreenState extends State<SalarySheetScreen> {
   }
 
   Future<void> _exportPdf() async {
+    final sheet = _sheet;
+    if (sheet == null) return;
     final messenger = ScaffoldMessenger.of(context);
     String f(double v) => '৳ ${v.toStringAsFixed(0)}';
     try {
       await PdfExporter.share(
         PdfDocumentData(
           documentTitle: 'Salary Sheet',
-          fileName: 'salary_${_sheet.month.replaceAll(' ', '_')}',
-          subtitle: '${_sheet.month} · ${_sheet.totalEvents} events',
+          fileName: 'salary_${sheet.month.replaceAll(' ', '_')}',
+          subtitle: '${sheet.month} · ${sheet.totalEvents} events',
           summary: [
-            PdfRow('Total earned', f(_sheet.totalEarned)),
-            PdfRow('Total paid', f(_sheet.totalPaid)),
-            PdfRow('Total due', f(_sheet.totalDue), emphasize: true),
+            PdfRow('Total earned', f(sheet.totalEarned)),
+            PdfRow('Total paid', f(sheet.totalPaid)),
+            PdfRow('Total due', f(sheet.totalDue), emphasize: true),
           ],
-          table: _sheet.entries.isEmpty
+          table: sheet.entries.isEmpty
               ? null
               : PdfTable(
                   headers: const [
@@ -353,7 +391,7 @@ class _SalarySheetScreenState extends State<SalarySheetScreen> {
                     'Due',
                   ],
                   rows: [
-                    for (final e in _sheet.entries)
+                    for (final e in sheet.entries)
                       [
                         e.memberName,
                         e.eventsCount.toString(),

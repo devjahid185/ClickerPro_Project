@@ -4,8 +4,12 @@
 // and user context. Sends to a crash reporting backend in production;
 // currently logs locally.
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+
+import '../../../core/network/api_client.dart';
+import '../../../core/providers.dart';
 
 const _uuid = Uuid();
 
@@ -65,10 +69,13 @@ class CrashReport {
 }
 
 final crashServiceProvider = Provider<CrashService>((ref) {
-  return CrashService();
+  return CrashService(ref.read(apiClientProvider));
 });
 
 class CrashService {
+  CrashService([this._client]);
+
+  final ApiClient? _client;
   String? _userId;
   String? _userRole;
   final List<CrashBreadcrumb> _breadcrumbs = [];
@@ -111,7 +118,6 @@ class CrashService {
   Future<void> recordError(Object error, StackTrace stackTrace) async {
     if (!_enabled) return;
     _crashCount++;
-    // ignore: unused_local_variable
     final report = CrashReport(
       id: _uuid.v4(),
       error: error.toString(),
@@ -122,8 +128,17 @@ class CrashService {
       timestamp: DateTime.now(),
     );
 
-    // TODO: POST /api/crash-reports
-    // Log locally for now
+    // Best-effort upload; never throw from the crash handler itself.
+    try {
+      await _client?.post('/api/crash-reports', body: {
+        'error': report.error,
+        'stackTrace': report.stackTrace,
+        'userRole': report.userRole,
+        'breadcrumbs': report.breadcrumbs.map((b) => b.toJson()).toList(),
+        'platform': defaultTargetPlatform.name,
+      });
+    } catch (_) {/* swallow — telemetry must not crash the app */}
+
     _breadcrumbs.clear();
   }
 

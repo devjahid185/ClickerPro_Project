@@ -5,23 +5,51 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getToken, clearToken } from '@/lib/api';
 
-const NAV = [
-  { href: '/', label: 'Dashboard', icon: '📊' },
-  { href: '/users', label: 'Users', icon: '👥' },
-  { href: '/bookings', label: 'Bookings', icon: '📅' },
-  { href: '/subscription', label: 'Subscription', icon: '💎' },
-  { href: '/payments', label: 'Payments', icon: '💳' },
-  { href: '/coupons', label: 'Coupons', icon: '🎟️' },
-  { href: '/files', label: 'Files', icon: '📂' },
-  { href: '/broadcasts', label: 'Broadcasts', icon: '📢' },
-  { href: '/support', label: 'Support & FAQ', icon: '💬' },
-  { href: '/security', label: 'Security', icon: '🔐' },
-  { href: '/audit', label: 'Audit Log', icon: '📋' },
-  { href: '/settings', label: 'Settings', icon: '⚙️' },
+type NavItem = { href: string; label: string; icon: string };
+
+const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
+  {
+    label: 'Overview',
+    items: [
+      { href: '/',          label: 'Dashboard',     icon: '◈' },
+      { href: '/analytics', label: 'Analytics',     icon: '↗' },
+    ],
+  },
+  {
+    label: 'Users',
+    items: [
+      { href: '/users',   label: 'All Users',  icon: '⊙' },
+      { href: '/studios', label: 'Businesses', icon: '⬡' },
+    ],
+  },
+  {
+    label: 'Operations',
+    items: [
+      { href: '/bookings',     label: 'Bookings',      icon: '▦' },
+      { href: '/finance',      label: 'Finance',       icon: '◎' },
+      { href: '/payments',     label: 'Payments',      icon: '◇' },
+      { href: '/subscription', label: 'Subscriptions', icon: '◈' },
+      { href: '/coupons',      label: 'Coupons',       icon: '⊕' },
+    ],
+  },
+  {
+    label: 'Engagement',
+    items: [
+      { href: '/broadcasts', label: 'Notifications', icon: '◉' },
+      { href: '/files',      label: 'Files',          icon: '▣' },
+      { href: '/support',    label: 'Support & FAQ',  icon: '◌' },
+    ],
+  },
+  {
+    label: 'System',
+    items: [
+      { href: '/security', label: 'Security',   icon: '⊛' },
+      { href: '/audit',    label: 'Audit Log',  icon: '≡' },
+      { href: '/settings', label: 'Settings',   icon: '⊞' },
+    ],
+  },
 ];
 
-// Wraps every authed page: redirects to /login if no token, renders the
-// sidebar + main content area.
 export default function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -42,26 +70,41 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     router.replace('/login');
   };
 
+  const isActive = (href: string) =>
+    href === '/' ? pathname === '/' : pathname.startsWith(href);
+
   return (
     <div className="shell">
       <aside className="sidebar">
-        <div className="brand">📷 Clicker Pro</div>
+        {/* Brand */}
+        <div className="brand">
+          <div className="brand-icon">📷</div>
+          <span>Clicker Pro</span>
+        </div>
+
+        {/* Nav */}
         <nav className="nav">
-          {NAV.map((n) => {
-            const active = n.href === '/' ? pathname === '/' : pathname.startsWith(n.href);
-            return (
-              <Link key={n.href} href={n.href} className={active ? 'active' : ''}>
-                <span>{n.icon}</span> {n.label}
-              </Link>
-            );
-          })}
+          {NAV_GROUPS.map((group) => (
+            <div key={group.label}>
+              <div className="nav-section-label">{group.label}</div>
+              {group.items.map((n) => (
+                <Link key={n.href} href={n.href} className={isActive(n.href) ? 'active' : ''}>
+                  <span className="nav-icon">{n.icon}</span>
+                  {n.label}
+                </Link>
+              ))}
+            </div>
+          ))}
         </nav>
+
+        {/* Footer */}
         <div className="sidebar-foot">
-          <button className="btn secondary" style={{ width: '100%' }} onClick={logout}>
+          <button className="btn secondary" style={{ width: '100%', justifyContent: 'center' }} onClick={logout}>
             Sign out
           </button>
         </div>
       </aside>
+
       <main className="main">{children}</main>
     </div>
   );

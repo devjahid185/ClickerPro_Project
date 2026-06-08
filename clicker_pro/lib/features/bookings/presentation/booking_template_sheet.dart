@@ -1,14 +1,59 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../theme/app_colors.dart';
 import '../domain/booking_template.dart';
 import '../domain/event_type.dart';
 import '../domain/shift.dart';
 
-final bookingTemplateListProvider = StateProvider<List<BookingTemplate>>(
-  (ref) => <BookingTemplate>[],
-);
+class _TemplateNotifier extends AsyncNotifier<List<BookingTemplate>> {
+  static const _key = 'booking_templates_v1';
+
+  @override
+  Future<List<BookingTemplate>> build() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_key);
+    if (raw == null) return [];
+    try {
+      final list = jsonDecode(raw) as List<dynamic>;
+      return list
+          .map((e) => BookingTemplate.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> _save(List<BookingTemplate> items) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _key,
+      jsonEncode(items.map((e) => e.toJson()).toList()),
+    );
+  }
+
+  Future<void> add(BookingTemplate t) async {
+    final current = state.valueOrNull ?? [];
+    final next = [...current, t];
+    state = AsyncData(next);
+    await _save(next);
+  }
+
+  Future<void> remove(String id) async {
+    final current = state.valueOrNull ?? [];
+    final next = [for (final t in current) if (t.id != id) t];
+    state = AsyncData(next);
+    await _save(next);
+  }
+}
+
+final bookingTemplateListProvider =
+    AsyncNotifierProvider<_TemplateNotifier, List<BookingTemplate>>(
+      _TemplateNotifier.new,
+    );
 
 class BookingTemplateSheet extends ConsumerStatefulWidget {
   const BookingTemplateSheet._();
@@ -42,7 +87,7 @@ class _BookingTemplateSheetState extends ConsumerState<BookingTemplateSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final templates = ref.watch(bookingTemplateListProvider);
+    final templates = ref.watch(bookingTemplateListProvider).valueOrNull ?? [];
 
     return SafeArea(
       child: Padding(
@@ -190,10 +235,7 @@ class _BookingTemplateSheetState extends ConsumerState<BookingTemplateSheet> {
                             );
                             ref
                                 .read(bookingTemplateListProvider.notifier)
-                                .state = [
-                              ...templates,
-                              template,
-                            ];
+                                .add(template);
                             _nameCtrl.clear();
                             setState(() => _saving = false);
                           },

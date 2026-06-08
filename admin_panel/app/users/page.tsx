@@ -21,13 +21,6 @@ type User = {
 
 const ROLES = ['OWNER', 'FREELANCER', 'BOTH', 'MANAGER', 'ADMIN'];
 
-function roleBadge(role: string) {
-  const r = role.toUpperCase();
-  const cls =
-    r === 'ADMIN' ? 'red' : r === 'OWNER' ? 'orange' : r === 'FREELANCER' ? 'teal' : 'gray';
-  return <span className={`badge ${cls}`}>{r}</span>;
-}
-
 export default function UsersPage() {
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
