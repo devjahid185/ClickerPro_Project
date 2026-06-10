@@ -218,38 +218,8 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
               fontWeight: FontWeight.w600,
             ),
           ),
-          actions: [
-            AnimatedBuilder(
-              animation: _flashAnim,
-              builder: (context, child) {
-                final flash = _flashAnim.value;
-                return TextButton(
-                  onPressed: draftAsync.hasValue ? _onSave : null,
-                  style: TextButton.styleFrom(
-                    backgroundColor: flash > 0
-                        ? AppColors.teal.withValues(alpha: flash * 0.15)
-                        : Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: Text(
-                    loc.bookings_save,
-                    style: TextStyle(
-                      color: flash > 0
-                          ? Color.lerp(AppColors.film, AppColors.teal, flash)
-                          : AppColors.orange,
-                      fontFamily: 'Montserrat',
-                      fontSize: 12,
-                      letterSpacing: 1.4,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(width: 8),
-          ],
+          // Saving happens only through the sticky "Create Booking" /
+          // "Save Changes" bar below — the duplicate appbar SAVE was removed.
         ),
         body: SafeArea(
           child: draftAsync.when(
@@ -655,10 +625,12 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
         children: Shift.values.map((shift) {
           final isSelected = draft.shift == shift;
           final label = switch (shift) {
-            Shift.day => 'Day\n12 – 5',
-            Shift.night => 'Night\n6 – 11',
+            Shift.day => 'Day 12–5',
+            Shift.night => 'Night 6–11',
             Shift.both => 'Full Day',
           };
+          // Compact single-row pills — the old stacked icon+label cards
+          // took ~3x the vertical space they needed.
           return Expanded(
             child: GestureDetector(
               onTap: () {
@@ -668,14 +640,14 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 margin: EdgeInsets.only(right: shift != Shift.both ? 8 : 0),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 6),
                 decoration: BoxDecoration(
                   // Selected = solid teal so the white label/icon is readable
                   // and it's obvious which shift is picked.
                   color: isSelected
                       ? AppColors.teal
                       : Colors.black.withValues(alpha: 0.04),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(9),
                   border: Border.all(
                     color: isSelected
                         ? AppColors.teal
@@ -683,7 +655,8 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                     width: isSelected ? 1.2 : 1,
                   ),
                 ),
-                child: Column(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
                       shift == Shift.night
@@ -691,24 +664,26 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                           : shift == Shift.day
                           ? Icons.wb_sunny_outlined
                           : Icons.brightness_6_outlined,
-                      size: 18,
+                      size: 14,
                       color: isSelected
                           ? Colors.white
                           : AppColors.filmDim.withValues(alpha: 0.7),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      label,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: isSelected
-                            ? Colors.white
-                            : AppColors.filmDim.withValues(alpha: 0.85),
-                        fontSize: 11,
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.w500,
-                        height: 1.3,
+                    const SizedBox(width: 5),
+                    Flexible(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: isSelected
+                              ? Colors.white
+                              : AppColors.filmDim.withValues(alpha: 0.85),
+                          fontSize: 11,
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.w500,
+                        ),
                       ),
                     ),
                   ],
@@ -756,7 +731,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                           fontFamily: 'Montserrat',
                           fontSize: 10,
                           letterSpacing: 1.4,
-                          color: AppColors.gold.withValues(alpha: 0.85),
+                          color: AppColors.film,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -853,7 +828,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                           fontFamily: 'Montserrat',
                           fontSize: 10,
                           letterSpacing: 1.4,
-                          color: AppColors.gold.withValues(alpha: 0.85),
+                          color: AppColors.film,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -974,7 +949,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                           fontSize: 10,
                           letterSpacing: 1.4,
                           color: isEnabled
-                              ? AppColors.gold
+                              ? AppColors.film
                               : AppColors.filmMuted.withValues(alpha: 0.85),
                           fontWeight: FontWeight.w600,
                         ),
@@ -1050,7 +1025,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
               fontFamily: 'Montserrat',
               fontSize: 10,
               letterSpacing: 1.4,
-              color: AppColors.gold.withValues(alpha: 0.85),
+              color: AppColors.film,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -1120,7 +1095,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
             fontFamily: 'Montserrat',
             fontSize: 10,
             letterSpacing: 1.4,
-            color: AppColors.gold.withValues(alpha: 0.85),
+            color: AppColors.film,
             fontWeight: FontWeight.w600,
           ),
         ),

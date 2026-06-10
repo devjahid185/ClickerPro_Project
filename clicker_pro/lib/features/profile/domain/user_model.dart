@@ -106,17 +106,21 @@ class UserModel {
       phone: json['phone'] as String?,
       whatsapp: json['whatsapp'] as String?,
       bio: json['bio'] as String?,
-      avatarUrl: json['avatarUrl'] as String?,
+      // Laravel UserResource sends snake_case (`avatar`, `business_name`)
+      // alongside some camelCase aliases — accept both spellings.
+      avatarUrl: (json['avatarUrl'] ?? json['avatar']) as String?,
       specialization: json['specialization'] as String?,
       companyName:
-          json['companyName'] as String? ?? json['businessName'] as String?,
+          json['companyName'] as String? ??
+          json['businessName'] as String? ??
+          json['business_name'] as String?,
       vatBin: json['vatBin'] as String?,
       studioAddress: json['studioAddress'] as String?,
       bkash: json['bkash'] as String?,
       bankDetails: json['bankDetails'] as String?,
       signatureUrl: json['signatureUrl'] as String?,
       logoUrl: json['logoUrl'] as String?,
-      ownerId: json['ownerId'] as String?,
+      ownerId: (json['ownerId'] ?? json['owner_id'])?.toString(),
       totalEvents: (json['totalEvents'] as num?)?.toInt() ?? 0,
       totalRevenueMinor: (json['totalRevenueMinor'] as num?)?.toInt() ?? 0,
       totalClients: (json['totalClients'] as num?)?.toInt() ?? 0,

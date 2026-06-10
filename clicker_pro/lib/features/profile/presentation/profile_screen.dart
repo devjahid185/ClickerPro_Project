@@ -23,6 +23,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/format/number_format.dart';
 import '../../../core/navigation/route_names.dart';
@@ -230,7 +231,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               value: view.email,
               icon: Icons.email,
               keyboardType: TextInputType.emailAddress,
-              onChanged: (val) => _updateDraft((d) => d.copyWith(email: val)),
+              // Email is the login identity — the backend (correctly)
+              // refuses to change it from the profile endpoint, so showing
+              // it as editable was a lie. Read-only until a proper
+              // change-email + re-verify flow exists.
+              onChanged: null,
+              isReadOnly: true,
             ),
             _buildInfoField(
               label: t('studio_address'),
@@ -311,6 +317,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 icon: Icons.image,
                 onChanged: null,
                 isUpload: true,
+                onUpload: () => _pickAndUploadImage(
+                  (url) => _updateDraft((d) => d.copyWith(logoUrl: url)),
+                  successMessage: 'Logo uploaded — tap Save to keep it.',
+                ),
               ),
               _buildInfoField(
                 label: t('digital_signature'),
@@ -321,6 +331,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 icon: Icons.edit,
                 onChanged: null,
                 isUpload: true,
+                onUpload: () => _pickAndUploadImage(
+                  (url) => _updateDraft((d) => d.copyWith(signatureUrl: url)),
+                  successMessage: 'Signature uploaded — tap Save to keep it.',
+                ),
               ),
             ]),
           ],
@@ -345,12 +359,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   // ── Header (avatar + role chip) ───────────────────────────────
   Widget _buildHeader(UserModel user) {
+    final hasPhoto = user.avatarUrl != null && user.avatarUrl!.isNotEmpty;
     final avatar = Container(
       width: 120,
       height: 120,
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: AppColors.accent,
+        // Uploaded profile photo when present; gradient initials otherwise.
+        image: hasPhoto
+            ? DecorationImage(
+                image: NetworkImage(user.avatarUrl!),
+                fit: BoxFit.cover,
+              )
+            : null,
         boxShadow: [
           BoxShadow(
             color: AppColors.accent.withValues(alpha: 0.3),
@@ -359,18 +382,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
         ],
       ),
-      child: Center(
-        child: Text(
-          user.avatarInitials,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 36,
-            fontWeight: FontWeight.w700,
-            fontFamily: 'Poppins',
-            letterSpacing: 1.2,
-          ),
-        ),
-      ),
+      child: hasPhoto
+          ? null
+          : Center(
+              child: Text(
+                user.avatarInitials,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 36,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Poppins',
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ),
     );
 
     return Center(
@@ -395,8 +420,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         size: 18,
                         color: AppColors.film,
                       ),
-                      // Avatar upload is out of scope per Req 3.8.
-                      onPressed: () => _showSnack(t('coming_soon')),
+                      onPressed: () => _pickAndUploadImage(
+                        (url) => _updateDraft(
+                          (d) => d.copyWith(avatarUrl: url),
+                        ),
+                        successMessage:
+                            'Photo uploaded — tap Save to keep it.',
+                      ),
                     ),
                   ),
                 ),
@@ -612,6 +642,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     required ValueChanged<String>? onChanged,
     bool isReadOnly = false,
     bool isUpload = false,
+    VoidCallback? onUpload,
     TextInputType? keyboardType,
   }) {
     final canEdit = _isEditing && !isReadOnly && onChanged != null;
@@ -648,7 +679,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 Text(
                   value.isEmpty ? '—' : value,
                   style: TextStyle(
-                    color: value.isEmpty ? AppColors.filmMuted : Colors.white,
+                    // film (ink) — Colors.white vanished on the light card
+                    // surface, which made saved values look "invisible".
+                    color: value.isEmpty ? AppColors.filmMuted : AppColors.film,
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                   ),
@@ -663,10 +696,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               color: AppColors.accent,
               size: 20,
             ),
-            onPressed: () => _showSnack(t('coming_soon')),
+            onPressed: onUpload ?? () => _showSnack(t('coming_soon')),
           ),
       ],
     );
+  }
+
+  /// Picks an image from the gallery, uploads it to the backend, and hands
+  /// the hosted URL to [apply] (which stores it on the profile draft).
+  Future<void> _pickAndUploadImage(
+    void Function(String url) apply, {
+    required String successMessage,
+  }) async {
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1600,
+      imageQuality: 88,
+    );
+    if (picked == null || !mounted) return;
+    _showSnack('Uploading…');
+    try {
+      final url = await ref.read(userApiProvider).uploadImage(picked.path);
+      if (!mounted) return;
+      apply(url);
+      _showSnack(successMessage);
+    } catch (e) {
+      if (mounted) _showSnack('Upload failed: $e');
+    }
   }
 
   // ── Gear section (real Drift stream) ──────────────────────────

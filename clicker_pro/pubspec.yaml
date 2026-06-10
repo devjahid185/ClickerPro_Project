@@ -1,8 +1,7 @@
 name: clicker_pro
-description: "Clicker Pro — photography & event management. Dark Luxury Lens · Offline-first · Bilingual."
+description: "Clicker Pro — photography & event management. Deep Ocean theme. Offline-first. Bilingual."
 publish_to: 'none'
-
-version: 1.0.0+1
+version: 3.8.0+38
 
 environment:
   sdk: ^3.12.0
@@ -12,7 +11,6 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-
   cupertino_icons: ^1.0.8
   http: ^1.6.0
   shared_preferences: ^2.5.5
@@ -34,7 +32,13 @@ dependencies:
   pdf: ^3.11.0
   printing: ^5.13.0
   google_sign_in: ^6.2.1
+  image_picker: ^1.1.2
   sign_in_with_apple: ^6.1.4
+  firebase_core: ^3.1.0
+  firebase_auth: ^5.1.0
+  firebase_database: ^11.1.0
+  firebase_storage: ^12.1.0
+  firebase_messaging: ^15.1.0
 
 dev_dependencies:
   flutter_test:
@@ -45,8 +49,6 @@ dev_dependencies:
   glados: ^1.1.7
   flutter_launcher_icons: ^0.14.1
 
-# App launcher icon — Orange Horizon brand (camera mark on orange).
-# Regenerate with: dart run flutter_launcher_icons
 flutter_launcher_icons:
   android: true
   ios: true
@@ -60,6 +62,5 @@ flutter_launcher_icons:
 flutter:
   generate: true
   uses-material-design: true
-
   assets:
     - .env

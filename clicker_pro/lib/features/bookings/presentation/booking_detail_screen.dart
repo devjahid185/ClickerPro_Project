@@ -305,6 +305,13 @@ class _DetailBody extends StatelessWidget {
                   valueColor: AppColors.teal,
                   onTap: () =>
                       launchUrl(Uri.parse('tel:${envelope.client!.phone}')),
+                  trailing: envelope.client!.phone.isEmpty
+                      ? null
+                      : CallIconButton(
+                          onTap: () => launchUrl(
+                            Uri.parse('tel:${envelope.client!.phone}'),
+                          ),
+                        ),
                 ),
                 if (envelope.client!.email != null)
                   DetailRow(
@@ -332,6 +339,36 @@ class _DetailBody extends StatelessWidget {
                       value: booking.groomName,
                     ),
                 ],
+              ],
+            ),
+          ),
+        // The booking itself carries client name/phone even when the
+        // linked Client row hasn't synced — never hide the contact info.
+        if (envelope.client == null &&
+            (booking.clientName != null || booking.clientPhone != null))
+          DetailSection(
+            title: 'Client',
+            child: Column(
+              children: [
+                if (booking.clientName != null)
+                  DetailRow(
+                    icon: Icons.person_outline_rounded,
+                    label: 'Name',
+                    value: booking.clientName,
+                  ),
+                if (booking.clientPhone != null)
+                  DetailRow(
+                    icon: Icons.phone_outlined,
+                    label: 'Phone',
+                    value: booking.clientPhone,
+                    valueColor: AppColors.teal,
+                    onTap: () =>
+                        launchUrl(Uri.parse('tel:${booking.clientPhone}')),
+                    trailing: CallIconButton(
+                      onTap: () =>
+                          launchUrl(Uri.parse('tel:${booking.clientPhone}')),
+                    ),
+                  ),
               ],
             ),
           ),

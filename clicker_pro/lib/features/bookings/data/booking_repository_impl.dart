@@ -198,13 +198,66 @@ class BookingRepositoryImpl implements BookingRepository {
       final result = await _api.list(filter ?? const BookingFilter());
       for (final booking in result.items) {
         await _bookings.upsert(
-          await _bookingToCompanion(booking, pending: false),
+          await _bookingToCompanion(await _mergeWithLocal(booking),
+              pending: false),
         );
       }
     } on ApiException catch (e, st) {
       AppLogger.w('booking', 'refreshFromRemote failed: ${e.message}');
       AppLogger.e('booking', e, st);
     }
+  }
+
+  /// Same merge for the client carried by a detail envelope: match by
+  /// `remoteId`, keep the local id and local-only fields.
+  Future<Client?> _mergeEnvelopeClient(Client? incoming) async {
+    if (incoming == null) return null;
+    final remoteId = incoming.remoteId;
+    if (remoteId == null) return incoming;
+    final existingRow = await _clients.getByRemoteId(remoteId);
+    if (existingRow == null) return incoming;
+    if (existingRow.pending) return _rowToClient(existingRow);
+    final local = _rowToClient(existingRow);
+    return local.copyWith(
+      remoteId: remoteId,
+      name: incoming.name,
+      phone: incoming.phone.isNotEmpty ? incoming.phone : local.phone,
+      email: incoming.email ?? local.email,
+      updatedAt: incoming.updatedAt,
+      pending: false,
+    );
+  }
+
+  /// Reconciles a pulled server booking with its local counterpart (matched
+  /// by `remoteId`). The local row keeps its id and every field the Laravel
+  /// schema does not persist (times, bride/groom, package economics, …);
+  /// the server-authoritative fields are adopted. Rows with no local match
+  /// (created on another device / the web app) pass through unchanged.
+  Future<Booking> _mergeWithLocal(Booking incoming) async {
+    final remoteId = incoming.remoteId;
+    if (remoteId == null) return incoming;
+    final existingRow = await _bookings.getByRemoteId(remoteId);
+    if (existingRow == null) return incoming;
+    if (existingRow.pending) {
+      // Local unsynced edits win until the outbox drains them.
+      return _rowToBooking(existingRow);
+    }
+    final local = _rowToBooking(existingRow);
+    return local.copyWith(
+      remoteId: remoteId,
+      title: incoming.title,
+      eventType: incoming.eventType,
+      date: incoming.date,
+      shift: incoming.shift,
+      venue: incoming.venue ?? local.venue,
+      status: incoming.status,
+      customPrice: incoming.customPrice ?? local.customPrice,
+      notes: incoming.notes ?? local.notes,
+      clientName: incoming.clientName ?? local.clientName,
+      clientPhone: incoming.clientPhone ?? local.clientPhone,
+      updatedAt: incoming.updatedAt,
+      pending: false,
+    );
   }
 
   // ───────────────────────── Writes ─────────────────────────
@@ -339,10 +392,12 @@ class BookingRepositoryImpl implements BookingRepository {
   /// (idempotent on `id`) since the table is append-only and rows are
   /// dedupe-keyed by their id.
   Future<void> _upsertEnvelope(BookingDetailEnvelope envelope) async {
-    await _bookings.upsert(
-      await _bookingToCompanion(envelope.booking, pending: false),
-    );
-    final client = envelope.client;
+    // Merge against the local row (matched by remoteId) so a detail pull
+    // updates in place instead of duplicating under the server id, and so
+    // child rows below hang off the correct LOCAL booking id.
+    final booking = await _mergeWithLocal(envelope.booking);
+    await _bookings.upsert(await _bookingToCompanion(booking, pending: false));
+    final client = await _mergeEnvelopeClient(envelope.client);
     if (client != null) {
       await _clients.upsert(_clientToCompanion(client, pending: false));
     }
@@ -357,7 +412,14 @@ class BookingRepositoryImpl implements BookingRepository {
       await _payments.upsert(_paymentToCompanion(p, pending: false));
     }
     for (final h in envelope.statusHistory) {
-      await _history.append(_statusHistoryToCompanion(h, pending: false));
+      // Re-point at the merged LOCAL booking id (the wire entry carries
+      // the server-side id when the booking originated on this device).
+      await _history.append(
+        _statusHistoryToCompanion(
+          h.copyWith(bookingId: booking.id),
+          pending: false,
+        ),
+      );
     }
     for (final r in envelope.reEditRequests) {
       await _reEdits.upsert(_reEditToCompanion(r, pending: false));

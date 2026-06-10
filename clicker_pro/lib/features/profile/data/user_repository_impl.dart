@@ -112,10 +112,21 @@ class UserRepositoryImpl implements UserRepository {
     try {
       final json = await _api.patchProfile(updated.toJson());
       final remoteCopy = UserModel.fromJson(json);
-      await _users.upsertCurrent(
-        _modelToCompanion(remoteCopy).copyWith(pending: const Value(false)),
+      // The server only persists name/phone/bio/business_name/avatar —
+      // merge its authoritative values into the FULL local model so the
+      // device-only fields (whatsapp, bkash, signature, logo, …) survive.
+      final merged = updated.copyWith(
+        name: remoteCopy.name.isNotEmpty ? remoteCopy.name : null,
+        phone: remoteCopy.phone,
+        bio: remoteCopy.bio,
+        companyName: remoteCopy.companyName,
+        avatarUrl: remoteCopy.avatarUrl,
+        remoteId: remoteCopy.remoteId,
       );
-      return remoteCopy;
+      await _users.upsertCurrent(
+        _modelToCompanion(merged).copyWith(pending: const Value(false)),
+      );
+      return merged;
     } catch (e, st) {
       AppLogger.w('user', 'updateProfile remote failed; queued in outbox: $e');
       AppLogger.e('user', e, st);

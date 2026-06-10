@@ -117,11 +117,37 @@ class ClientRepositoryImpl implements ClientRepository {
     try {
       final clients = await _api.list();
       for (final c in clients) {
-        await _clients.upsert(_modelToCompanion(c, pending: false));
+        await _clients.upsert(
+          _modelToCompanion(await _mergeWithLocal(c), pending: false),
+        );
       }
     } on ApiException catch (e, st) {
       AppLogger.w('client', 'refreshFromRemote failed: ${e.message}');
       AppLogger.e('client', e, st);
     }
+  }
+
+  /// Reconciles a pulled server client with its local counterpart (matched
+  /// by `remoteId`) so the pull updates the existing row instead of
+  /// inserting a duplicate under the server id. Local-only fields
+  /// (address, dob, anniversary) are preserved.
+  Future<Client> _mergeWithLocal(Client incoming) async {
+    final remoteId = incoming.remoteId;
+    if (remoteId == null) return incoming;
+    final existingRow = await _clients.getByRemoteId(remoteId);
+    if (existingRow == null) return incoming;
+    if (existingRow.pending) {
+      // Local unsynced edits win until the outbox drains them.
+      return _rowToClient(existingRow);
+    }
+    final local = _rowToClient(existingRow);
+    return local.copyWith(
+      remoteId: remoteId,
+      name: incoming.name,
+      phone: incoming.phone.isNotEmpty ? incoming.phone : local.phone,
+      email: incoming.email ?? local.email,
+      updatedAt: incoming.updatedAt,
+      pending: false,
+    );
   }
 }

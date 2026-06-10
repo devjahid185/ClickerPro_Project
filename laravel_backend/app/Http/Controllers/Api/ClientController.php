@@ -34,8 +34,11 @@ class ClientController extends Controller
             return response()->json(['message' => 'Not found'], 404);
         }
 
+        // The events table has no client_name column — bookings link to a
+        // client via client_id. (The old query referenced client_name and
+        // 500'd on Postgres every time this endpoint was hit.)
         $bookings = Event::where('owner_id', $request->user()->id)
-            ->where('client_name', $client->name)
+            ->where('client_id', $client->id)
             ->orderBy('date', 'desc')
             ->get(['id', 'title', 'date', 'status', 'price']);
 

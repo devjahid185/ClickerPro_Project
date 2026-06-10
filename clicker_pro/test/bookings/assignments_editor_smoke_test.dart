@@ -41,8 +41,9 @@ void main() {
     await _pumpEditScreen(tester);
 
     // The booking edit screen mounts in create mode. Verify basic structure.
+    // (Appbar SAVE removed in v3.8 — the sticky Create Booking bar saves.)
     expect(find.text('New Booking'), findsOneWidget);
-    expect(find.text('SAVE'), findsOneWidget);
+    expect(find.text('Create Booking'), findsOneWidget);
 
     // Scroll down to find the Assignments section.
     await tester.drag(find.byType(ListView), const Offset(0, -1200));

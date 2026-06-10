@@ -3,6 +3,16 @@ import Link from 'next/link';
 import Head from 'next/head';
 import styles from './landing.module.css';
 
+// Landing-only static deploy (NEXT_PUBLIC_LANDING_ONLY=1): the web-app routes
+// are not hosted, so "Open Web App" CTAs point at the download section and the
+// contact form posts straight to the backend (NEXT_PUBLIC_API_BASE) instead of
+// the dev proxy. Both are baked in at build time.
+const LANDING_ONLY = process.env.NEXT_PUBLIC_LANDING_ONLY === '1';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
+const WEB_LOGIN = LANDING_ONLY ? '#download' : '/login';
+const WEB_REGISTER = LANDING_ONLY ? '#download' : '/register';
+const ANDROID_APK_URL = '/ClickerPro.apk';
+
 const FEATURES = [
   { icon: '📅', name: 'Smart Booking Management', desc: 'Handle every event from inquiry to delivery. Track status, assign team, manage timelines effortlessly.' },
   { icon: '💳', name: 'Invoicing & Payments', desc: 'Generate professional invoices, track payments via bKash, Nagad, bank transfer, and cash.' },
@@ -74,7 +84,7 @@ export default function LandingPage() {
     if (!contact.name || !contact.email || !contact.message) return;
     setContactState('sending');
     try {
-      const res = await fetch('/api/contact', {
+      const res = await fetch(`${API_BASE}/api/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(contact),
@@ -242,7 +252,9 @@ export default function LandingPage() {
           <a href="#pricing">Pricing</a>
           <a href="#faq">FAQ</a>
           <a href="#contact">Contact</a>
-          <Link href="/login" className={styles.navCta}>Launch Web App →</Link>
+          <Link href={WEB_LOGIN} className={styles.navCta}>
+            {LANDING_ONLY ? 'Get the App →' : 'Launch Web App →'}
+          </Link>
         </div>
       </nav>
 
@@ -266,7 +278,9 @@ export default function LandingPage() {
             Bookings, invoices, clients, and team — all in one place.
           </p>
           <div className={styles.heroActions}>
-            <Link href="/login" className={styles.btnPrimary}>Open Web App →</Link>
+            <Link href={WEB_LOGIN} className={styles.btnPrimary}>
+              {LANDING_ONLY ? 'Download the App →' : 'Open Web App →'}
+            </Link>
             <a href="#features" className={styles.btnSecondary}>Explore Features</a>
           </div>
         </div>
@@ -394,11 +408,19 @@ export default function LandingPage() {
                   <div className={styles.badgeName}>App Store</div>
                 </div>
               </a>
-              <a href="#" className={styles.storeBadge}>
+              <a
+                href={LANDING_ONLY ? ANDROID_APK_URL : '#'}
+                {...(LANDING_ONLY ? { download: true } : {})}
+                className={styles.storeBadge}
+              >
                 <span>▶</span>
                 <div>
-                  <div className={styles.badgeSub}>Get it on</div>
-                  <div className={styles.badgeName}>Google Play</div>
+                  <div className={styles.badgeSub}>
+                    {LANDING_ONLY ? 'Android' : 'Get it on'}
+                  </div>
+                  <div className={styles.badgeName}>
+                    {LANDING_ONLY ? 'Download APK' : 'Google Play'}
+                  </div>
                 </div>
               </a>
             </div>
@@ -436,7 +458,7 @@ export default function LandingPage() {
               <ul className={styles.priceFeatures}>
                 {plan.features.map((f) => <li key={f}>{f}</li>)}
               </ul>
-              <Link href="/login" className={styles.btnPrimary} style={{ width: '100%', justifyContent: 'center' }}>
+              <Link href={WEB_REGISTER} className={styles.btnPrimary} style={{ width: '100%', justifyContent: 'center' }}>
                 {plan.name === 'Starter' ? 'Start Free' : 'Start Free Trial'}
               </Link>
             </div>
@@ -554,8 +576,10 @@ export default function LandingPage() {
           <h2 className={styles.ctaTitle}>Ready to run your<br />photography business?</h2>
           <p className={styles.ctaDesc}>Join thousands of photographers managing bookings, clients, and money — all in one place. Start free today.</p>
           <div className={styles.ctaActions}>
-            <Link href="/register" className={styles.btnPrimary}>Get Started Free →</Link>
-            <Link href="/login" className={styles.btnSecondary}>Open Web App</Link>
+            <Link href={WEB_REGISTER} className={styles.btnPrimary}>Get Started Free →</Link>
+            <Link href={WEB_LOGIN} className={styles.btnSecondary}>
+              {LANDING_ONLY ? 'Download the App' : 'Open Web App'}
+            </Link>
           </div>
         </div>
       </section>

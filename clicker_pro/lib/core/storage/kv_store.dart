@@ -12,6 +12,7 @@ class KvKeys {
   static const String onboardingComplete = 'onboarding_complete';
   static const String pendingDeleteUntil = 'pending_delete_until';
   static const String appThemeMode = 'app_theme_mode';
+  static const String seenBroadcastIds = 'seen_broadcast_ids';
 
   static const Set<String> _allowed = {
     authToken,
@@ -19,6 +20,7 @@ class KvKeys {
     onboardingComplete,
     pendingDeleteUntil,
     appThemeMode,
+    seenBroadcastIds,
   };
   static bool isAllowed(String key) => _allowed.contains(key);
 }

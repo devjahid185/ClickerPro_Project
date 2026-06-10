@@ -46,7 +46,10 @@ import '../../../theme/app_strings.dart';
 import '../../../theme/app_theme.dart';
 import '../../auth/application/session_controller.dart';
 import '../../auth/domain/user_role.dart';
+import '../../../core/booking_status/booking_status.dart';
+import '../../bookings/application/booking_providers.dart';
 import '../../broadcasts/presentation/broadcast_banner.dart';
+import '../../broadcasts/presentation/broadcast_popup.dart';
 import '../../announcements/application/announcement_providers.dart';
 import '../../announcements/domain/announcement.dart';
 import '../../profile/application/profile_controllers.dart';
@@ -97,6 +100,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         setState(() => _visible[i] = true);
       });
     }
+
+    // Admin broadcast popup — shows once per broadcast on app open,
+    // auto-dismisses after 10s (see broadcast_popup.dart).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) showBroadcastPopupIfNeeded(context, ref);
+    });
   }
 
   @override
@@ -1135,7 +1144,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 label,
                 style: TextStyle(
                   fontFamily: AppText.sectionTitle.fontFamily,
-                  fontSize: 9,
+                  fontSize: 10,
                   letterSpacing: 0.5,
                   color: AppColors.filmDim,
                   height: 1.4,
@@ -1163,8 +1172,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             sub,
             style: TextStyle(
               fontFamily: AppText.sectionTitle.fontFamily,
-              fontSize: 9.5,
-              color: AppColors.filmDim.withValues(alpha: 0.6),
+              fontSize: 10.5,
+              color: AppColors.filmDim.withValues(alpha: 0.85),
             ),
           ),
         ],
@@ -1193,10 +1202,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             number: '${m.cancelledEvents}',
             label: 'Cancelled\nEvents',
             isCancel: true,
+            // Tapping opens the booking list pre-filtered to Cancelled.
+            onTap: _openCancelledEvents,
           ),
         ),
       ],
     );
+  }
+
+  /// Opens the booking list showing ONLY cancelled events.
+  void _openCancelledEvents() {
+    ref.read(bookingFilterProvider.notifier).state = ref
+        .read(bookingFilterProvider)
+        .copyWith(statuses: {BookingStatus.cancelled});
+    _pushNamed(RouteNames.bookings);
   }
 
   Widget _buildInfoCard({
@@ -1204,8 +1223,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     required String number,
     required String label,
     required bool isCancel,
+    VoidCallback? onTap,
   }) {
-    return Container(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -1238,15 +1260,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 label,
                 style: TextStyle(
                   fontFamily: AppText.sectionTitle.fontFamily,
-                  fontSize: 9,
+                  fontSize: 10,
                   letterSpacing: 0.5,
-                  color: AppColors.filmDim.withValues(alpha: 0.6),
+                  color: AppColors.filmDim.withValues(alpha: 0.85),
                   height: 1.4,
                 ),
               ),
             ],
           ),
         ],
+      ),
       ),
     );
   }
@@ -1265,67 +1288,54 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         : hour < 18
         ? ('⛅', 'PARTLY CLOUDY', '30')
         : ('🌇', 'EVENING', '28');
+    // Compact one-line strip — the old oversized emoji + 30px temperature
+    // crowded the column and collided with neighbouring sections.
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.indigo.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.indigo.withValues(alpha: 0.20)),
       ),
       child: Row(
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 36)),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Text(emoji, style: const TextStyle(fontSize: 22)),
+          const SizedBox(width: 10),
+          RichText(
+            text: TextSpan(
+              style: TextStyle(
+                fontFamily: AppText.brand.fontFamily,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: AppColors.film,
+              ),
               children: [
-                RichText(
-                  text: TextSpan(
-                    style: TextStyle(
-                      fontFamily: AppText.brand.fontFamily,
-                      fontSize: 30,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.film,
-                    ),
-                    children: [
-                      TextSpan(text: temp),
-                      const TextSpan(
-                        text: '°',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    ],
-                  ),
-                ),
-                Text(
-                  condition,
-                  style: TextStyle(
-                    fontFamily: AppText.sectionTitle.fontFamily,
-                    fontSize: 9,
-                    letterSpacing: 1,
-                    color: AppColors.filmDim.withValues(alpha: 0.6),
-                  ),
-                ),
+                TextSpan(text: temp),
+                const TextSpan(text: '°', style: TextStyle(fontSize: 13)),
               ],
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              const Text(
-                'Dhaka, BD',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.film,
-                ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              condition,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: AppText.sectionTitle.fontFamily,
+                fontSize: 9,
+                letterSpacing: 1,
+                color: AppColors.filmDim.withValues(alpha: 0.85),
               ),
-              const SizedBox(height: 2),
-              const Text(
-                '💧 Humidity varies',
-                style: TextStyle(fontSize: 10, color: AppColors.indigo),
-              ),
-            ],
+            ),
+          ),
+          const Text(
+            'Dhaka, BD',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.film,
+            ),
           ),
         ],
       ),
@@ -1736,22 +1746,57 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
+  /// Per-module accent so every drawer icon carries its own colour —
+  /// modern SaaS sidebars colour-code by domain, not one flat accent.
+  Color _sbTintFor(String label) {
+    final l = label.toLowerCase();
+    if (l.contains('payment') ||
+        l.contains('invoice') ||
+        l.contains('expense') ||
+        l.contains('petty') ||
+        l.contains('finance') ||
+        l.contains('earning')) {
+      return AppColors.green;
+    }
+    if (l.contains('booking') ||
+        l.contains('calendar') ||
+        l.contains('re-edit') ||
+        l.contains('waitlist')) {
+      return AppColors.indigo;
+    }
+    if (l.contains('team') || l.contains('chat') || l.contains('staff')) {
+      return AppColors.gold;
+    }
+    if (l.contains('announce') ||
+        l.contains('platform') ||
+        l.contains('notification')) {
+      return AppColors.red;
+    }
+    return AppColors.orange;
+  }
+
   Widget _sbItem(IconData icon, String label, VoidCallback onTap) {
+    final tint = _sbTintFor(label);
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
         child: Row(
           children: [
-            SizedBox(
-              width: 22,
-              child: Icon(icon, color: AppColors.accent, size: 16),
+            Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: tint.withValues(alpha: 0.13),
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: Icon(icon, color: tint, size: 16),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 label,
-                style: TextStyle(fontSize: 13.5, color: AppColors.filmDim),
+                style: const TextStyle(fontSize: 13.5, color: AppColors.film),
               ),
             ),
             Text(
@@ -1772,11 +1817,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     return SafeArea(
       top: false,
       child: Container(
-        height: 66,
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        // Slim bar — 56px keeps icon + label readable while reclaiming
+        // vertical space for content.
+        height: 56,
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
           boxShadow: [
             BoxShadow(
@@ -1894,9 +1941,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         onTap: _openNewBooking,
         child: Center(
           child: Container(
-            width: 46,
-            height: 46,
-            margin: const EdgeInsets.only(bottom: 6),
+            width: 42,
+            height: 42,
+            margin: const EdgeInsets.only(bottom: 4),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppColors.accent,
@@ -1975,7 +2022,7 @@ class _AnimatedBrand extends StatelessWidget {
               fontFamily: AppText.body.fontFamily,
               fontSize: 9.5,
               fontWeight: FontWeight.w600,
-              color: AppColors.filmDim.withValues(alpha: 0.6),
+              color: AppColors.filmDim.withValues(alpha: 0.85),
               letterSpacing: 1.0,
             ),
           ),

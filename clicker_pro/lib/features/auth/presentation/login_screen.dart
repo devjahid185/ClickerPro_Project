@@ -22,6 +22,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
+import '../../../core/env/app_config.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../core/providers.dart';
 import '../../../core/storage/kv_store.dart';
 import '../../../screens/dashboard_screen.dart';
@@ -62,6 +64,11 @@ PageRouteBuilder<T> slideFromRightRoute<T>(Widget page) {
     },
   );
 }
+
+/// The Laravel backend has no `/api/auth/google` / `/api/auth/apple`
+/// routes yet, so the social buttons would always fail with a 404.
+/// Hidden until the backend endpoints exist — flip this to re-enable.
+const bool kSocialLoginEnabled = false;
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -147,14 +154,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       return;
     }
 
-    // Otherwise surface why it failed.
+    // Otherwise surface why it failed — by status code, not by string
+    // matching, so 429 (rate limit) and 403 (disabled) get honest messages.
     final error = session.error;
-    final text = error?.toString() ?? '';
-    final msg = text.contains('401')
-        ? 'ইমেইল বা পাসওয়ার্ড ভুল।'
-        : text.contains('timeout') || text.contains('No network')
-        ? 'সার্ভারের সাথে যোগাযোগ করা যাচ্ছে না।'
-        : 'লগইন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।';
+    final String msg;
+    if (error is ApiException) {
+      if (error.isUnauthorized) {
+        msg = 'ইমেইল বা পাসওয়ার্ড ভুল।';
+      } else if (error.isRateLimited) {
+        msg = 'অনেকবার চেষ্টা হয়েছে — ১ মিনিট অপেক্ষা করে আবার চেষ্টা করুন।';
+      } else if (error.statusCode == 403) {
+        msg = 'অ্যাকাউন্টটি নিষ্ক্রিয় করা আছে। সাপোর্টে যোগাযোগ করুন।';
+      } else if (error.isNetwork) {
+        msg = 'সার্ভারের সাথে যোগাযোগ করা যাচ্ছে না। ইন্টারনেট চেক করুন।';
+      } else {
+        msg = 'লগইন ব্যর্থ হয়েছে (${error.statusCode})। আবার চেষ্টা করুন।';
+      }
+    } else {
+      msg = 'লগইন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।';
+    }
     _showError(msg);
   }
 
@@ -272,6 +290,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       backgroundColor: AppColors.voidBlack,
       body: Stack(
         children: [
+          // ─── WATERMARK LOGO (subtle brand backdrop) ───────────────
+          // Very low opacity + IgnorePointer: pure branding, never
+          // interferes with touch targets or readability.
+          Positioned(
+            right: -70,
+            bottom: -50,
+            child: IgnorePointer(
+              child: Opacity(
+                opacity: 0.045,
+                child: Icon(
+                  Icons.camera_alt_rounded,
+                  size: 340,
+                  color: AppColors.film,
+                ),
+              ),
+            ),
+          ),
           // ─── BACKGROUND GLOW BLOBS ────────────────────────────────
           Positioned(
             top: -100,
@@ -421,59 +456,61 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
                         const SizedBox(height: 24),
 
-                        // ── DIVIDER ───────────────────────────────
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Container(
-                                height: 1,
-                                color: Colors.white.withValues(alpha: 0.06),
+                        // ── DIVIDER + SOCIAL LOGIN ────────────────
+                        // Hidden while kSocialLoginEnabled is false (no
+                        // backend routes yet — see the constant's doc).
+                        if (kSocialLoginEnabled) ...[
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  height: 1,
+                                  color: Colors.white.withValues(alpha: 0.06),
+                                ),
                               ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                              child: Text(
-                                lang == 'bn' ? 'অথবা' : 'OR',
-                                style: TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontSize: 9.5,
-                                  letterSpacing: 1.5,
-                                  color: AppColors.filmDim.withValues(
-                                    alpha: 0.5,
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                child: Text(
+                                  lang == 'bn' ? 'অথবা' : 'OR',
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 9.5,
+                                    letterSpacing: 1.5,
+                                    color: AppColors.filmDim.withValues(
+                                      alpha: 0.5,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            Expanded(
-                              child: Container(
-                                height: 1,
-                                color: Colors.white.withValues(alpha: 0.06),
+                              Expanded(
+                                child: Container(
+                                  height: 1,
+                                  color: Colors.white.withValues(alpha: 0.06),
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 18),
-
-                        // ── SOCIAL LOGIN BUTTONS ──────────────────
-                        _SocialButton(
-                          label: lang == 'bn'
-                              ? 'Google দিয়ে লগইন'
-                              : 'Continue with Google',
-                          icon: _kGoogleIcon,
-                          loading: _googleLoading,
-                          onTap: _handleGoogleSignIn,
-                        ),
-                        const SizedBox(height: 10),
-                        _SocialButton(
-                          label: lang == 'bn'
-                              ? 'Apple দিয়ে লগইন'
-                              : 'Continue with Apple',
-                          icon: _kAppleIcon,
-                          loading: _appleLoading,
-                          onTap: _handleAppleSignIn,
-                        ),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          _SocialButton(
+                            label: lang == 'bn'
+                                ? 'Google দিয়ে লগইন'
+                                : 'Continue with Google',
+                            icon: _kGoogleIcon,
+                            loading: _googleLoading,
+                            onTap: _handleGoogleSignIn,
+                          ),
+                          const SizedBox(height: 10),
+                          _SocialButton(
+                            label: lang == 'bn'
+                                ? 'Apple দিয়ে লগইন'
+                                : 'Continue with Apple',
+                            icon: _kAppleIcon,
+                            loading: _appleLoading,
+                            onTap: _handleAppleSignIn,
+                          ),
+                        ],
 
                         const SizedBox(height: 20),
 
@@ -577,6 +614,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                 ],
                               ),
                             ),
+                          ),
+                        ),
+
+                        // ── COMPANY BRANDING ──────────────────────
+                        const SizedBox(height: 14),
+                        Text(
+                          '${AppConfig.appName} ${AppConfig.appVersionLabel} · by ${AppConfig.companyName}',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppColors.filmMuted.withValues(alpha: 0.7),
+                            fontSize: 10,
+                            letterSpacing: 0.6,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],

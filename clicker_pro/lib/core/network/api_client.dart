@@ -101,6 +101,44 @@ class ApiClient {
     authenticated: authenticated,
   );
 
+  /// Multipart file upload (e.g. `POST /api/files/upload`). [field] is the
+  /// form-field name the server reads the file from. Returns the decoded
+  /// JSON body like every other method.
+  Future<dynamic> postMultipart(
+    String path, {
+    required String filePath,
+    String field = 'file',
+    Map<String, String>? fields,
+  }) async {
+    final request = http.MultipartRequest('POST', _uri(path));
+    final token = await _secure.readToken();
+    if (token != null) request.headers['Authorization'] = 'Bearer $token';
+    request.headers['Accept'] = 'application/json';
+    if (fields != null) request.fields.addAll(fields);
+    request.files.add(await http.MultipartFile.fromPath(field, filePath));
+
+    try {
+      final streamed = await _http
+          .send(request)
+          .timeout(AppConfig.networkTimeout * 4); // uploads need headroom
+      final response = await http.Response.fromStream(streamed);
+      return _handle(response);
+    } on TimeoutException catch (e, st) {
+      AppLogger.e('api', 'upload timeout: $e', st);
+      throw ApiException(statusCode: 0, message: 'Upload timed out', cause: e);
+    } on SocketException catch (e, st) {
+      AppLogger.e('api', 'upload socket: $e', st);
+      throw ApiException(
+        statusCode: 0,
+        message: 'No network connection',
+        cause: e,
+      );
+    } on http.ClientException catch (e, st) {
+      AppLogger.e('api', 'upload client: $e', st);
+      throw ApiException(statusCode: 0, message: 'Network error', cause: e);
+    }
+  }
+
   Future<dynamic> _sendWithRetry(
     Future<http.Response> Function() request, {
     required bool authenticated,

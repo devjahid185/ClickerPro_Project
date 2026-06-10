@@ -6,6 +6,7 @@ import 'package:drift/drift.dart' show Value;
 
 import '../../../core/db/app_database.dart';
 import '../../../core/db/daos/users_dao.dart';
+import '../../../core/env/app_config.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/storage/secure_store.dart';
@@ -82,6 +83,23 @@ class AuthRepositoryImpl implements AuthRepository {
     throw error;
   }
 
+  /// The offline "demo mode" (accept-any-credentials fallback + demo OTP)
+  /// is a development convenience ONLY. In production builds it would be
+  /// a login bypass — anyone with the device could enter the app with
+  /// made-up credentials in airplane mode — so it is hard-gated off.
+  bool get _allowOfflineDemo =>
+      AppConfig.environment.toLowerCase() != 'production';
+
+  /// Wraps a non-API failure (transport, parsing) into a clean
+  /// [ApiException] for the UI instead of leaking raw error text.
+  Never _raiseUnreachable(Object cause) {
+    throw ApiException(
+      statusCode: 0,
+      message: 'Cannot reach the server. Check your internet connection.',
+      cause: cause,
+    );
+  }
+
   @override
   Future<Session> login({
     required String email,
@@ -92,8 +110,10 @@ class AuthRepositoryImpl implements AuthRepository {
       return _persistSession(r.token, r.user);
     } on ApiException {
       rethrow;
-    } catch (_) {
-      // Network unreachable — accept any credentials for offline demo.
+    } catch (e) {
+      // Network unreachable. In production this is a hard failure; the
+      // offline demo session is a dev-only convenience (see _allowOfflineDemo).
+      if (!_allowOfflineDemo) _raiseUnreachable(e);
       final demoUser = UserModel(
         id: 'demo_${email.hashCode.abs()}',
         name: email.split('@').first,
@@ -138,8 +158,9 @@ class AuthRepositoryImpl implements AuthRepository {
       return _persistSession(r.token, r.user);
     } on ApiException {
       rethrow;
-    } catch (_) {
-      // Network unreachable — create a local demo account.
+    } catch (e) {
+      // Network unreachable — dev builds fall back to a local demo account.
+      if (!_allowOfflineDemo) _raiseUnreachable(e);
       return _persistSession(_demoToken, {
         'id': 'demo_${email.hashCode.abs()}',
         'name': name,
@@ -165,9 +186,10 @@ class AuthRepositoryImpl implements AuthRepository {
       await _api.requestOtp(identifier: identifier, purpose: purpose);
     } on ApiException {
       rethrow;
-    } catch (_) {
-      // Network unreachable — silently succeed so the OTP screen appears.
-      // User must enter $_demoOtp to proceed.
+    } catch (e) {
+      // Network unreachable — dev builds silently succeed so the OTP
+      // screen appears (user enters $_demoOtp); production surfaces it.
+      if (!_allowOfflineDemo) _raiseUnreachable(e);
     }
   }
 
@@ -183,11 +205,40 @@ class AuthRepositoryImpl implements AuthRepository {
         code: code,
         purpose: purpose,
       );
-      return _persistSession(r.token, r.user);
+      final token = r.token;
+      final user = r.user;
+      if (token != null && user != null) {
+        return _persistSession(token, user);
+      }
+      // The Laravel verify endpoint confirms the code but does not issue
+      // a token. If a session already exists (e.g. OTP after register),
+      // keep it; otherwise the caller must route the user to login.
+      final existingToken = await _secure.readToken();
+      final row = await _users.getCurrent();
+      if (existingToken != null && row != null) {
+        return Session(
+          token: existingToken,
+          user: UserModel(
+            id: row.id,
+            name: row.name,
+            email: row.email,
+            role: UserRole.fromString(row.role),
+            remoteId: row.remoteId,
+            phone: row.phone,
+            ownerId: row.ownerId,
+          ),
+          issuedAt: DateTime.now(),
+        );
+      }
+      throw ApiException(
+        statusCode: 401,
+        message: 'Code verified. Please log in with your password.',
+      );
     } on ApiException {
       rethrow;
-    } catch (_) {
-      // Network unreachable — accept the demo code for offline sessions.
+    } catch (e) {
+      // Network unreachable — dev builds accept the demo code.
+      if (!_allowOfflineDemo) _raiseUnreachable(e);
       if (code.trim() != _demoOtp) {
         throw ApiException(
           statusCode: 400,
@@ -221,8 +272,10 @@ class AuthRepositoryImpl implements AuthRepository {
       await _api.forgotPassword(email);
     } on ApiException {
       rethrow;
-    } catch (_) {
-      // Network unreachable — silently succeed; OTP screen handles demo code.
+    } catch (e) {
+      // Network unreachable — dev builds silently succeed (demo OTP path);
+      // production surfaces the failure.
+      if (!_allowOfflineDemo) _raiseUnreachable(e);
     }
   }
 

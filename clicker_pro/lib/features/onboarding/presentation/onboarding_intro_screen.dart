@@ -85,113 +85,133 @@ class _OnboardingIntroScreenState extends ConsumerState<OnboardingIntroScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.voidBlack,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Skip top right.
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: _finish,
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColors.filmDim,
-                    ),
-                    child: Text(
-                      isBn ? 'এড়িয়ে যান' : 'Skip',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
+      body: Stack(
+        children: [
+          // Subtle watermark logo backdrop — branding only; IgnorePointer
+          // keeps it from ever blocking touches (pairs with login_screen).
+          Positioned(
+            left: -80,
+            top: -40,
+            child: IgnorePointer(
+              child: Opacity(
+                opacity: 0.04,
+                child: Icon(
+                  Icons.camera_alt_rounded,
+                  size: 320,
+                  color: AppColors.film,
+                ),
               ),
             ),
-
-            Expanded(
-              child: PageView.builder(
-                controller: _pageCtrl,
-                onPageChanged: (i) => setState(() => _index = i),
-                itemCount: _slides.length,
-                itemBuilder: (_, i) => _Slide(data: _slides[i], isBn: isBn),
-              ),
-            ),
-
-            // Indicator + Next/Done.
-            Padding(
-              padding: const EdgeInsets.fromLTRB(28, 12, 28, 28),
-              child: Row(
-                children: [
-                  Row(
-                    children: List.generate(
-                      _slides.length,
-                      (i) => AnimatedContainer(
-                        duration: const Duration(milliseconds: 240),
-                        margin: const EdgeInsets.only(right: 6),
-                        width: i == _index ? 22 : 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: i == _index
-                              ? AppColors.orange
-                              : AppColors.gray300,
-                          borderRadius: BorderRadius.circular(99),
+          ),
+          SafeArea(
+            child: Column(
+              children: [
+                // Skip top right.
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: _finish,
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.filmDim,
+                        ),
+                        child: Text(
+                          isBn ? 'এড়িয়ে যান' : 'Skip',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                  const Spacer(),
-                  SizedBox(
-                    height: 50,
-                    child: FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.orange,
-                        padding: const EdgeInsets.symmetric(horizontal: 28),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      onPressed: () {
-                        if (isLast) {
-                          _finish();
-                        } else {
-                          _pageCtrl.nextPage(
-                            duration: const Duration(milliseconds: 320),
-                            curve: const Cubic(0.2, 0.8, 0.2, 1),
-                          );
-                        }
-                      },
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            isLast
-                                ? (isBn ? 'শুরু করুন' : 'Get Started')
-                                : (isBn ? 'পরবর্তী' : 'Next'),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                              letterSpacing: 0.3,
+                ),
+
+                Expanded(
+                  child: PageView.builder(
+                    controller: _pageCtrl,
+                    onPageChanged: (i) => setState(() => _index = i),
+                    itemCount: _slides.length,
+                    itemBuilder: (_, i) => _Slide(data: _slides[i], isBn: isBn),
+                  ),
+                ),
+
+                // Indicator + Next/Done.
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(28, 12, 28, 28),
+                  child: Row(
+                    children: [
+                      Row(
+                        children: List.generate(
+                          _slides.length,
+                          (i) => AnimatedContainer(
+                            duration: const Duration(milliseconds: 240),
+                            margin: const EdgeInsets.only(right: 6),
+                            width: i == _index ? 22 : 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: i == _index
+                                  ? AppColors.orange
+                                  : AppColors.gray300,
+                              borderRadius: BorderRadius.circular(99),
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          const Icon(
-                            Icons.arrow_forward_rounded,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
+                      const Spacer(),
+                      SizedBox(
+                        height: 50,
+                        child: FilledButton(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.orange,
+                            padding: const EdgeInsets.symmetric(horizontal: 28),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          onPressed: () {
+                            if (isLast) {
+                              _finish();
+                            } else {
+                              _pageCtrl.nextPage(
+                                duration: const Duration(milliseconds: 320),
+                                curve: const Cubic(0.2, 0.8, 0.2, 1),
+                              );
+                            }
+                          },
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                isLast
+                                    ? (isBn ? 'শুরু করুন' : 'Get Started')
+                                    : (isBn ? 'পরবর্তী' : 'Next'),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Icon(
+                                Icons.arrow_forward_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
