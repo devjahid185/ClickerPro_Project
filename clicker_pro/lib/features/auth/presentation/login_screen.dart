@@ -197,10 +197,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       // plugin fails to read the default_web_client_id resource from
       // google-services.json and dies with DEVELOPER_ERROR (status 10).
       // This is the project's PUBLIC web OAuth client id, not a secret.
-      final googleUser = await GoogleSignIn(
+      final google = GoogleSignIn(
         serverClientId:
             '113528221350-ulop3128toa364k8n4uo109mq7ag9cog.apps.googleusercontent.com',
-      ).signIn();
+      );
+      // Clear any cached Google session first — otherwise the plugin
+      // silently reuses the last account and the user never gets to
+      // pick which Gmail to sign in with.
+      try {
+        await google.signOut();
+      } catch (_) {
+        // Ignore — a failed signOut just means no cached session.
+      }
+      final googleUser = await google.signIn();
       if (googleUser == null) {
         setState(() => _googleLoading = false);
         return;

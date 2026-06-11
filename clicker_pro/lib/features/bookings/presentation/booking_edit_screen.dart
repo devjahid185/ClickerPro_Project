@@ -384,7 +384,14 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
               label: 'Freelancer',
               icon: Icons.camera_alt_outlined,
               selected: _showFreelancerForm,
-              onTap: () => setState(() => _showFreelancerForm = true),
+              onTap: () {
+                setState(() => _showFreelancerForm = true);
+                ref
+                    .read(
+                      bookingEditControllerProvider(widget.bookingId).notifier,
+                    )
+                    .setFreelancerMode(true);
+              },
             ),
           ),
           Expanded(
@@ -392,7 +399,14 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
               label: 'Owner',
               icon: Icons.business_center_outlined,
               selected: !_showFreelancerForm,
-              onTap: () => setState(() => _showFreelancerForm = false),
+              onTap: () {
+                setState(() => _showFreelancerForm = false);
+                ref
+                    .read(
+                      bookingEditControllerProvider(widget.bookingId).notifier,
+                    )
+                    .setFreelancerMode(false);
+              },
             ),
           ),
         ],

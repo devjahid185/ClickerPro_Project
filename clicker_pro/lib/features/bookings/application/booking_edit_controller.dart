@@ -66,6 +66,7 @@ class BookingDraft {
     this.assignments = const <Assignment>[],
     this.originalAssignmentIds = const <String>{},
     this.clientRequirements,
+    this.freelancerMode = false,
   }) : date = date;
 
   final String localId;
@@ -113,6 +114,11 @@ class BookingDraft {
   /// (e.g. the delivery checklist) — preserved verbatim on save.
   final Map<String, dynamic>? clientRequirements;
 
+  /// True while a Both-role user has the FL-12 short form selected.
+  /// Validation must NOT demand client name/phone in that mode — the
+  /// short form has no phone field, so saving was impossible.
+  final bool freelancerMode;
+
   String? get mapLink => clientRequirements?['mapLink'] as String?;
   String? get requirementsNote =>
       clientRequirements?['requirementsNote'] as String?;
@@ -146,6 +152,7 @@ class BookingDraft {
     BookingStatus? status,
     List<Assignment>? assignments,
     Map<String, dynamic>? clientRequirements,
+    bool? freelancerMode,
     bool clearPackage = false,
     bool clearCustomPrice = false,
     bool clearClient = false,
@@ -184,6 +191,7 @@ class BookingDraft {
       assignments: assignments ?? this.assignments,
       originalAssignmentIds: originalAssignmentIds,
       clientRequirements: clientRequirements ?? this.clientRequirements,
+      freelancerMode: freelancerMode ?? this.freelancerMode,
     );
   }
 
@@ -409,6 +417,10 @@ class BookingEditController
   void setHidePaymentFromTeam(bool value) =>
       _update((d) => d.copyWith(hidePaymentFromTeam: value));
 
+  /// Both-role mode picker: true = FL-12 short form active.
+  void setFreelancerMode(bool value) =>
+      _update((d) => d.copyWith(freelancerMode: value));
+
   void setChiefPhotographerUserId(String? value) {
     _update(
       (d) => value == null
@@ -534,7 +546,8 @@ class BookingEditController
 
     final policy = ref.read(bookingsPolicyProvider);
     final isOwnerMode =
-        policy.role == UserRole.owner || policy.role == UserRole.both;
+        (policy.role == UserRole.owner || policy.role == UserRole.both) &&
+        !draft.freelancerMode;
 
     if (draft.date == null) {
       errors[BookingField.date] = 'Date is required.';
