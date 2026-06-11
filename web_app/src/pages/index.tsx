@@ -343,20 +343,8 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div className={styles.heroStats}>
-          <div>
-            <div className={styles.statNum}>2,400+</div>
-            <div className={styles.statLabel}>Active Users</div>
-          </div>
-          <div>
-            <div className={styles.statNum}>48K+</div>
-            <div className={styles.statLabel}>Bookings Managed</div>
-          </div>
-          <div>
-            <div className={styles.statNum}>৳ 12Cr</div>
-            <div className={styles.statLabel}>Revenue Tracked</div>
-          </div>
-        </div>
+        {/* Hero stats removed pre-launch — bring back with REAL numbers
+            once the platform has live usage to show. */}
 
         <div className={styles.scrollLine}>
           <div className={styles.scrollBar} />
