@@ -56,7 +56,32 @@ export default function UserDetailPage() {
 
   useEffect(() => {
     api<{ data: Detail }>(`/api/admin/users/${id}`)
-      .then((r) => setData(r.data))
+      .then((r) => {
+        // Tolerate the old backend shape (raw user under data) so a
+        // stale API can never white-screen this page again.
+        const d = r.data as Detail & Record<string, unknown>;
+        if (d && (d as { user?: unknown }).user) {
+          setData(d);
+        } else {
+          const raw = d as unknown as Record<string, never>;
+          setData({
+            user: {
+              id: String(raw['id'] ?? ''),
+              email: String(raw['email'] ?? ''),
+              fullName: String(raw['fullName'] ?? raw['name'] ?? '—'),
+              phone: raw['phone'] ?? null,
+              whatsapp: raw['whatsapp'] ?? null,
+              role: String(raw['role'] ?? 'OWNER'),
+              plan: String(raw['plan'] ?? 'FREE'),
+              businessName: raw['businessName'] ?? raw['business_name'] ?? null,
+              businessAddress: raw['businessAddress'] ?? null,
+              createdAt: String(raw['createdAt'] ?? raw['created_at'] ?? new Date().toISOString()),
+            },
+            stats: { bookings: 0, clients: 0, paymentsCount: 0, paymentsTotal: 0 },
+            bookings: [],
+          });
+        }
+      })
       .catch((e) => setErr(e.message));
   }, [id]);
 

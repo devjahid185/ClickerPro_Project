@@ -107,7 +107,7 @@ export default function BookingsPage() {
                       onClick={() => router.push(`/users/${b.owner!.id}`)}
                       style={{ cursor: 'pointer', color: 'var(--orange)', fontWeight: 600 }}
                     >
-                      {b.owner.businessName || b.owner.fullName}
+                      {b.owner?.businessName || b.owner?.fullName || '—'}
                     </span>
                   ) : '—'}
                 </td>
