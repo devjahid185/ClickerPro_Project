@@ -1,21 +1,19 @@
 // lib/features/finance/presentation/finance_screen.dart
 //
-// Finance Dashboard — the role-aware money home (v12 "Finance 4-Role").
+// Finance Dashboard — "Aura" bento layout on the warm-porcelain theme.
 //
-// Layout:
-//   ┌─────────────────────────────────┐
-//   │ Monthly | Yearly toggle         │
-//   │ Income · Expense · Net cards    │
-//   │ 6-month Income vs Expense bars  │
-//   │ Booked · Collected · Due strip  │
-//   │ Events with due (tap → details) │
-//   │ Quick links (Expenses, CashFlow,│
-//   │   Petty Cash, Reports, Salary)  │
-//   └─────────────────────────────────┘
+// Visual language (adapted from the Aura Mobile Finance reference):
+//   • Big-figure hero card (gradient, oversized Net, mono eyebrow label)
+//   • Circular quick-action pills under the hero
+//   • "Assets"-style rows for Booked / Collected / Due
+//   • Income vs Expense bento pair with share bars
+//   • 6-month bar chart card
+//   • "Activity Log" — events with money still owed, transaction-style
+//   • Staggered fade-up entrance, large radii, pill controls
 //
-// Numbers are derived from the local booking stream + expense list so
-// the screen works offline; Manager role gets the locked view (due +
-// client only, no income/profit) per the permission matrix.
+// All figures derive from the local booking stream + expense list so the
+// screen works offline. Manager role gets the locked view (due + client
+// only — no income/profit) per the permission matrix.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,6 +28,7 @@ import '../../bookings/domain/booking_filter.dart';
 import '../../dashboard/application/dashboard_providers.dart';
 import '../../expenses/application/expense_providers.dart';
 import '../../expenses/domain/expense.dart';
+import '../../profile/application/profile_controllers.dart';
 
 class FinanceScreen extends ConsumerStatefulWidget {
   const FinanceScreen({super.key});
@@ -45,6 +44,14 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   Widget build(BuildContext context) {
     final policy = ref.watch(bookingsPolicyProvider);
     final isManager = policy.role == UserRole.manager;
+    final firstName = ref
+            .watch(currentUserProvider)
+            .valueOrNull
+            ?.name
+            .trim()
+            .split(' ')
+            .first ??
+        '';
 
     final bookings =
         ref.watch(bookingListProvider(const BookingFilter())).valueOrNull ??
@@ -59,7 +66,6 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         ? d.year == now.year
         : (d.year == now.year && d.month == now.month);
 
-    // Booked = priced, non-cancelled bookings in the period.
     final periodBookings = bookings
         .where((b) => b.status != BookingStatus.cancelled && inPeriod(b.date))
         .toList(growable: false);
@@ -68,8 +74,6 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
       (s, b) => s + (b.customPrice ?? 0),
     );
 
-    // Due per booking comes from the payment aggregates; bookings absent
-    // from the due list are fully collected.
     final dueById = <String, double>{
       for (final e in dueEntries ?? const <DueEntry>[]) e.bookingId: e.due,
     };
@@ -89,7 +93,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         .toList(growable: false);
 
     return Scaffold(
-      backgroundColor: AppColors.voidBlack,
+      backgroundColor: AppColors.appBg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -97,56 +101,81 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
           icon: const Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
-          'Finance',
-          style: TextStyle(
-            color: AppColors.film,
-            fontFamily: 'Poppins',
-            fontSize: 22,
-            fontWeight: FontWeight.w600,
-          ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (firstName.isNotEmpty)
+              Text(
+                'Hello, $firstName',
+                style: TextStyle(
+                  color: AppColors.filmDim.withValues(alpha: 0.8),
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            const Text(
+              'Finance',
+              style: TextStyle(
+                color: AppColors.film,
+                fontFamily: 'Poppins',
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ),
       ),
       body: RefreshIndicator(
-        color: AppColors.teal,
-        backgroundColor: AppColors.voidLight,
+        color: AppColors.orange,
+        backgroundColor: AppColors.surface,
         onRefresh: () async {
           ref.invalidate(dueBreakdownProvider);
           await ref.read(expenseListControllerProvider.notifier).refresh();
         },
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
           children: [
-            _buildPeriodToggle(),
+            _FadeUp(order: 0, child: _buildPeriodToggle()),
             const SizedBox(height: 14),
-            if (isManager)
-              _managerLockedNotice()
-            else ...[
-              _buildHeroCards(
-                income: collected,
-                expense: periodExpense,
-                net: net,
-              ),
-              const SizedBox(height: 16),
-              _buildBarChart(bookings, expenses),
-              const SizedBox(height: 16),
-              _buildBookedRow(
-                booked: booked,
-                collected: collected,
-                due: periodDue,
+            if (isManager) ...[
+              _FadeUp(order: 1, child: _managerLockedNotice()),
+              const SizedBox(height: 18),
+            ] else ...[
+              _FadeUp(
+                order: 1,
+                child: _buildHero(net: net, collected: collected),
               ),
               const SizedBox(height: 18),
+              _FadeUp(order: 2, child: _buildQuickActions(isManager)),
+              const SizedBox(height: 22),
+              _FadeUp(
+                order: 3,
+                child: _buildIncomeExpensePair(
+                  income: collected,
+                  expense: periodExpense,
+                ),
+              ),
+              const SizedBox(height: 14),
+              _FadeUp(
+                order: 4,
+                child: _buildAssetRows(
+                  booked: booked,
+                  collected: collected,
+                  due: periodDue,
+                ),
+              ),
+              const SizedBox(height: 14),
+              _FadeUp(order: 5, child: _buildBarChart(bookings, expenses)),
+              const SizedBox(height: 22),
             ],
-            _buildDueSection(periodDueEntries),
-            const SizedBox(height: 18),
-            _buildQuickLinks(isManager),
+            _FadeUp(order: 6, child: _buildActivityLog(periodDueEntries)),
           ],
         ),
       ),
     );
   }
 
-  // ── Monthly | Yearly ────────────────────────────────────────────────
+  // ── Monthly | Yearly pill ───────────────────────────────────────────
   Widget _buildPeriodToggle() {
     Widget pill(String label, bool yearly) {
       final selected = _isYearly == yearly;
@@ -154,19 +183,20 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         child: GestureDetector(
           onTap: () => setState(() => _isYearly = yearly),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
+            duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(vertical: 10),
             decoration: BoxDecoration(
-              color: selected ? AppColors.teal : Colors.transparent,
-              borderRadius: BorderRadius.circular(10),
+              color: selected ? AppColors.film : Colors.transparent,
+              borderRadius: BorderRadius.circular(999),
             ),
             alignment: Alignment.center,
             child: Text(
               label,
               style: TextStyle(
-                color: selected ? AppColors.voidBlack : AppColors.filmDim,
-                fontSize: 13,
+                color: selected ? Colors.white : AppColors.filmDim,
+                fontSize: 12.5,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                letterSpacing: 0.3,
               ),
             ),
           ),
@@ -177,9 +207,9 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppColors.voidLight,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.hairline),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.glassBorder),
       ),
       child: Row(children: [pill('Monthly', false), pill('Yearly', true)]),
     );
@@ -187,12 +217,11 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
 
   Widget _managerLockedNotice() {
     return Container(
-      padding: const EdgeInsets.all(14),
-      margin: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.voidLight,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.hairline),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.glassBorder),
       ),
       child: Row(
         children: [
@@ -213,44 +242,237 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     );
   }
 
-  // ── Income / Expense / Net ─────────────────────────────────────────
-  Widget _buildHeroCards({
+  // ── Hero: oversized Net on a deep gradient card ─────────────────────
+  Widget _buildHero({required double net, required double collected}) {
+    final positive = net >= 0;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 26, 24, 26),
+      decoration: BoxDecoration(
+        gradient: AppColors.drawerHeaderGradient,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary600.withValues(alpha: 0.35),
+            blurRadius: 28,
+            spreadRadius: -8,
+            offset: const Offset(0, 14),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _isYearly ? 'NET — THIS YEAR' : 'NET — THIS MONTH',
+            style: TextStyle(
+              fontFamily: 'Montserrat',
+              color: Colors.white.withValues(alpha: 0.85),
+              fontSize: 10.5,
+              letterSpacing: 2.2,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 10),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              '৳${net.toStringAsFixed(0)}',
+              style: const TextStyle(
+                fontFamily: 'Poppins',
+                color: Colors.white,
+                fontSize: 44,
+                fontWeight: FontWeight.w700,
+                height: 1.04,
+                letterSpacing: -1,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  positive
+                      ? Icons.trending_up_rounded
+                      : Icons.trending_down_rounded,
+                  color: Colors.white,
+                  size: 14,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Collected ৳${collected.toStringAsFixed(0)}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Circular quick-action pills ─────────────────────────────────────
+  Widget _buildQuickActions(bool isManager) {
+    final actions = <({String label, IconData icon, String route})>[
+      (
+        label: 'Expenses',
+        icon: Icons.receipt_long_outlined,
+        route: RouteNames.financeExpenses,
+      ),
+      if (!isManager)
+        (
+          label: 'Cash Flow',
+          icon: Icons.stacked_line_chart_rounded,
+          route: RouteNames.cashFlow,
+        ),
+      (
+        label: 'Petty Cash',
+        icon: Icons.savings_outlined,
+        route: RouteNames.pettyCash,
+      ),
+      if (!isManager)
+        (
+          label: 'Reports',
+          icon: Icons.assessment_outlined,
+          route: RouteNames.reports,
+        ),
+      (
+        label: 'Salary',
+        icon: Icons.groups_outlined,
+        route: RouteNames.teamSalarySheet,
+      ),
+    ];
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (final a in actions)
+            Padding(
+              padding: const EdgeInsets.only(right: 18),
+              child: GestureDetector(
+                onTap: () => Navigator.of(context).pushNamed(a.route),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 58,
+                      height: 58,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.glassBorder),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x14803500),
+                            blurRadius: 16,
+                            spreadRadius: -4,
+                            offset: Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Icon(a.icon, color: AppColors.orange, size: 24),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      a.label,
+                      style: const TextStyle(
+                        color: AppColors.film,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ── Income / Expense bento pair ─────────────────────────────────────
+  Widget _buildIncomeExpensePair({
     required double income,
     required double expense,
-    required double net,
   }) {
-    Widget card(String label, double value, Color color, IconData icon) {
+    final total = (income + expense) <= 0 ? 1.0 : income + expense;
+
+    Widget card({
+      required String label,
+      required double value,
+      required double share,
+      required Color color,
+      required IconData icon,
+    }) {
       return Expanded(
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: AppColors.voidLight,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: color.withValues(alpha: 0.25)),
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.glassBorder),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x14803500),
+                blurRadius: 20,
+                spreadRadius: -6,
+                offset: Offset(0, 10),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, color: color, size: 16),
-              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 18),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                label,
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 10,
+                  letterSpacing: 1.6,
+                  color: AppColors.filmDim.withValues(alpha: 0.8),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
                   '৳${value.toStringAsFixed(0)}',
                   style: TextStyle(
-                    color: color,
-                    fontSize: 17,
+                    fontFamily: 'Poppins',
+                    color: AppColors.film,
+                    fontSize: 21,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                style: TextStyle(
-                  color: AppColors.filmDim.withValues(alpha: 0.8),
-                  fontSize: 10.5,
-                  letterSpacing: 0.4,
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: LinearProgressIndicator(
+                  value: (value / total).clamp(0.02, 1.0),
+                  minHeight: 5,
+                  backgroundColor: color.withValues(alpha: 0.10),
+                  valueColor: AlwaysStoppedAnimation<Color>(color),
                 ),
               ),
             ],
@@ -261,17 +483,140 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
 
     return Row(
       children: [
-        card('INCOME', income, AppColors.teal, Icons.trending_up_rounded),
-        const SizedBox(width: 10),
-        card('EXPENSE', expense, AppColors.coral, Icons.trending_down_rounded),
-        const SizedBox(width: 10),
         card(
-          'NET',
-          net,
-          net >= 0 ? AppColors.gold : AppColors.red,
-          Icons.account_balance_wallet_outlined,
+          label: 'INCOME',
+          value: income,
+          share: income / total,
+          color: AppColors.green,
+          icon: Icons.south_west_rounded,
+        ),
+        const SizedBox(width: 14),
+        card(
+          label: 'EXPENSE',
+          value: expense,
+          share: expense / total,
+          color: AppColors.coral,
+          icon: Icons.north_east_rounded,
         ),
       ],
+    );
+  }
+
+  // ── "Assets" rows: Booked / Collected / Due ─────────────────────────
+  Widget _buildAssetRows({
+    required double booked,
+    required double collected,
+    required double due,
+  }) {
+    Widget row({
+      required IconData icon,
+      required Color color,
+      required String label,
+      required String sub,
+      required double value,
+      VoidCallback? onTap,
+    }) {
+      return InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        color: AppColors.film,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      sub,
+                      style: TextStyle(
+                        color: AppColors.filmDim.withValues(alpha: 0.75),
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                '৳${value.toStringAsFixed(0)}',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  color: color,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.glassBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _isYearly ? 'THIS YEAR' : 'THIS MONTH',
+            style: TextStyle(
+              fontFamily: 'Montserrat',
+              fontSize: 10,
+              letterSpacing: 1.8,
+              color: AppColors.filmDim.withValues(alpha: 0.8),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          row(
+            icon: Icons.event_note_rounded,
+            color: AppColors.film,
+            label: 'Booked',
+            sub: 'মোট বুকিং মূল্য',
+            value: booked,
+          ),
+          Divider(height: 1, color: AppColors.hairline),
+          row(
+            icon: Icons.check_circle_outline_rounded,
+            color: AppColors.green,
+            label: 'Collected',
+            sub: 'আদায় হয়েছে',
+            value: collected,
+          ),
+          Divider(height: 1, color: AppColors.hairline),
+          row(
+            icon: Icons.hourglass_bottom_rounded,
+            color: AppColors.coral,
+            label: 'Due',
+            sub: 'বকেয়া — নিচের Activity Log দেখুন',
+            value: due,
+          ),
+        ],
+      ),
     );
   }
 
@@ -312,32 +657,34 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     ];
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.voidLight,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.hairline),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.glassBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Text(
-                'Last 6 Months',
+              Text(
+                'LAST 6 MONTHS',
                 style: TextStyle(
-                  color: AppColors.film,
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Montserrat',
+                  fontSize: 10,
+                  letterSpacing: 1.8,
+                  color: AppColors.filmDim.withValues(alpha: 0.8),
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               const Spacer(),
-              _legendDot(AppColors.teal, 'Income'),
+              _legendDot(AppColors.orange, 'Income'),
               const SizedBox(width: 10),
               _legendDot(AppColors.coral, 'Expense'),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           SizedBox(
             height: 120,
             child: Row(
@@ -353,7 +700,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          _bar(incomeH, AppColors.teal),
+                          _bar(incomeH, AppColors.orange),
                           const SizedBox(width: 3),
                           _bar(expenseH, AppColors.coral),
                         ],
@@ -362,8 +709,10 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                       Text(
                         monthNames[m.month - 1],
                         style: TextStyle(
+                          fontFamily: 'Montserrat',
                           color: AppColors.filmDim.withValues(alpha: 0.7),
-                          fontSize: 10,
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
@@ -379,13 +728,13 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
 
   Widget _bar(double height, Color color) {
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 500),
       curve: Curves.easeOutCubic,
       width: 10,
-      height: height.clamp(2, 90),
+      height: height.clamp(3, 90),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.85),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
+        color: color.withValues(alpha: 0.9),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
       ),
     );
   }
@@ -410,83 +759,32 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     );
   }
 
-  // ── Booked / Collected / Due strip ─────────────────────────────────
-  Widget _buildBookedRow({
-    required double booked,
-    required double collected,
-    required double due,
-  }) {
-    Widget stat(String label, double value, Color color) {
-      return Expanded(
-        child: Column(
-          children: [
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                '৳${value.toStringAsFixed(0)}',
-                style: TextStyle(
-                  color: color,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                color: AppColors.filmDim.withValues(alpha: 0.75),
-                fontSize: 10.5,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      decoration: BoxDecoration(
-        color: AppColors.voidLight,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.hairline),
-      ),
-      child: Row(
-        children: [
-          stat('Booked', booked, AppColors.film),
-          Container(width: 1, height: 28, color: AppColors.hairline),
-          stat('Collected', collected, AppColors.teal),
-          Container(width: 1, height: 28, color: AppColors.hairline),
-          stat('Due', due, AppColors.coral),
-        ],
-      ),
-    );
-  }
-
-  // ── Events with due ────────────────────────────────────────────────
-  Widget _buildDueSection(List<DueEntry> entries) {
+  // ── Activity Log: events with money still owed ──────────────────────
+  Widget _buildActivityLog(List<DueEntry> entries) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'DUE — ${_isYearly ? 'THIS YEAR' : 'THIS MONTH'}',
-          style: TextStyle(
-            fontFamily: 'Montserrat',
-            fontSize: 10.5,
-            letterSpacing: 1.4,
-            color: AppColors.filmDim.withValues(alpha: 0.85),
-            fontWeight: FontWeight.w600,
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 10),
+          child: Text(
+            'ACTIVITY LOG — DUE',
+            style: TextStyle(
+              fontFamily: 'Montserrat',
+              fontSize: 10.5,
+              letterSpacing: 1.8,
+              color: AppColors.filmDim.withValues(alpha: 0.85),
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
-        const SizedBox(height: 10),
         if (entries.isEmpty)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: AppColors.voidLight,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.hairline),
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: AppColors.glassBorder),
             ),
             child: Text(
               'কোনো বকেয়া নেই 🎉',
@@ -498,148 +796,135 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
             ),
           )
         else
-          for (final e in entries.take(8))
-            Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              decoration: BoxDecoration(
-                color: AppColors.voidLight,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.hairline),
-              ),
-              child: ListTile(
-                onTap: () => Navigator.of(
-                  context,
-                ).pushNamed(RouteNames.bookingDetail, arguments: e.bookingId),
-                leading: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: AppColors.coral.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.event_note_rounded,
-                    color: AppColors.coral,
-                    size: 20,
-                  ),
-                ),
-                title: Text(
-                  e.clientName?.trim().isNotEmpty == true
-                      ? e.clientName!
-                      : e.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.film,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                subtitle: Text(
-                  '${e.date.day}/${e.date.month}/${e.date.year}'
-                  ' · Paid ৳${e.paid.toStringAsFixed(0)}'
-                  ' / ৳${e.total.toStringAsFixed(0)}',
-                  style: TextStyle(
-                    color: AppColors.filmDim.withValues(alpha: 0.8),
-                    fontSize: 11.5,
-                  ),
-                ),
-                trailing: Text(
-                  '৳${e.due.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                    color: AppColors.coral,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: AppColors.glassBorder),
             ),
+            child: Column(
+              children: [
+                for (var i = 0; i < entries.length && i < 10; i++) ...[
+                  _activityRow(entries[i]),
+                  if (i != entries.length - 1 && i != 9)
+                    Divider(height: 1, indent: 68, color: AppColors.hairline),
+                ],
+              ],
+            ),
+          ),
       ],
     );
   }
 
-  // ── Quick links ────────────────────────────────────────────────────
-  Widget _buildQuickLinks(bool isManager) {
-    final links = <({String label, IconData icon, String route})>[
-      (
-        label: 'Expenses',
-        icon: Icons.receipt_long_outlined,
-        route: RouteNames.financeExpenses,
-      ),
-      if (!isManager)
-        (
-          label: 'Cash Flow',
-          icon: Icons.stacked_line_chart_rounded,
-          route: RouteNames.cashFlow,
-        ),
-      (
-        label: 'Petty Cash',
-        icon: Icons.savings_outlined,
-        route: RouteNames.pettyCash,
-      ),
-      if (!isManager)
-        (
-          label: 'Reports',
-          icon: Icons.assessment_outlined,
-          route: RouteNames.reports,
-        ),
-      (
-        label: 'Salary Sheet',
-        icon: Icons.groups_outlined,
-        route: RouteNames.teamSalarySheet,
-      ),
-    ];
+  Widget _activityRow(DueEntry e) {
+    final display = e.clientName?.trim().isNotEmpty == true
+        ? e.clientName!
+        : e.title;
+    final initial = display.isEmpty ? '?' : display[0].toUpperCase();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'MORE',
-          style: TextStyle(
-            fontFamily: 'Montserrat',
-            fontSize: 10.5,
-            letterSpacing: 1.4,
-            color: AppColors.filmDim.withValues(alpha: 0.85),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: links.map((l) {
-            return GestureDetector(
-              onTap: () => Navigator.of(context).pushNamed(l.route),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.voidLight,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.hairline),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(l.icon, color: AppColors.teal, size: 16),
-                    const SizedBox(width: 7),
-                    Text(
-                      l.label,
-                      style: const TextStyle(
-                        color: AppColors.film,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
+    return InkWell(
+      borderRadius: BorderRadius.circular(24),
+      onTap: () => Navigator.of(
+        context,
+      ).pushNamed(RouteNames.bookingDetail, arguments: e.bookingId),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.gold.withValues(alpha: 0.14),
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                initial,
+                style: const TextStyle(
+                  color: AppColors.gold,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-            );
-          }).toList(),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    display,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppColors.film,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${e.date.day}/${e.date.month}/${e.date.year}'
+                    ' · Paid ৳${e.paid.toStringAsFixed(0)} / ৳${e.total.toStringAsFixed(0)}',
+                    style: TextStyle(
+                      color: AppColors.filmDim.withValues(alpha: 0.8),
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              '-৳${e.due.toStringAsFixed(0)}',
+              style: const TextStyle(
+                fontFamily: 'Poppins',
+                color: AppColors.coral,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
+    );
+  }
+}
+
+/// Staggered fade-up entrance: each [order] step starts 70ms later.
+class _FadeUp extends StatefulWidget {
+  const _FadeUp({required this.order, required this.child});
+
+  final int order;
+  final Widget child;
+
+  @override
+  State<_FadeUp> createState() => _FadeUpState();
+}
+
+class _FadeUpState extends State<_FadeUp> {
+  bool _shown = false;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(Duration(milliseconds: 60 + widget.order * 70), () {
+      if (mounted) setState(() => _shown = true);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSlide(
+      duration: const Duration(milliseconds: 380),
+      curve: Curves.easeOutCubic,
+      offset: _shown ? Offset.zero : const Offset(0, 0.06),
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 380),
+        curve: Curves.easeOut,
+        opacity: _shown ? 1 : 0,
+        child: widget.child,
+      ),
     );
   }
 }
