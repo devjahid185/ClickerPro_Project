@@ -29,13 +29,26 @@ class FlEarningApi {
     return FlEarningsOverview.fromJson(data);
   }
 
-  /// `POST /api/freelancer/earnings/request-payment` — notify all owners
-  /// with pending balances.  Returns `true` on success.
-  Future<bool> requestPayment() async {
+  /// `POST /api/freelancer/earnings/request-payment` — app-to-app due
+  /// payment request to the owner, carrying the freelancer's bKash /
+  /// bank details so the owner can pay without asking. Returns `true`
+  /// on success.
+  Future<bool> requestPayment({
+    double? amount,
+    String? bkash,
+    String? bankDetails,
+    String? note,
+  }) async {
     final r =
         await _client.post(
               '/api/freelancer/earnings/request-payment',
-              body: <String, dynamic>{},
+              body: <String, dynamic>{
+                if (amount != null && amount > 0) 'amount': amount,
+                if (bkash != null && bkash.isNotEmpty) 'bkash': bkash,
+                if (bankDetails != null && bankDetails.isNotEmpty)
+                  'bankDetails': bankDetails,
+                if (note != null && note.isNotEmpty) 'note': note,
+              },
             )
             as Map<String, dynamic>;
     return r['success'] == true;

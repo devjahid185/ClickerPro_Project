@@ -13,6 +13,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../core/booking_status/booking_status.dart';
 import '../../../core/role/capability.dart';
@@ -24,6 +25,7 @@ import '../../../shared/states/lens_loader.dart';
 import '../../../shared/states/offline_banner.dart';
 import '../../../theme/app_colors.dart';
 import '../../auth/domain/user_role.dart';
+import '../../public_booking/application/public_booking_providers.dart';
 import '../../settings/application/language_controller.dart';
 import '../application/booking_providers.dart';
 import '../domain/booking.dart';
@@ -125,6 +127,29 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
     );
   }
 
+  /// Shares the studio's public self-booking web link — the client
+  /// fills the form themselves and the booking lands as PENDING.
+  Future<void> _shareBookingLink(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final repo = ref.read(publicBookingRepositoryProvider);
+      final issued = await repo.issueToken(
+        policy: ref.read(bookingsPolicyProvider),
+      );
+      await SharePlus.instance.share(
+        ShareParams(
+          text:
+              'আমাদের স্টুডিওতে বুকিং দিতে এই লিংকে আপনার তথ্য দিন:\n${issued.url}',
+          subject: 'Booking link',
+        ),
+      );
+    } catch (_) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('লিংক আনা যায়নি — আবার চেষ্টা করুন।')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final filter = ref.watch(bookingFilterProvider);
@@ -171,7 +196,12 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
             onPressed: () =>
                 Navigator.of(context).pushNamed(RouteNames.waitlist),
           ),
-          if (policy.can(Capability.approvePublicBooking))
+          if (policy.can(Capability.approvePublicBooking)) ...[
+            IconButton(
+              tooltip: 'Share booking link',
+              icon: const Icon(Icons.share_outlined, color: AppColors.teal),
+              onPressed: () => _shareBookingLink(context),
+            ),
             IconButton(
               tooltip: 'Pending requests',
               icon: const Icon(
@@ -182,6 +212,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                 context,
               ).pushNamed(RouteNames.pendingPublicBookings),
             ),
+          ],
           if (listAsync.hasValue)
             Center(
               child: Container(

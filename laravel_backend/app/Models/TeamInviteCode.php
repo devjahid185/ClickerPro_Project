@@ -10,7 +10,7 @@ class TeamInviteCode extends Model
     use HasFactory;
 
     protected $fillable = [
-        'owner_id', 'code', 'used_by', 'used_at', 'expires_at',
+        'owner_id', 'code', 'target_email', 'used_by', 'used_at', 'expires_at',
     ];
 
     protected $casts = [

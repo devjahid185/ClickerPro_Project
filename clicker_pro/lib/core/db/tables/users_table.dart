@@ -19,6 +19,7 @@ class UsersTable extends Table {
   TextColumn get bankDetails => text().nullable()();
   TextColumn get signatureUrl => text().nullable()();
   TextColumn get logoUrl => text().nullable()();
+  TextColumn get companyName => text().nullable()();
   IntColumn get totalEvents => integer().withDefault(const Constant(0))();
   IntColumn get totalRevenueMinor => integer().withDefault(const Constant(0))();
   IntColumn get totalClients => integer().withDefault(const Constant(0))();

@@ -97,7 +97,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -148,6 +148,11 @@ class AppDatabase extends _$AppDatabase {
           "WHERE client_id IS NOT NULL "
           "AND client_id NOT IN (SELECT id FROM clients_table)",
         );
+      }
+      // v6 → v7: users_table gains companyName. Without a local column the
+      // edited Company Name silently vanished after every profile refresh.
+      if (from <= 6 && to >= 7) {
+        await m.addColumn(usersTable, usersTable.companyName);
       }
     },
   );

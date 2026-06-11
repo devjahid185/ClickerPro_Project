@@ -34,7 +34,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
+import '../../../core/format/bd_holidays.dart';
 import '../../../core/navigation/route_names.dart';
 import '../../../core/providers.dart';
 import '../../../shared/states/error_state.dart';
@@ -48,7 +50,6 @@ import '../../auth/application/session_controller.dart';
 import '../../auth/domain/user_role.dart';
 import '../../../core/booking_status/booking_status.dart';
 import '../../bookings/application/booking_providers.dart';
-import '../../broadcasts/presentation/broadcast_banner.dart';
 import '../../broadcasts/presentation/broadcast_popup.dart';
 import '../../push/application/fcm_bootstrap.dart';
 import '../../announcements/application/announcement_providers.dart';
@@ -142,7 +143,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         // Center FAB handled in `_navFab`.
         break;
       case 3:
-        _pushNamed(RouteNames.finance);
+        // Freelancer's "Finance" is their earnings view — they have no
+        // studio income/expense data to show.
+        final role = ref.read(currentUserProvider).valueOrNull?.role;
+        _pushNamed(
+          role == UserRole.freelancer
+              ? RouteNames.freelancerEarnings
+              : RouteNames.finance,
+        );
         break;
       case 4:
         _pushNamed(RouteNames.settings);
@@ -339,10 +347,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       ..sort((a, b) => a.order.compareTo(b.order));
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 20),
+      // Bottom padding clears the floating 56px nav bar + its margin so
+      // the last card (weather) is never hidden behind it.
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 96),
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
-        const BroadcastBanner(),
+        // Platform broadcasts now arrive as the 10s popup + the drawer's
+        // "Platform Updates" screen — the persistent welcome banner was
+        // removed per design feedback.
         for (var i = 0; i < enabled.length; i++) ...[
           if (i > 0) const SizedBox(height: 12),
           _stagger(i, _buildSection(enabled[i].type, user)),
@@ -1010,13 +1022,69 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   Widget _buildAnnouncementCard() {
     final announcementsAsync = ref.watch(sortedAnnouncementsProvider);
 
+    // The section header is always rendered above this card, so an
+    // invisible card here looked like a broken/missing announcement box.
+    // Loading / error / empty all render a real placeholder box that
+    // links to the Announcements screen instead of disappearing.
+    Widget placeholderBox(String message) {
+      return GestureDetector(
+        onTap: () => Navigator.of(context).pushNamed(RouteNames.announcements),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppColors.gold.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.campaign_outlined,
+                  color: AppColors.gold,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  message,
+                  style: TextStyle(
+                    color: AppColors.filmDim.withValues(alpha: 0.85),
+                    fontSize: 12.5,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.filmDim.withValues(alpha: 0.5),
+                size: 20,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return announcementsAsync.when(
-      loading: () => const SizedBox.shrink(),
-      error: (_, _) => const SizedBox.shrink(),
+      loading: () => placeholderBox('এনাউন্সমেন্ট লোড হচ্ছে…'),
+      error: (_, _) =>
+          placeholderBox('এনাউন্সমেন্ট আনা যায়নি — ট্যাপ করে আবার দেখুন।'),
       data: (items) {
-        // Show only latest non-expired item; hide card if nothing available.
         final active = items.where((a) => !a.isExpired).toList();
-        if (active.isEmpty) return const SizedBox.shrink();
+        if (active.isEmpty) {
+          return placeholderBox(
+            'এখনো কোনো এনাউন্সমেন্ট নেই — নতুন পোস্ট করতে ট্যাপ করুন।',
+          );
+        }
         final a = active.first;
         return GestureDetector(
           onTap: () {
@@ -1039,13 +1107,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
     final metricsAsync = ref.watch(dashboardMetricsProvider);
     final m = metricsAsync.value ?? DashboardMetrics.placeholder;
+    final dueEntries = ref.watch(dueBreakdownProvider).valueOrNull;
+    final dueSub = dueEntries == null
+        ? 'tap to see events'
+        : '${dueEntries.length} events with due';
 
     if (isManager) {
       return _buildPayCard(
         isCollect: false,
         label: 'Due',
         amount: _formatBdt(m.pendingDue),
-        sub: '7 clients · 3 overdue',
+        sub: dueSub,
+        onTap: _showDueSheet,
       );
     }
 
@@ -1057,7 +1130,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               isCollect: true,
               label: 'Received',
               amount: _formatBdt(m.todayCollection),
-              sub: '4 payments received',
+              sub: 'today',
             ),
           ),
           const SizedBox(width: 10),
@@ -1066,7 +1139,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               isCollect: false,
               label: 'Pending\nPayout',
               amount: _formatBdt(m.pendingDue),
-              sub: '7 clients · 3 overdue',
+              sub: dueSub,
+              onTap: _showDueSheet,
             ),
           ),
         ],
@@ -1081,7 +1155,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             isCollect: true,
             label: 'Today\nCollection',
             amount: _formatBdt(m.todayCollection),
-            sub: '4 payments received',
+            sub: 'today',
           ),
         ),
         const SizedBox(width: 10),
@@ -1090,10 +1164,166 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             isCollect: false,
             label: 'Pending\nDue',
             amount: _formatBdt(m.pendingDue),
-            sub: '7 clients · 3 overdue',
+            sub: dueSub,
+            onTap: _showDueSheet,
           ),
         ),
       ],
+    );
+  }
+
+  /// Due drill-down: lists every event that still has money owed.
+  /// Tapping an entry opens that event's details.
+  void _showDueSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.voidElevated,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Consumer(
+        builder: (ctx, sheetRef, _) {
+          final entriesAsync = sheetRef.watch(dueBreakdownProvider);
+          return SafeArea(
+            child: Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(ctx).size.height * 0.7,
+              ),
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const Text(
+                    'বকেয়া আছে যেসব ইভেন্টে',
+                    style: TextStyle(
+                      color: AppColors.film,
+                      fontFamily: 'Poppins',
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Flexible(
+                    child: entriesAsync.when(
+                      loading: () => const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24),
+                        child: Center(child: LensLoader()),
+                      ),
+                      error: (_, _) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 24),
+                        child: Text(
+                          'বকেয়ার তালিকা আনা যায়নি।',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppColors.filmDim.withValues(alpha: 0.85),
+                          ),
+                        ),
+                      ),
+                      data: (entries) {
+                        if (entries.isEmpty) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 24),
+                            child: Text(
+                              'কোনো বকেয়া নেই 🎉',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: AppColors.filmDim.withValues(
+                                  alpha: 0.85,
+                                ),
+                                fontSize: 14,
+                              ),
+                            ),
+                          );
+                        }
+                        return ListView.separated(
+                          shrinkWrap: true,
+                          itemCount: entries.length,
+                          separatorBuilder: (_, _) => Divider(
+                            height: 1,
+                            color: Colors.black.withValues(alpha: 0.05),
+                          ),
+                          itemBuilder: (_, i) {
+                            final e = entries[i];
+                            return ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: AppColors.coral.withValues(
+                                    alpha: 0.12,
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.event_note_rounded,
+                                  color: AppColors.coral,
+                                  size: 20,
+                                ),
+                              ),
+                              title: Text(
+                                e.clientName?.trim().isNotEmpty == true
+                                    ? e.clientName!
+                                    : e.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: AppColors.film,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              subtitle: Text(
+                                '${e.date.day}/${e.date.month}/${e.date.year}'
+                                ' · Paid ৳${e.paid.toStringAsFixed(0)}'
+                                ' / ৳${e.total.toStringAsFixed(0)}',
+                                style: TextStyle(
+                                  color: AppColors.filmDim.withValues(
+                                    alpha: 0.85,
+                                  ),
+                                  fontSize: 11.5,
+                                ),
+                              ),
+                              trailing: Text(
+                                '৳${e.due.toStringAsFixed(0)}',
+                                style: const TextStyle(
+                                  color: AppColors.coral,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              onTap: () {
+                                Navigator.of(ctx).pop();
+                                Navigator.of(context).pushNamed(
+                                  RouteNames.bookingDetail,
+                                  arguments: e.bookingId,
+                                );
+                              },
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -1116,9 +1346,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     required String label,
     required String amount,
     required String sub,
+    VoidCallback? onTap,
   }) {
     final color = isCollect ? AppColors.teal : AppColors.coral;
-    return Container(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -1182,6 +1415,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           ),
         ],
       ),
+      ),
     );
   }
 
@@ -1197,6 +1431,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             number: '${m.holidaysThisMonth}',
             label: 'Holidays\nThis Month',
             isCancel: false,
+            // Tapping lists WHICH dates are holidays this month.
+            onTap: _showHolidaySheet,
           ),
         ),
         const SizedBox(width: 10),
@@ -1211,6 +1447,127 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           ),
         ),
       ],
+    );
+  }
+
+  /// Lists this month's public holidays (date + name) in a sheet.
+  void _showHolidaySheet() {
+    final now = DateTime.now();
+    final holidays = bdHolidaysOfMonth(now);
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.voidElevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Text(
+                '🎉 ${DateFormat.MMMM().format(now)} — এ মাসের ছুটি',
+                style: const TextStyle(
+                  color: AppColors.film,
+                  fontFamily: 'Poppins',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (holidays.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Text(
+                    'এই মাসে কোনো সরকারি ছুটি নেই।',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.filmDim.withValues(alpha: 0.85),
+                      fontSize: 13,
+                    ),
+                  ),
+                )
+              else
+                for (final h in holidays)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.gold.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: AppColors.gold.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            '${h.date.day}',
+                            style: const TextStyle(
+                              color: AppColors.gold,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                h.name,
+                                style: const TextStyle(
+                                  color: AppColors.film,
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Text(
+                                DateFormat.EEEE().format(h.date),
+                                style: TextStyle(
+                                  color: AppColors.filmDim.withValues(
+                                    alpha: 0.7,
+                                  ),
+                                  fontSize: 11.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              if (holidays.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  '* চাঁদ দেখার ওপর নির্ভর করে ±১ দিন এদিক-ওদিক হতে পারে।',
+                  style: TextStyle(
+                    color: AppColors.filmDim.withValues(alpha: 0.6),
+                    fontSize: 10.5,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -1910,11 +2267,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   scale: isActive ? 1.15 : 1.0,
                   duration: const Duration(milliseconds: 220),
                   curve: Curves.easeOutBack,
+                  // Always-colourful tabs: filled icons in each module's
+                  // own colour (inactive just slightly softened) — the old
+                  // grey-washed inactive state read as monochrome.
                   child: Icon(
-                    isActive ? filledIcon : outlinedIcon,
-                    color: isActive
-                        ? tint
-                        : Color.lerp(tint, AppColors.filmMuted, 0.5),
+                    filledIcon,
+                    color: isActive ? tint : tint.withValues(alpha: 0.75),
                     size: 19,
                   ),
                 ),

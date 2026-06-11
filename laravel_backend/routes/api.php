@@ -42,15 +42,19 @@ use App\Http\Controllers\Api\PettyCashController;
 use App\Http\Controllers\Api\FollowupController;
 use App\Http\Controllers\Api\FreelancerController;
 
-// Public auth routes — strict throttle to blunt brute-force / OTP guessing.
-Route::prefix('auth')->middleware('throttle:6,1')->group(function () {
-    Route::post('register', [AuthController::class, 'register']);
-    Route::post('login', [AuthController::class, 'login']);
-    Route::post('forgot', [AuthController::class, 'forgotPassword']);
-    Route::post('reset', [AuthController::class, 'resetPassword']);
-    Route::post('otp/request', [AuthController::class, 'requestOtp']);
-    Route::post('otp/verify', [AuthController::class, 'verifyOtp']);
-    Route::post('accept-invite', [AuthController::class, 'acceptInvite']);
+// Public auth routes. Each flow gets its OWN throttle bucket so a burst
+// of OTP requests can no longer lock a legitimate user out of login
+// (previously all seven routes shared one 6/min bucket per IP).
+Route::prefix('auth')->group(function () {
+    Route::post('register', [AuthController::class, 'register'])->middleware('throttle:5,10');
+    Route::post('login', [AuthController::class, 'login'])->middleware('throttle:10,1');
+    Route::post('forgot', [AuthController::class, 'forgotPassword'])->middleware('throttle:4,1');
+    Route::post('reset', [AuthController::class, 'resetPassword'])->middleware('throttle:6,1');
+    Route::post('otp/request', [AuthController::class, 'requestOtp'])->middleware('throttle:4,1');
+    Route::post('otp/verify', [AuthController::class, 'verifyOtp'])->middleware('throttle:8,1');
+    Route::post('accept-invite', [AuthController::class, 'acceptInvite'])->middleware('throttle:6,1');
+    Route::post('google', [\App\Http\Controllers\Api\SocialAuthController::class, 'google'])->middleware('throttle:10,1');
+    Route::post('apple', [\App\Http\Controllers\Api\SocialAuthController::class, 'apple'])->middleware('throttle:10,1');
 });
 
 // Other public endpoints — moderate throttle.
@@ -146,6 +150,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::delete('freelancer/leaves/{id}', [FreelancerController::class, 'destroyLeave']);
     Route::get('freelancer/work-history', [FreelancerController::class, 'workHistory']);
     Route::get('freelancer/earnings', [FreelancerController::class, 'earnings']);
+    Route::post('freelancer/earnings/request-payment', [FreelancerController::class, 'requestPayment'])->middleware('throttle:10,1');
 
     // Packages
     Route::get('packages', [PackageController::class, 'index']);
@@ -157,7 +162,12 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::get('team', [TeamController::class, 'members']);
     Route::get('team/invite', [TeamController::class, 'getInvite']);
     Route::post('team/invite', [TeamController::class, 'invite']);
+    Route::post('team/join', [TeamController::class, 'join'])->middleware('throttle:10,1');
+    Route::post('team/invite-email', [TeamController::class, 'inviteByEmail'])->middleware('throttle:10,1');
+    Route::get('team/invites/pending', [TeamController::class, 'pendingInvites']);
+    Route::post('team/invites/{id}/respond', [TeamController::class, 'respondInvite']);
     Route::get('team/members', [TeamController::class, 'members']);
+    Route::get('team/members/{userId}/profile', [TeamController::class, 'memberProfile']);
     Route::patch('team/members/{userId}/permissions', [TeamController::class, 'updatePermissions']);
     Route::delete('team/members/{userId}', [TeamController::class, 'removeMember']);
 
@@ -181,6 +191,13 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     // Notifications & Broadcasts
     Route::get('notifications', [NotificationController::class, 'index']);
     Route::patch('notifications/{id}/read', [NotificationController::class, 'markRead']);
+    // Owner→team announcements
+    Route::get('announcements', [\App\Http\Controllers\Api\AnnouncementController::class, 'index']);
+    Route::post('announcements', [\App\Http\Controllers\Api\AnnouncementController::class, 'store']);
+    Route::patch('announcements/{id}', [\App\Http\Controllers\Api\AnnouncementController::class, 'update']);
+    Route::delete('announcements/{id}', [\App\Http\Controllers\Api\AnnouncementController::class, 'destroy']);
+    Route::post('announcements/{id}/read', [\App\Http\Controllers\Api\AnnouncementController::class, 'markRead']);
+
     Route::get('broadcasts', [BroadcastController::class, 'index']);
     Route::post('broadcasts/{id}/view', [BroadcastController::class, 'trackView']);
     Route::post('broadcasts/{id}/click', [BroadcastController::class, 'trackClick']);

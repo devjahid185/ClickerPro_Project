@@ -41,6 +41,8 @@ import '../../../shared/widgets/status_conflict_listener.dart';
 import '../../../theme/app_colors.dart';
 import '../../auth/domain/user_role.dart';
 import '../../settings/application/language_controller.dart';
+import '../../team/application/team_providers.dart';
+import '../../team/domain/team_member.dart';
 import '../application/booking_detail_controller.dart';
 import '../application/booking_providers.dart';
 import 'widgets/delivery_checklist_sheet.dart';
@@ -124,10 +126,17 @@ class BookingDetailScreen extends ConsumerWidget {
                       ),
                     ),
                   const PopupMenuItem(
+                    value: _DetailMenuAction.calendar,
+                    child: Text(
+                      'Add to Google Calendar',
+                      style: TextStyle(color: AppColors.film),
+                    ),
+                  ),
+                  const PopupMenuItem(
                     value: _DetailMenuAction.refresh,
                     child: Text(
                       'Refresh from server',
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: AppColors.film),
                     ),
                   ),
                 ];
@@ -136,6 +145,12 @@ class BookingDetailScreen extends ConsumerWidget {
                 switch (action) {
                   case _DetailMenuAction.cancel:
                     await _handleCancel(context, ref);
+                    break;
+                  case _DetailMenuAction.calendar:
+                    final env = ref
+                        .read(bookingDetailControllerProvider(bookingId))
+                        .value;
+                    if (env != null) _addToGoogleCalendar(env.booking);
                     break;
                   case _DetailMenuAction.refresh:
                     await ref
@@ -688,13 +703,54 @@ class _ScrollableSlot extends StatelessWidget {
   }
 }
 
-enum _DetailMenuAction { cancel, refresh }
+enum _DetailMenuAction { cancel, calendar, refresh }
+
+/// Opens Google Calendar's event-template page pre-filled with the
+/// booking — works on every device with no API key or OAuth setup; the
+/// user just taps Save inside Google Calendar.
+void _addToGoogleCalendar(Booking booking) {
+  String two(int v) => v.toString().padLeft(2, '0');
+  DateTime at(String hhmm, {required String fallback}) {
+    final parts = (hhmm.contains(':') ? hhmm : fallback).split(':');
+    return DateTime(
+      booking.date.year,
+      booking.date.month,
+      booking.date.day,
+      int.tryParse(parts[0]) ?? 10,
+      int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0,
+    );
+  }
+
+  final start = at(booking.startTime, fallback: '10:00');
+  var end = at(booking.endTime, fallback: '18:00');
+  if (!end.isAfter(start)) end = start.add(const Duration(hours: 2));
+  String fmt(DateTime d) =>
+      '${d.year}${two(d.month)}${two(d.day)}T${two(d.hour)}${two(d.minute)}00';
+
+  final details = [
+    if (booking.clientName != null) 'Client: ${booking.clientName}',
+    if (booking.clientPhone != null) 'Phone: ${booking.clientPhone}',
+    if (booking.notes != null) booking.notes!,
+    'Booked via CLICKER PRO',
+  ].join('\n');
+
+  final uri = Uri.parse('https://calendar.google.com/calendar/render').replace(
+    queryParameters: {
+      'action': 'TEMPLATE',
+      'text': booking.title,
+      'dates': '${fmt(start)}/${fmt(end)}',
+      'details': details,
+      if (booking.venue != null) 'location': booking.venue!,
+    },
+  );
+  launchUrl(uri, mode: LaunchMode.externalApplication);
+}
 
 // ─────────────────────────────────────────────────────────────────────
 // Invoice Action — opens auto-generated invoice bottom sheet
 // ─────────────────────────────────────────────────────────────────────
 
-class _InvoiceAction extends StatelessWidget {
+class _InvoiceAction extends ConsumerWidget {
   const _InvoiceAction({
     required this.booking,
     required this.envelope,
@@ -706,7 +762,7 @@ class _InvoiceAction extends StatelessWidget {
   final String lang;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return DetailSection(
       title: 'Invoice',
       child: SizedBox(
@@ -722,18 +778,35 @@ class _InvoiceAction extends StatelessWidget {
           ),
           icon: const Icon(Icons.receipt_long_rounded, size: 18),
           label: const Text('View Invoice'),
-          onPressed: () => _showInvoiceSheet(context),
+          onPressed: () => _showInvoiceSheet(context, ref),
         ),
       ),
     );
   }
 
-  void _showInvoiceSheet(BuildContext context) {
-    final chiefName = _resolveChiefName();
-    final teamNames = envelope.assignments
-        .map((a) => '${_titleCase(a.role.name)} (${a.userId})')
-        .join(', ');
+  void _showInvoiceSheet(BuildContext context, WidgetRef ref) {
+    // Resolve real names + phone numbers from the team list so the
+    // invoice carries contactable info, not internal user ids.
+    final members = ref.read(teamMembersProvider).valueOrNull ?? const [];
+    String memberLine(String userId, String roleLabel) {
+      final m = members.where((m) => m.userId == userId).firstOrNull;
+      if (m == null) return roleLabel;
+      final phone = (m.phone ?? '').trim();
+      return phone.isEmpty
+          ? '${m.fullName} ($roleLabel)'
+          : '${m.fullName} ($roleLabel) – $phone';
+    }
+
+    final chiefName = _resolveChiefName(members);
+    final teamLines = envelope.assignments
+        .map((a) => memberLine(a.userId, _titleCase(a.role.name)))
+        .toList(growable: false);
     final teamNo = envelope.assignments.length.toString();
+
+    final clientName =
+        envelope.client?.name ?? booking.clientName ?? '—';
+    final clientPhone =
+        envelope.client?.phone ?? booking.clientPhone ?? '—';
 
     final total = booking.customPrice ?? envelope.package?.basePrice ?? 0.0;
     final advance = envelope.payments.fold<double>(0, (s, p) => s + p.amount);
@@ -744,11 +817,16 @@ class _InvoiceAction extends StatelessWidget {
       'DATE: $dateStr',
       'TIME: ${booking.startTime} – ${booking.endTime}',
       'EVENT: ${_titleCase(booking.eventType.name)}',
-      'CLIENT: ${envelope.client?.name ?? '—'}',
-      'PHONE: ${envelope.client?.phone ?? '—'}',
+      'CLIENT: $clientName',
+      'PHONE: $clientPhone',
       'VENUE: ${booking.venue ?? '—'}',
       'CHIEF: $chiefName',
-      'TEAM: $teamNames',
+      if (teamLines.isEmpty)
+        'TEAM: —'
+      else ...[
+        'TEAM:',
+        for (final line in teamLines) '  • $line',
+      ],
       'TEAM NO: $teamNo',
       'TOTAL: ${BookingFormat.money(total, lang: lang, bnNumerals: lang == 'bn')}',
       'ADVANCE: ${BookingFormat.money(advance, lang: lang, bnNumerals: lang == 'bn')}',
@@ -765,14 +843,16 @@ class _InvoiceAction extends StatelessWidget {
     );
   }
 
-  String _resolveChiefName() {
-    if (booking.chiefPhotographerUserId == null) return '—';
-    for (final a in envelope.assignments) {
-      if (a.userId == booking.chiefPhotographerUserId) {
-        return '${_titleCase(a.role.name)} (${a.userId})';
-      }
+  String _resolveChiefName(List<TeamMember> members) {
+    final chiefId = booking.chiefPhotographerUserId;
+    if (chiefId == null) return '—';
+    final m = members.where((m) => m.userId == chiefId).firstOrNull;
+    if (m != null) {
+      final phone = (m.phone ?? '').trim();
+      return phone.isEmpty ? m.fullName : '${m.fullName} – $phone';
     }
-    return booking.chiefPhotographerUserId!;
+    // The chief field stores a free-typed name when not picked from team.
+    return chiefId;
   }
 }
 

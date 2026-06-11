@@ -25,12 +25,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/navigation/route_names.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../screens/dashboard_screen.dart';
+import '../../../core/providers.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_theme.dart';
 import '../../settings/application/language_controller.dart';
 import '../application/session_controller.dart';
+import '../domain/otp_purpose.dart';
 import '../domain/user_role.dart';
+import 'otp_screen.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -154,8 +156,23 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       }
 
       if (session != null) {
+        // Email verification: fire the 6-digit code (fail-soft — a mail
+        // hiccup must not strand a freshly registered user) and route
+        // through the OTP screen; it lands on the Dashboard after verify.
+        final email = _emailController.text.trim();
+        try {
+          await ref
+              .read(authRepositoryProvider)
+              .requestOtp(identifier: email, purpose: OtpPurpose.signup);
+        } catch (_) {
+          // Code email failed — continue; user can resend from the screen.
+        }
+        if (!mounted) return;
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+          MaterialPageRoute(
+            builder: (_) =>
+                OtpScreen(identifier: email, purpose: OtpPurpose.signup),
+          ),
           (route) => false,
         );
       }
@@ -228,21 +245,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             ),
           ),
 
-          // ─── BACK BUTTON ─────────────────────────────────────────
-          Positioned(
-            top: 12,
-            left: 8,
-            child: SafeArea(
-              child: IconButton(
-                icon: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  size: 18,
-                  color: AppColors.film,
-                ),
-                onPressed: () => Navigator.of(context).maybePop(),
-              ),
-            ),
-          ),
+
 
           // ─── MAIN CONTENT ────────────────────────────────────────
           SafeArea(
@@ -440,6 +443,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ],
                   ),
                 ),
+              ),
+            ),
+          ),
+          // ─── BACK BUTTON ─────────────────────────────────────────
+          Positioned(
+            top: 12,
+            left: 8,
+            child: SafeArea(
+              child: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  size: 18,
+                  color: AppColors.film,
+                ),
+                onPressed: () => Navigator.of(context).maybePop(),
               ),
             ),
           ),

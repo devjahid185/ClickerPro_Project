@@ -34,10 +34,9 @@ dependencies:
   google_sign_in: ^6.2.1
   image_picker: ^1.1.2
   sign_in_with_apple: ^6.1.4
+  # Firebase: core + messaging only — auth/database/storage were unused
+  # and added ~15MB of dead weight to the APK.
   firebase_core: ^3.1.0
-  firebase_auth: ^5.1.0
-  firebase_database: ^11.1.0
-  firebase_storage: ^12.1.0
   firebase_messaging: ^15.1.0
 
 dev_dependencies:
@@ -56,7 +55,7 @@ flutter_launcher_icons:
   image_path: "assets/icon/app_icon.png"
   image_path_ios: "assets/icon/app_icon_ios.png"
   min_sdk_android: 21
-  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_background: "#1A0E08"
   adaptive_icon_foreground: "assets/icon/app_icon.png"
 
 flutter:
@@ -64,3 +63,4 @@ flutter:
   uses-material-design: true
   assets:
     - .env
+    - assets/brand/

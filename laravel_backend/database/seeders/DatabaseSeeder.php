@@ -13,6 +13,17 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // SECURITY: these are well-known dev credentials. Refuse to plant
+        // them on a production environment unless explicitly forced
+        // (php artisan db:seed --force still respects this guard).
+        if (app()->environment('production') && env('ALLOW_PROD_SEED') !== 'true') {
+            $this->command?->error(
+                'Refusing to seed known dev credentials in production. '
+                . 'Set ALLOW_PROD_SEED=true temporarily if you really mean it.'
+            );
+            return;
+        }
+
         // Admin user. role/plan/is_active are guarded fields, so set them via
         // forceFill after the safe attributes.
         $admin = User::updateOrCreate(

@@ -214,20 +214,7 @@ class _ManagerInviteScreenState extends ConsumerState<ManagerInviteScreen> {
             ),
           ),
 
-          Positioned(
-            top: 12,
-            left: 8,
-            child: SafeArea(
-              child: IconButton(
-                icon: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  size: 18,
-                  color: AppColors.film,
-                ),
-                onPressed: () => Navigator.of(context).maybePop(),
-              ),
-            ),
-          ),
+
 
           SafeArea(
             child: Center(
@@ -388,6 +375,20 @@ class _ManagerInviteScreenState extends ConsumerState<ManagerInviteScreen> {
                     ],
                   ),
                 ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 12,
+            left: 8,
+            child: SafeArea(
+              child: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  size: 18,
+                  color: AppColors.film,
+                ),
+                onPressed: () => Navigator.of(context).maybePop(),
               ),
             ),
           ),

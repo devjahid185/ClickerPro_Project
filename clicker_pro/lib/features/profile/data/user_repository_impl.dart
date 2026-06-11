@@ -46,6 +46,7 @@ class UserRepositoryImpl implements UserRepository {
     bankDetails: row.bankDetails,
     signatureUrl: row.signatureUrl,
     logoUrl: row.logoUrl,
+    companyName: row.companyName,
     deletedAt: row.deletedAt,
   );
 
@@ -76,6 +77,7 @@ class UserRepositoryImpl implements UserRepository {
     bankDetails: Value(u.bankDetails),
     signatureUrl: Value(u.signatureUrl),
     logoUrl: Value(u.logoUrl),
+    companyName: Value(u.companyName),
     deletedAt: Value(u.deletedAt),
     updatedAt: Value(DateTime.now()),
   );
@@ -94,8 +96,29 @@ class UserRepositoryImpl implements UserRepository {
   Future<void> refreshFromRemote() async {
     try {
       final json = await _api.getProfile();
-      final user = UserModel.fromJson(json);
-      await _users.upsertCurrent(_modelToCompanion(user));
+      final server = UserModel.fromJson(json);
+      // Merge: the server doesn't persist whatsapp/bkash/address/
+      // specialization/signature/logo — overwriting with its copy used
+      // to NULL those out after every refresh (the "save disappears"
+      // bug). Keep the local value wherever the server has none.
+      final row = await _users.getCurrent();
+      final merged = row == null
+          ? server
+          : server.copyWith(
+              whatsapp: server.whatsapp ?? row.whatsapp,
+              specialization: server.specialization ?? row.specialization,
+              vatBin: server.vatBin ?? row.vatBin,
+              studioAddress: server.studioAddress ?? row.studioAddress,
+              bkash: server.bkash ?? row.bkash,
+              bankDetails: server.bankDetails ?? row.bankDetails,
+              signatureUrl: server.signatureUrl ?? row.signatureUrl,
+              logoUrl: server.logoUrl ?? row.logoUrl,
+              avatarUrl: server.avatarUrl ?? row.avatarUrl,
+              phone: server.phone ?? row.phone,
+              bio: server.bio ?? row.bio,
+              companyName: server.companyName ?? row.companyName,
+            );
+      await _users.upsertCurrent(_modelToCompanion(merged));
     } on ApiException catch (e, st) {
       AppLogger.w('user', 'refreshFromRemote failed: ${e.message}');
       AppLogger.e('user', e, st);

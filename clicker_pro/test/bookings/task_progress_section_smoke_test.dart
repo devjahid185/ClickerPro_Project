@@ -143,6 +143,9 @@ class _FakeSessionController extends SessionController {
 }
 
 class _FakeBookingRepository implements BookingRepository {
+  @override
+  Future<Booking?> getByRemoteId(String remoteId) async => null;
+
   _FakeBookingRepository(this._envelope);
   final BookingDetailEnvelope _envelope;
 

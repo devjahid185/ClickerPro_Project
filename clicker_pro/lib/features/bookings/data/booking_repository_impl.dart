@@ -131,6 +131,12 @@ class BookingRepositoryImpl implements BookingRepository {
   }
 
   @override
+  Future<Booking?> getByRemoteId(String remoteId) async {
+    final row = await _bookings.getByRemoteId(remoteId);
+    return row == null ? null : _rowToBooking(row);
+  }
+
+  @override
   Future<BookingDetailEnvelope> getDetail(String localId) async {
     final bookingRow = await _bookings.watchById(localId).first;
     if (bookingRow == null) {

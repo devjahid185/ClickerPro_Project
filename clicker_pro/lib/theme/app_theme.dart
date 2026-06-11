@@ -199,12 +199,18 @@ class AppDecorations {
     return BoxDecoration(
       color: tint ?? AppColors.glass,
       borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: AppColors.glassBorder, width: 1.5),
+      border: Border.all(color: AppColors.glassBorder, width: 1),
       boxShadow: const [
         BoxShadow(
-          color: Color(0x0D000000), // 5% black — soft elevation
-          blurRadius: 12,
-          offset: Offset(0, 4),
+          color: Color(0x0A1C1917), // 4% warm ink — crisp key
+          blurRadius: 4,
+          offset: Offset(0, 1),
+        ),
+        BoxShadow(
+          color: Color(0x14803500), // 8% warm umber — soft ambient
+          blurRadius: 24,
+          spreadRadius: -6,
+          offset: Offset(0, 12),
         ),
       ],
     );
@@ -217,12 +223,18 @@ class AppDecorations {
     return BoxDecoration(
       color: tint,
       borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: AppColors.glassBorder, width: 1.5),
+      border: Border.all(color: AppColors.glassBorder, width: 1),
       boxShadow: const [
         BoxShadow(
-          color: Color(0x0D000000), // 5% black — soft elevation
-          blurRadius: 12,
-          offset: Offset(0, 4),
+          color: Color(0x0A1C1917), // 4% warm ink — crisp key
+          blurRadius: 4,
+          offset: Offset(0, 1),
+        ),
+        BoxShadow(
+          color: Color(0x14803500), // 8% warm umber — soft ambient
+          blurRadius: 24,
+          spreadRadius: -6,
+          offset: Offset(0, 12),
         ),
       ],
     );
@@ -239,21 +251,21 @@ class AppDecorations {
     return BoxDecoration(
       color: tint ?? AppColors.glass,
       borderRadius: BorderRadius.circular(AppRadius.pill),
-      border: Border.all(color: AppColors.glassBorder, width: 1.5),
+      border: Border.all(color: AppColors.glassBorder, width: 1),
     );
   }
 
   static BoxDecoration topbar = const BoxDecoration(
     color: AppColors.topbarBg,
     border: Border(
-      bottom: BorderSide(color: AppColors.topbarBorder, width: 1.5),
+      bottom: BorderSide(color: AppColors.topbarBorder, width: 1),
     ),
   );
 
   static BoxDecoration bottomNav = const BoxDecoration(
     color: AppColors.bottomNavBg,
     border: Border(
-      top: BorderSide(color: AppColors.bottomNavBorder, width: 1.5),
+      top: BorderSide(color: AppColors.bottomNavBorder, width: 1),
     ),
   );
 }

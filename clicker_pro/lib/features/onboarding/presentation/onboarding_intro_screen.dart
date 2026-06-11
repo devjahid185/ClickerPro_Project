@@ -87,18 +87,19 @@ class _OnboardingIntroScreenState extends ConsumerState<OnboardingIntroScreen> {
       backgroundColor: AppColors.voidBlack,
       body: Stack(
         children: [
-          // Subtle watermark logo backdrop — branding only; IgnorePointer
-          // keeps it from ever blocking touches (pairs with login_screen).
+          // Subtle watermark — the blade-flower brand mark, same motif as
+          // the landing page so onboarding and site read as one product.
+          // IgnorePointer keeps it from ever blocking touches.
           Positioned(
-            left: -80,
-            top: -40,
+            left: -100,
+            top: -60,
             child: IgnorePointer(
               child: Opacity(
-                opacity: 0.04,
-                child: Icon(
-                  Icons.camera_alt_rounded,
-                  size: 320,
-                  color: AppColors.film,
+                opacity: 0.06,
+                child: Image.asset(
+                  'assets/brand/logo_flower.png',
+                  width: 360,
+                  height: 360,
                 ),
               ),
             ),

@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/navigation/route_names.dart';
 import '../../../core/providers.dart';
 import '../../../theme/app_colors.dart';
+import '../../bookings/application/booking_providers.dart';
 import '../data/search_api.dart';
 
 final searchApiProvider = Provider<SearchApi>(
@@ -78,17 +79,41 @@ class _GlobalSearchSheetState extends ConsumerState<GlobalSearchSheet> {
     }
   }
 
-  void _openHit(SearchHit hit) {
-    Navigator.of(context).pop();
-    // The search API returns server (remote) ids, but BookingDetailScreen is
-    // keyed by the local Drift id — so we land on the relevant LIST rather
-    // than risk opening a detail screen with an id it can't resolve.
+  Future<void> _openHit(SearchHit hit) async {
+    final navigator = Navigator.of(context);
+
+    // Bookings: the search API returns the SERVER id, but the detail
+    // screen is keyed by the local Drift id — resolve it first so the
+    // tap actually opens Event Details (the old behaviour dumped the
+    // user on the list, which read as "search doesn't work").
+    if (hit.kind == SearchKind.booking) {
+      try {
+        final booking = await ref
+            .read(bookingRepositoryProvider)
+            .getByRemoteId(hit.id);
+        if (!mounted) return;
+        navigator.pop();
+        if (booking != null) {
+          navigator.pushNamed(RouteNames.bookingDetail, arguments: booking.id);
+        } else {
+          // Not synced locally yet — the list is the best we can do.
+          navigator.pushNamed(RouteNames.bookings);
+        }
+      } catch (_) {
+        if (!mounted) return;
+        navigator.pop();
+        navigator.pushNamed(RouteNames.bookings);
+      }
+      return;
+    }
+
+    navigator.pop();
     final route = switch (hit.kind) {
       SearchKind.member => RouteNames.team,
       SearchKind.package => RouteNames.packages,
       SearchKind.booking || SearchKind.client => RouteNames.bookings,
     };
-    Navigator.of(context).pushNamed(route);
+    navigator.pushNamed(route);
   }
 
   IconData _iconFor(SearchKind kind) => switch (kind) {

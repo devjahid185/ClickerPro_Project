@@ -66,6 +66,7 @@ import '../../features/calendar_sync/presentation/calendar_sync_settings.dart';
 import '../../features/reminders/presentation/reminders_screen.dart';
 import '../../features/bookings/presentation/waitlist_screen.dart';
 import '../../features/finance/presentation/cash_flow_screen.dart';
+import '../../features/finance/presentation/finance_screen.dart';
 import '../../features/petty_cash/presentation/petty_cash_screen.dart';
 import '../../features/followup/presentation/followup_screen.dart';
 import '../../features/home_widget/presentation/widget_settings_screen.dart';
@@ -164,6 +165,8 @@ class AppRouter {
       case RouteNames.help:
         return lensPageRoute<void>(const HelpScreen());
       case RouteNames.finance:
+        return lensPageRoute<void>(const FinanceScreen());
+      case RouteNames.financeExpenses:
         return lensPageRoute<void>(const ExpensesScreen());
       case RouteNames.reports:
         return lensPageRoute<void>(const ReportsScreen());

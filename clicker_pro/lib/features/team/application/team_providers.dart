@@ -19,6 +19,14 @@ final teamMembersProvider = FutureProvider<List<TeamMember>>((ref) {
   return ref.read(teamRepositoryProvider).members();
 });
 
+/// Email invites addressed to the logged-in user (accept / decline).
+final pendingTeamInvitesProvider = FutureProvider<List<PendingTeamInvite>>((
+  ref,
+) {
+  ref.watch(teamRefreshProvider);
+  return ref.read(teamRepositoryProvider).pendingInvites();
+});
+
 final teamRefreshProvider = StateProvider<int>((ref) => 0);
 
 final teamControllerProvider =
@@ -55,7 +63,46 @@ class TeamController extends Notifier<AsyncValue<void>> {
     }
   }
 
+  Future<void> joinWithCode(String code) async {
+    state = const AsyncValue.loading();
+    try {
+      await ref.read(teamRepositoryProvider).joinWithCode(code);
+      state = const AsyncValue.data(null);
+      ref.invalidate(teamMembersProvider);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      rethrow;
+    }
+  }
+
+  Future<void> inviteByEmail(String email) async {
+    state = const AsyncValue.loading();
+    try {
+      await ref.read(teamRepositoryProvider).inviteByEmail(email);
+      state = const AsyncValue.data(null);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      rethrow;
+    }
+  }
+
+  Future<void> respondInvite(String inviteId, {required bool accept}) async {
+    state = const AsyncValue.loading();
+    try {
+      await ref
+          .read(teamRepositoryProvider)
+          .respondInvite(inviteId, accept: accept);
+      state = const AsyncValue.data(null);
+      ref.invalidate(pendingTeamInvitesProvider);
+      ref.invalidate(teamMembersProvider);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      rethrow;
+    }
+  }
+
   void refresh() {
     ref.invalidate(teamMembersProvider);
+    ref.invalidate(pendingTeamInvitesProvider);
   }
 }

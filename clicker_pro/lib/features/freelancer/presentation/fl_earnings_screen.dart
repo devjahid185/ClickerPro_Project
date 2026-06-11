@@ -33,6 +33,7 @@ import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
+import '../../profile/application/profile_controllers.dart';
 import '../../settings/application/language_controller.dart';
 import '../application/fl_earning_providers.dart';
 import '../domain/fl_earning.dart';
@@ -380,7 +381,8 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
                 style: TextStyle(color: AppColors.film),
               ),
               content: const Text(
-                'Send a payment reminder to all owners with pending balances?',
+                'Owner-কে অ্যাপের মধ্যেই ডিউ পেমেন্ট রিকুয়েস্ট পাঠানো হবে — '
+                'আপনার প্রোফাইলের bKash ও ব্যাংক তথ্যসহ।',
                 style: TextStyle(color: AppColors.filmDim),
               ),
               actions: [
@@ -405,27 +407,37 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
           if (confirmed != true || !context.mounted) return;
 
           try {
+            // Attach the freelancer's payout details from their profile
+            // so the owner can pay without asking for numbers.
+            final me = ref.read(currentUserProvider).valueOrNull;
+            final overview = ref
+                .read(flEarningOverviewControllerProvider)
+                .valueOrNull;
             final sent = await ref
                 .read(flEarningRepositoryProvider)
-                .requestPayment();
+                .requestPayment(
+                  amount: overview?.pendingAmount,
+                  bkash: me?.bkash,
+                  bankDetails: me?.bankDetails,
+                );
             if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
                   sent
-                      ? 'Payment reminders sent successfully'
-                      : 'Failed to send reminders',
+                      ? 'ডিউ পেমেন্ট রিকুয়েস্ট Owner-এর অ্যাপে পাঠানো হয়েছে ✓'
+                      : 'Failed to send the request',
                 ),
                 backgroundColor: sent ? AppColors.green : AppColors.red,
               ),
             );
-          } catch (_) {
+          } catch (e) {
             if (!context.mounted) return;
+            final msg = e.toString().contains('not in any owner')
+                ? 'আপনি এখনো কোনো Owner-এর টিমে নেই — আগে টিমে যোগ দিন।'
+                : 'Network error — try again';
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Network error — try again'),
-                backgroundColor: AppColors.red,
-              ),
+              SnackBar(content: Text(msg), backgroundColor: AppColors.red),
             );
           }
         },

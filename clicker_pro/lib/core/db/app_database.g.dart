@@ -181,6 +181,17 @@ class $UsersTableTable extends UsersTable
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _companyNameMeta = const VerificationMeta(
+    'companyName',
+  );
+  @override
+  late final GeneratedColumn<String> companyName = GeneratedColumn<String>(
+    'company_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _totalEventsMeta = const VerificationMeta(
     'totalEvents',
   );
@@ -313,6 +324,7 @@ class $UsersTableTable extends UsersTable
     bankDetails,
     signatureUrl,
     logoUrl,
+    companyName,
     totalEvents,
     totalRevenueMinor,
     totalClients,
@@ -452,6 +464,15 @@ class $UsersTableTable extends UsersTable
       context.handle(
         _logoUrlMeta,
         logoUrl.isAcceptableOrUnknown(data['logo_url']!, _logoUrlMeta),
+      );
+    }
+    if (data.containsKey('company_name')) {
+      context.handle(
+        _companyNameMeta,
+        companyName.isAcceptableOrUnknown(
+          data['company_name']!,
+          _companyNameMeta,
+        ),
       );
     }
     if (data.containsKey('total_events')) {
@@ -597,6 +618,10 @@ class $UsersTableTable extends UsersTable
         DriftSqlType.string,
         data['${effectivePrefix}logo_url'],
       ),
+      companyName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}company_name'],
+      ),
       totalEvents: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}total_events'],
@@ -660,6 +685,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
   final String? bankDetails;
   final String? signatureUrl;
   final String? logoUrl;
+  final String? companyName;
   final int totalEvents;
   final int totalRevenueMinor;
   final int totalClients;
@@ -687,6 +713,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
     this.bankDetails,
     this.signatureUrl,
     this.logoUrl,
+    this.companyName,
     required this.totalEvents,
     required this.totalRevenueMinor,
     required this.totalClients,
@@ -742,6 +769,9 @@ class UserRow extends DataClass implements Insertable<UserRow> {
     }
     if (!nullToAbsent || logoUrl != null) {
       map['logo_url'] = Variable<String>(logoUrl);
+    }
+    if (!nullToAbsent || companyName != null) {
+      map['company_name'] = Variable<String>(companyName);
     }
     map['total_events'] = Variable<int>(totalEvents);
     map['total_revenue_minor'] = Variable<int>(totalRevenueMinor);
@@ -802,6 +832,9 @@ class UserRow extends DataClass implements Insertable<UserRow> {
       logoUrl: logoUrl == null && nullToAbsent
           ? const Value.absent()
           : Value(logoUrl),
+      companyName: companyName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(companyName),
       totalEvents: Value(totalEvents),
       totalRevenueMinor: Value(totalRevenueMinor),
       totalClients: Value(totalClients),
@@ -841,6 +874,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
       bankDetails: serializer.fromJson<String?>(json['bankDetails']),
       signatureUrl: serializer.fromJson<String?>(json['signatureUrl']),
       logoUrl: serializer.fromJson<String?>(json['logoUrl']),
+      companyName: serializer.fromJson<String?>(json['companyName']),
       totalEvents: serializer.fromJson<int>(json['totalEvents']),
       totalRevenueMinor: serializer.fromJson<int>(json['totalRevenueMinor']),
       totalClients: serializer.fromJson<int>(json['totalClients']),
@@ -875,6 +909,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
       'bankDetails': serializer.toJson<String?>(bankDetails),
       'signatureUrl': serializer.toJson<String?>(signatureUrl),
       'logoUrl': serializer.toJson<String?>(logoUrl),
+      'companyName': serializer.toJson<String?>(companyName),
       'totalEvents': serializer.toJson<int>(totalEvents),
       'totalRevenueMinor': serializer.toJson<int>(totalRevenueMinor),
       'totalClients': serializer.toJson<int>(totalClients),
@@ -905,6 +940,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
     Value<String?> bankDetails = const Value.absent(),
     Value<String?> signatureUrl = const Value.absent(),
     Value<String?> logoUrl = const Value.absent(),
+    Value<String?> companyName = const Value.absent(),
     int? totalEvents,
     int? totalRevenueMinor,
     int? totalClients,
@@ -936,6 +972,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
     bankDetails: bankDetails.present ? bankDetails.value : this.bankDetails,
     signatureUrl: signatureUrl.present ? signatureUrl.value : this.signatureUrl,
     logoUrl: logoUrl.present ? logoUrl.value : this.logoUrl,
+    companyName: companyName.present ? companyName.value : this.companyName,
     totalEvents: totalEvents ?? this.totalEvents,
     totalRevenueMinor: totalRevenueMinor ?? this.totalRevenueMinor,
     totalClients: totalClients ?? this.totalClients,
@@ -975,6 +1012,9 @@ class UserRow extends DataClass implements Insertable<UserRow> {
           ? data.signatureUrl.value
           : this.signatureUrl,
       logoUrl: data.logoUrl.present ? data.logoUrl.value : this.logoUrl,
+      companyName: data.companyName.present
+          ? data.companyName.value
+          : this.companyName,
       totalEvents: data.totalEvents.present
           ? data.totalEvents.value
           : this.totalEvents,
@@ -1015,6 +1055,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
           ..write('bankDetails: $bankDetails, ')
           ..write('signatureUrl: $signatureUrl, ')
           ..write('logoUrl: $logoUrl, ')
+          ..write('companyName: $companyName, ')
           ..write('totalEvents: $totalEvents, ')
           ..write('totalRevenueMinor: $totalRevenueMinor, ')
           ..write('totalClients: $totalClients, ')
@@ -1047,6 +1088,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
     bankDetails,
     signatureUrl,
     logoUrl,
+    companyName,
     totalEvents,
     totalRevenueMinor,
     totalClients,
@@ -1078,6 +1120,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
           other.bankDetails == this.bankDetails &&
           other.signatureUrl == this.signatureUrl &&
           other.logoUrl == this.logoUrl &&
+          other.companyName == this.companyName &&
           other.totalEvents == this.totalEvents &&
           other.totalRevenueMinor == this.totalRevenueMinor &&
           other.totalClients == this.totalClients &&
@@ -1107,6 +1150,7 @@ class UsersTableCompanion extends UpdateCompanion<UserRow> {
   final Value<String?> bankDetails;
   final Value<String?> signatureUrl;
   final Value<String?> logoUrl;
+  final Value<String?> companyName;
   final Value<int> totalEvents;
   final Value<int> totalRevenueMinor;
   final Value<int> totalClients;
@@ -1135,6 +1179,7 @@ class UsersTableCompanion extends UpdateCompanion<UserRow> {
     this.bankDetails = const Value.absent(),
     this.signatureUrl = const Value.absent(),
     this.logoUrl = const Value.absent(),
+    this.companyName = const Value.absent(),
     this.totalEvents = const Value.absent(),
     this.totalRevenueMinor = const Value.absent(),
     this.totalClients = const Value.absent(),
@@ -1164,6 +1209,7 @@ class UsersTableCompanion extends UpdateCompanion<UserRow> {
     this.bankDetails = const Value.absent(),
     this.signatureUrl = const Value.absent(),
     this.logoUrl = const Value.absent(),
+    this.companyName = const Value.absent(),
     this.totalEvents = const Value.absent(),
     this.totalRevenueMinor = const Value.absent(),
     this.totalClients = const Value.absent(),
@@ -1196,6 +1242,7 @@ class UsersTableCompanion extends UpdateCompanion<UserRow> {
     Expression<String>? bankDetails,
     Expression<String>? signatureUrl,
     Expression<String>? logoUrl,
+    Expression<String>? companyName,
     Expression<int>? totalEvents,
     Expression<int>? totalRevenueMinor,
     Expression<int>? totalClients,
@@ -1225,6 +1272,7 @@ class UsersTableCompanion extends UpdateCompanion<UserRow> {
       if (bankDetails != null) 'bank_details': bankDetails,
       if (signatureUrl != null) 'signature_url': signatureUrl,
       if (logoUrl != null) 'logo_url': logoUrl,
+      if (companyName != null) 'company_name': companyName,
       if (totalEvents != null) 'total_events': totalEvents,
       if (totalRevenueMinor != null) 'total_revenue_minor': totalRevenueMinor,
       if (totalClients != null) 'total_clients': totalClients,
@@ -1256,6 +1304,7 @@ class UsersTableCompanion extends UpdateCompanion<UserRow> {
     Value<String?>? bankDetails,
     Value<String?>? signatureUrl,
     Value<String?>? logoUrl,
+    Value<String?>? companyName,
     Value<int>? totalEvents,
     Value<int>? totalRevenueMinor,
     Value<int>? totalClients,
@@ -1285,6 +1334,7 @@ class UsersTableCompanion extends UpdateCompanion<UserRow> {
       bankDetails: bankDetails ?? this.bankDetails,
       signatureUrl: signatureUrl ?? this.signatureUrl,
       logoUrl: logoUrl ?? this.logoUrl,
+      companyName: companyName ?? this.companyName,
       totalEvents: totalEvents ?? this.totalEvents,
       totalRevenueMinor: totalRevenueMinor ?? this.totalRevenueMinor,
       totalClients: totalClients ?? this.totalClients,
@@ -1352,6 +1402,9 @@ class UsersTableCompanion extends UpdateCompanion<UserRow> {
     if (logoUrl.present) {
       map['logo_url'] = Variable<String>(logoUrl.value);
     }
+    if (companyName.present) {
+      map['company_name'] = Variable<String>(companyName.value);
+    }
     if (totalEvents.present) {
       map['total_events'] = Variable<int>(totalEvents.value);
     }
@@ -1405,6 +1458,7 @@ class UsersTableCompanion extends UpdateCompanion<UserRow> {
           ..write('bankDetails: $bankDetails, ')
           ..write('signatureUrl: $signatureUrl, ')
           ..write('logoUrl: $logoUrl, ')
+          ..write('companyName: $companyName, ')
           ..write('totalEvents: $totalEvents, ')
           ..write('totalRevenueMinor: $totalRevenueMinor, ')
           ..write('totalClients: $totalClients, ')
@@ -12131,6 +12185,7 @@ typedef $$UsersTableTableCreateCompanionBuilder =
       Value<String?> bankDetails,
       Value<String?> signatureUrl,
       Value<String?> logoUrl,
+      Value<String?> companyName,
       Value<int> totalEvents,
       Value<int> totalRevenueMinor,
       Value<int> totalClients,
@@ -12161,6 +12216,7 @@ typedef $$UsersTableTableUpdateCompanionBuilder =
       Value<String?> bankDetails,
       Value<String?> signatureUrl,
       Value<String?> logoUrl,
+      Value<String?> companyName,
       Value<int> totalEvents,
       Value<int> totalRevenueMinor,
       Value<int> totalClients,
@@ -12264,6 +12320,11 @@ class $$UsersTableTableFilterComposer
 
   ColumnFilters<String> get logoUrl => $composableBuilder(
     column: $table.logoUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get companyName => $composableBuilder(
+    column: $table.companyName,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -12407,6 +12468,11 @@ class $$UsersTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get companyName => $composableBuilder(
+    column: $table.companyName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get totalEvents => $composableBuilder(
     column: $table.totalEvents,
     builder: (column) => ColumnOrderings(column),
@@ -12521,6 +12587,11 @@ class $$UsersTableTableAnnotationComposer
   GeneratedColumn<String> get logoUrl =>
       $composableBuilder(column: $table.logoUrl, builder: (column) => column);
 
+  GeneratedColumn<String> get companyName => $composableBuilder(
+    column: $table.companyName,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<int> get totalEvents => $composableBuilder(
     column: $table.totalEvents,
     builder: (column) => column,
@@ -12602,6 +12673,7 @@ class $$UsersTableTableTableManager
                 Value<String?> bankDetails = const Value.absent(),
                 Value<String?> signatureUrl = const Value.absent(),
                 Value<String?> logoUrl = const Value.absent(),
+                Value<String?> companyName = const Value.absent(),
                 Value<int> totalEvents = const Value.absent(),
                 Value<int> totalRevenueMinor = const Value.absent(),
                 Value<int> totalClients = const Value.absent(),
@@ -12630,6 +12702,7 @@ class $$UsersTableTableTableManager
                 bankDetails: bankDetails,
                 signatureUrl: signatureUrl,
                 logoUrl: logoUrl,
+                companyName: companyName,
                 totalEvents: totalEvents,
                 totalRevenueMinor: totalRevenueMinor,
                 totalClients: totalClients,
@@ -12660,6 +12733,7 @@ class $$UsersTableTableTableManager
                 Value<String?> bankDetails = const Value.absent(),
                 Value<String?> signatureUrl = const Value.absent(),
                 Value<String?> logoUrl = const Value.absent(),
+                Value<String?> companyName = const Value.absent(),
                 Value<int> totalEvents = const Value.absent(),
                 Value<int> totalRevenueMinor = const Value.absent(),
                 Value<int> totalClients = const Value.absent(),
@@ -12688,6 +12762,7 @@ class $$UsersTableTableTableManager
                 bankDetails: bankDetails,
                 signatureUrl: signatureUrl,
                 logoUrl: logoUrl,
+                companyName: companyName,
                 totalEvents: totalEvents,
                 totalRevenueMinor: totalRevenueMinor,
                 totalClients: totalClients,

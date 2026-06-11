@@ -50,7 +50,9 @@ class PublicBookingApi {
         (u['bookingToken'] ?? u['public_booking_token'] ?? u['publicToken'] ?? '')
             .toString();
     return (
-      url: '${AppConfig.baseUrl}/api/public-booking/$token',
+      // The shareable link must open the WEB booking form, not the raw
+      // JSON API endpoint — clients tap this from WhatsApp/SMS.
+      url: '${AppConfig.webBaseUrl}/book/$token',
       token: token,
       // The account token does not expire — surface a far-future date so
       // the share sheet renders something sensible.

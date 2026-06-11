@@ -12,6 +12,9 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 const WEB_LOGIN = LANDING_ONLY ? '#download' : '/login';
 const WEB_REGISTER = LANDING_ONLY ? '#download' : '/register';
 const ANDROID_APK_URL = '/ClickerPro.apk';
+// Pricing is hidden for now (pre-launch) — flip to true to bring the
+// section and its nav link back.
+const SHOW_PRICING = false;
 
 const FEATURES = [
   { icon: '📅', name: 'Smart Booking Management', desc: 'Handle every event from inquiry to delivery. Track status, assign team, manage timelines effortlessly.' },
@@ -125,6 +128,7 @@ export default function LandingPage() {
 
   useEffect(() => {
     let destroyed = false;
+    let onResize: (() => void) | null = null;
 
     const initGsap = async () => {
       try {
@@ -137,8 +141,13 @@ export default function LandingPage() {
         const container = document.querySelector<HTMLElement>(`.${styles.bladeContainer}`);
         if (container) {
           container.innerHTML = '';
-          const numBlades = 42;
           const isWide = window.innerWidth > 768;
+          const reducedMotion = window.matchMedia(
+            '(prefers-reduced-motion: reduce)'
+          ).matches;
+          // Mobile GPUs choke on 42 blades × infinite tweens (visible
+          // jitter) — fewer blades + a single gentle tween there.
+          const numBlades = isWide ? 42 : 26;
           for (let i = 0; i < numBlades; i++) {
             const blade = document.createElement('div');
             blade.className = 'cp-blade';
@@ -174,39 +183,52 @@ export default function LandingPage() {
             delay: 0.2,
           });
 
-          // 2. Ambient breathing of the whole hub
-          gsap.to(container, {
-            rotation: -4,
-            duration: 16,
-            repeat: -1,
-            yoyo: true,
-            ease: 'sine.inOut',
-          });
-
-          // 3. Organic per-blade flex
-          blades.forEach((blade, index) => {
-            gsap.to(blade, {
-              rotation: `+=${2 + (index % 2.5)}`,
-              scaleX: 1.015 + (index % 3) * 0.005,
-              duration: 5 + (index % 3),
+          if (isWide && !reducedMotion) {
+            // 2. Ambient breathing of the whole hub
+            gsap.to(container, {
+              rotation: -4,
+              duration: 16,
               repeat: -1,
               yoyo: true,
               ease: 'sine.inOut',
-              delay: index * 0.06,
             });
-          });
 
-          // 4. Subtle scroll parallax
-          ScrollTrigger.create({
-            trigger: '.js-hero',
-            start: 'top top',
-            end: 'bottom top',
-            onUpdate: (self) => {
-              gsap.to(container, { x: self.progress * 60, duration: 0.3, overwrite: 'auto' });
-            },
-          });
+            // 3. Organic per-blade flex — desktop only; this is the tween
+            // storm that made the fan shake on phones.
+            blades.forEach((blade, index) => {
+              gsap.to(blade, {
+                rotation: `+=${2 + (index % 2.5)}`,
+                scaleX: 1.015 + (index % 3) * 0.005,
+                duration: 5 + (index % 3),
+                repeat: -1,
+                yoyo: true,
+                ease: 'sine.inOut',
+                delay: index * 0.06,
+              });
+            });
 
-          const onResize = () => {
+            // 4. Subtle scroll parallax
+            ScrollTrigger.create({
+              trigger: '.js-hero',
+              start: 'top top',
+              end: 'bottom top',
+              onUpdate: (self) => {
+                gsap.to(container, { x: self.progress * 60, duration: 0.3, overwrite: 'auto' });
+              },
+            });
+          } else if (!reducedMotion) {
+            // Mobile: one slow, cheap breath for the whole fan — calm,
+            // no per-blade churn.
+            gsap.to(container, {
+              rotation: -2,
+              duration: 20,
+              repeat: -1,
+              yoyo: true,
+              ease: 'sine.inOut',
+            });
+          }
+
+          onResize = () => {
             const w = window.innerWidth > 768 ? '65vw' : '90vw';
             blades.forEach((b) => { b.style.width = w; });
           };
@@ -229,7 +251,10 @@ export default function LandingPage() {
     };
 
     initGsap();
-    return () => { destroyed = true; };
+    return () => {
+      destroyed = true;
+      if (onResize) window.removeEventListener('resize', onResize);
+    };
   }, []);
 
   return (
@@ -245,11 +270,31 @@ export default function LandingPage() {
       <canvas className={styles.grain} />
 
       <nav ref={navRef} className={styles.nav}>
-        <div className={styles.navLogo}>Clicker<span>Pro</span></div>
+        <Link
+          href="/"
+          className={styles.navLogo}
+          style={{ textDecoration: 'none', cursor: 'pointer' }}
+          aria-label="ClickerPro home"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo_flower.png"
+            alt=""
+            style={{
+              height: 28,
+              width: 28,
+              objectFit: 'contain',
+              marginRight: 9,
+              verticalAlign: 'middle',
+            }}
+          />
+          Clicker<span>Pro</span>
+        </Link>
         <div className={styles.navLinks}>
+          <a href="#top">Home</a>
           <a href="#features">Features</a>
           <a href="#how">How It Works</a>
-          <a href="#pricing">Pricing</a>
+          {SHOW_PRICING && <a href="#pricing">Pricing</a>}
           <a href="#faq">FAQ</a>
           <a href="#contact">Contact</a>
           <Link href={WEB_LOGIN} className={styles.navCta}>
@@ -259,7 +304,7 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className={`${styles.hero} js-hero`}>
+      <section id="top" className={`${styles.hero} js-hero`}>
         <div className={styles.heroBg} />
         <div className={styles.heroBgGlow} />
         <div className={styles.bladeContainer} />
@@ -442,7 +487,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing */}
+      {/* Pricing — hidden pre-launch via SHOW_PRICING */}
+      {SHOW_PRICING && (
       <section id="pricing" className={`${styles.pricingSection} ${styles.sectionPad}`}>
         <div style={{ textAlign: 'center' }}>
           <div className={styles.sectionEyebrow}>Pricing</div>
@@ -465,6 +511,7 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+      )}
 
       {/* How It Works */}
       <section id="how" className={`${styles.howSection} ${styles.sectionPad}`}>

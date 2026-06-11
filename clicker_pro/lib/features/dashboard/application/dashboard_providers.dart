@@ -5,6 +5,7 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/format/bd_holidays.dart';
 import '../../../core/booking_status/booking_status.dart';
 import '../../bookings/application/booking_providers.dart';
 import '../../bookings/domain/booking_filter.dart';
@@ -98,7 +99,7 @@ final dashboardMetricsProvider = StreamProvider<DashboardMetrics>((ref) {
           totalEvents: bookings.length,
           todayCollection: todayRevenue,
           pendingDue: pendingDueCount * avgPrice,
-          holidaysThisMonth: 0,
+          holidaysThisMonth: bdHolidaysInMonth(DateTime.now()),
           cancelledEvents: cancelledEvents,
         ),
       );
@@ -111,4 +112,57 @@ final dashboardMetricsProvider = StreamProvider<DashboardMetrics>((ref) {
 final dashboardSelectedDayProvider = StateProvider<DateTime>((ref) {
   final now = DateTime.now();
   return DateTime(now.year, now.month, now.day);
+});
+
+/// One booking with money still owed — feeds the dashboard's Due
+/// drill-down sheet ("which events have dues").
+class DueEntry {
+  const DueEntry({
+    required this.bookingId,
+    required this.title,
+    required this.clientName,
+    required this.date,
+    required this.total,
+    required this.paid,
+  });
+
+  final String bookingId;
+  final String title;
+  final String? clientName;
+  final DateTime date;
+  final double total;
+  final double paid;
+
+  double get due => total - paid;
+}
+
+/// Per-event due breakdown: every non-cancelled booking with a price
+/// whose payments don't cover the total yet, newest event first.
+final dueBreakdownProvider = FutureProvider<List<DueEntry>>((ref) async {
+  final bookings = await ref.watch(
+    bookingListProvider(const BookingFilter()).future,
+  );
+  final payRepo = ref.read(paymentRepositoryProvider);
+
+  final entries = <DueEntry>[];
+  for (final b in bookings) {
+    if (b.status == BookingStatus.cancelled) continue;
+    final total = b.customPrice;
+    if (total == null || total <= 0) continue;
+    final agg = await payRepo.aggregateForBooking(b.id);
+    final due = total - agg.total;
+    if (due <= 0.5) continue;
+    entries.add(
+      DueEntry(
+        bookingId: b.id,
+        title: b.title,
+        clientName: b.clientName,
+        date: b.date,
+        total: total,
+        paid: agg.total,
+      ),
+    );
+  }
+  entries.sort((a, b) => b.date.compareTo(a.date));
+  return entries;
 });

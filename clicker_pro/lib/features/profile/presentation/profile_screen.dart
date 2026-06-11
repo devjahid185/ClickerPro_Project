@@ -270,12 +270,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               keyboardType: TextInputType.phone,
               onChanged: (val) => _updateDraft((d) => d.copyWith(bkash: val)),
             ),
+            // Bank account split into the 4 fields a payout actually
+            // needs. All four serialize into the single `bankDetails`
+            // column as "bank | account | branch | holder".
             _buildInfoField(
-              label: t('bank_details'),
-              value: view.bankDetails ?? '',
+              label: 'Bank Name',
+              value: _bankPart(view.bankDetails, 0),
               icon: Icons.account_balance,
-              onChanged: (val) =>
-                  _updateDraft((d) => d.copyWith(bankDetails: val)),
+              onChanged: (val) => _updateBankPart(view, 0, val),
+            ),
+            _buildInfoField(
+              label: 'Account Number',
+              value: _bankPart(view.bankDetails, 1),
+              icon: Icons.numbers,
+              keyboardType: TextInputType.number,
+              onChanged: (val) => _updateBankPart(view, 1, val),
+            ),
+            _buildInfoField(
+              label: 'Branch',
+              value: _bankPart(view.bankDetails, 2),
+              icon: Icons.location_city,
+              onChanged: (val) => _updateBankPart(view, 2, val),
+            ),
+            _buildInfoField(
+              label: 'Account Holder Name',
+              value: _bankPart(view.bankDetails, 3),
+              icon: Icons.badge_outlined,
+              onChanged: (val) => _updateBankPart(view, 3, val),
             ),
           ]),
 
@@ -504,6 +525,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   // ── Specialization role chips (Photographer / Cinematographer / etc.) ──
+  /// Bank details live in ONE backend column; the UI splits them into
+  /// "bank | account | branch | holder". Legacy free-text values (no
+  /// pipes) surface in the Bank Name field so nothing is lost.
+  String _bankPart(String? raw, int index) {
+    if (raw == null || raw.trim().isEmpty) return '';
+    final parts = raw.split('|').map((p) => p.trim()).toList();
+    return index < parts.length ? parts[index] : '';
+  }
+
+  void _updateBankPart(UserModel view, int index, String value) {
+    _updateDraft((d) {
+      final raw = d.bankDetails ?? view.bankDetails ?? '';
+      final parts = raw.split('|').map((p) => p.trim()).toList();
+      while (parts.length < 4) {
+        parts.add('');
+      }
+      parts[index] = value.trim();
+      final joined = parts.join(' | ');
+      // All four cleared → store empty.
+      return d.copyWith(
+        bankDetails: parts.every((p) => p.isEmpty) ? '' : joined,
+      );
+    });
+  }
+
   Widget _buildSpecializationChips(UserModel view) {
     const options = <({String value, String label, IconData icon})>[
       (
@@ -550,6 +596,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       _updateDraft((d) => d.copyWith(specialization: sorted.join(',')));
     }
 
+    // View mode shows ONLY the saved skills; the full option list is
+    // for edit mode (showing unselected chips read as "skills you have").
+    final visibleOptions = _isEditing
+        ? options
+        : options.where((o) => selected.contains(o.value)).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -570,10 +622,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ],
         ),
         const SizedBox(height: 10),
+        if (visibleOptions.isEmpty)
+          Text(
+            'কোনো স্কিল সেভ করা নেই — Edit চাপুন।',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              color: AppColors.filmDim.withValues(alpha: 0.7),
+            ),
+          ),
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: options.map((opt) {
+          children: visibleOptions.map((opt) {
             final isOn = selected.contains(opt.value);
             return GestureDetector(
               onTap: () => toggle(opt.value),

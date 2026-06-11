@@ -26,6 +26,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/role/capability.dart';
 import '../../../core/role/role_policy.dart';
@@ -34,16 +35,17 @@ import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
 import '../../auth/domain/user_role.dart';
+import '../../calendar_sync/data/calendar_sync_service.dart';
 import '../application/booking_edit_controller.dart';
 import '../application/booking_providers.dart';
 import '../domain/assignment_role.dart';
 import '../domain/booking.dart';
-import '../domain/client.dart';
 import '../domain/event_type.dart';
 import '../domain/package.dart';
 import '../domain/shift.dart';
 import 'widgets/assignments_editor.dart';
 import 'widgets/lens_form_fields.dart';
+import 'widgets/team_member_picker_sheet.dart';
 
 class BookingEditScreen extends ConsumerStatefulWidget {
   const BookingEditScreen({super.key, this.bookingId});
@@ -74,10 +76,18 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
   final _locationCtrl = TextEditingController();
   final _reportingTimeCtrl = TextEditingController();
   final _chiefNameCtrl = TextEditingController();
+  final _mapLinkCtrl = TextEditingController();
+  final _requirementsCtrl = TextEditingController();
 
   BookingValidation _validation = const BookingValidation({});
   bool _seeded = false;
   bool _dirty = false;
+
+  /// Whether the Chief Photographer section is toggled on. Kept as
+  /// local UI state — deriving it from `chiefPhotographerUserId` made
+  /// the toggle a no-op (turning it ON set nothing, so the name field
+  /// never appeared and a chief could never be added).
+  bool _chiefEnabled = false;
 
   /// When `true`, the Freelancer short-form (FL-12) is shown instead
   /// of the full Owner form. Only relevant when role is `UserRole.both`.
@@ -136,6 +146,8 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     _locationCtrl.dispose();
     _reportingTimeCtrl.dispose();
     _chiefNameCtrl.dispose();
+    _mapLinkCtrl.dispose();
+    _requirementsCtrl.dispose();
     _flashCtrl.dispose();
     _shakeCtrl.dispose();
     super.dispose();
@@ -163,6 +175,9 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     if (draft.chiefPhotographerUserId != null) {
       _chiefNameCtrl.text = draft.chiefPhotographerUserId!;
     }
+    _chiefEnabled = draft.chiefPhotographerUserId != null;
+    _mapLinkCtrl.text = draft.mapLink ?? '';
+    _requirementsCtrl.text = draft.requirementsNote ?? '';
     _seeded = true;
   }
 
@@ -443,6 +458,8 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
             controller.setVenue(v.isEmpty ? null : v);
           },
         ),
+        // 5b. Optional venue map link — tap the pin to open the maps app.
+        _buildMapLinkField(controller),
         // 6. Package
         _buildPackageSection(draft, controller),
         // 7. Outdoor toggle → conditional Location + Time fields
@@ -498,14 +515,17 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
         ],
         // 12. Payment (Total / Advance / Due)
         _buildPaymentSection(draft, controller, policy),
-        // 13. Client picker (moved after Payment per v12 spec)
-        LensPickerRow(
-          label: 'Client',
-          icon: Icons.person_outline_rounded,
-          valueText: _clientLabel(draft),
-          placeholder: 'Pick or create a client',
-          errorText: _validation.errorFor(BookingField.client),
-          onTap: () => _pickClient(draft, controller),
+        // 13. Client Requirements — optional free text (prints, album,
+        // pendrive, delivery system, …).
+        LensTextField(
+          label: 'Client Requirements (optional)',
+          controller: _requirementsCtrl,
+          hint: 'Print, album, pendrive, delivery system…',
+          maxLines: 3,
+          onChanged: (v) {
+            _markDirty();
+            controller.setRequirementsNote(v.isEmpty ? null : v);
+          },
         ),
         // 14. Notes
         LensTextField(
@@ -600,6 +620,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
             onChanged: (_) => _markDirty(),
           ),
         ],
+        _buildMapLinkField(controller),
         _buildEventTypeSection(draft, controller),
         LensTextField(
           label: 'Notes',
@@ -918,7 +939,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     BookingDraft draft,
     BookingEditController controller,
   ) {
-    final isEnabled = draft.chiefPhotographerUserId != null;
+    final isEnabled = _chiefEnabled;
     return Column(
       children: [
         Padding(
@@ -956,11 +977,11 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        isEnabled
+                        draft.chiefPhotographerUserId != null
                             ? 'Assigned'
                             : 'Designate a lead photographer',
                         style: TextStyle(
-                          color: isEnabled
+                          color: draft.chiefPhotographerUserId != null
                               ? AppColors.gold
                               : AppColors.filmDim.withValues(alpha: 0.7),
                           fontSize: 11.5,
@@ -973,12 +994,11 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                   value: isEnabled,
                   onChanged: (v) {
                     _markDirty();
+                    setState(() => _chiefEnabled = v);
                     if (!v) {
                       controller.setChiefPhotographerUserId(null);
                       _chiefNameCtrl.clear();
                     }
-                    // When toggled on, the text field appears below
-                    setState(() {});
                   },
                   activeThumbColor: Colors.white,
                   activeTrackColor: AppColors.gold,
@@ -991,16 +1011,81 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
         ),
         if (isEnabled)
           LensTextField(
-            label: 'Chief ID',
+            label: 'Chief Photographer Name',
             controller: _chiefNameCtrl,
-            hint: 'Paste chief photographer user ID',
+            hint: 'Type a name or pick from team',
+            suffix: IconButton(
+              tooltip: 'Pick from team',
+              icon: const Icon(
+                Icons.group_add_outlined,
+                color: AppColors.gold,
+                size: 20,
+              ),
+              onPressed: () => _pickChiefFromTeam(controller),
+            ),
             onChanged: (v) {
               _markDirty();
-              controller.setChiefPhotographerUserId(v.isEmpty ? null : v);
+              controller.setChiefPhotographerUserId(
+                v.trim().isEmpty ? null : v.trim(),
+              );
             },
           ),
       ],
     );
+  }
+
+  Future<void> _pickChiefFromTeam(BookingEditController controller) async {
+    final picked = await TeamMemberPickerSheet.show(
+      context,
+      title: 'Pick chief photographer',
+      multiSelect: false,
+      accentColor: AppColors.gold,
+    );
+    if (picked == null || picked.isEmpty) return;
+    final member = picked.first;
+    _chiefNameCtrl.text = member.fullName;
+    _markDirty();
+    controller.setChiefPhotographerUserId(member.fullName);
+  }
+
+  /// Optional map link field with a trailing pin that launches the
+  /// device's maps app. Accepts a Google-Maps share link or a plain
+  /// place name (which is opened as a maps search).
+  Widget _buildMapLinkField(BookingEditController controller) {
+    return LensTextField(
+      label: 'Location Map (optional)',
+      controller: _mapLinkCtrl,
+      hint: 'Paste a Google Maps link or place name',
+      keyboardType: TextInputType.url,
+      suffix: IconButton(
+        tooltip: 'Open in maps',
+        icon: const Icon(
+          Icons.location_on_outlined,
+          color: AppColors.teal,
+          size: 20,
+        ),
+        onPressed: () => _openMapLink(_mapLinkCtrl.text),
+      ),
+      onChanged: (v) {
+        _markDirty();
+        controller.setMapLink(v.isEmpty ? null : v);
+      },
+    );
+  }
+
+  Future<void> _openMapLink(String raw) async {
+    final value = raw.trim();
+    if (value.isEmpty) {
+      _showSnack('Add a map link or place name first.');
+      return;
+    }
+    final uri = value.startsWith('http://') || value.startsWith('https://')
+        ? Uri.parse(value)
+        : Uri.parse(
+            'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(value)}',
+          );
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && mounted) _showSnack('Could not open the maps app.');
   }
 
   Widget _buildQuickTeamSection(
@@ -1066,13 +1151,28 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     AssignmentRole role,
   ) async {
     final roleLabel = switch (role) {
-      AssignmentRole.photographer => 'Photographer',
-      AssignmentRole.cinematographer => 'Cinematographer',
+      AssignmentRole.photographer => 'Photographers',
+      AssignmentRole.cinematographer => 'Cinematographers',
       _ => role.name,
     };
-    final userId = await _QuickMemberDialog.show(context, roleLabel: roleLabel);
-    if (userId == null || userId.isEmpty) return;
-    controller.addAssignment(userId: userId, role: role, payout: 0.0);
+    final draft = ref
+        .read(bookingEditControllerProvider(widget.bookingId))
+        .valueOrNull;
+    final alreadyAssigned =
+        draft?.assignments.map((a) => a.userId).toSet() ?? const <String>{};
+    final picked = await TeamMemberPickerSheet.show(
+      context,
+      title: 'Add $roleLabel',
+      excludedUserIds: alreadyAssigned,
+      accentColor: role == AssignmentRole.cinematographer
+          ? AppColors.purple
+          : AppColors.teal,
+    );
+    if (picked == null || picked.isEmpty) return;
+    _markDirty();
+    for (final member in picked) {
+      controller.addAssignment(userId: member.userId, role: role, payout: 0.0);
+    }
   }
 
   Widget _buildPaymentSection(
@@ -1214,20 +1314,6 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     controller.setDate(picked);
   }
 
-  Future<void> _pickClient(
-    BookingDraft draft,
-    BookingEditController controller,
-  ) async {
-    final picked = await _ClientPickerSheet.show(
-      context,
-      ref: ref,
-      currentStudioId: draft.studioId,
-    );
-    if (picked == null) return;
-    _markDirty();
-    controller.setClientId(picked);
-  }
-
   Future<void> _pickPackage(
     BookingDraft draft,
     BookingEditController controller,
@@ -1263,33 +1349,6 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
         if (mounted) setState(() => _isFlashingTotal = false);
       });
     });
-  }
-
-  String? _clientLabel(BookingDraft draft) {
-    final clientId = draft.clientId;
-    // No linked client id: fall back to the booking's own client name/phone.
-    if (clientId == null || clientId.isEmpty) {
-      final name = draft.clientName?.trim();
-      if (name != null && name.isNotEmpty) {
-        final phone = draft.clientPhone?.trim();
-        return (phone != null && phone.isNotEmpty) ? '$name · $phone' : name;
-      }
-      return null;
-    }
-    final clientAsync = ref.watch(clientByIdProvider(clientId));
-    final c = clientAsync.value;
-    // BUG-FIX: a clientId that resolves to no client (e.g. a stale/placeholder
-    // id like 'pending' on older rows) must NOT be shown raw. Prefer the
-    // booking's own clientName/clientPhone; only then give nothing.
-    if (c == null) {
-      final name = draft.clientName?.trim();
-      if (name != null && name.isNotEmpty) {
-        final phone = draft.clientPhone?.trim();
-        return (phone != null && phone.isNotEmpty) ? '$name · $phone' : name;
-      }
-      return null;
-    }
-    return '${c.name} · ${c.phone}';
   }
 
   String? _packageLabel(BookingDraft draft) {
@@ -1362,8 +1421,50 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     try {
       final saved = await controller.save();
       if (!mounted) return;
+      final isNewBooking = widget.bookingId == null;
+      final messenger = ScaffoldMessenger.of(context);
       _showSnack('Saved ✓');
       Navigator.of(context).pop<Booking>(saved);
+      // MOD-61: new booking → Google Calendar. With auto-sync ON the
+      // pre-filled calendar event opens immediately; otherwise offer a
+      // one-tap action on the snackbar.
+      if (isNewBooking) {
+        final autoSync = await CalendarSyncService.isAutoSyncEnabled();
+        void openCalendar() {
+          CalendarSyncService.openGoogleCalendar(
+            title: saved.title,
+            date: saved.date,
+            startTime: saved.startTime,
+            endTime: saved.endTime,
+            venue: saved.venue,
+            description: [
+              if (saved.clientName != null) 'Client: ${saved.clientName}',
+              if (saved.clientPhone != null) 'Phone: ${saved.clientPhone}',
+              'Booked via CLICKER PRO',
+            ].join('\n'),
+          );
+        }
+
+        if (autoSync) {
+          openCalendar();
+        } else {
+          messenger
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: const Text('Saved ✓ — Google Calendar-এ যোগ করবেন?'),
+                backgroundColor: AppColors.voidElevated,
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 5),
+                action: SnackBarAction(
+                  label: 'Add',
+                  textColor: AppColors.teal,
+                  onPressed: openCalendar,
+                ),
+              ),
+            );
+        }
+      }
     } on BookingValidationException catch (e) {
       if (!mounted) return;
       setState(() => _validation = e.validation);
@@ -1396,334 +1497,6 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
 // ─────────────────────────────────────────────────────────────────────
 // Pickers (bottom sheets)
 // ─────────────────────────────────────────────────────────────────────
-
-class _ClientPickerSheet extends ConsumerStatefulWidget {
-  const _ClientPickerSheet({required this.studioId});
-  final String studioId;
-
-  static Future<String?> show(
-    BuildContext context, {
-    required WidgetRef ref,
-    required String currentStudioId,
-  }) {
-    return showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: AppColors.voidElevated,
-      isScrollControlled: true,
-      builder: (_) => _ClientPickerSheet(studioId: currentStudioId),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
-    );
-  }
-
-  @override
-  ConsumerState<_ClientPickerSheet> createState() => _ClientPickerSheetState();
-}
-
-class _ClientPickerSheetState extends ConsumerState<_ClientPickerSheet> {
-  final _searchCtrl = TextEditingController();
-  List<Client> _results = const [];
-
-  @override
-  void initState() {
-    super.initState();
-    _runSearch('');
-  }
-
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _runSearch(String q) async {
-    final repo = ref.read(clientRepositoryProvider);
-    final list = await repo.searchByPhone(q);
-    if (!mounted) return;
-    setState(() => _results = list);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.75,
-        ),
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const _SheetHandle(),
-            const SizedBox(height: 8),
-            const Text(
-              'Pick a client',
-              style: TextStyle(
-                color: AppColors.film,
-                fontFamily: 'Poppins',
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 12),
-            LensTextField(
-              label: 'Search by phone',
-              controller: _searchCtrl,
-              keyboardType: TextInputType.phone,
-              hint: 'Type a phone number',
-              prefixIcon: Icons.search,
-              onChanged: _runSearch,
-            ),
-            const SizedBox(height: 8),
-            Flexible(
-              child: _results.isEmpty
-                  ? _NoResults(
-                      onCreate: () => _onCreateInline(_searchCtrl.text.trim()),
-                    )
-                  : ListView.separated(
-                      shrinkWrap: true,
-                      itemCount: _results.length,
-                      separatorBuilder: (_, _) => Container(
-                        height: 1,
-                        color: Colors.black.withValues(alpha: 0.04),
-                      ),
-                      itemBuilder: (_, i) {
-                        final c = _results[i];
-                        return ListTile(
-                          dense: true,
-                          contentPadding: EdgeInsets.zero,
-                          title: Text(
-                            c.name,
-                            style: const TextStyle(
-                              color: AppColors.film,
-                              fontSize: 14,
-                            ),
-                          ),
-                          subtitle: Text(
-                            c.phone,
-                            style: TextStyle(
-                              color: AppColors.filmDim.withValues(alpha: 0.85),
-                              fontSize: 12,
-                            ),
-                          ),
-                          trailing: const Icon(
-                            Icons.chevron_right_rounded,
-                            color: AppColors.filmMuted,
-                          ),
-                          onTap: () => Navigator.of(context).pop(c.id),
-                        );
-                      },
-                    ),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.add, color: AppColors.orange),
-              label: const Text(
-                'Create new client',
-                style: TextStyle(color: AppColors.orange),
-              ),
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(
-                  color: AppColors.orange.withValues(alpha: 0.4),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              onPressed: () => _onCreateInline(_searchCtrl.text.trim()),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _onCreateInline(String prefilledPhone) async {
-    final created = await _CreateClientDialog.show(
-      context,
-      studioId: widget.studioId,
-      prefillPhone: prefilledPhone,
-    );
-    if (created == null) return;
-    final saved = await ref.read(clientRepositoryProvider).save(created);
-    if (!mounted) return;
-    Navigator.of(context).pop(saved.id);
-  }
-}
-
-class _CreateClientDialog extends StatefulWidget {
-  const _CreateClientDialog({
-    required this.studioId,
-    required this.prefillPhone,
-  });
-
-  final String studioId;
-  final String prefillPhone;
-
-  static Future<Client?> show(
-    BuildContext context, {
-    required String studioId,
-    required String prefillPhone,
-  }) {
-    return showDialog<Client>(
-      context: context,
-      builder: (_) =>
-          _CreateClientDialog(studioId: studioId, prefillPhone: prefillPhone),
-    );
-  }
-
-  @override
-  State<_CreateClientDialog> createState() => _CreateClientDialogState();
-}
-
-class _CreateClientDialogState extends State<_CreateClientDialog> {
-  late final TextEditingController _name;
-  late final TextEditingController _phone;
-  late final TextEditingController _email;
-  String? _nameError;
-  String? _phoneError;
-
-  @override
-  void initState() {
-    super.initState();
-    _name = TextEditingController();
-    _phone = TextEditingController(text: widget.prefillPhone);
-    _email = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _name.dispose();
-    _phone.dispose();
-    _email.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 420),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppColors.voidElevated,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'New client',
-              style: TextStyle(
-                color: AppColors.film,
-                fontFamily: 'Poppins',
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 12),
-            LensTextField(
-              label: 'Name',
-              controller: _name,
-              maxLength: 80,
-              errorText: _nameError,
-              onChanged: (_) => _clearErrors(),
-            ),
-            LensTextField(
-              label: 'Phone',
-              controller: _phone,
-              keyboardType: TextInputType.phone,
-              errorText: _phoneError,
-              onChanged: (_) => _clearErrors(),
-            ),
-            LensTextField(
-              label: 'Email (optional)',
-              controller: _email,
-              keyboardType: TextInputType.emailAddress,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => Navigator.of(context).pop(null),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(color: AppColors.filmDim),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.orange,
-                      foregroundColor: Colors.white,
-                    ),
-                    onPressed: _onCreate,
-                    child: const Text('Create'),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _clearErrors() {
-    if (_nameError != null || _phoneError != null) {
-      setState(() {
-        _nameError = null;
-        _phoneError = null;
-      });
-    }
-  }
-
-  void _onCreate() {
-    final name = _name.text.trim();
-    final phone = _phone.text.trim();
-    final email = _email.text.trim();
-    String? nameErr;
-    String? phoneErr;
-    if (name.isEmpty) nameErr = 'Name is required.';
-    if (name.length > 80) nameErr = 'Name must be 80 characters or fewer.';
-    if (phone.isEmpty) {
-      phoneErr = 'Phone is required.';
-    } else if (!RegExp(r'^\+?\d+$').hasMatch(phone)) {
-      phoneErr = 'Phone must be digits.';
-    }
-    if (nameErr != null || phoneErr != null) {
-      setState(() {
-        _nameError = nameErr;
-        _phoneError = phoneErr;
-      });
-      return;
-    }
-    final now = DateTime.now();
-    Navigator.of(context).pop(
-      Client(
-        id: 'c-${now.microsecondsSinceEpoch}',
-        studioId: widget.studioId,
-        name: name,
-        phone: phone,
-        email: email.isEmpty ? null : email,
-        createdAt: now,
-        updatedAt: now,
-      ),
-    );
-  }
-}
 
 class _PackagePickerResult {
   const _PackagePickerResult({this.package, this.useCustomPrice = false});
@@ -1850,36 +1623,6 @@ class _PackagePickerSheet extends ConsumerWidget {
   }
 }
 
-class _NoResults extends StatelessWidget {
-  const _NoResults({required this.onCreate});
-  final VoidCallback onCreate;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.person_search_outlined,
-            color: AppColors.filmMuted.withValues(alpha: 0.85),
-            size: 28,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'No matching clients yet.',
-            style: TextStyle(
-              color: AppColors.filmDim.withValues(alpha: 0.85),
-              fontSize: 13,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _SheetHandle extends StatelessWidget {
   const _SheetHandle();
 
@@ -1950,115 +1693,6 @@ class _ModePill extends StatelessWidget {
                 fontSize: 13,
                 fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Quick-add team member dialog — asks only for a user ID.
-class _QuickMemberDialog extends StatefulWidget {
-  const _QuickMemberDialog({required this.roleLabel});
-  final String roleLabel;
-
-  static Future<String?> show(
-    BuildContext context, {
-    required String roleLabel,
-  }) {
-    return showDialog<String>(
-      context: context,
-      builder: (_) => _QuickMemberDialog(roleLabel: roleLabel),
-    );
-  }
-
-  @override
-  State<_QuickMemberDialog> createState() => _QuickMemberDialogState();
-}
-
-class _QuickMemberDialogState extends State<_QuickMemberDialog> {
-  late final TextEditingController _ctrl;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 400),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppColors.voidElevated,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Add ${widget.roleLabel}',
-              style: const TextStyle(
-                color: AppColors.film,
-                fontFamily: 'Poppins',
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 12),
-            LensTextField(
-              label: 'User ID',
-              controller: _ctrl,
-              hint: 'Paste team member user ID',
-              errorText: _error,
-              onChanged: (_) {
-                if (_error != null) setState(() => _error = null);
-              },
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => Navigator.of(context).pop(null),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(color: AppColors.filmDim),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.teal,
-                      foregroundColor: AppColors.voidBlack,
-                    ),
-                    onPressed: () {
-                      final val = _ctrl.text.trim();
-                      if (val.isEmpty) {
-                        setState(() => _error = 'User ID is required.');
-                        return;
-                      }
-                      Navigator.of(context).pop(val);
-                    },
-                    child: const Text('Add'),
-                  ),
-                ),
-              ],
             ),
           ],
         ),

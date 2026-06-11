@@ -65,6 +65,7 @@ class BookingDraft {
     this.status = BookingStatus.pending,
     this.assignments = const <Assignment>[],
     this.originalAssignmentIds = const <String>{},
+    this.clientRequirements,
   }) : date = date;
 
   final String localId;
@@ -106,6 +107,16 @@ class BookingDraft {
   /// were present in the original but removed in the draft).
   final Set<String> originalAssignmentIds;
 
+  /// Free-form JSON map carried through from [Booking.clientRequirements].
+  /// Holds the optional map link (`mapLink`) and the client requirements
+  /// note (`requirementsNote`) plus anything other features stored there
+  /// (e.g. the delivery checklist) — preserved verbatim on save.
+  final Map<String, dynamic>? clientRequirements;
+
+  String? get mapLink => clientRequirements?['mapLink'] as String?;
+  String? get requirementsNote =>
+      clientRequirements?['requirementsNote'] as String?;
+
   /// Whether this draft is a brand-new booking (no remoteId AND a
   /// freshly-generated localId).
   bool get isCreate => remoteId == null;
@@ -134,6 +145,7 @@ class BookingDraft {
     String? chiefPhotographerUserId,
     BookingStatus? status,
     List<Assignment>? assignments,
+    Map<String, dynamic>? clientRequirements,
     bool clearPackage = false,
     bool clearCustomPrice = false,
     bool clearClient = false,
@@ -171,6 +183,7 @@ class BookingDraft {
       status: status ?? this.status,
       assignments: assignments ?? this.assignments,
       originalAssignmentIds: originalAssignmentIds,
+      clientRequirements: clientRequirements ?? this.clientRequirements,
     );
   }
 
@@ -210,6 +223,7 @@ class BookingDraft {
       hidePaymentFromTeam: hidePaymentFromTeam,
       chiefPhotographerUserId: chiefPhotographerUserId,
       status: status,
+      clientRequirements: clientRequirements,
       createdAt: createdAt,
       updatedAt: DateTime.now(),
     );
@@ -248,6 +262,7 @@ class BookingDraft {
     status: b.status,
     assignments: List<Assignment>.unmodifiable(assignments),
     originalAssignmentIds: assignments.map((a) => a.id).toSet(),
+    clientRequirements: b.clientRequirements,
   );
 }
 
@@ -278,7 +293,8 @@ enum BookingField {
   customPrice,
 }
 
-class BookingEditController extends FamilyAsyncNotifier<BookingDraft, String?> {
+class BookingEditController
+    extends AutoDisposeFamilyAsyncNotifier<BookingDraft, String?> {
   @override
   Future<BookingDraft> build(String? bookingLocalId) async {
     // Read the cached current user via the Drift-backed
@@ -399,6 +415,35 @@ class BookingEditController extends FamilyAsyncNotifier<BookingDraft, String?> {
           ? d.copyWith(clearChief: true)
           : d.copyWith(chiefPhotographerUserId: value),
     );
+  }
+
+  /// Optional Google-Maps (or any) link for the venue. Stored inside
+  /// the booking's `clientRequirements` JSON so no schema change is
+  /// needed and existing keys (delivery checklist, …) are preserved.
+  void setMapLink(String? value) {
+    _update((d) {
+      final next = <String, dynamic>{...?d.clientRequirements};
+      if (value == null || value.trim().isEmpty) {
+        next.remove('mapLink');
+      } else {
+        next['mapLink'] = value.trim();
+      }
+      return d.copyWith(clientRequirements: next);
+    });
+  }
+
+  /// Optional free-text client requirements (prints, album, pendrive,
+  /// delivery preference, …). Same storage strategy as [setMapLink].
+  void setRequirementsNote(String? value) {
+    _update((d) {
+      final next = <String, dynamic>{...?d.clientRequirements};
+      if (value == null || value.trim().isEmpty) {
+        next.remove('requirementsNote');
+      } else {
+        next['requirementsNote'] = value;
+      }
+      return d.copyWith(clientRequirements: next);
+    });
   }
 
   // ────────────────────────── Assignments ──────────────────────────
@@ -598,7 +643,11 @@ class BookingValidationException implements Exception {
 }
 
 /// Family-keyed by booking local id (or `null` for create mode).
-final bookingEditControllerProvider =
-    AsyncNotifierProvider.family<BookingEditController, BookingDraft, String?>(
+///
+/// `autoDispose` is load-bearing here: without it the create-mode draft
+/// (key = `null`) survives the screen being closed, so the next "New
+/// Booking" re-opens with the previous client's data still filled in.
+final bookingEditControllerProvider = AsyncNotifierProvider.autoDispose
+    .family<BookingEditController, BookingDraft, String?>(
       BookingEditController.new,
     );

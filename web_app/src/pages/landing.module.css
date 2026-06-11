@@ -3,7 +3,7 @@
 .grain{position:fixed;inset:0;pointer-events:none;z-index:60;opacity:0.04;mix-blend-mode:overlay}
 .nav{position:fixed;top:0;left:0;right:0;z-index:50;padding:1.5rem 2.5rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid transparent;transition:border-color .4s,background .4s}
 .scrolled{background:rgba(0,0,0,0.85);border-color:rgba(255,98,0,0.15);backdrop-filter:blur(12px)}
-.navLogo{font-family:"Bebas Neue",sans-serif;font-size:1.6rem;letter-spacing:0.08em;color:#fff}
+.navLogo{font-family:"Bebas Neue",sans-serif;font-size:1.6rem;letter-spacing:0.08em;color:#fff;display:flex;align-items:center}
 .navLogo span{color:#FF6200}
 .navLinks{display:flex;gap:2rem;align-items:center}
 .navLinks a{font-family:"JetBrains Mono",monospace;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.15em;color:rgba(255,200,150,0.6);text-decoration:none;transition:color .2s}

@@ -33,6 +33,7 @@ class RouteNames {
   static const String packages = '/bookings/packages';
 
   static const String finance = '/finance';
+  static const String financeExpenses = '/finance/expenses';
   static const String reports = '/reports';
   static const String performance = '/performance';
   static const String notifications = '/notifications';

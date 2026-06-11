@@ -188,6 +188,9 @@ class _FakeSessionController extends SessionController {
 /// every other method falls through to `noSuchMethod` so unexpected
 /// usage surfaces as a test failure rather than a silent stub.
 class _FakeBookingRepository implements BookingRepository {
+  @override
+  Future<Booking?> getByRemoteId(String remoteId) async => null;
+
   _FakeBookingRepository(this._envelope);
 
   final BookingDetailEnvelope _envelope;

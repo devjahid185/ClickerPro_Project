@@ -456,17 +456,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  // ── Visual primitives (preserved) ─────────────────────────────
+  // ── Visual primitives ─────────────────────────────────────────
   Widget _sectionHeader(String title) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 15, top: 4),
+      padding: const EdgeInsets.only(bottom: 10, top: 6, left: 4),
       child: Text(
         title.toUpperCase(),
-        style: const TextStyle(
-          color: AppColors.accent,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 1.2,
+        style: TextStyle(
+          color: AppColors.filmDim.withValues(alpha: 0.75),
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.6,
         ),
       ),
     );
@@ -474,11 +474,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Widget _buildSettingsGroup(List<Widget> children) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         color: AppColors.glass,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.glassBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 16,
+            spreadRadius: -4,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       // ListTile children paint their ink/splash on the nearest Material.
       // Without this transparent Material they'd paint on the colored
@@ -488,6 +496,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         child: Column(children: children),
       ),
     );
+  }
+
+  /// Per-row accent colour — modern settings screens colour-code their
+  /// icons instead of a flat monochrome list.
+  Color _settingsTint(IconData icon) {
+    if (icon == Icons.notifications_outlined ||
+        icon == Icons.notifications_active_outlined) {
+      return AppColors.red;
+    }
+    if (icon == Icons.lock_outline ||
+        icon == Icons.security ||
+        icon == Icons.shield_outlined) {
+      return AppColors.indigo;
+    }
+    if (icon == Icons.backup_outlined ||
+        icon == Icons.download_outlined ||
+        icon == Icons.file_download_outlined) {
+      return AppColors.green;
+    }
+    if (icon == Icons.description_outlined ||
+        icon == Icons.privacy_tip_outlined ||
+        icon == Icons.info_outline) {
+      return AppColors.gold;
+    }
+    return AppColors.orange;
   }
 
   Widget _buildLanguageRow(String currentLang, String Function(String) t) {
@@ -637,11 +670,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     required VoidCallback onTap,
     bool danger = false,
   }) {
-    final color = danger ? AppColors.red : AppColors.film;
+    final tint = danger ? AppColors.red : _settingsTint(icon);
     return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: danger ? AppColors.red : AppColors.filmDim),
-      title: Text(label, style: TextStyle(color: color)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+      leading: Container(
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(
+          color: tint.withValues(alpha: 0.13),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, color: tint, size: 18),
+      ),
+      title: Text(
+        label,
+        style: TextStyle(
+          color: danger ? AppColors.red : AppColors.film,
+          fontSize: 14.5,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
       trailing: Icon(Icons.chevron_right, color: AppColors.filmMuted, size: 20),
       onTap: onTap,
     );
@@ -656,15 +704,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           borderRadius: BorderRadius.circular(14),
           side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
         ),
-        title: const Text(
-          'Clicker Pro',
-          style: TextStyle(
-            color: AppColors.film,
-            fontFamily: 'Poppins',
-          ),
+        title: Row(
+          children: [
+            Image.asset('assets/brand/logo_flower.png', width: 28, height: 28),
+            const SizedBox(width: 10),
+            const Text(
+              'CLICKER PRO',
+              style: TextStyle(color: AppColors.film, fontFamily: 'Poppins'),
+            ),
+          ],
         ),
         content: Text(
-          'Company management for photographers in Bangladesh.\nFoundation MVP build.',
+          'Company management for photographers in Bangladesh.\n'
+          'Version 3.8 · by waLidu Tech',
           style: TextStyle(
             color: AppColors.filmDim.withValues(alpha: 0.85),
             fontSize: 13,

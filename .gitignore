@@ -27,3 +27,16 @@ Thumbs.db
 # Firebase service-account key (server-side secret — never commit)
 laravel_backend/storage/app/firebase/
 firebase-adminsdk*.json
+
+# local debug screenshots
+_p0_*.png
+_r_*.png
+_s.png
+_s_s.png
+_set*.png
+_t_*.png
+
+# local tool state (never commit — contains credentials/caches)
+.jetro/
+.cursor/
+.claude/settings.local.json

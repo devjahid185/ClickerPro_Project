@@ -7,10 +7,66 @@ use App\Models\BlackoutDate;
 use App\Models\LeaveRequest;
 use App\Models\Event;
 use App\Models\Payment;
+use App\Models\User;
+use App\Services\PushService;
 use Illuminate\Http\Request;
 
 class FreelancerController extends Controller
 {
+    /**
+     * Freelancer → Owner due-payment request. Strictly app-to-app: the
+     * owner gets an in-app push with the freelancer's bKash / bank
+     * details. Only works when the freelancer is actually in an
+     * owner's team (manager_permissions.ownerId set).
+     */
+    public function requestPayment(Request $request, PushService $push)
+    {
+        $data = $request->validate([
+            'amount' => 'nullable|numeric|min:0',
+            'bkash' => 'nullable|string|max:30',
+            'bankDetails' => 'nullable|string|max:255',
+            'note' => 'nullable|string|max:500',
+        ]);
+
+        $user = $request->user();
+        $ownerId = (int) ($user->manager_permissions['ownerId'] ?? 0);
+        if (!$ownerId) {
+            return response()->json([
+                'message' => 'You are not in any owner\'s team yet. Join a team first.',
+            ], 422);
+        }
+
+        $owner = User::find($ownerId);
+        if (!$owner || !$owner->is_active) {
+            return response()->json(['message' => 'Owner account not found'], 422);
+        }
+
+        $lines = array_filter([
+            !empty($data['amount']) ? 'Amount: ৳' . number_format((float) $data['amount']) : null,
+            !empty($data['bkash']) ? 'bKash: ' . $data['bkash'] : null,
+            !empty($data['bankDetails']) ? 'Bank: ' . $data['bankDetails'] : null,
+            !empty($data['note']) ? 'Note: ' . $data['note'] : null,
+        ]);
+
+        $sent = $push->sendToUser(
+            $ownerId,
+            'Due payment request',
+            "{$user->name} has requested due payment."
+                . ($lines ? "\n" . implode("\n", $lines) : ''),
+            [
+                'type' => 'payout_request',
+                'freelancerId' => (string) $user->id,
+                'freelancerName' => (string) $user->name,
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'ownerName' => $owner->name,
+            'devicesNotified' => $sent,
+        ]);
+    }
+
     // ── Blackout / unavailable dates ──
     public function blackouts(Request $request)
     {

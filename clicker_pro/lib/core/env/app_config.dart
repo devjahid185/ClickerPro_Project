@@ -33,6 +33,11 @@ class AppConfig {
 
   static String get baseUrl => _read('API_BASE_URL', 'http://127.0.0.1:5000');
 
+  /// Public web app origin — used for client-facing share links
+  /// (e.g. the self-booking page at `<webBaseUrl>/book/<token>`).
+  static String get webBaseUrl =>
+      _read('WEB_BASE_URL', 'http://127.0.0.1:3000');
+
   static String get jwtSecret => _read('JWT_SECRET', '');
 
   static String get environment => _read('ENVIRONMENT', 'development');
