@@ -65,6 +65,16 @@ class BroadcastController extends Controller
 
         $broadcast = Broadcast::create($data);
 
+        // Push the broadcast to every registered device. Fail-soft: a
+        // push hiccup must never fail the admin's create request.
+        if ($broadcast->is_active) {
+            app(\App\Services\PushService::class)->sendToAll(
+                $broadcast->title,
+                $broadcast->body,
+                ['type' => 'broadcast', 'id' => $broadcast->id]
+            );
+        }
+
         return response()->json(['data' => new BroadcastResource($broadcast)], 201);
     }
 

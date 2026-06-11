@@ -8,10 +8,17 @@ class TeamInviteApi {
   final ApiClient _client;
 
   Future<({String code, DateTime expiresAt})> generateInvite() async {
-    final r = await _client.post('/api/team/invite') as Map<String, dynamic>;
+    // Laravel wraps the invite in {data:{code, expires_at}}.
+    final r = await _client.post('/api/team/invite');
+    final d = (r is Map && r['data'] is Map)
+        ? (r['data'] as Map).cast<String, dynamic>()
+        : (r is Map ? r.cast<String, dynamic>() : <String, dynamic>{});
+    final expiresRaw = (d['expires_at'] ?? d['expiresAt'] ?? '').toString();
     return (
-      code: r['code'] as String,
-      expiresAt: DateTime.parse(r['expiresAt'] as String),
+      code: (d['code'] ?? '').toString(),
+      expiresAt:
+          DateTime.tryParse(expiresRaw) ??
+          DateTime.now().add(const Duration(days: 7)),
     );
   }
 }

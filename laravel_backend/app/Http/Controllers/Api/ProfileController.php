@@ -28,4 +28,27 @@ class ProfileController extends Controller
 
         return response()->json(['data' => new UserResource($user->fresh())]);
     }
+
+    /**
+     * Switch between the self-service roles. ADMIN/MANAGER are privileged
+     * and can never be reached through this endpoint.
+     */
+    public function changeRole(Request $request)
+    {
+        $data = $request->validate([
+            'newRole' => 'nullable|string',
+            'role' => 'nullable|string',
+        ]);
+
+        $requested = strtoupper($data['newRole'] ?? $data['role'] ?? '');
+        if (!in_array($requested, ['OWNER', 'FREELANCER', 'BOTH'], true)) {
+            return response()->json(['message' => 'Invalid role'], 422);
+        }
+
+        $user = $request->user();
+        // role is guarded — set explicitly for this validated flow.
+        $user->forceFill(['role' => $requested])->save();
+
+        return response()->json(['data' => ['user' => new UserResource($user->fresh())]]);
+    }
 }

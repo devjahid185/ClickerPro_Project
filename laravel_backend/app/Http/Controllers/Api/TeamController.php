@@ -77,4 +77,28 @@ class TeamController extends Controller
 
         return response()->json(['data' => $member->fresh()]);
     }
+
+    /**
+     * Detach a member from the caller's team. The account itself is kept
+     * (it may have history elsewhere) — only the team link is severed.
+     */
+    public function removeMember(Request $request, $userId)
+    {
+        $member = User::find($userId);
+
+        if (!$member) {
+            return response()->json(['message' => 'Not found'], 404);
+        }
+
+        // Same ownership rule as updatePermissions: only MY team members.
+        $ownerId = $request->user()->id;
+        $memberOwnerId = $member->manager_permissions['ownerId'] ?? null;
+        if ($memberOwnerId === null || (int) $memberOwnerId !== (int) $ownerId) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $member->forceFill(['manager_permissions' => null])->save();
+
+        return response()->json(['message' => 'ok']);
+    }
 }

@@ -20,9 +20,14 @@
 //     to safe defaults so one bad row never crashes a list.
 
 import '../../../core/booking_status/booking_status.dart';
+import '../domain/assignment.dart';
+import '../domain/assignment_role.dart';
 import '../domain/booking.dart';
 import '../domain/client.dart';
 import '../domain/event_type.dart';
+import '../domain/package.dart';
+import '../domain/payment.dart';
+import '../domain/payment_kind.dart';
 import '../domain/shift.dart';
 import '../domain/status_history_entry.dart';
 
@@ -276,6 +281,208 @@ Map<String, dynamic> clientToServer(Client c) {
     'name': c.name,
     if (c.phone.isNotEmpty) 'phone': c.phone,
     if (c.email != null) 'email': c.email,
+  };
+}
+
+// ───────────────────────── Payment ─────────────────────────
+
+PaymentKind paymentKindFromServer(
+  Object? raw, {
+  PaymentKind fallback = PaymentKind.advance,
+}) {
+  if (raw == null) return fallback;
+  final n = _normalizeEnum(raw.toString());
+  for (final k in PaymentKind.values) {
+    if (_normalizeEnum(k.name) == n) return k;
+  }
+  // The server also knows PAYOUT (freelancer payouts) — closest local
+  // bucket is `extra` so the money still tallies somewhere visible.
+  if (n == 'payout') return PaymentKind.extra;
+  return fallback;
+}
+
+String paymentKindToServer(PaymentKind k) {
+  switch (k) {
+    case PaymentKind.advance:
+      return 'ADVANCE';
+    case PaymentKind.due:
+      return 'DUE';
+    case PaymentKind.extra:
+      return 'EXTRA';
+  }
+}
+
+/// Laravel validates method against CASH/BKASH/NAGAD/BANK/CARD/OTHER.
+String? paymentMethodToServer(String? method) {
+  if (method == null || method.trim().isEmpty) return null;
+  const allowed = {'CASH', 'BKASH', 'NAGAD', 'BANK', 'CARD', 'OTHER'};
+  final upper = method.trim().toUpperCase();
+  return allowed.contains(upper) ? upper : 'OTHER';
+}
+
+/// Maps a Laravel `payments` row to a local [Payment]. [bookingLocalId]
+/// is the LOCAL booking the payment hangs off.
+Payment paymentFromServer(
+  Map<String, dynamic> j, {
+  required String bookingLocalId,
+  Payment? fallback,
+}) {
+  final serverId = serverString(j, ['id']);
+  return Payment(
+    id: fallback?.id ?? serverId ?? '',
+    remoteId: serverId ?? fallback?.remoteId,
+    bookingId: bookingLocalId,
+    kind: paymentKindFromServer(
+      j['kind'],
+      fallback: fallback?.kind ?? PaymentKind.advance,
+    ),
+    amount: serverDouble(j['amount']) ?? fallback?.amount ?? 0,
+    method:
+        serverString(j, ['method'])?.toLowerCase() ?? fallback?.method,
+    note: serverString(j, ['note']) ?? fallback?.note,
+    paidAt: serverDate(j['paid_at'] ?? j['paidAt']) ?? fallback?.paidAt,
+    createdAt:
+        serverDate(j['created_at'] ?? j['createdAt']) ??
+        fallback?.createdAt ??
+        DateTime.now(),
+    updatedAt:
+        serverDate(j['updated_at'] ?? j['updatedAt']) ??
+        fallback?.updatedAt ??
+        DateTime.now(),
+    pending: false,
+  );
+}
+
+/// Request body for `POST /api/payments` (PaymentController::store).
+Map<String, dynamic> paymentToServer(
+  Payment p, {
+  required String eventRemoteId,
+}) {
+  return <String, dynamic>{
+    'event_id': int.tryParse(eventRemoteId) ?? eventRemoteId,
+    'amount': p.amount,
+    'kind': paymentKindToServer(p.kind),
+    'method': ?paymentMethodToServer(p.method),
+    'note': ?p.note,
+    if (p.paidAt != null)
+      'paid_at': p.paidAt!.toIso8601String().split('T').first,
+  };
+}
+
+// ───────────────────────── Assignment ─────────────────────────
+
+AssignmentRole assignmentRoleFromServer(
+  Object? raw, {
+  AssignmentRole fallback = AssignmentRole.assistant,
+}) {
+  if (raw == null) return fallback;
+  final n = _normalizeEnum(raw.toString());
+  for (final r in AssignmentRole.values) {
+    if (_normalizeEnum(r.name) == n) return r;
+  }
+  return fallback;
+}
+
+/// Maps a Laravel `assignments` row to a local [Assignment].
+/// [bookingLocalId] is the LOCAL booking the row hangs off.
+Assignment assignmentFromServer(
+  Map<String, dynamic> j, {
+  required String bookingLocalId,
+  Assignment? fallback,
+}) {
+  final serverId = serverString(j, ['id']);
+  return Assignment(
+    id: fallback?.id ?? serverId ?? '',
+    remoteId: serverId ?? fallback?.remoteId,
+    bookingId: bookingLocalId,
+    userId:
+        serverString(j, ['user_id', 'userId']) ?? fallback?.userId ?? '',
+    role: assignmentRoleFromServer(
+      j['role'],
+      fallback: fallback?.role ?? AssignmentRole.assistant,
+    ),
+    payout: serverDouble(j['payout']) ?? fallback?.payout ?? 0,
+    notes: serverString(j, ['notes']) ?? fallback?.notes,
+    createdAt:
+        serverDate(j['created_at'] ?? j['createdAt']) ??
+        fallback?.createdAt ??
+        DateTime.now(),
+    updatedAt:
+        serverDate(j['updated_at'] ?? j['updatedAt']) ??
+        fallback?.updatedAt ??
+        DateTime.now(),
+    pending: false,
+  );
+}
+
+/// Request body for the Laravel AssignmentController. The local userId
+/// must already be a server user id (team members sync down with server
+/// ids) — a non-numeric local-only id is sent as-is and rejected with a
+/// clean 422 rather than corrupting data.
+Map<String, dynamic> assignmentToServer(Assignment a) {
+  return <String, dynamic>{
+    'user_id': int.tryParse(a.userId) ?? a.userId,
+    'role': a.role.name,
+    'payout': a.payout,
+    'notes': ?a.notes,
+  };
+}
+
+// ───────────────────────── Package ─────────────────────────
+
+/// Maps a Laravel `packages` row to a local [Package]. The server only
+/// persists name/base_price/coverage_hours (+ a few booleans) — the rich
+/// local fields (prints, albums, trailers, items…) come from [fallback].
+Package packageFromServer(Map<String, dynamic> j, {Package? fallback}) {
+  final serverId = serverString(j, ['id']);
+  return Package(
+    id: fallback?.id ?? serverId ?? '',
+    remoteId: serverId ?? fallback?.remoteId,
+    studioId:
+        serverString(j, ['owner_id', 'ownerId', 'studioId']) ??
+        fallback?.studioId ??
+        '',
+    name: serverString(j, ['name']) ?? fallback?.name ?? '',
+    basePrice:
+        serverDouble(j['base_price'] ?? j['basePrice']) ??
+        fallback?.basePrice ??
+        0,
+    discount: fallback?.discount ?? 0,
+    coverageHours:
+        serverDouble(j['coverage_hours'] ?? j['coverageHours']) ??
+        fallback?.coverageHours,
+    extraHourRate: fallback?.extraHourRate,
+    printSize: fallback?.printSize,
+    printQuantity: fallback?.printQuantity,
+    albumText: fallback?.albumText,
+    deliveryMethod: fallback?.deliveryMethod,
+    trailersPerEvent: fallback?.trailersPerEvent,
+    fullVideosPerEvent: fallback?.fullVideosPerEvent,
+    items: fallback?.items,
+    inclusions: fallback?.inclusions,
+    createdAt:
+        serverDate(j['created_at'] ?? j['createdAt']) ??
+        fallback?.createdAt ??
+        DateTime.now(),
+    updatedAt:
+        serverDate(j['updated_at'] ?? j['updatedAt']) ??
+        fallback?.updatedAt ??
+        DateTime.now(),
+    pending: false,
+  );
+}
+
+/// Request body for the Laravel PackageController.
+Map<String, dynamic> packageToServer(Package p) {
+  return <String, dynamic>{
+    'name': p.name,
+    'base_price': p.basePrice,
+    if (p.coverageHours != null)
+      'coverage_hours': p.coverageHours!.round(),
+    if (p.fullVideosPerEvent != null)
+      'has_video': p.fullVideosPerEvent! > 0,
+    if (p.albumText != null && p.albumText!.trim().isNotEmpty)
+      'has_album': true,
   };
 }
 

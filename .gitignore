@@ -23,3 +23,7 @@ clicker_pro/ios/Pods/
 # ── OS / editor ──────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+
+# Firebase service-account key (server-side secret — never commit)
+laravel_backend/storage/app/firebase/
+firebase-adminsdk*.json

@@ -70,6 +70,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
 
     Route::get('profile', [ProfileController::class, 'show']);
     Route::patch('profile', [ProfileController::class, 'update']);
+    Route::post('profile/role', [ProfileController::class, 'changeRole']);
 
     // Bookings
     Route::get('bookings', [BookingController::class, 'index']);
@@ -97,6 +98,8 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::post('payments', [PaymentController::class, 'store']);
     Route::get('payments/event/{eventId}', [PaymentController::class, 'byEvent']);
     Route::get('payments/earnings', [PaymentController::class, 'earnings']);
+    Route::patch('payments/{id}', [PaymentController::class, 'update']);
+    Route::delete('payments/{id}', [PaymentController::class, 'destroy']);
 
     // Invoices
     Route::get('invoices', [InvoiceController::class, 'index']);
@@ -119,6 +122,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::get('gear/{gearId}/rent', [RentController::class, 'index']);
     Route::get('rent', [RentController::class, 'all']);
     Route::post('rent', [RentController::class, 'store']);
+    Route::patch('rent/{id}', [RentController::class, 'update']);
 
     // Petty Cash
     Route::get('petty-cash', [PettyCashController::class, 'index']);
@@ -155,6 +159,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::post('team/invite', [TeamController::class, 'invite']);
     Route::get('team/members', [TeamController::class, 'members']);
     Route::patch('team/members/{userId}/permissions', [TeamController::class, 'updatePermissions']);
+    Route::delete('team/members/{userId}', [TeamController::class, 'removeMember']);
 
     // Re-edits
     Route::get('bookings/{eventId}/reedits', [ReEditController::class, 'index']);
@@ -167,6 +172,8 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
 
     // Reports
     Route::get('reports/summary', [ReportController::class, 'summary']);
+    Route::get('reports/yearly-summary', [ReportController::class, 'yearlySummary']);
+    Route::get('reports/team-performance', [ReportController::class, 'teamPerformance']);
 
     // Search
     Route::get('search', [SearchController::class, 'search']);
@@ -215,6 +222,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
 
     // Devices
     Route::post('devices', [DeviceTokenController::class, 'register']);
+    Route::delete('devices/{token}', [DeviceTokenController::class, 'unregister']);
 
     // Entitlements
     Route::get('entitlements/{key}', [EntitlementController::class, 'check']);
@@ -225,6 +233,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     // Account
     Route::post('account/delete-request', [AccountController::class, 'requestDelete']);
     Route::post('account/cancel-delete', [AccountController::class, 'cancelDelete']);
+    Route::post('account/export', [AccountController::class, 'export']);
 
     // Files
     Route::post('files/upload', [FileController::class, 'upload']);

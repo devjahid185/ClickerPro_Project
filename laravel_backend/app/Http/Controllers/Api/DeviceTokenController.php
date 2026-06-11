@@ -22,4 +22,14 @@ class DeviceTokenController extends Controller
 
         return response()->json(['data' => $deviceToken]);
     }
+
+    /** Remove the caller's device token (called on logout). */
+    public function unregister(Request $request, $token)
+    {
+        DeviceToken::where('user_id', $request->user()->id)
+            ->where('token', $token)
+            ->delete();
+
+        return response()->json(['message' => 'ok']);
+    }
 }

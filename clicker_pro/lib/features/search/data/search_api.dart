@@ -28,15 +28,20 @@ class SearchApi {
 
   final ApiClient _client;
 
-  /// Runs a global search. Returns an empty list for blank queries.
+  /// Runs a global search against `GET /api/search?q=` (Laravel returns
+  /// `{data: {events, clients, payments}}`). Empty for blank queries.
   Future<List<SearchHit>> search(String query) async {
     final q = query.trim();
     if (q.isEmpty) return const [];
 
-    final r =
-        await _client.get('/api/search/global', query: {'q': q})
-            as Map<String, dynamic>;
-    final results = (r['results'] as Map?)?.cast<String, dynamic>() ?? const {};
+    final r = await _client.get('/api/search', query: {'q': q});
+    final Map<String, dynamic> results;
+    if (r is Map) {
+      final d = r['data'] ?? r['results'] ?? r;
+      results = d is Map ? d.cast<String, dynamic>() : const {};
+    } else {
+      results = const {};
+    }
 
     final hits = <SearchHit>[];
 
@@ -61,28 +66,6 @@ class SearchApi {
             ? m['title'] as String
             : 'Untitled booking',
         subtitle: (m['venue'] as String?) ?? '',
-      ));
-    }
-
-    for (final u in (results['teamMembers'] as List? ?? const [])) {
-      final m = (u as Map).cast<String, dynamic>();
-      hits.add(SearchHit(
-        kind: SearchKind.member,
-        id: (m['id'] ?? '').toString(),
-        title: (m['fullName'] as String?) ??
-            (m['name'] as String?) ??
-            'Team member',
-        subtitle: (m['email'] as String?) ?? '',
-      ));
-    }
-
-    for (final p in (results['packages'] as List? ?? const [])) {
-      final m = (p as Map).cast<String, dynamic>();
-      hits.add(SearchHit(
-        kind: SearchKind.package,
-        id: (m['id'] ?? '').toString(),
-        title: (m['name'] as String?) ?? 'Package',
-        subtitle: 'Package',
       ));
     }
 

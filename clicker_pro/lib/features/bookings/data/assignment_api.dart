@@ -1,50 +1,69 @@
 // lib/features/bookings/data/assignment_api.dart
 //
-// Wire-level methods for booking-scoped Assignment endpoints (CRUD per
-// booking). Wraps `ApiClient` calls and returns plain `Assignment`
-// domain instances.
+// Wire-level methods for booking-scoped Assignment endpoints against the
+// Laravel backend. Shape translation lives in `server_wire.dart`.
 //
-// Source of truth: `.kiro/specs/bookings-module/design.md` →
-// "Remote API Contract" section. Validates Requirement 13.9.
+// Laravel contract (routes/api.php + AssignmentController):
+//   GET    /api/bookings/:eventId/assignments        → { data: [row…] }
+//   POST   /api/bookings/:eventId/assignments        → { data: row } (201)
+//   PATCH  /api/bookings/:eventId/assignments/:id    → { data: row }
+//   DELETE /api/bookings/:eventId/assignments/:id    → { message: ok }
 
 import '../../../core/network/api_client.dart';
 import '../domain/assignment.dart';
+import 'server_wire.dart';
 
 class AssignmentApi {
   AssignmentApi(this._client);
 
   final ApiClient _client;
 
-  /// `POST /api/bookings/:id/assignments`.
+  /// Creates an assignment against the booking's SERVER id. The response
+  /// is mapped with the submitted assignment as fallback so the LOCAL ids
+  /// survive the round-trip.
   Future<Assignment> create(
     String bookingRemoteId,
     Assignment assignment,
   ) async {
-    final r =
-        await _client.post(
-              '/api/bookings/$bookingRemoteId/assignments',
-              body: assignment.toJson(),
-            )
-            as Map<String, dynamic>;
-    return Assignment.fromJson(
-      (r['assignment'] as Map).cast<String, dynamic>(),
+    final r = await _client.post(
+      '/api/bookings/$bookingRemoteId/assignments',
+      body: assignmentToServer(assignment),
+    );
+    return assignmentFromServer(
+      unwrapServerMap(r),
+      bookingLocalId: assignment.bookingId,
+      fallback: assignment,
     );
   }
 
-  /// `PATCH /api/bookings/:id/assignments/:assignmentId`.
+  /// Lists a booking's assignments. [bookingLocalId] is the local row the
+  /// returned assignments should reference.
+  Future<List<Assignment>> list(
+    String bookingRemoteId, {
+    required String bookingLocalId,
+  }) async {
+    final r = await _client.get('/api/bookings/$bookingRemoteId/assignments');
+    return unwrapServerList(r)
+        .map((e) => assignmentFromServer(e, bookingLocalId: bookingLocalId))
+        .toList(growable: false);
+  }
+
+  /// Partial update. [partial] is the full local `Assignment.toJson()`
+  /// map (both call sites pass exactly that).
   Future<Assignment> patch(
     String bookingRemoteId,
     String assignmentRemoteId,
     Map<String, dynamic> partial,
   ) async {
-    final r =
-        await _client.patch(
-              '/api/bookings/$bookingRemoteId/assignments/$assignmentRemoteId',
-              body: partial,
-            )
-            as Map<String, dynamic>;
-    return Assignment.fromJson(
-      (r['assignment'] as Map).cast<String, dynamic>(),
+    final local = Assignment.fromJson(partial);
+    final r = await _client.patch(
+      '/api/bookings/$bookingRemoteId/assignments/$assignmentRemoteId',
+      body: assignmentToServer(local),
+    );
+    return assignmentFromServer(
+      unwrapServerMap(r),
+      bookingLocalId: local.bookingId,
+      fallback: local,
     );
   }
 

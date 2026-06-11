@@ -50,6 +50,7 @@ import '../../../core/booking_status/booking_status.dart';
 import '../../bookings/application/booking_providers.dart';
 import '../../broadcasts/presentation/broadcast_banner.dart';
 import '../../broadcasts/presentation/broadcast_popup.dart';
+import '../../push/application/fcm_bootstrap.dart';
 import '../../announcements/application/announcement_providers.dart';
 import '../../announcements/domain/announcement.dart';
 import '../../profile/application/profile_controllers.dart';
@@ -104,7 +105,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     // Admin broadcast popup — shows once per broadcast on app open,
     // auto-dismisses after 10s (see broadcast_popup.dart).
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) showBroadcastPopupIfNeeded(context, ref);
+      if (!mounted) return;
+      showBroadcastPopupIfNeeded(context, ref);
+      // Register this device for push notifications (fail-soft).
+      initPushNotifications(ref);
     });
   }
 
