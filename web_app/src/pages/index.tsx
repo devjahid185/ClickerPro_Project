@@ -9,8 +9,21 @@ import styles from './landing.module.css';
 // the dev proxy. Both are baked in at build time.
 const LANDING_ONLY = process.env.NEXT_PUBLIC_LANDING_ONLY === '1';
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
-const WEB_LOGIN = LANDING_ONLY ? '#download' : '/login';
-const WEB_REGISTER = LANDING_ONLY ? '#download' : '/register';
+// When the web app is hosted elsewhere (e.g. landing on the main domain,
+// app on app.deyalghori.com), NEXT_PUBLIC_APP_URL makes every sign-in /
+// register CTA point at the live web app — even in static-export mode.
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? '';
+const HAS_WEB_APP = !LANDING_ONLY || APP_URL !== '';
+const WEB_LOGIN = APP_URL
+  ? `${APP_URL}/login`
+  : LANDING_ONLY
+    ? '#download'
+    : '/login';
+const WEB_REGISTER = APP_URL
+  ? `${APP_URL}/register`
+  : LANDING_ONLY
+    ? '#download'
+    : '/register';
 const ANDROID_APK_URL = '/ClickerPro.apk';
 // Pricing is hidden for now (pre-launch) — flip to true to bring the
 // section and its nav link back.
@@ -298,7 +311,7 @@ export default function LandingPage() {
           <a href="#faq">FAQ</a>
           <a href="#contact">Contact</a>
           <Link href={WEB_LOGIN} className={styles.navCta}>
-            {LANDING_ONLY ? 'Get the App →' : 'Launch Web App →'}
+            {HAS_WEB_APP ? 'Launch Web App →' : 'Get the App →'}
           </Link>
         </div>
       </nav>
@@ -324,7 +337,7 @@ export default function LandingPage() {
           </p>
           <div className={styles.heroActions}>
             <Link href={WEB_LOGIN} className={styles.btnPrimary}>
-              {LANDING_ONLY ? 'Download the App →' : 'Open Web App →'}
+              {HAS_WEB_APP ? 'Open Web App →' : 'Download the App →'}
             </Link>
             <a href="#features" className={styles.btnSecondary}>Explore Features</a>
           </div>
@@ -625,7 +638,7 @@ export default function LandingPage() {
           <div className={styles.ctaActions}>
             <Link href={WEB_REGISTER} className={styles.btnPrimary}>Get Started Free →</Link>
             <Link href={WEB_LOGIN} className={styles.btnSecondary}>
-              {LANDING_ONLY ? 'Download the App' : 'Open Web App'}
+              {HAS_WEB_APP ? 'Open Web App' : 'Download the App'}
             </Link>
           </div>
         </div>
