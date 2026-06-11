@@ -270,34 +270,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               keyboardType: TextInputType.phone,
               onChanged: (val) => _updateDraft((d) => d.copyWith(bkash: val)),
             ),
-            // Bank account split into the 4 fields a payout actually
-            // needs. All four serialize into the single `bankDetails`
-            // column as "bank | account | branch | holder".
-            _buildInfoField(
-              label: 'Bank Name',
-              value: _bankPart(view.bankDetails, 0),
-              icon: Icons.account_balance,
-              onChanged: (val) => _updateBankPart(view, 0, val),
-            ),
-            _buildInfoField(
-              label: 'Account Number',
-              value: _bankPart(view.bankDetails, 1),
-              icon: Icons.numbers,
-              keyboardType: TextInputType.number,
-              onChanged: (val) => _updateBankPart(view, 1, val),
-            ),
-            _buildInfoField(
-              label: 'Branch',
-              value: _bankPart(view.bankDetails, 2),
-              icon: Icons.location_city,
-              onChanged: (val) => _updateBankPart(view, 2, val),
-            ),
-            _buildInfoField(
-              label: 'Account Holder Name',
-              value: _bankPart(view.bankDetails, 3),
-              icon: Icons.badge_outlined,
-              onChanged: (val) => _updateBankPart(view, 3, val),
-            ),
+            // Bank account lives behind one tile: collapsed = just the
+            // bank name; tap = form sheet with the 4 payout fields.
+            _buildBankTile(view),
           ]),
 
           // ── Gear inventory + companies (Freelancer / Both) ────
@@ -534,20 +509,196 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return index < parts.length ? parts[index] : '';
   }
 
-  void _updateBankPart(UserModel view, int index, String value) {
-    _updateDraft((d) {
-      final raw = d.bankDetails ?? view.bankDetails ?? '';
-      final parts = raw.split('|').map((p) => p.trim()).toList();
-      while (parts.length < 4) {
-        parts.add('');
-      }
-      parts[index] = value.trim();
-      final joined = parts.join(' | ');
-      // All four cleared → store empty.
-      return d.copyWith(
-        bankDetails: parts.every((p) => p.isEmpty) ? '' : joined,
-      );
-    });
+  /// Collapsed bank tile: bank name only (or an "add" prompt). Tapping
+  /// opens the 4-field form sheet so details stay hidden until asked.
+  Widget _buildBankTile(UserModel view) {
+    final bankName = _bankPart(view.bankDetails, 0);
+    final hasBank = bankName.isNotEmpty;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => _openBankSheet(view),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColors.glass,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.glassBorder),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.account_balance,
+                  size: 20,
+                  color: hasBank ? AppColors.teal : AppColors.filmMuted,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        hasBank ? bankName : 'Bank Account যোগ করুন',
+                        style: TextStyle(
+                          color: hasBank ? AppColors.film : AppColors.filmDim,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        hasBank
+                            ? 'বিস্তারিত দেখতে/বদলাতে ট্যাপ করুন'
+                            : 'ব্যাংক নাম, একাউন্ট নম্বর, ব্রাঞ্চ, হোল্ডারের নাম',
+                        style: TextStyle(
+                          color: AppColors.filmDim.withValues(alpha: 0.7),
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (hasBank)
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    color: AppColors.teal,
+                    size: 18,
+                  ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.filmMuted,
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openBankSheet(UserModel view) async {
+    final raw = (_isEditing ? _draft?.bankDetails : null) ?? view.bankDetails;
+    final ctrls = List.generate(
+      4,
+      (i) => TextEditingController(text: _bankPart(raw, i)),
+    );
+    const labels = [
+      'Bank Name',
+      'Account Number',
+      'Branch',
+      'Account Holder Name',
+    ];
+
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: AppColors.voidLight,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          20,
+          24,
+          24 + MediaQuery.of(ctx).viewInsets.bottom,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Bank Account Details',
+                style: TextStyle(
+                  color: AppColors.film,
+                  fontFamily: 'Poppins',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 14),
+              for (var i = 0; i < 4; i++) ...[
+                TextField(
+                  controller: ctrls[i],
+                  keyboardType: i == 1 ? TextInputType.number : null,
+                  style: const TextStyle(color: AppColors.film, fontSize: 14),
+                  decoration: InputDecoration(
+                    labelText: labels[i],
+                    labelStyle: const TextStyle(
+                      color: AppColors.filmDim,
+                      fontSize: 13,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.voidBlack,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(
+                        color: AppColors.glassBorder,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(
+                        color: AppColors.glassBorder,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: AppColors.teal),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+              const SizedBox(height: 4),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.teal,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Save'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final parts = ctrls.map((c) => c.text.trim()).toList();
+    for (final c in ctrls) {
+      c.dispose();
+    }
+    if (saved != true) return;
+
+    final joined = parts.every((p) => p.isEmpty) ? '' : parts.join(' | ');
+
+    if (_isEditing) {
+      // Editing session: stage in the draft; the profile Save commits.
+      _updateDraft((d) => d.copyWith(bankDetails: joined));
+      return;
+    }
+
+    // View mode: persist immediately so the tile works standalone.
+    try {
+      final updated = view.copyWith(bankDetails: joined);
+      await ref.read(userRepositoryProvider).updateProfile(updated);
+      if (!mounted) return;
+      _showSnack('Bank details saved');
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack('সেভ করা যায়নি — আবার চেষ্টা করুন।');
+    }
   }
 
   Widget _buildSpecializationChips(UserModel view) {

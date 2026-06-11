@@ -193,7 +193,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   Future<void> _handleGoogleSignIn() async {
     setState(() => _googleLoading = true);
     try {
-      final googleUser = await GoogleSignIn().signIn();
+      // serverClientId is passed explicitly — on some OEM ROMs the
+      // plugin fails to read the default_web_client_id resource from
+      // google-services.json and dies with DEVELOPER_ERROR (status 10).
+      // This is the project's PUBLIC web OAuth client id, not a secret.
+      final googleUser = await GoogleSignIn(
+        serverClientId:
+            '113528221350-ulop3128toa364k8n4uo109mq7ag9cog.apps.googleusercontent.com',
+      ).signIn();
       if (googleUser == null) {
         setState(() => _googleLoading = false);
         return;

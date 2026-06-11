@@ -46,6 +46,10 @@ class BookingListScreen extends ConsumerStatefulWidget {
 class _BookingListScreenState extends ConsumerState<BookingListScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _showSearch = false;
+
+  /// false = চলমান (active, date-ascending) · true = শেষ হওয়া
+  /// (delivered / completed / cancelled, newest first).
+  bool _showHistory = false;
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -288,6 +292,10 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                       );
                 },
               ),
+            _SectionToggle(
+              showHistory: _showHistory,
+              onChanged: (v) => setState(() => _showHistory = v),
+            ),
             _StatusChips(
               selected: _activeChip,
               onSelected: (chip) {
@@ -343,23 +351,46 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                     ),
                   ),
                   data: (bookings) {
-                    if (bookings.isEmpty) {
+                    // Active vs History split: finished events
+                    // (delivered/completed/cancelled) live in their own
+                    // section; the default view is upcoming work sorted
+                    // by date so today's events surface first.
+                    const finished = {
+                      BookingStatus.delivered,
+                      BookingStatus.completed,
+                      BookingStatus.cancelled,
+                    };
+                    final visible =
+                        bookings
+                            .where(
+                              (b) =>
+                                  finished.contains(b.status) == _showHistory,
+                            )
+                            .toList()
+                          ..sort(
+                            (a, b) => _showHistory
+                                ? b.date.compareTo(a.date)
+                                : a.date.compareTo(b.date),
+                          );
+                    if (visible.isEmpty) {
                       return Center(
                         child: Padding(
                           padding: const EdgeInsets.only(top: 120),
                           child: EmptyState(
                             icon: Icons.event_note_outlined,
-                            message: loc.bookings_empty,
+                            message: _showHistory
+                                ? 'এখনো কোনো শেষ হওয়া ইভেন্ট নেই।'
+                                : loc.bookings_empty,
                           ),
                         ),
                       );
                     }
-                    final dayBookings = bookings
+                    final dayBookings = visible
                         .where(
                           (b) => b.shift == Shift.day || b.shift == Shift.both,
                         )
                         .toList();
-                    final nightBookings = bookings
+                    final nightBookings = visible
                         .where(
                           (b) =>
                               b.shift == Shift.night || b.shift == Shift.both,
@@ -376,6 +407,70 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// "চলমান | শেষ হওয়া" segmented pill — separates upcoming work from
+/// finished (delivered/completed/cancelled) events.
+class _SectionToggle extends StatelessWidget {
+  const _SectionToggle({required this.showHistory, required this.onChanged});
+
+  final bool showHistory;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget pill(String label, IconData icon, bool history) {
+      final selected = showHistory == history;
+      return Expanded(
+        child: GestureDetector(
+          onTap: () => onChanged(history),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(vertical: 9),
+            decoration: BoxDecoration(
+              color: selected ? AppColors.teal : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 15,
+                  color: selected ? Colors.white : AppColors.filmDim,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: selected ? Colors.white : AppColors.filmDim,
+                    fontSize: 12.5,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.glass,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.glassBorder),
+      ),
+      child: Row(
+        children: [
+          pill('চলমান', Icons.upcoming_outlined, false),
+          pill('শেষ হওয়া', Icons.history_rounded, true),
+        ],
       ),
     );
   }

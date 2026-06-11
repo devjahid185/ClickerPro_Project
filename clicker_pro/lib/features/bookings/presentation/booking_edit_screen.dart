@@ -1422,14 +1422,11 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
       final saved = await controller.save();
       if (!mounted) return;
       final isNewBooking = widget.bookingId == null;
-      final messenger = ScaffoldMessenger.of(context);
       _showSnack('Saved ✓');
-      Navigator.of(context).pop<Booking>(saved);
       // MOD-61: new booking → Google Calendar. With auto-sync ON the
-      // pre-filled calendar event opens immediately; otherwise offer a
-      // one-tap action on the snackbar.
+      // pre-filled calendar event opens immediately; otherwise ask with
+      // a dialog BEFORE popping (a snackbar action was too easy to miss).
       if (isNewBooking) {
-        final autoSync = await CalendarSyncService.isAutoSyncEnabled();
         void openCalendar() {
           CalendarSyncService.openGoogleCalendar(
             title: saved.title,
@@ -1445,26 +1442,49 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
           );
         }
 
+        final autoSync = await CalendarSyncService.isAutoSyncEnabled();
+        if (!mounted) return;
         if (autoSync) {
           openCalendar();
         } else {
-          messenger
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(
-                content: const Text('Saved ✓ — Google Calendar-এ যোগ করবেন?'),
-                backgroundColor: AppColors.voidElevated,
-                behavior: SnackBarBehavior.floating,
-                duration: const Duration(seconds: 5),
-                action: SnackBarAction(
-                  label: 'Add',
-                  textColor: AppColors.teal,
-                  onPressed: openCalendar,
-                ),
+          final add = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              backgroundColor: AppColors.voidElevated,
+              title: const Text(
+                'Google Calendar-এ যোগ করবেন?',
+                style: TextStyle(color: AppColors.film, fontSize: 18),
               ),
-            );
+              content: Text(
+                '"${saved.title}" — ${saved.date.day}/${saved.date.month}/${saved.date.year} '
+                'ইভেন্টটা আপনার Google Calendar-এ তুলে রাখলে রিমাইন্ডারও পাবেন।',
+                style: const TextStyle(color: AppColors.filmDim, fontSize: 13.5),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: const Text(
+                    'এখন না',
+                    style: TextStyle(color: AppColors.filmDim),
+                  ),
+                ),
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.teal,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  icon: const Icon(Icons.event_available_rounded, size: 18),
+                  label: const Text('যোগ করুন'),
+                ),
+              ],
+            ),
+          );
+          if (add == true) openCalendar();
         }
       }
+      if (!mounted) return;
+      Navigator.of(context).pop<Booking>(saved);
     } on BookingValidationException catch (e) {
       if (!mounted) return;
       setState(() => _validation = e.validation);

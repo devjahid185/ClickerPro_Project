@@ -230,6 +230,26 @@ class BookingDetailScreen extends ConsumerWidget {
     WidgetRef ref,
     BookingStatus to,
   ) async {
+    // Chronology guard: Shot Complete / Delivered / Completed can only
+    // be marked AFTER the event's end time — a future event can't
+    // already be done.
+    final booking = ref
+        .read(bookingDetailControllerProvider(bookingId))
+        .valueOrNull
+        ?.booking;
+    if (booking != null &&
+        !BookingStatusMachine.isTimeAllowed(
+          to,
+          booking.date,
+          booking.endTime,
+        )) {
+      _showSnack(
+        context,
+        'ইভেন্টের সময় (${booking.date.day}/${booking.date.month} ${booking.endTime}) '
+        'শেষ হওয়ার আগে "${_titleCase(to.name)}" মার্ক করা যাবে না।',
+      );
+      return;
+    }
     try {
       await ref
           .read(bookingDetailControllerProvider(bookingId).notifier)
@@ -785,6 +805,16 @@ class _InvoiceAction extends ConsumerWidget {
   }
 
   void _showInvoiceSheet(BuildContext context, WidgetRef ref) {
+    // Hide-payment must hold on the invoice too — otherwise the eye
+    // toggle was pointless (team members could read Total/Advance/Due
+    // straight off the generated invoice).
+    final policy = ref.read(bookingsPolicyProvider);
+    final showPayment = shouldShowPayment(
+      role: policy.role,
+      hidePaymentFromTeam: booking.hidePaymentFromTeam,
+      canViewPayments: policy.can(Capability.viewBookingPayments),
+    );
+
     // Resolve real names + phone numbers from the team list so the
     // invoice carries contactable info, not internal user ids.
     final members = ref.read(teamMembersProvider).valueOrNull ?? const [];
@@ -828,9 +858,11 @@ class _InvoiceAction extends ConsumerWidget {
         for (final line in teamLines) '  • $line',
       ],
       'TEAM NO: $teamNo',
-      'TOTAL: ${BookingFormat.money(total, lang: lang, bnNumerals: lang == 'bn')}',
-      'ADVANCE: ${BookingFormat.money(advance, lang: lang, bnNumerals: lang == 'bn')}',
-      'DUE: ${BookingFormat.money(due, lang: lang, bnNumerals: lang == 'bn')}',
+      if (showPayment) ...[
+        'TOTAL: ${BookingFormat.money(total, lang: lang, bnNumerals: lang == 'bn')}',
+        'ADVANCE: ${BookingFormat.money(advance, lang: lang, bnNumerals: lang == 'bn')}',
+        'DUE: ${BookingFormat.money(due, lang: lang, bnNumerals: lang == 'bn')}',
+      ],
     ];
     final invoiceText = lines.join('\n');
 
