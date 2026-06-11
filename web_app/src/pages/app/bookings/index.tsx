@@ -40,6 +40,23 @@ export default function BookingsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [modalError, setModalError] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
+
+  // Client self-booking link: clients fill the form themselves and the
+  // booking lands as PENDING. Token lives on the owner profile.
+  const shareBookingLink = async () => {
+    try {
+      const res = await api<any>('/api/profile');
+      const d = res?.data ?? res;
+      const u = d?.user ?? d;
+      const token = u?.bookingToken || u?.public_booking_token || u?.publicToken;
+      if (!token) { alert('Booking link token pawa gelo na.'); return; }
+      const url = `${window.location.origin}/book/${token}`;
+      await navigator.clipboard.writeText(url);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2500);
+    } catch (e: any) { alert(e.message); }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -203,6 +220,7 @@ export default function BookingsPage() {
           <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 24, color: 'var(--film)' }}>Bookings</div>
           <span className="spacer" />
           <button className="btn ghost sm" onClick={exportCSV}>Export CSV</button>
+          <button className="btn ghost" onClick={shareBookingLink}>{shareCopied ? 'Link Copied!' : 'Share Booking Link'}</button>
           <button className="btn sm" style={{ background: 'var(--orange)', color: '#000' }} onClick={openNew}>+ New Booking</button>
         </div>
 
