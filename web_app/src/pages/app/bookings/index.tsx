@@ -114,10 +114,24 @@ export default function BookingsPage() {
     if (!form.clientName || !form.date) { setModalError('Client name and date are required.'); return; }
     setSubmitting(true); setModalError('');
     try {
+      // Laravel expects snake_case keys and a required `title` — the raw
+      // camelCase form body failed validation on every save.
+      const payload = {
+        title: `${form.clientName} — ${form.eventType}`,
+        date: form.date,
+        event_type: form.eventType,
+        shift: form.shift,
+        venue: form.venue || null,
+        price: form.price !== '' && form.price != null ? Number(form.price) : null,
+        advance_paid: form.advance !== '' && form.advance != null ? Number(form.advance) : null,
+        notes: form.notes || null,
+        client_name: form.clientName,
+        client_phone: form.clientPhone || null,
+      };
       if (editId) {
-        await api(`/api/bookings/${editId}`, { method: 'PATCH', body: form });
+        await api(`/api/bookings/${editId}`, { method: 'PATCH', body: payload });
       } else {
-        await api('/api/bookings', { method: 'POST', body: form });
+        await api('/api/bookings', { method: 'POST', body: payload });
       }
       setShowModal(false);
       load();
