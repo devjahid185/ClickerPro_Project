@@ -20,10 +20,13 @@ class ChatGroup {
   factory ChatGroup.fromJson(Map<String, dynamic> json) => ChatGroup(
     id: (json['id'] ?? '').toString(),
     name: (json['name'] ?? '').toString(),
-    ownerId: (json['ownerId'] ?? '').toString(),
-    createdAt: json['createdAt'] == null
+    // Laravel sends snake_case; the legacy Node backend sent camelCase.
+    ownerId: (json['ownerId'] ?? json['owner_id'] ?? '').toString(),
+    createdAt: (json['createdAt'] ?? json['created_at']) == null
         ? null
-        : DateTime.tryParse(json['createdAt'].toString()),
+        : DateTime.tryParse(
+            (json['createdAt'] ?? json['created_at']).toString(),
+          ),
   );
 
   @override

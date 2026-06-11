@@ -165,11 +165,22 @@ class TeamController extends Controller
 
     public function members(Request $request)
     {
-        $userId = $request->user()->id;
+        $user = $request->user();
+        // The team is anchored to its OWNER: members resolve their
+        // owner's id so "My Team" works from both sides of the link.
+        $teamOwnerId = (int) ($user->manager_permissions['ownerId'] ?? 0)
+            ?: (int) $user->id;
 
         // Allowlist the fields — raw User rows leak internal columns
         // (manager_permissions, activity metadata) to every teammate.
-        $members = User::whereJsonContains('manager_permissions->ownerId', $userId)
+        // ownerId may be stored as int OR string depending on which
+        // join path wrote it — match both.
+        $members = User::where(function ($q) use ($teamOwnerId) {
+                $q->where('id', $teamOwnerId)
+                  ->orWhereJsonContains('manager_permissions->ownerId', $teamOwnerId)
+                  ->orWhereJsonContains('manager_permissions->ownerId', (string) $teamOwnerId);
+            })
+            ->where('id', '!=', $user->id)
             ->get()
             ->map(fn (User $u) => [
                 'id' => $u->id,
@@ -179,7 +190,8 @@ class TeamController extends Controller
                 'role' => $u->role,
                 'avatar' => $u->avatar,
                 'created_at' => $u->created_at,
-            ]);
+            ])
+            ->values();
 
         return response()->json(['data' => $members]);
     }

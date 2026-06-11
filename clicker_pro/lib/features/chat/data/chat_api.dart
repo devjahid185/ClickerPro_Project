@@ -1,6 +1,12 @@
 // lib/features/chat/data/chat_api.dart
+//
+// Laravel contract (routes/api.php + ChatController):
+//   GET  /api/chat/groups                    -> { data: [group...] }
+//        (server auto-creates the default "Team Chat" on first call)
+//   POST /api/chat/groups {name}             -> { data: group }
+//   GET  /api/chat/groups/{id}/messages      -> { data: [message...] }
+//   POST /api/chat/groups/{id}/messages {body} -> { data: message }
 
-import '../../../core/network/api_exception.dart';
 import '../../../core/network/api_client.dart';
 import '../domain/chat_group.dart';
 import '../domain/chat_message.dart';
@@ -10,34 +16,29 @@ class ChatApi {
 
   final ApiClient _client;
 
-  /// Tolerates a 404 response — backend returns 404 when the user
-  /// hasn't created a group yet, which we surface as `null`।
+  /// The team's chat group. The backend auto-creates "Team Chat" when
+  /// none exists, so this only returns null on a malformed response.
   Future<ChatGroup?> myGroup() async {
-    try {
-      final r = await _client.get('/api/chat/my-group') as Map<String, dynamic>;
-      final data = (r['data'] as Map?)?.cast<String, dynamic>();
-      if (data == null) return null;
-      return ChatGroup.fromJson(data);
-    } on ApiException catch (e) {
-      if (e.statusCode == 404) return null;
-      rethrow;
-    }
+    final r = await _client.get('/api/chat/groups') as Map<String, dynamic>;
+    final raw = (r['data'] as List?) ?? const <dynamic>[];
+    if (raw.isEmpty) return null;
+    return ChatGroup.fromJson((raw.first as Map).cast<String, dynamic>());
   }
 
   Future<ChatGroup> createGroup() async {
     final r =
-        await _client.post('/api/chat/create-group') as Map<String, dynamic>;
+        await _client.post('/api/chat/groups', body: {'name': 'Team Chat'})
+            as Map<String, dynamic>;
     return ChatGroup.fromJson((r['data'] as Map).cast<String, dynamic>());
   }
 
   Future<List<ChatMessage>> messages(String groupId) async {
     final r =
-        await _client.get('/api/chat/messages/$groupId')
+        await _client.get('/api/chat/groups/$groupId/messages')
             as Map<String, dynamic>;
     final raw = (r['data'] as List?) ?? const <dynamic>[];
     return raw
-        .cast<Map<String, dynamic>>()
-        .map(ChatMessage.fromJson)
+        .map((e) => ChatMessage.fromJson((e as Map).cast<String, dynamic>()))
         .toList(growable: false);
   }
 
@@ -47,8 +48,8 @@ class ChatApi {
   }) async {
     final r =
         await _client.post(
-              '/api/chat/send',
-              body: {'groupId': groupId, 'text': text},
+              '/api/chat/groups/$groupId/messages',
+              body: {'body': text},
             )
             as Map<String, dynamic>;
     return ChatMessage.fromJson((r['data'] as Map).cast<String, dynamic>());
