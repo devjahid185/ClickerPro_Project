@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Local event reminders ("1 hour before"): show notifications +
          schedule exact alarms + re-register them after a reboot. -->
@@ -11,7 +12,11 @@
         android:label="CLICKER PRO"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="true"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        tools:replace="android:allowBackup,android:fullBackupContent">
         <activity
             android:name=".MainActivity"
             android:exported="true"

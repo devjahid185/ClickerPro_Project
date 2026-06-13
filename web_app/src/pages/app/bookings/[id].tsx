@@ -61,6 +61,10 @@ export default function BookingDetailPage() {
   const [editForm, setEditForm] = useState<any>({});
   const [editErr, setEditErr] = useState('');
 
+  // Invoice
+  const [showInvoice, setShowInvoice] = useState(false);
+  const [studio, setStudio] = useState<{ name: string; phone: string }>({ name: 'CLICKER PRO', phone: '' });
+
   const [submitting, setSubmitting] = useState(false);
 
   const loadBooking = async () => {
@@ -116,6 +120,25 @@ export default function BookingDetailPage() {
       await api(`/api/bookings/${id}`, { method: 'PATCH', body: { status } });
       loadBooking();
     } catch (e: any) { alert(e.message); }
+  };
+
+  // Opens the modern invoice — pulls the studio identity + payments first
+  // so the totals and the branded header are accurate.
+  const openInvoice = async () => {
+    try {
+      const [prof, pays] = await Promise.all([
+        api<any>('/api/profile').catch(() => null),
+        api<any>(`/api/payments/event/${id}`).catch(() => null),
+      ]);
+      const u = prof?.data?.user ?? prof?.data ?? prof ?? {};
+      setStudio({
+        name: u.businessName || u.business_name || u.companyName || u.name || 'CLICKER PRO',
+        phone: u.phone || '',
+      });
+      const list = Array.isArray(pays) ? pays : pays?.data ?? pays?.payments ?? [];
+      if (list.length) setEvtPayments(list);
+    } catch { /* fail-soft: still show the invoice with booking data */ }
+    setShowInvoice(true);
   };
 
   const handleEdit = async (e: FormEvent) => {
@@ -204,6 +227,7 @@ export default function BookingDetailPage() {
               <span className="spacer" />
               <div className="row" style={{ gap: 8 }}>
                 {statusBadge(booking.status)}
+                <button className="btn sm" style={{ background: 'var(--orange)', color: '#000' }} onClick={openInvoice}>🧾 Invoice</button>
                 <button className="btn ghost sm" onClick={() => setShowEditModal(true)}>Edit</button>
               </div>
             </div>
@@ -533,6 +557,93 @@ export default function BookingDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Modern Invoice */}
+      {showInvoice && booking && (() => {
+        const total = Number(booking.price) || 0;
+        const collected = evtPayments.filter((p: any) => p.kind !== 'PAYOUT').reduce((s: number, p: any) => s + (Number(p.amount) || 0), 0)
+          || (Number(booking.advance) || 0);
+        const invDue = Math.max(0, total - collected);
+        const invoiceNo = 'INV-' + String(id).replace(/\D/g, '').slice(-4).padStart(4, '0');
+        const teamLines = assignments.map((a: any) => `${a.user?.name || a.userId || 'Member'} (${a.role})`);
+        const lines = [
+          studio.name, '',
+          `Invoice: ${invoiceNo}`,
+          `Date: ${fmtDate(getDate(booking))}`,
+          `Event: ${booking.eventType || booking.event_type || '—'}`,
+          `Client: ${getName(booking)}`,
+          `Phone: ${getPhone(booking)}`,
+          `Venue: ${booking.venue || '—'}`,
+          ...(teamLines.length ? ['Team:', ...teamLines.map((l) => '  • ' + l)] : []),
+          `Total: ${tk(total)}`, `Paid: ${tk(collected)}`, `Due: ${tk(invDue)}`,
+        ].join('\n');
+        return (
+          <div className="modal-backdrop" onClick={() => setShowInvoice(false)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480, padding: 0, overflow: 'hidden' }}>
+              {/* Branded header band */}
+              <div style={{ background: 'linear-gradient(135deg, #FF8534, #FF6B00 55%, #E55A00)', padding: '20px 22px', color: '#fff' }}>
+                <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 24, letterSpacing: 0.5, textTransform: 'uppercase' }}>{studio.name}</div>
+                  <span style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 999, padding: '4px 12px', fontSize: 11, fontWeight: 700, letterSpacing: 1.5, fontFamily: 'JetBrains Mono, monospace' }}>INVOICE</span>
+                </div>
+                <div className="row" style={{ justifyContent: 'space-between', marginTop: 6, fontSize: 12, opacity: 0.95 }}>
+                  <span>{studio.phone ? '☎ ' + studio.phone : ''}</span>
+                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>{invoiceNo}</span>
+                </div>
+              </div>
+              <div style={{ padding: '18px 22px' }}>
+                <div style={{ color: 'var(--orange)', fontSize: 10, fontWeight: 700, letterSpacing: 1.6, fontFamily: 'JetBrains Mono, monospace', marginBottom: 6 }}>BILL TO</div>
+                <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 20, color: 'var(--film)' }}>{getName(booking)}</div>
+                {getPhone(booking) !== '—' && <div className="muted text-sm" style={{ marginBottom: 12 }}>{getPhone(booking)}</div>}
+
+                <div style={{ color: 'var(--orange)', fontSize: 10, fontWeight: 700, letterSpacing: 1.6, fontFamily: 'JetBrains Mono, monospace', margin: '14px 0 6px' }}>EVENT DETAILS</div>
+                {[
+                  ['Event', booking.eventType || booking.event_type || '—'],
+                  ['Date', fmtDate(getDate(booking))],
+                  ['Shift', `${booking.shift || '—'}`],
+                  ['Venue', booking.venue || '—'],
+                  ...(booking.package ? [['Package', booking.package]] : []),
+                ].map(([k, v]) => (
+                  <div key={k} className="row" style={{ justifyContent: 'space-between', padding: '3px 0', fontSize: 13 }}>
+                    <span className="muted">{k}</span><span style={{ color: 'var(--film)', fontWeight: 500 }}>{v}</span>
+                  </div>
+                ))}
+
+                {teamLines.length > 0 && (
+                  <>
+                    <div style={{ color: 'var(--orange)', fontSize: 10, fontWeight: 700, letterSpacing: 1.6, fontFamily: 'JetBrains Mono, monospace', margin: '14px 0 6px' }}>TEAM</div>
+                    {teamLines.map((l, i) => <div key={i} style={{ fontSize: 13, color: 'var(--film)', padding: '2px 0' }}>• {l}</div>)}
+                  </>
+                )}
+
+                {/* Totals box */}
+                <div style={{ background: '#1C1917', borderRadius: 14, padding: 16, marginTop: 16 }}>
+                  <div className="row" style={{ justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13 }}>Total</span>
+                    <span style={{ color: '#fff', fontFamily: 'Bebas Neue, sans-serif', fontSize: 18 }}>{tk(total)}</span>
+                  </div>
+                  <div className="row" style={{ justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13 }}>Paid</span>
+                    <span style={{ color: '#22c55e', fontFamily: 'Bebas Neue, sans-serif', fontSize: 18 }}>{tk(collected)}</span>
+                  </div>
+                  <div style={{ height: 1, background: 'rgba(255,255,255,0.12)', margin: '10px 0' }} />
+                  <div className="row" style={{ justifyContent: 'space-between' }}>
+                    <span style={{ color: '#fff', fontSize: 14, fontWeight: 600 }}>{invDue <= 0 ? 'Due · Fully Paid ✓' : 'Due'}</span>
+                    <span style={{ color: invDue <= 0 ? '#22c55e' : '#C9A84C', fontFamily: 'Bebas Neue, sans-serif', fontSize: 24 }}>{tk(invDue)}</span>
+                  </div>
+                </div>
+
+                <div className="row" style={{ gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
+                  <button className="btn ghost sm" onClick={() => { navigator.clipboard.writeText(lines); alert('Invoice copied!'); }}>Copy</button>
+                  <button className="btn ghost sm" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(lines)}`, '_blank')}>WhatsApp</button>
+                  <button className="btn ghost sm" onClick={() => window.print()}>Print / PDF</button>
+                  <button className="btn sm" style={{ background: 'var(--orange)', color: '#000' }} onClick={() => setShowInvoice(false)}>Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </AppShell>
   );
 }

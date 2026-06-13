@@ -20,6 +20,13 @@ const EVENT_TYPES = ['Wedding', 'Holud', 'Reception', 'Corporate', 'Birthday', '
 const STATUSES = ['ALL', 'PENDING', 'CONFIRMED', 'IN_PROGRESS', 'SHOT_COMPLETE', 'DELIVERED', 'COMPLETED', 'CANCELLED'];
 const DATE_FILTERS = ['Today', 'This Week', 'This Month', 'Custom'];
 
+// Canonical shift windows — Day 12pm–5pm, Night 6pm–11pm (matches mobile).
+const SHIFT_TIMES: Record<string, string> = {
+  DAY: '12pm–5pm',
+  NIGHT: '6pm–11pm',
+  BOTH: '12pm–11pm',
+};
+
 const blank = () => ({
   clientName: '', clientPhone: '', eventType: 'Wedding', date: '', shift: 'DAY',
   venue: '', package: '', price: '', advance: '', notes: '',
@@ -183,7 +190,9 @@ export default function BookingsPage() {
         <Link href={`/app/bookings/${b.id}`} style={{ fontWeight: 700, fontSize: 15, color: 'var(--film)', textDecoration: 'none' }}>
           {b.title || b.eventType || 'Booking'}
         </Link>
-        <span className={`pill ${b.shift === 'NIGHT' ? 'night' : b.shift === 'BOTH' ? 'both' : 'day'}`}>{b.shift}</span>
+        <span className={`pill ${b.shift === 'NIGHT' ? 'night' : b.shift === 'BOTH' ? 'both' : 'day'}`} title={SHIFT_TIMES[b.shift] || ''}>
+          {b.shift} · {SHIFT_TIMES[b.shift] || ''}
+        </span>
       </div>
       <div className="info-row">
         <span className="info-key">Client</span>
@@ -347,7 +356,7 @@ export default function BookingsPage() {
                         className={`pill ${s === 'DAY' ? 'day' : s === 'NIGHT' ? 'night' : 'both'}`}
                         style={{ opacity: form.shift === s ? 1 : 0.4, border: form.shift === s ? '1px solid currentColor' : '1px solid transparent' }}
                         onClick={() => setForm({ ...form, shift: s })}
-                      >{s}</button>
+                      >{s} · {SHIFT_TIMES[s]}</button>
                     ))}
                   </div>
                 </div>
