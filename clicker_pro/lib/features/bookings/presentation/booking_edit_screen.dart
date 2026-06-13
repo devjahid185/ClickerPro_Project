@@ -34,6 +34,7 @@ import '../../../core/role/role_policy.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
+import '../../../shared/widgets/celebration.dart';
 import '../../../theme/app_colors.dart';
 import '../../auth/domain/user_role.dart';
 import '../../calendar_sync/data/calendar_sync_service.dart';
@@ -1497,6 +1498,8 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
       final saved = await controller.save();
       if (!mounted) return;
       final isNewBooking = widget.bookingId == null;
+      // 🎉 celebrate a freshly created booking.
+      if (isNewBooking) Celebration.confetti(context);
       _showSnack('Saved ✓ — ক্যালেন্ডারে যোগ হচ্ছে');
       // Schedule (or reschedule) the on-device "1 hour before" reminder.
       // Fire-and-forget — never blocks the save flow.

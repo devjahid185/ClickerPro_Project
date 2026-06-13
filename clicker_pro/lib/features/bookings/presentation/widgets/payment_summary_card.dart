@@ -18,6 +18,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/format/booking_format.dart';
 import '../../../../core/role/capability.dart';
 import '../../../../features/settings/application/language_controller.dart';
+import '../../../../shared/widgets/celebration.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../dashboard/application/dashboard_providers.dart';
 import '../../application/booking_providers.dart';
@@ -197,6 +198,8 @@ class PaymentSummaryCard extends ConsumerWidget {
           .add(payment, policy: ref.read(bookingsPolicyProvider));
       ref.invalidate(paymentAggregateProvider(bookingId));
       ref.invalidate(dueBreakdownProvider);
+      // 🪙 payment received — coin-pop celebration.
+      if (context.mounted) Celebration.coinPop(context);
       messenger.showSnackBar(
         const SnackBar(content: Text('বকেয়া কালেকশন-এ যোগ হয়েছে ✓')),
       );

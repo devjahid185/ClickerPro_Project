@@ -23,6 +23,7 @@ import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../shared/states/offline_banner.dart';
+import '../../../shared/widgets/motion.dart';
 import '../../../theme/app_colors.dart';
 import '../../auth/domain/user_role.dart';
 import '../../public_booking/application/public_booking_providers.dart';
@@ -597,13 +598,16 @@ class _DayNightColumns extends StatelessWidget {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(16, 8, 8, 96),
                   itemCount: dayBookings.length,
-                  itemBuilder: (context, index) => _BookingColumnRow(
-                    booking: dayBookings[index],
-                    borderSide: const BorderSide(
-                      color: AppColors.gold,
-                      width: 2,
+                  itemBuilder: (context, index) => FadeUpIn(
+                    order: index.clamp(0, 8),
+                    child: _BookingColumnRow(
+                      booking: dayBookings[index],
+                      borderSide: const BorderSide(
+                        color: AppColors.gold,
+                        width: 2,
+                      ),
+                      iconColor: AppColors.gold,
                     ),
-                    iconColor: AppColors.gold,
                   ),
                 ),
               ),
@@ -613,13 +617,16 @@ class _DayNightColumns extends StatelessWidget {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(8, 8, 16, 96),
                   itemCount: nightBookings.length,
-                  itemBuilder: (context, index) => _BookingColumnRow(
-                    booking: nightBookings[index],
-                    borderSide: const BorderSide(
-                      color: AppColors.purple,
-                      width: 2,
+                  itemBuilder: (context, index) => FadeUpIn(
+                    order: index.clamp(0, 8),
+                    child: _BookingColumnRow(
+                      booking: nightBookings[index],
+                      borderSide: const BorderSide(
+                        color: AppColors.purple,
+                        width: 2,
+                      ),
+                      iconColor: AppColors.purple,
                     ),
-                    iconColor: AppColors.purple,
                   ),
                 ),
               ),

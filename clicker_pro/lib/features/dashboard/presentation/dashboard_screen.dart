@@ -43,6 +43,7 @@ import '../../../core/providers.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../shared/states/offline_banner.dart';
+import '../../../shared/widgets/motion.dart';
 import '../../../shared/widgets/sync_indicator.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_strings.dart';
@@ -974,7 +975,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     required String routeName,
   }) {
     return Expanded(
-      child: GestureDetector(
+      child: TapScale(
         onTap: () => _pushNamed(routeName),
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 4),
