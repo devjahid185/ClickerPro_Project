@@ -1,8 +1,10 @@
 <?php
 
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -22,5 +24,11 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // This is an API-only backend with no `login` named route. An
+        // unauthenticated request (missing / expired Sanctum token) must
+        // return a clean 401 JSON — NOT crash with "Route [login] not
+        // defined" (which surfaced as a 500 in the admin panel).
+        $exceptions->render(function (AuthenticationException $e, Request $request) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        });
     })->create();
