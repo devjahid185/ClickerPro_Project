@@ -32,6 +32,7 @@ import '../../../core/booking_status/booking_status.dart';
 import '../../../core/booking_status/booking_status_machine.dart';
 import '../../../core/format/booking_format.dart';
 import '../../../core/navigation/route_names.dart';
+import '../../../core/notifications/event_reminder_service.dart';
 import '../../../core/pdf/pdf_export.dart';
 import '../../../core/role/capability.dart';
 import '../../../shared/states/error_state.dart';
@@ -272,6 +273,8 @@ class BookingDetailScreen extends ConsumerWidget {
       await ref
           .read(bookingDetailControllerProvider(bookingId).notifier)
           .cancel(reason.isEmpty ? 'No reason provided' : reason);
+      // A cancelled event shouldn't still ping its 1-hour reminder.
+      EventReminderService.instance.cancelForBooking(bookingId);
       if (!context.mounted) return;
       _showSnack(context, 'Booking cancelled.');
     } catch (e) {

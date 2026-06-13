@@ -21,6 +21,10 @@
 # ── connectivity_plus ──────────────────────────────────────────────
 -keep class dev.fluttercommunity.plus.connectivity.** { *; }
 
+# ── flutter_local_notifications (scheduled event reminders) ─────────
+-keep class com.dexterous.** { *; }
+-dontwarn com.dexterous.**
+
 # ── General serialization safety ───────────────────────────────────
 -keepattributes Signature
 -keepattributes *Annotation*

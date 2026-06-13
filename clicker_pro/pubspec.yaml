@@ -38,6 +38,10 @@ dependencies:
   # and added ~15MB of dead weight to the APK.
   firebase_core: ^3.1.0
   firebase_messaging: ^15.1.0
+  # On-device scheduled reminders (event starts in 1 hour). Works offline —
+  # no server cron / Firebase scheduling needed.
+  flutter_local_notifications: ^18.0.1
+  timezone: ^0.9.4
 
 dev_dependencies:
   flutter_test:

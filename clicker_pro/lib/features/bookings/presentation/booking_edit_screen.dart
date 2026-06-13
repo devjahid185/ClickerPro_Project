@@ -28,6 +28,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/notifications/event_reminder_service.dart';
 import '../../../core/role/capability.dart';
 import '../../../core/role/role_policy.dart';
 import '../../../l10n/app_localizations.dart';
@@ -1497,6 +1498,17 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
       if (!mounted) return;
       final isNewBooking = widget.bookingId == null;
       _showSnack('Saved ✓ — ক্যালেন্ডারে যোগ হচ্ছে');
+      // Schedule (or reschedule) the on-device "1 hour before" reminder.
+      // Fire-and-forget — never blocks the save flow.
+      EventReminderService.instance.scheduleForBooking(
+        bookingId: saved.id,
+        title: saved.clientName?.trim().isNotEmpty == true
+            ? saved.clientName!.trim()
+            : saved.title,
+        eventDate: saved.date,
+        startTime: saved.startTime,
+        venue: saved.venue,
+      );
       // MOD-61: a new booking is ALWAYS auto-added to Google Calendar —
       // no "do you want to add?" dialog. The pre-filled Google Calendar
       // page opens immediately so the user just taps Save there.
