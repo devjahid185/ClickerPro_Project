@@ -35,24 +35,24 @@ export default function SecurityPage() {
   };
 
   const verify = async () => {
-    if (code.trim().length !== 6) { setErr('App থেকে ৬ সংখ্যার কোডটি দিন।'); return; }
+    if (code.trim().length !== 6) { setErr('Enter the 6-digit code from the app.'); return; }
     setBusy(true); setErr('');
     try {
       await api('/api/security/2fa/verify', { method: 'POST', body: { token: code.trim() } });
       setEnabled(true); setSetup(null); setCode('');
-      setMsg('2FA চালু হয়ে গেছে ✓ — এখন থেকে লগইনে authenticator কোড লাগবে।');
+      setMsg('2FA is on ✓ — login will now ask for the authenticator code.');
     } catch {
-      setErr('কোডটি মেলেনি — অ্যাপের সময় ঠিক আছে কিনা দেখে আবার দিন।');
+      setErr('Code did not match — check your app time and try again.');
     } finally { setBusy(false); }
   };
 
   const disable = async () => {
-    if (!confirm('2FA বন্ধ করবেন? অ্যাকাউন্টের নিরাপত্তা কমে যাবে।')) return;
+    if (!confirm('Turn off 2FA? Your account will be less secure.')) return;
     setBusy(true); setErr(''); setMsg('');
     try {
       await api('/api/security/2fa/disable', { method: 'POST' });
       setEnabled(false);
-      setMsg('2FA বন্ধ করা হয়েছে।');
+      setMsg('2FA has been turned off.');
     } catch (e: any) { setErr(e.message); }
     finally { setBusy(false); }
   };
@@ -70,7 +70,7 @@ export default function SecurityPage() {
             <div>
               <div style={{ fontWeight: 700, fontSize: 16 }}>Two-Factor Authentication (2FA)</div>
               <div className="muted text-sm" style={{ marginTop: 4 }}>
-                Google Authenticator-এর ৬-digit কোড ছাড়া কেউ ঢুকতে পারবে না — পাসওয়ার্ড ফাঁস হলেও।
+                Without the 6-digit Google Authenticator code, no one can sign in — even if your password leaks.
               </div>
             </div>
             <span className="spacer" />
@@ -96,14 +96,14 @@ export default function SecurityPage() {
           {setup && (
             <div style={{ marginTop: 18, borderTop: '1px solid var(--surface-3)', paddingTop: 18 }}>
               <ol style={{ margin: 0, paddingLeft: 18, lineHeight: 2 }}>
-                <li>ফোনে <strong>Google Authenticator</strong> অ্যাপ খুলুন (না থাকলে Play Store থেকে নিন)</li>
-                <li>নিচের QR কোডটা scan করুন:</li>
+                <li>Open the <strong>Google Authenticator</strong> app on your phone (get it from the Play Store if needed)</li>
+                <li>Scan the QR code below:</li>
               </ol>
               <div style={{ textAlign: 'center', margin: '14px 0' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={setup.qr} alt="2FA QR" width={200} height={200} style={{ borderRadius: 8, background: '#fff', padding: 8 }} />
                 <div className="muted text-sm" style={{ marginTop: 8 }}>
-                  Scan না হলে এই কোডটা হাতে লিখুন:
+                  If scanning fails, enter this code manually:
                 </div>
                 <code style={{ display: 'inline-block', marginTop: 6, padding: '6px 12px', background: 'var(--surface-3)', borderRadius: 6, fontSize: 12, wordBreak: 'break-all' }}>
                   {setup.secret}
