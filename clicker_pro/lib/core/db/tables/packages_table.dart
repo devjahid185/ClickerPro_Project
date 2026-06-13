@@ -16,6 +16,12 @@ class PackagesTable extends Table {
   TextColumn get deliveryMethod => text().nullable()();
   IntColumn get trailersPerEvent => integer().nullable()();
   IntColumn get fullVideosPerEvent => integer().nullable()();
+  // MOD-25 team-composition: how many photographers / cinematographers the
+  // package includes, and whether it designates a chief photographer.
+  // Selecting the package in the booking form auto-fills these.
+  IntColumn get photographerCount => integer().nullable()();
+  IntColumn get cinematographerCount => integer().nullable()();
+  BoolColumn get includesChief => boolean().withDefault(const Constant(false))();
   TextColumn get itemsJson => text().nullable()();
   TextColumn get inclusionsJson => text().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();

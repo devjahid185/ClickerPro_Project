@@ -8389,6 +8389,42 @@ class $PackagesTableTable extends PackagesTable
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _photographerCountMeta = const VerificationMeta(
+    'photographerCount',
+  );
+  @override
+  late final GeneratedColumn<int> photographerCount = GeneratedColumn<int>(
+    'photographer_count',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _cinematographerCountMeta =
+      const VerificationMeta('cinematographerCount');
+  @override
+  late final GeneratedColumn<int> cinematographerCount = GeneratedColumn<int>(
+    'cinematographer_count',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _includesChiefMeta = const VerificationMeta(
+    'includesChief',
+  );
+  @override
+  late final GeneratedColumn<bool> includesChief = GeneratedColumn<bool>(
+    'includes_chief',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("includes_chief" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _itemsJsonMeta = const VerificationMeta(
     'itemsJson',
   );
@@ -8466,6 +8502,9 @@ class $PackagesTableTable extends PackagesTable
     deliveryMethod,
     trailersPerEvent,
     fullVideosPerEvent,
+    photographerCount,
+    cinematographerCount,
+    includesChief,
     itemsJson,
     inclusionsJson,
     createdAt,
@@ -8591,6 +8630,33 @@ class $PackagesTableTable extends PackagesTable
         ),
       );
     }
+    if (data.containsKey('photographer_count')) {
+      context.handle(
+        _photographerCountMeta,
+        photographerCount.isAcceptableOrUnknown(
+          data['photographer_count']!,
+          _photographerCountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cinematographer_count')) {
+      context.handle(
+        _cinematographerCountMeta,
+        cinematographerCount.isAcceptableOrUnknown(
+          data['cinematographer_count']!,
+          _cinematographerCountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('includes_chief')) {
+      context.handle(
+        _includesChiefMeta,
+        includesChief.isAcceptableOrUnknown(
+          data['includes_chief']!,
+          _includesChiefMeta,
+        ),
+      );
+    }
     if (data.containsKey('items_json')) {
       context.handle(
         _itemsJsonMeta,
@@ -8689,6 +8755,18 @@ class $PackagesTableTable extends PackagesTable
         DriftSqlType.int,
         data['${effectivePrefix}full_videos_per_event'],
       ),
+      photographerCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}photographer_count'],
+      ),
+      cinematographerCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}cinematographer_count'],
+      ),
+      includesChief: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}includes_chief'],
+      )!,
       itemsJson: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}items_json'],
@@ -8733,6 +8811,9 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
   final String? deliveryMethod;
   final int? trailersPerEvent;
   final int? fullVideosPerEvent;
+  final int? photographerCount;
+  final int? cinematographerCount;
+  final bool includesChief;
   final String? itemsJson;
   final String? inclusionsJson;
   final DateTime createdAt;
@@ -8753,6 +8834,9 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
     this.deliveryMethod,
     this.trailersPerEvent,
     this.fullVideosPerEvent,
+    this.photographerCount,
+    this.cinematographerCount,
+    required this.includesChief,
     this.itemsJson,
     this.inclusionsJson,
     required this.createdAt,
@@ -8794,6 +8878,13 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
     if (!nullToAbsent || fullVideosPerEvent != null) {
       map['full_videos_per_event'] = Variable<int>(fullVideosPerEvent);
     }
+    if (!nullToAbsent || photographerCount != null) {
+      map['photographer_count'] = Variable<int>(photographerCount);
+    }
+    if (!nullToAbsent || cinematographerCount != null) {
+      map['cinematographer_count'] = Variable<int>(cinematographerCount);
+    }
+    map['includes_chief'] = Variable<bool>(includesChief);
     if (!nullToAbsent || itemsJson != null) {
       map['items_json'] = Variable<String>(itemsJson);
     }
@@ -8840,6 +8931,13 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
       fullVideosPerEvent: fullVideosPerEvent == null && nullToAbsent
           ? const Value.absent()
           : Value(fullVideosPerEvent),
+      photographerCount: photographerCount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(photographerCount),
+      cinematographerCount: cinematographerCount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cinematographerCount),
+      includesChief: Value(includesChief),
       itemsJson: itemsJson == null && nullToAbsent
           ? const Value.absent()
           : Value(itemsJson),
@@ -8872,6 +8970,11 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
       deliveryMethod: serializer.fromJson<String?>(json['deliveryMethod']),
       trailersPerEvent: serializer.fromJson<int?>(json['trailersPerEvent']),
       fullVideosPerEvent: serializer.fromJson<int?>(json['fullVideosPerEvent']),
+      photographerCount: serializer.fromJson<int?>(json['photographerCount']),
+      cinematographerCount: serializer.fromJson<int?>(
+        json['cinematographerCount'],
+      ),
+      includesChief: serializer.fromJson<bool>(json['includesChief']),
       itemsJson: serializer.fromJson<String?>(json['itemsJson']),
       inclusionsJson: serializer.fromJson<String?>(json['inclusionsJson']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
@@ -8897,6 +9000,9 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
       'deliveryMethod': serializer.toJson<String?>(deliveryMethod),
       'trailersPerEvent': serializer.toJson<int?>(trailersPerEvent),
       'fullVideosPerEvent': serializer.toJson<int?>(fullVideosPerEvent),
+      'photographerCount': serializer.toJson<int?>(photographerCount),
+      'cinematographerCount': serializer.toJson<int?>(cinematographerCount),
+      'includesChief': serializer.toJson<bool>(includesChief),
       'itemsJson': serializer.toJson<String?>(itemsJson),
       'inclusionsJson': serializer.toJson<String?>(inclusionsJson),
       'createdAt': serializer.toJson<DateTime>(createdAt),
@@ -8920,6 +9026,9 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
     Value<String?> deliveryMethod = const Value.absent(),
     Value<int?> trailersPerEvent = const Value.absent(),
     Value<int?> fullVideosPerEvent = const Value.absent(),
+    Value<int?> photographerCount = const Value.absent(),
+    Value<int?> cinematographerCount = const Value.absent(),
+    bool? includesChief,
     Value<String?> itemsJson = const Value.absent(),
     Value<String?> inclusionsJson = const Value.absent(),
     DateTime? createdAt,
@@ -8952,6 +9061,13 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
     fullVideosPerEvent: fullVideosPerEvent.present
         ? fullVideosPerEvent.value
         : this.fullVideosPerEvent,
+    photographerCount: photographerCount.present
+        ? photographerCount.value
+        : this.photographerCount,
+    cinematographerCount: cinematographerCount.present
+        ? cinematographerCount.value
+        : this.cinematographerCount,
+    includesChief: includesChief ?? this.includesChief,
     itemsJson: itemsJson.present ? itemsJson.value : this.itemsJson,
     inclusionsJson: inclusionsJson.present
         ? inclusionsJson.value
@@ -8988,6 +9104,15 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
       fullVideosPerEvent: data.fullVideosPerEvent.present
           ? data.fullVideosPerEvent.value
           : this.fullVideosPerEvent,
+      photographerCount: data.photographerCount.present
+          ? data.photographerCount.value
+          : this.photographerCount,
+      cinematographerCount: data.cinematographerCount.present
+          ? data.cinematographerCount.value
+          : this.cinematographerCount,
+      includesChief: data.includesChief.present
+          ? data.includesChief.value
+          : this.includesChief,
       itemsJson: data.itemsJson.present ? data.itemsJson.value : this.itemsJson,
       inclusionsJson: data.inclusionsJson.present
           ? data.inclusionsJson.value
@@ -9015,6 +9140,9 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
           ..write('deliveryMethod: $deliveryMethod, ')
           ..write('trailersPerEvent: $trailersPerEvent, ')
           ..write('fullVideosPerEvent: $fullVideosPerEvent, ')
+          ..write('photographerCount: $photographerCount, ')
+          ..write('cinematographerCount: $cinematographerCount, ')
+          ..write('includesChief: $includesChief, ')
           ..write('itemsJson: $itemsJson, ')
           ..write('inclusionsJson: $inclusionsJson, ')
           ..write('createdAt: $createdAt, ')
@@ -9025,7 +9153,7 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
     remoteId,
     studioId,
@@ -9040,12 +9168,15 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
     deliveryMethod,
     trailersPerEvent,
     fullVideosPerEvent,
+    photographerCount,
+    cinematographerCount,
+    includesChief,
     itemsJson,
     inclusionsJson,
     createdAt,
     updatedAt,
     pending,
-  );
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -9064,6 +9195,9 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
           other.deliveryMethod == this.deliveryMethod &&
           other.trailersPerEvent == this.trailersPerEvent &&
           other.fullVideosPerEvent == this.fullVideosPerEvent &&
+          other.photographerCount == this.photographerCount &&
+          other.cinematographerCount == this.cinematographerCount &&
+          other.includesChief == this.includesChief &&
           other.itemsJson == this.itemsJson &&
           other.inclusionsJson == this.inclusionsJson &&
           other.createdAt == this.createdAt &&
@@ -9086,6 +9220,9 @@ class PackagesTableCompanion extends UpdateCompanion<PackageRow> {
   final Value<String?> deliveryMethod;
   final Value<int?> trailersPerEvent;
   final Value<int?> fullVideosPerEvent;
+  final Value<int?> photographerCount;
+  final Value<int?> cinematographerCount;
+  final Value<bool> includesChief;
   final Value<String?> itemsJson;
   final Value<String?> inclusionsJson;
   final Value<DateTime> createdAt;
@@ -9107,6 +9244,9 @@ class PackagesTableCompanion extends UpdateCompanion<PackageRow> {
     this.deliveryMethod = const Value.absent(),
     this.trailersPerEvent = const Value.absent(),
     this.fullVideosPerEvent = const Value.absent(),
+    this.photographerCount = const Value.absent(),
+    this.cinematographerCount = const Value.absent(),
+    this.includesChief = const Value.absent(),
     this.itemsJson = const Value.absent(),
     this.inclusionsJson = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -9129,6 +9269,9 @@ class PackagesTableCompanion extends UpdateCompanion<PackageRow> {
     this.deliveryMethod = const Value.absent(),
     this.trailersPerEvent = const Value.absent(),
     this.fullVideosPerEvent = const Value.absent(),
+    this.photographerCount = const Value.absent(),
+    this.cinematographerCount = const Value.absent(),
+    this.includesChief = const Value.absent(),
     this.itemsJson = const Value.absent(),
     this.inclusionsJson = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -9154,6 +9297,9 @@ class PackagesTableCompanion extends UpdateCompanion<PackageRow> {
     Expression<String>? deliveryMethod,
     Expression<int>? trailersPerEvent,
     Expression<int>? fullVideosPerEvent,
+    Expression<int>? photographerCount,
+    Expression<int>? cinematographerCount,
+    Expression<bool>? includesChief,
     Expression<String>? itemsJson,
     Expression<String>? inclusionsJson,
     Expression<DateTime>? createdAt,
@@ -9177,6 +9323,10 @@ class PackagesTableCompanion extends UpdateCompanion<PackageRow> {
       if (trailersPerEvent != null) 'trailers_per_event': trailersPerEvent,
       if (fullVideosPerEvent != null)
         'full_videos_per_event': fullVideosPerEvent,
+      if (photographerCount != null) 'photographer_count': photographerCount,
+      if (cinematographerCount != null)
+        'cinematographer_count': cinematographerCount,
+      if (includesChief != null) 'includes_chief': includesChief,
       if (itemsJson != null) 'items_json': itemsJson,
       if (inclusionsJson != null) 'inclusions_json': inclusionsJson,
       if (createdAt != null) 'created_at': createdAt,
@@ -9201,6 +9351,9 @@ class PackagesTableCompanion extends UpdateCompanion<PackageRow> {
     Value<String?>? deliveryMethod,
     Value<int?>? trailersPerEvent,
     Value<int?>? fullVideosPerEvent,
+    Value<int?>? photographerCount,
+    Value<int?>? cinematographerCount,
+    Value<bool>? includesChief,
     Value<String?>? itemsJson,
     Value<String?>? inclusionsJson,
     Value<DateTime>? createdAt,
@@ -9223,6 +9376,9 @@ class PackagesTableCompanion extends UpdateCompanion<PackageRow> {
       deliveryMethod: deliveryMethod ?? this.deliveryMethod,
       trailersPerEvent: trailersPerEvent ?? this.trailersPerEvent,
       fullVideosPerEvent: fullVideosPerEvent ?? this.fullVideosPerEvent,
+      photographerCount: photographerCount ?? this.photographerCount,
+      cinematographerCount: cinematographerCount ?? this.cinematographerCount,
+      includesChief: includesChief ?? this.includesChief,
       itemsJson: itemsJson ?? this.itemsJson,
       inclusionsJson: inclusionsJson ?? this.inclusionsJson,
       createdAt: createdAt ?? this.createdAt,
@@ -9277,6 +9433,15 @@ class PackagesTableCompanion extends UpdateCompanion<PackageRow> {
     if (fullVideosPerEvent.present) {
       map['full_videos_per_event'] = Variable<int>(fullVideosPerEvent.value);
     }
+    if (photographerCount.present) {
+      map['photographer_count'] = Variable<int>(photographerCount.value);
+    }
+    if (cinematographerCount.present) {
+      map['cinematographer_count'] = Variable<int>(cinematographerCount.value);
+    }
+    if (includesChief.present) {
+      map['includes_chief'] = Variable<bool>(includesChief.value);
+    }
     if (itemsJson.present) {
       map['items_json'] = Variable<String>(itemsJson.value);
     }
@@ -9315,6 +9480,9 @@ class PackagesTableCompanion extends UpdateCompanion<PackageRow> {
           ..write('deliveryMethod: $deliveryMethod, ')
           ..write('trailersPerEvent: $trailersPerEvent, ')
           ..write('fullVideosPerEvent: $fullVideosPerEvent, ')
+          ..write('photographerCount: $photographerCount, ')
+          ..write('cinematographerCount: $cinematographerCount, ')
+          ..write('includesChief: $includesChief, ')
           ..write('itemsJson: $itemsJson, ')
           ..write('inclusionsJson: $inclusionsJson, ')
           ..write('createdAt: $createdAt, ')
@@ -16075,6 +16243,9 @@ typedef $$PackagesTableTableCreateCompanionBuilder =
       Value<String?> deliveryMethod,
       Value<int?> trailersPerEvent,
       Value<int?> fullVideosPerEvent,
+      Value<int?> photographerCount,
+      Value<int?> cinematographerCount,
+      Value<bool> includesChief,
       Value<String?> itemsJson,
       Value<String?> inclusionsJson,
       Value<DateTime> createdAt,
@@ -16098,6 +16269,9 @@ typedef $$PackagesTableTableUpdateCompanionBuilder =
       Value<String?> deliveryMethod,
       Value<int?> trailersPerEvent,
       Value<int?> fullVideosPerEvent,
+      Value<int?> photographerCount,
+      Value<int?> cinematographerCount,
+      Value<bool> includesChief,
       Value<String?> itemsJson,
       Value<String?> inclusionsJson,
       Value<DateTime> createdAt,
@@ -16182,6 +16356,21 @@ class $$PackagesTableTableFilterComposer
 
   ColumnFilters<int> get fullVideosPerEvent => $composableBuilder(
     column: $table.fullVideosPerEvent,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get photographerCount => $composableBuilder(
+    column: $table.photographerCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get cinematographerCount => $composableBuilder(
+    column: $table.cinematographerCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get includesChief => $composableBuilder(
+    column: $table.includesChief,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -16290,6 +16479,21 @@ class $$PackagesTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get photographerCount => $composableBuilder(
+    column: $table.photographerCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get cinematographerCount => $composableBuilder(
+    column: $table.cinematographerCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get includesChief => $composableBuilder(
+    column: $table.includesChief,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get itemsJson => $composableBuilder(
     column: $table.itemsJson,
     builder: (column) => ColumnOrderings(column),
@@ -16379,6 +16583,21 @@ class $$PackagesTableTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get photographerCount => $composableBuilder(
+    column: $table.photographerCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get cinematographerCount => $composableBuilder(
+    column: $table.cinematographerCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get includesChief => $composableBuilder(
+    column: $table.includesChief,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get itemsJson =>
       $composableBuilder(column: $table.itemsJson, builder: (column) => column);
 
@@ -16442,6 +16661,9 @@ class $$PackagesTableTableTableManager
                 Value<String?> deliveryMethod = const Value.absent(),
                 Value<int?> trailersPerEvent = const Value.absent(),
                 Value<int?> fullVideosPerEvent = const Value.absent(),
+                Value<int?> photographerCount = const Value.absent(),
+                Value<int?> cinematographerCount = const Value.absent(),
+                Value<bool> includesChief = const Value.absent(),
                 Value<String?> itemsJson = const Value.absent(),
                 Value<String?> inclusionsJson = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -16463,6 +16685,9 @@ class $$PackagesTableTableTableManager
                 deliveryMethod: deliveryMethod,
                 trailersPerEvent: trailersPerEvent,
                 fullVideosPerEvent: fullVideosPerEvent,
+                photographerCount: photographerCount,
+                cinematographerCount: cinematographerCount,
+                includesChief: includesChief,
                 itemsJson: itemsJson,
                 inclusionsJson: inclusionsJson,
                 createdAt: createdAt,
@@ -16486,6 +16711,9 @@ class $$PackagesTableTableTableManager
                 Value<String?> deliveryMethod = const Value.absent(),
                 Value<int?> trailersPerEvent = const Value.absent(),
                 Value<int?> fullVideosPerEvent = const Value.absent(),
+                Value<int?> photographerCount = const Value.absent(),
+                Value<int?> cinematographerCount = const Value.absent(),
+                Value<bool> includesChief = const Value.absent(),
                 Value<String?> itemsJson = const Value.absent(),
                 Value<String?> inclusionsJson = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -16507,6 +16735,9 @@ class $$PackagesTableTableTableManager
                 deliveryMethod: deliveryMethod,
                 trailersPerEvent: trailersPerEvent,
                 fullVideosPerEvent: fullVideosPerEvent,
+                photographerCount: photographerCount,
+                cinematographerCount: cinematographerCount,
+                includesChief: includesChief,
                 itemsJson: itemsJson,
                 inclusionsJson: inclusionsJson,
                 createdAt: createdAt,

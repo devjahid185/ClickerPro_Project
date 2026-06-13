@@ -143,7 +143,14 @@ class UserRepositoryImpl implements UserRepository {
         phone: remoteCopy.phone,
         bio: remoteCopy.bio,
         companyName: remoteCopy.companyName,
-        avatarUrl: remoteCopy.avatarUrl,
+        // Keep the locally-picked avatar whenever the server doesn't echo
+        // one back (it returns a relative path or omits it entirely on
+        // some builds). Overwriting with an empty server value was the
+        // "profile picture doesn't save" bug.
+        avatarUrl:
+            (remoteCopy.avatarUrl != null && remoteCopy.avatarUrl!.isNotEmpty)
+            ? remoteCopy.avatarUrl
+            : updated.avatarUrl,
         remoteId: remoteCopy.remoteId,
       );
       await _users.upsertCurrent(

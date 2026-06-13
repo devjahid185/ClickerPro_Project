@@ -32,7 +32,7 @@ import '../domain/booking.dart';
 import '../domain/booking_filter.dart';
 import '../domain/shift.dart';
 
-enum _StatusChip { all, pending, confirmed, successful, delivered, cancelled }
+enum _StatusChip { all, confirmed, successful, delivered, cancelled }
 
 enum _DateRangePreset { any, today, week, month, lastMonth }
 
@@ -46,10 +46,6 @@ class BookingListScreen extends ConsumerStatefulWidget {
 class _BookingListScreenState extends ConsumerState<BookingListScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _showSearch = false;
-
-  /// false = চলমান (active, date-ascending) · true = শেষ হওয়া
-  /// (delivered / completed / cancelled, newest first).
-  bool _showHistory = false;
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -79,7 +75,6 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
     final statuses = ref.read(bookingFilterProvider).statuses;
     if (statuses.isEmpty) return _StatusChip.all;
     if (statuses.length == 1) {
-      if (statuses.contains(BookingStatus.pending)) return _StatusChip.pending;
       if (statuses.contains(BookingStatus.confirmed)) {
         return _StatusChip.confirmed;
       }
@@ -97,10 +92,10 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
     switch (chip) {
       case _StatusChip.all:
         return {};
-      case _StatusChip.pending:
-        return {BookingStatus.pending};
       case _StatusChip.confirmed:
-        return {BookingStatus.confirmed};
+        // "Confirmed" now also surfaces pending bookings so nothing is
+        // hidden after the dedicated Pending chip was removed.
+        return {BookingStatus.pending, BookingStatus.confirmed};
       case _StatusChip.successful:
         return {
           BookingStatus.inProgress,
@@ -292,10 +287,6 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                       );
                 },
               ),
-            _SectionToggle(
-              showHistory: _showHistory,
-              onChanged: (v) => setState(() => _showHistory = v),
-            ),
             _StatusChips(
               selected: _activeChip,
               onSelected: (chip) {
@@ -351,36 +342,19 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                     ),
                   ),
                   data: (bookings) {
-                    // Active vs History split: finished events
-                    // (delivered/completed/cancelled) live in their own
-                    // section; the default view is upcoming work sorted
-                    // by date so today's events surface first.
-                    const finished = {
-                      BookingStatus.delivered,
-                      BookingStatus.completed,
-                      BookingStatus.cancelled,
-                    };
-                    final visible =
-                        bookings
-                            .where(
-                              (b) =>
-                                  finished.contains(b.status) == _showHistory,
-                            )
-                            .toList()
-                          ..sort(
-                            (a, b) => _showHistory
-                                ? b.date.compareTo(a.date)
-                                : a.date.compareTo(b.date),
-                          );
+                    // One unified list — no চলমান/শেষ হওয়া split. Every
+                    // event (including cancelled) shows here, sorted by
+                    // date so the nearest events surface first. Use the
+                    // status chips to narrow by status.
+                    final visible = bookings.toList()
+                      ..sort((a, b) => a.date.compareTo(b.date));
                     if (visible.isEmpty) {
                       return Center(
                         child: Padding(
                           padding: const EdgeInsets.only(top: 120),
                           child: EmptyState(
                             icon: Icons.event_note_outlined,
-                            message: _showHistory
-                                ? 'এখনো কোনো শেষ হওয়া ইভেন্ট নেই।'
-                                : loc.bookings_empty,
+                            message: loc.bookings_empty,
                           ),
                         ),
                       );
@@ -407,70 +381,6 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// "চলমান | শেষ হওয়া" segmented pill — separates upcoming work from
-/// finished (delivered/completed/cancelled) events.
-class _SectionToggle extends StatelessWidget {
-  const _SectionToggle({required this.showHistory, required this.onChanged});
-
-  final bool showHistory;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    Widget pill(String label, IconData icon, bool history) {
-      final selected = showHistory == history;
-      return Expanded(
-        child: GestureDetector(
-          onTap: () => onChanged(history),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            padding: const EdgeInsets.symmetric(vertical: 9),
-            decoration: BoxDecoration(
-              color: selected ? AppColors.teal : Colors.transparent,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  size: 15,
-                  color: selected ? Colors.white : AppColors.filmDim,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: selected ? Colors.white : AppColors.filmDim,
-                    fontSize: 12.5,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppColors.glass,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.glassBorder),
-      ),
-      child: Row(
-        children: [
-          pill('চলমান', Icons.upcoming_outlined, false),
-          pill('শেষ হওয়া', Icons.history_rounded, true),
-        ],
       ),
     );
   }
@@ -528,7 +438,6 @@ class _StatusChips extends StatelessWidget {
 
   static const _chips = [
     (_StatusChip.all, 'All'),
-    (_StatusChip.pending, 'Pending'),
     (_StatusChip.confirmed, 'Confirmed'),
     (_StatusChip.successful, 'Successful'),
     (_StatusChip.delivered, 'Delivered'),

@@ -97,7 +97,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -153,6 +153,13 @@ class AppDatabase extends _$AppDatabase {
       // edited Company Name silently vanished after every profile refresh.
       if (from <= 6 && to >= 7) {
         await m.addColumn(usersTable, usersTable.companyName);
+      }
+      // v7 → v8: MOD-25 — packages gain team-composition fields so picking
+      // a package auto-fills photographer/cinematographer counts + chief.
+      if (from <= 7 && to >= 8) {
+        await m.addColumn(packagesTable, packagesTable.photographerCount);
+        await m.addColumn(packagesTable, packagesTable.cinematographerCount);
+        await m.addColumn(packagesTable, packagesTable.includesChief);
       }
     },
   );

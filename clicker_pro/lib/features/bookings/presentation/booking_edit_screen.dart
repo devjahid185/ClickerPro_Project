@@ -36,10 +36,14 @@ import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
 import '../../auth/domain/user_role.dart';
 import '../../calendar_sync/data/calendar_sync_service.dart';
+import '../../profile/application/profile_controllers.dart';
+import '../../../core/providers.dart';
+import '../application/booking_conflict.dart';
 import '../application/booking_edit_controller.dart';
 import '../application/booking_providers.dart';
 import '../domain/assignment_role.dart';
 import '../domain/booking.dart';
+import '../domain/booking_filter.dart';
 import '../domain/event_type.dart';
 import '../domain/package.dart';
 import '../domain/shift.dart';
@@ -1342,14 +1346,32 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     if (result.useCustomPrice) {
       controller.setCustomPrice(0);
     } else if (result.package != null) {
+      final pkg = result.package!;
       controller.setPackage(
-        packageId: result.package!.id,
-        coverageHours: result.package!.coverageHours,
-        extraHourRate: result.package!.extraHourRate,
+        packageId: pkg.id,
+        coverageHours: pkg.coverageHours,
+        extraHourRate: pkg.extraHourRate,
       );
-      _coverageCtrl.text = result.package!.coverageHours?.toString() ?? '';
-      _extraRateCtrl.text = result.package!.extraHourRate?.toString() ?? '';
+      _coverageCtrl.text = pkg.coverageHours?.toString() ?? '';
+      _extraRateCtrl.text = pkg.extraHourRate?.toString() ?? '';
+      // MOD-25 auto-fill: a package that designates a chief turns the
+      // Chief Photographer section on automatically.
+      if (pkg.includesChief) {
+        setState(() => _chiefEnabled = true);
+      }
       _triggerPackageFlash();
+      // Surface the package's team composition so the user knows how many
+      // photographers / cinematographers to add.
+      final parts = <String>[
+        if ((pkg.photographerCount ?? 0) > 0)
+          '${pkg.photographerCount} photographer${pkg.photographerCount! > 1 ? 's' : ''}',
+        if ((pkg.cinematographerCount ?? 0) > 0)
+          '${pkg.cinematographerCount} cinematographer${pkg.cinematographerCount! > 1 ? 's' : ''}',
+        if (pkg.includesChief) 'chief',
+      ];
+      if (parts.isNotEmpty && mounted) {
+        _showSnack('${pkg.name}: ${parts.join(' · ')} — টিম এড করুন');
+      }
     }
   }
 
@@ -1432,70 +1454,65 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     if (_validation.errors.isNotEmpty) {
       setState(() => _validation = const BookingValidation({}));
     }
+
+    // ── Scheduling conflict guard (v12 Key Decisions) ──
+    // Freelancer = strict 1 event/shift (hard block). Owner/Both = warning
+    // unless Distribution mode is on.
+    final draft = ref.read(bookingEditControllerProvider(widget.bookingId)).valueOrNull;
+    if (draft != null) {
+      final policy = ref.read(bookingsPolicyProvider);
+      final existing =
+          ref.read(bookingListProvider(const BookingFilter())).valueOrNull ??
+          const [];
+      // Distribution mode lives in the per-user preferences (Settings).
+      final userId = ref.read(currentUserProvider).valueOrNull?.id;
+      final distributionOn = userId == null
+          ? false
+          : await ref
+                .read(preferencesRepositoryProvider)
+                .getDistributionEnabled(userId);
+      if (!mounted) return;
+      final conflict = BookingConflict.evaluate(
+        role: policy.role,
+        freelancerMode: draft.freelancerMode,
+        date: draft.date,
+        shift: draft.shift,
+        candidateId: draft.localId,
+        existing: existing,
+        distributionOn: distributionOn,
+      );
+      if (conflict.isBlock) {
+        _shakeCtrl.forward(from: 0);
+        _showConflictBlocked(conflict.clashingTitle);
+        return;
+      }
+      if (conflict.isWarning) {
+        final proceed = await _showConflictWarning(conflict.clashingTitle);
+        if (!mounted || !proceed) return;
+      }
+    }
+
     try {
       final saved = await controller.save();
       if (!mounted) return;
       final isNewBooking = widget.bookingId == null;
-      _showSnack('Saved ✓');
-      // MOD-61: new booking → Google Calendar. With auto-sync ON the
-      // pre-filled calendar event opens immediately; otherwise ask with
-      // a dialog BEFORE popping (a snackbar action was too easy to miss).
+      _showSnack('Saved ✓ — ক্যালেন্ডারে যোগ হচ্ছে');
+      // MOD-61: a new booking is ALWAYS auto-added to Google Calendar —
+      // no "do you want to add?" dialog. The pre-filled Google Calendar
+      // page opens immediately so the user just taps Save there.
       if (isNewBooking) {
-        void openCalendar() {
-          CalendarSyncService.openGoogleCalendar(
-            title: saved.title,
-            date: saved.date,
-            startTime: saved.startTime,
-            endTime: saved.endTime,
-            venue: saved.venue,
-            description: [
-              if (saved.clientName != null) 'Client: ${saved.clientName}',
-              if (saved.clientPhone != null) 'Phone: ${saved.clientPhone}',
-              'Booked via CLICKER PRO',
-            ].join('\n'),
-          );
-        }
-
-        final autoSync = await CalendarSyncService.isAutoSyncEnabled();
-        if (!mounted) return;
-        if (autoSync) {
-          openCalendar();
-        } else {
-          final add = await showDialog<bool>(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              backgroundColor: AppColors.voidElevated,
-              title: const Text(
-                'Google Calendar-এ যোগ করবেন?',
-                style: TextStyle(color: AppColors.film, fontSize: 18),
-              ),
-              content: Text(
-                '"${saved.title}" — ${saved.date.day}/${saved.date.month}/${saved.date.year} '
-                'ইভেন্টটা আপনার Google Calendar-এ তুলে রাখলে রিমাইন্ডারও পাবেন।',
-                style: const TextStyle(color: AppColors.filmDim, fontSize: 13.5),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(false),
-                  child: const Text(
-                    'এখন না',
-                    style: TextStyle(color: AppColors.filmDim),
-                  ),
-                ),
-                FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.teal,
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: () => Navigator.of(ctx).pop(true),
-                  icon: const Icon(Icons.event_available_rounded, size: 18),
-                  label: const Text('যোগ করুন'),
-                ),
-              ],
-            ),
-          );
-          if (add == true) openCalendar();
-        }
+        await CalendarSyncService.openGoogleCalendar(
+          title: saved.title,
+          date: saved.date,
+          startTime: saved.startTime,
+          endTime: saved.endTime,
+          venue: saved.venue,
+          description: [
+            if (saved.clientName != null) 'Client: ${saved.clientName}',
+            if (saved.clientPhone != null) 'Phone: ${saved.clientPhone}',
+            'Booked via CLICKER PRO',
+          ].join('\n'),
+        );
       }
       if (!mounted) return;
       Navigator.of(context).pop<Booking>(saved);
@@ -1508,6 +1525,75 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
       if (!mounted) return;
       _showSnack('Could not save: $e');
     }
+  }
+
+  /// Freelancer hard block — same date+shift already booked. No override.
+  void _showConflictBlocked(String? clashTitle) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.voidElevated,
+        title: const Text(
+          'এই শিফট-এ আগে থেকেই বুকিং আছে',
+          style: TextStyle(color: AppColors.film, fontSize: 18),
+        ),
+        content: Text(
+          'একজন ফ্রিল্যান্সার এক শিফটে একটাই ইভেন্ট নিতে পারবেন।'
+          '${clashTitle != null ? '\n\nএই দিন/শিফটে আগে থেকেই আছে: "$clashTitle"।' : ''}\n\n'
+          'আগের বুকিংটা বদলান বা অন্য শিফট/তারিখ বেছে নিন।',
+          style: const TextStyle(color: AppColors.filmDim, fontSize: 13.5),
+        ),
+        actions: [
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.orange,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('বুঝেছি'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Owner/Both warning — same date+shift already booked, override allowed.
+  /// Returns true if the user chooses to save anyway.
+  Future<bool> _showConflictWarning(String? clashTitle) async {
+    final proceed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.voidElevated,
+        title: const Text(
+          'এই শিফট-এ আগে থেকেই বুকিং আছে',
+          style: TextStyle(color: AppColors.film, fontSize: 18),
+        ),
+        content: Text(
+          '${clashTitle != null ? '"$clashTitle" — ' : ''}এই দিন/শিফটে আগে থেকেই একটি ইভেন্ট আছে।\n\n'
+          'একসাথে একাধিক ইভেন্ট নিতে চাইলে Profile → Distribution mode চালু করুন।\n\n'
+          'তবুও এই বুকিংটা সেভ করবেন?',
+          style: const TextStyle(color: AppColors.filmDim, fontSize: 13.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text(
+              'বাতিল',
+              style: TextStyle(color: AppColors.filmDim),
+            ),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.orange,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('হ্যাঁ, সেভ করুন'),
+          ),
+        ],
+      ),
+    );
+    return proceed ?? false;
   }
 
   void _markDirty() {

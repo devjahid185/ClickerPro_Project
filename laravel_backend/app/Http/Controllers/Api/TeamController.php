@@ -60,6 +60,15 @@ class TeamController extends Controller
         if ((int) $invite->owner_id === (int) $user->id) {
             return response()->json(['message' => 'You cannot join your own team'], 422);
         }
+        // Only freelancers (and owner-added managers) may join a team. A
+        // studio owner / "both" account cannot become someone else's
+        // team member.
+        if (in_array(strtolower((string) $user->role), ['owner', 'both'], true)) {
+            return response()->json(
+                ['message' => 'Studio owners cannot join another team. Only freelancers can.'],
+                422
+            );
+        }
 
         $this->attachToTeam($user, (int) $invite->owner_id);
         $invite->update(['used_by' => $user->id, 'used_at' => now()]);
@@ -85,6 +94,16 @@ class TeamController extends Controller
         if (!$target) {
             return response()->json(
                 ['message' => 'No registered account with this email'],
+                422
+            );
+        }
+
+        // Only freelancers may be added to a team. A studio owner (or a
+        // "both" account that runs its own studio) cannot become someone
+        // else's team member — that would tangle two studios together.
+        if (in_array(strtolower((string) $target->role), ['owner', 'both'], true)) {
+            return response()->json(
+                ['message' => 'Only freelancers can be added to a team.'],
                 422
             );
         }

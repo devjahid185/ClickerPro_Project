@@ -631,8 +631,13 @@ class _MemberProfileSheet extends ConsumerWidget {
                         final intl = digits.startsWith('880')
                             ? digits
                             : '880${digits.replaceFirst(RegExp(r'^0'), '')}';
+                        // Open a direct WhatsApp chat with a friendly
+                        // pre-filled greeting.
+                        final hi = Uri.encodeComponent(
+                          'হ্যালো ${member.fullName.split(' ').first}, ',
+                        );
                         launchUrl(
-                          Uri.parse('https://wa.me/$intl'),
+                          Uri.parse('https://wa.me/$intl?text=$hi'),
                           mode: LaunchMode.externalApplication,
                         );
                       },

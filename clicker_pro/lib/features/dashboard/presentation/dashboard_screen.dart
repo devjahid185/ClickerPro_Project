@@ -570,7 +570,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         ],
       ),
       data: (m) {
-        final dayNight = _dayNightBreakdown(m.todayEvents);
+        final dayNight = (m.todayDayEvents, m.todayNightEvents);
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -688,12 +688,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         );
       },
     );
-  }
-
-  (int, int) _dayNightBreakdown(int total) {
-    // Placeholder split — Phase 2 will use real day/night data.
-    final day = (total * 0.6).round();
-    return (day, total - day);
   }
 
   Widget _dayNightPill({

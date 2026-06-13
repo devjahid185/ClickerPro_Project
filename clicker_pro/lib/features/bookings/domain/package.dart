@@ -56,6 +56,16 @@ class Package {
   /// Number of full-length videos per event.
   final int? fullVideosPerEvent;
 
+  /// How many photographers this package supplies. Auto-fills the booking
+  /// form's photographer slots when the package is selected.
+  final int? photographerCount;
+
+  /// How many cinematographers this package supplies.
+  final int? cinematographerCount;
+
+  /// Whether the package designates a chief photographer.
+  final bool includesChief;
+
   /// Free-form list of line items / inclusions rendered as bullets.
   final List<String>? items;
 
@@ -89,6 +99,9 @@ class Package {
     this.deliveryMethod,
     this.trailersPerEvent,
     this.fullVideosPerEvent,
+    this.photographerCount,
+    this.cinematographerCount,
+    this.includesChief = false,
     this.items,
     this.inclusions,
     required this.createdAt,
@@ -111,6 +124,9 @@ class Package {
     String? deliveryMethod,
     int? trailersPerEvent,
     int? fullVideosPerEvent,
+    int? photographerCount,
+    int? cinematographerCount,
+    bool? includesChief,
     List<String>? items,
     List<String>? inclusions,
     DateTime? createdAt,
@@ -142,6 +158,9 @@ class Package {
           : (deliveryMethod ?? this.deliveryMethod),
       trailersPerEvent: trailersPerEvent ?? this.trailersPerEvent,
       fullVideosPerEvent: fullVideosPerEvent ?? this.fullVideosPerEvent,
+      photographerCount: photographerCount ?? this.photographerCount,
+      cinematographerCount: cinematographerCount ?? this.cinematographerCount,
+      includesChief: includesChief ?? this.includesChief,
       items: clearItems ? null : (items ?? this.items),
       inclusions: clearInclusions ? null : (inclusions ?? this.inclusions),
       createdAt: createdAt ?? this.createdAt,
@@ -166,6 +185,10 @@ class Package {
       if (deliveryMethod != null) 'deliveryMethod': deliveryMethod,
       if (trailersPerEvent != null) 'trailersPerEvent': trailersPerEvent,
       if (fullVideosPerEvent != null) 'fullVideosPerEvent': fullVideosPerEvent,
+      if (photographerCount != null) 'photographerCount': photographerCount,
+      if (cinematographerCount != null)
+        'cinematographerCount': cinematographerCount,
+      'includesChief': includesChief,
       if (items != null) 'items': items,
       if (inclusions != null) 'inclusions': inclusions,
       'createdAt': createdAt.toIso8601String(),
@@ -190,6 +213,9 @@ class Package {
       deliveryMethod: json['deliveryMethod'] as String?,
       trailersPerEvent: (json['trailersPerEvent'] as num?)?.toInt(),
       fullVideosPerEvent: (json['fullVideosPerEvent'] as num?)?.toInt(),
+      photographerCount: (json['photographerCount'] as num?)?.toInt(),
+      cinematographerCount: (json['cinematographerCount'] as num?)?.toInt(),
+      includesChief: json['includesChief'] as bool? ?? false,
       items: json['items'] == null
           ? null
           : List<String>.from(json['items'] as List),
@@ -220,6 +246,9 @@ class Package {
         deliveryMethod == other.deliveryMethod &&
         trailersPerEvent == other.trailersPerEvent &&
         fullVideosPerEvent == other.fullVideosPerEvent &&
+        photographerCount == other.photographerCount &&
+        cinematographerCount == other.cinematographerCount &&
+        includesChief == other.includesChief &&
         _listEquals(items, other.items) &&
         _listEquals(inclusions, other.inclusions) &&
         createdAt == other.createdAt &&
@@ -243,6 +272,9 @@ class Package {
     deliveryMethod,
     trailersPerEvent,
     fullVideosPerEvent,
+    photographerCount,
+    cinematographerCount,
+    includesChief,
     items == null ? 0 : Object.hashAll(items!),
     inclusions == null ? 0 : Object.hashAll(inclusions!),
     createdAt,

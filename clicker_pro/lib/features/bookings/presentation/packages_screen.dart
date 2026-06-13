@@ -584,9 +584,12 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
   late final TextEditingController _trailersCtrl;
   late final TextEditingController _videosCtrl;
   late final TextEditingController _customSizeCtrl;
+  late final TextEditingController _photographersCtrl;
+  late final TextEditingController _cinematographersCtrl;
 
   String? _printSize;
   String? _delivery;
+  bool _includesChief = false;
   late List<String> _items;
   bool _saving = false;
 
@@ -614,8 +617,15 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
       text: p?.fullVideosPerEvent?.toString() ?? '',
     );
     _customSizeCtrl = TextEditingController(text: p?.printSize ?? '');
+    _photographersCtrl = TextEditingController(
+      text: p?.photographerCount?.toString() ?? '',
+    );
+    _cinematographersCtrl = TextEditingController(
+      text: p?.cinematographerCount?.toString() ?? '',
+    );
     _printSize = p?.printSize;
     _delivery = p?.deliveryMethod;
+    _includesChief = p?.includesChief ?? false;
     _items = List<String>.from(p?.items ?? const []);
   }
 
@@ -629,6 +639,8 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
     _trailersCtrl.dispose();
     _videosCtrl.dispose();
     _customSizeCtrl.dispose();
+    _photographersCtrl.dispose();
+    _cinematographersCtrl.dispose();
     super.dispose();
   }
 
@@ -812,6 +824,46 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
                             ),
                           ),
                         ],
+                      ),
+                      // Team composition — auto-fills the booking form's
+                      // photographer / cinematographer slots on select.
+                      Row(
+                        children: [
+                          Expanded(
+                            child: LensTextField(
+                              label: 'Photographers',
+                              controller: _photographersCtrl,
+                              keyboardType: TextInputType.number,
+                              hint: 'e.g. 2',
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: LensTextField(
+                              label: 'Cinematographers',
+                              controller: _cinematographersCtrl,
+                              keyboardType: TextInputType.number,
+                              hint: 'e.g. 1',
+                            ),
+                          ),
+                        ],
+                      ),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text(
+                          'Includes Chief Photographer',
+                          style: TextStyle(
+                            color: AppColors.film,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        value: _includesChief,
+                        activeThumbColor: AppColors.gold,
+                        onChanged: (v) {
+                          setState(() => _includesChief = v);
+                          refresh();
+                        },
                       ),
                       const SizedBox(height: 6),
                       _buildItemsEditor(refresh),
@@ -1119,6 +1171,8 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
     final printQty = int.tryParse(_printQtyCtrl.text.trim());
     final trailers = int.tryParse(_trailersCtrl.text.trim());
     final videos = int.tryParse(_videosCtrl.text.trim());
+    final photographers = int.tryParse(_photographersCtrl.text.trim());
+    final cinematographers = int.tryParse(_cinematographersCtrl.text.trim());
 
     String? resolvedPrintSize = _printSize;
     if (resolvedPrintSize == 'Custom') {
@@ -1149,6 +1203,9 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
       deliveryMethod: _delivery,
       trailersPerEvent: trailers,
       fullVideosPerEvent: videos,
+      photographerCount: photographers,
+      cinematographerCount: cinematographers,
+      includesChief: _includesChief,
       items: cleanedItems.isEmpty ? null : cleanedItems,
       inclusions: existing?.inclusions,
       createdAt: existing?.createdAt ?? now,

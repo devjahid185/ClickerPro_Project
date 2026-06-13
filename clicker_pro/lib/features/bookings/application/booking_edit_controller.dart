@@ -349,6 +349,11 @@ class BookingEditController
       createdByUserId: user.id,
       createdAt: now,
       date: DateTime(now.year, now.month, now.day).add(const Duration(days: 1)),
+      // Default to the Day shift's canonical window (12pm–5pm) so a
+      // freshly created booking already carries sane times before the
+      // user touches the shift pills.
+      startTime: Shift.day.defaultStartTime,
+      endTime: Shift.day.defaultEndTime,
     );
   }
 
@@ -361,7 +366,18 @@ class BookingEditController
   void setStartTime(String value) =>
       _update((d) => d.copyWith(startTime: value));
   void setEndTime(String value) => _update((d) => d.copyWith(endTime: value));
-  void setShift(Shift value) => _update((d) => d.copyWith(shift: value));
+
+  /// Picking a shift also stamps the booking's canonical times so the
+  /// calendar entry, dashboard "today" bucketing, and the chronology
+  /// guard all line up with the agreed schedule (Day 12pm–5pm,
+  /// Night 6pm–11pm).
+  void setShift(Shift value) => _update(
+    (d) => d.copyWith(
+      shift: value,
+      startTime: value.defaultStartTime,
+      endTime: value.defaultEndTime,
+    ),
+  );
   void setVenue(String? value) => _update((d) => d.copyWith(venue: value));
   void setOutdoor(bool value) => _update((d) => d.copyWith(outdoor: value));
   void setBrideName(String? value) =>
