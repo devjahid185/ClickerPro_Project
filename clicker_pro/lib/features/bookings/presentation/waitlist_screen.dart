@@ -31,10 +31,10 @@ class WaitlistScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Waitlist',
           style: TextStyle(
             color: AppColors.film,
@@ -98,16 +98,16 @@ class WaitlistScreen extends ConsumerWidget {
 
     InputDecoration deco(String label) => InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: AppColors.filmDim),
+      labelStyle: TextStyle(color: AppColors.filmDim),
       filled: true,
       fillColor: AppColors.voidElevated,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.glassBorder),
+        borderSide: BorderSide(color: AppColors.glassBorder),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.glassBorder),
+        borderSide: BorderSide(color: AppColors.glassBorder),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -143,7 +143,7 @@ class WaitlistScreen extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  const Text(
+                  Text(
                     'Add to Waitlist',
                     style: TextStyle(
                       color: AppColors.film,
@@ -155,14 +155,14 @@ class WaitlistScreen extends ConsumerWidget {
                   const SizedBox(height: 16),
                   TextField(
                     controller: nameCtrl,
-                    style: const TextStyle(color: AppColors.film),
+                    style: TextStyle(color: AppColors.film),
                     decoration: deco('Client name'),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: phoneCtrl,
                     keyboardType: TextInputType.phone,
-                    style: const TextStyle(color: AppColors.film),
+                    style: TextStyle(color: AppColors.film),
                     decoration: deco('Phone'),
                   ),
                   const SizedBox(height: 12),
@@ -187,14 +187,14 @@ class WaitlistScreen extends ConsumerWidget {
                         '${preferredDate.year}-'
                         '${preferredDate.month.toString().padLeft(2, '0')}-'
                         '${preferredDate.day.toString().padLeft(2, '0')}',
-                        style: const TextStyle(color: AppColors.film),
+                        style: TextStyle(color: AppColors.film),
                       ),
                     ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: noteCtrl,
-                    style: const TextStyle(color: AppColors.film),
+                    style: TextStyle(color: AppColors.film),
                     decoration: deco('Note (optional)'),
                   ),
                   const SizedBox(height: 20),
@@ -302,7 +302,7 @@ class _WaitlistRow extends StatelessWidget {
         ),
         title: Text(
           entry.clientName,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.film,
             fontSize: 14,
             fontWeight: FontWeight.w600,

@@ -234,7 +234,7 @@ class _ReEditRow extends ConsumerWidget {
           if (allowedTransitions.isNotEmpty) ...[
             const SizedBox(width: 6),
             PopupMenuButton<ReEditStatus>(
-              icon: const Icon(
+              icon: Icon(
                 Icons.more_horiz_rounded,
                 color: AppColors.filmMuted,
               ),
@@ -249,7 +249,7 @@ class _ReEditRow extends ConsumerWidget {
                     value: s,
                     child: Text(
                       _menuLabel(s),
-                      style: const TextStyle(color: AppColors.film),
+                      style: TextStyle(color: AppColors.film),
                     ),
                   ),
               ],
@@ -459,7 +459,7 @@ class _RequestReEditDialogState extends State<_RequestReEditDialog> {
           children: [
             Text(
               'Request re-edit (Round ${widget.defaultRound})',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.film,
                 fontFamily: 'Poppins',
                 fontSize: 22,
@@ -494,7 +494,7 @@ class _RequestReEditDialogState extends State<_RequestReEditDialog> {
                 Expanded(
                   child: TextButton(
                     onPressed: () => Navigator.of(context).pop(null),
-                    child: const Text(
+                    child: Text(
                       'Cancel',
                       style: TextStyle(color: AppColors.filmDim),
                     ),
@@ -528,13 +528,13 @@ class _RequestReEditDialogState extends State<_RequestReEditDialog> {
       lastDate: today.add(const Duration(days: 365)),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(
+          colorScheme: ColorScheme.light(
             primary: AppColors.orange,
             onPrimary: Colors.white,
             surface: AppColors.voidElevated,
             onSurface: AppColors.film,
           ),
-          dialogTheme: const DialogThemeData(
+          dialogTheme: DialogThemeData(
             backgroundColor: AppColors.voidElevated,
           ),
         ),

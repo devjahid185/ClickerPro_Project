@@ -35,45 +35,45 @@ const Map<int, Map<int, List<int>>> _bdHolidays = {
 /// the dashboard can show WHICH dates are holidays, not just a count.
 const Map<int, Map<int, Map<int, String>>> _bdHolidayNames = {
   2026: {
-    2: {21: 'শহীদ দিবস / আন্তর্জাতিক মাতৃভাষা দিবস'},
+    2: {21: 'Shaheed Day / Intl Mother Language Day'},
     3: {
-      20: 'ঈদুল ফিতর*',
-      21: 'ঈদুল ফিতর*',
-      22: 'ঈদুল ফিতর*',
-      26: 'স্বাধীনতা দিবস',
+      20: 'Eid-ul-Fitr*',
+      21: 'Eid-ul-Fitr*',
+      22: 'Eid-ul-Fitr*',
+      26: 'Independence Day',
     },
-    4: {14: 'পহেলা বৈশাখ'},
+    4: {14: 'Pohela Boishakh'},
     5: {
-      1: 'মে দিবস',
-      27: 'ঈদুল আজহা*',
-      28: 'ঈদুল আজহা*',
-      29: 'ঈদুল আজহা*',
+      1: 'May Day',
+      27: 'Eid-ul-Adha*',
+      28: 'Eid-ul-Adha*',
+      29: 'Eid-ul-Adha*',
     },
-    6: {26: 'আশুরা*'},
-    8: {26: 'ঈদে মিলাদুন্নবী*'},
-    9: {4: 'জন্মাষ্টমী*'},
-    10: {20: 'বিজয়া দশমী (দুর্গাপূজা)*'},
-    12: {16: 'বিজয় দিবস', 25: 'বড়দিন'},
+    6: {26: 'Ashura*'},
+    8: {26: 'Eid-e-Miladunnabi*'},
+    9: {4: 'Janmashtami*'},
+    10: {20: 'Bijoya Dashami (Durga Puja)*'},
+    12: {16: 'Victory Day', 25: 'Christmas'},
   },
   2027: {
-    2: {21: 'শহীদ দিবস / আন্তর্জাতিক মাতৃভাষা দিবস'},
+    2: {21: 'Shaheed Day / Intl Mother Language Day'},
     3: {
-      10: 'ঈদুল ফিতর*',
-      11: 'ঈদুল ফিতর*',
-      12: 'ঈদুল ফিতর*',
-      26: 'স্বাধীনতা দিবস',
+      10: 'Eid-ul-Fitr*',
+      11: 'Eid-ul-Fitr*',
+      12: 'Eid-ul-Fitr*',
+      26: 'Independence Day',
     },
-    4: {14: 'পহেলা বৈশাখ'},
+    4: {14: 'Pohela Boishakh'},
     5: {
-      1: 'মে দিবস',
-      17: 'ঈদুল আজহা*',
-      18: 'ঈদুল আজহা*',
-      19: 'ঈদুল আজহা*',
+      1: 'May Day',
+      17: 'Eid-ul-Adha*',
+      18: 'Eid-ul-Adha*',
+      19: 'Eid-ul-Adha*',
     },
-    6: {15: 'আশুরা*'},
-    8: {15: 'ঈদে মিলাদুন্নবী*'},
-    10: {9: 'বিজয়া দশমী*'},
-    12: {16: 'বিজয় দিবস', 25: 'বড়দিন'},
+    6: {15: 'Ashura*'},
+    8: {15: 'Eid-e-Miladunnabi*'},
+    10: {9: 'Bijoya Dashami*'},
+    12: {16: 'Victory Day', 25: 'Christmas'},
   },
 };
 
@@ -105,7 +105,7 @@ List<BdHoliday> bdHolidaysOfMonth(DateTime when) {
     for (final day in sorted)
       BdHoliday(
         date: DateTime(when.year, when.month, day),
-        name: names[day] ?? 'সরকারি ছুটি',
+        name: names[day] ?? 'Public Holiday',
       ),
   ]);
 }

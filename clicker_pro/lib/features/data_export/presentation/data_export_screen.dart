@@ -32,7 +32,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text('Data Export', style: AppText.brand),
@@ -249,7 +249,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
                             .toggleScope(scope),
                         activeColor: AppColors.teal,
                         checkColor: AppColors.voidBlack,
-                        side: const BorderSide(color: AppColors.glassBorder),
+                        side: BorderSide(color: AppColors.glassBorder),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(4),
                         ),
@@ -261,7 +261,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
                 ),
               ),
               if (!isLast)
-                const Divider(
+                Divider(
                   height: 1,
                   indent: 64,
                   color: AppColors.glassBorder,
@@ -349,7 +349,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
       decoration: AppDecorations.glassCard(radius: 10),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.calendar_today_outlined,
             size: 16,
             color: AppColors.filmDim,
@@ -377,13 +377,13 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
+            colorScheme: ColorScheme.light(
               primary: AppColors.teal,
               onPrimary: AppColors.voidBlack,
               surface: AppColors.voidLight,
               onSurface: AppColors.film,
             ),
-            dialogTheme: const DialogThemeData(
+            dialogTheme: DialogThemeData(
               backgroundColor: AppColors.voidElevated,
             ),
           ),
@@ -418,7 +418,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
                   ref.read(exportControllerProvider.notifier).generateAndShare()
             : null,
         icon: isGenerating
-            ? const SizedBox(
+            ? SizedBox(
                 width: 18,
                 height: 18,
                 child: CircularProgressIndicator(
@@ -426,10 +426,10 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
                   color: AppColors.film,
                 ),
               )
-            : const Icon(Icons.share_outlined, color: AppColors.film, size: 18),
+            : Icon(Icons.share_outlined, color: AppColors.film, size: 18),
         label: Text(
           isGenerating ? 'Generating...' : 'Generate & Share',
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.film,
             fontWeight: FontWeight.w600,
             fontSize: 14.5,

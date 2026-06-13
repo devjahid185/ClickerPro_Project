@@ -36,7 +36,7 @@ class ErrorState extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13.5,
                 color: AppColors.filmDim,
                 height: 1.5,

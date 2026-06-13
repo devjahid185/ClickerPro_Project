@@ -40,12 +40,12 @@ class CalendarScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
           loc.bookings_calendar,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.film,
             fontFamily: 'Poppins',
             fontSize: 22,
@@ -174,7 +174,7 @@ class _MonthHeader extends StatelessWidget {
             child: Center(
               child: Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.film,
                   fontFamily: 'Poppins',
                   fontSize: 20,
@@ -397,7 +397,7 @@ class _DayBottomSheet extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             DateFormat.yMMMMEEEEd().format(day),
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.film,
               fontFamily: 'Poppins',
               fontSize: 20,
@@ -432,7 +432,7 @@ class _DayBottomSheet extends StatelessWidget {
                               b.title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.film,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -454,7 +454,7 @@ class _DayBottomSheet extends StatelessWidget {
                       const SizedBox(width: 8),
                       BookingStatusBadge(b.status),
                       const SizedBox(width: 4),
-                      const Icon(
+                      Icon(
                         Icons.chevron_right_rounded,
                         color: AppColors.filmMuted,
                       ),

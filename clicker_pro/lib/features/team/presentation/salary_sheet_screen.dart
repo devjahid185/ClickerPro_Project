@@ -84,10 +84,10 @@ class _SalarySheetScreenState extends ConsumerState<SalarySheetScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Salary Sheet',
           style: TextStyle(
             color: AppColors.film,
@@ -312,18 +312,18 @@ class _SalarySheetScreenState extends ConsumerState<SalarySheetScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.voidLight,
-        title: const Text(
+        title: Text(
           'Mark All Paid',
           style: TextStyle(color: AppColors.film),
         ),
         content: Text(
           'Mark all ${sheet.entries.length} members as paid for ${sheet.month}?',
-          style: const TextStyle(color: AppColors.filmDim),
+          style: TextStyle(color: AppColors.filmDim),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text(
+            child: Text(
               'Cancel',
               style: TextStyle(color: AppColors.filmDim),
             ),
@@ -406,7 +406,7 @@ class _SalarySheetScreenState extends ConsumerState<SalarySheetScreen> {
       );
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('PDF তৈরি করা যায়নি: $e')),
+        SnackBar(content: Text('Could not create PDF: $e')),
       );
     }
   }
@@ -474,7 +474,7 @@ class _SalaryMemberCard extends StatelessWidget {
                   children: [
                     Text(
                       entry.memberName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 15,
                         fontWeight: FontWeight.w600,

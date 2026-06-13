@@ -47,10 +47,10 @@ class _FlAvailabilityScreenState extends ConsumerState<FlAvailabilityScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Availability',
           style: TextStyle(
             color: AppColors.film,
@@ -202,18 +202,18 @@ class _FlAvailabilityScreenState extends ConsumerState<FlAvailabilityScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.voidLight,
-        title: const Text(
+        title: Text(
           'Remove Blackout?',
           style: TextStyle(color: AppColors.film),
         ),
         content: Text(
           'This will make ${item.date.month}/${item.date.day} available again.',
-          style: const TextStyle(color: AppColors.filmDim),
+          style: TextStyle(color: AppColors.filmDim),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(
+            child: Text(
               'Cancel',
               style: TextStyle(color: AppColors.filmDim),
             ),
@@ -274,12 +274,12 @@ class _CalendarHeader extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(Icons.chevron_left, color: AppColors.filmDim),
+            icon: Icon(Icons.chevron_left, color: AppColors.filmDim),
             onPressed: onPrevious,
           ),
           Text(
             '${months[focusedMonth.month]} ${focusedMonth.year}',
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.film,
               fontFamily: 'Poppins',
               fontSize: 18,
@@ -287,7 +287,7 @@ class _CalendarHeader extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.chevron_right, color: AppColors.filmDim),
+            icon: Icon(Icons.chevron_right, color: AppColors.filmDim),
             onPressed: onNext,
           ),
         ],
@@ -328,7 +328,7 @@ class _CalendarGrid extends StatelessWidget {
         Center(
           child: Text(
             day,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.filmMuted,
               fontSize: 11,
               fontWeight: FontWeight.w600,
@@ -444,7 +444,7 @@ class _BlackoutRow extends StatelessWidget {
               children: [
                 Text(
                   '$dateStr$endStr',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.film,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -454,7 +454,7 @@ class _BlackoutRow extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     item.reason!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.filmMuted,
                       fontSize: 12,
                     ),
@@ -475,7 +475,7 @@ class _BlackoutRow extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.delete_outline,
               color: AppColors.filmMuted,
               size: 20,
@@ -537,7 +537,7 @@ class _AddBlackoutSheetState extends State<_AddBlackoutSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Add Blackout Date',
             style: TextStyle(
               color: AppColors.film,
@@ -557,10 +557,10 @@ class _AddBlackoutSheetState extends State<_AddBlackoutSheet> {
           const SizedBox(height: 12),
           TextField(
             controller: _reasonController,
-            style: const TextStyle(color: AppColors.film),
+            style: TextStyle(color: AppColors.film),
             decoration: InputDecoration(
               hintText: 'Reason (optional)',
-              hintStyle: const TextStyle(color: AppColors.filmMuted),
+              hintStyle: TextStyle(color: AppColors.filmMuted),
               filled: true,
               fillColor: AppColors.voidElevated,
               border: OutlineInputBorder(
@@ -577,10 +577,10 @@ class _AddBlackoutSheetState extends State<_AddBlackoutSheet> {
           DropdownButtonFormField<RecurrencePattern>(
             initialValue: _recurrence,
             dropdownColor: AppColors.voidElevated,
-            style: const TextStyle(color: AppColors.film),
+            style: TextStyle(color: AppColors.film),
             decoration: InputDecoration(
               labelText: 'Recurrence',
-              labelStyle: const TextStyle(color: AppColors.filmMuted),
+              labelStyle: TextStyle(color: AppColors.filmMuted),
               filled: true,
               fillColor: AppColors.voidElevated,
               border: OutlineInputBorder(
@@ -640,7 +640,7 @@ class _AddBlackoutSheetState extends State<_AddBlackoutSheet> {
                       );
                     },
               child: _submitting
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
@@ -674,7 +674,7 @@ class _AddBlackoutSheetState extends State<_AddBlackoutSheet> {
           builder: (context, child) {
             return Theme(
               data: Theme.of(context).copyWith(
-                colorScheme: const ColorScheme.light(
+                colorScheme: ColorScheme.light(
                   primary: AppColors.teal,
                   surface: AppColors.voidElevated,
                 ),
@@ -697,7 +697,7 @@ class _AddBlackoutSheetState extends State<_AddBlackoutSheet> {
           children: [
             Text(
               label,
-              style: const TextStyle(color: AppColors.filmMuted, fontSize: 13),
+              style: TextStyle(color: AppColors.filmMuted, fontSize: 13),
             ),
             Text(
               display,

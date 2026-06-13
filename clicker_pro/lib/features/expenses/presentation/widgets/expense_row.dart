@@ -52,7 +52,7 @@ class ExpenseRow extends StatelessWidget {
               children: [
                 Text(
                   expense.category,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.film,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -64,7 +64,7 @@ class ExpenseRow extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     expense.note!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.filmDim,
                       fontSize: 12,
                     ),
@@ -75,7 +75,7 @@ class ExpenseRow extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   BookingFormat.dateTime(expense.incurredAt, lang: lang),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.filmMuted,
                     fontSize: 11,
                   ),

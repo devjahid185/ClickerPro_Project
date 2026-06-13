@@ -36,25 +36,25 @@ class _OnboardingIntroScreenState extends ConsumerState<OnboardingIntroScreen> {
       headlineEn: 'Manage every booking',
       bodyEn:
           'From inquiry to delivery — your studio in one app, online or offline.',
-      headlineBn: 'প্রতিটি বুকিং সামলান',
+      headlineBn: 'Manage every booking',
       bodyBn:
-          'প্রথম ইনকোয়ারি থেকে ডেলিভারি — পুরো স্টুডিও এক জায়গায়, অনলাইনে বা অফলাইনে।',
+          'From first inquiry to delivery — your whole studio in one place, online or offline.',
     ),
     _SlideData(
       icon: Icons.groups_2_rounded,
       headlineEn: 'One app for every role',
       bodyEn:
           'Owner, freelancer, or both — Clicker Pro adapts to how you work.',
-      headlineBn: 'প্রতিটি রোলের জন্য এক অ্যাপ',
+      headlineBn: 'One app for every role',
       bodyBn:
-          'Owner, Freelancer অথবা Both — যেভাবে কাজ করেন, Clicker Pro সেভাবেই গড়ে উঠবে।',
+          'Owner, Freelancer or Both — Clicker Pro adapts to how you work.',
     ),
     _SlideData(
       icon: Icons.translate_rounded,
-      headlineEn: 'English & বাংলা — your call',
+      headlineEn: 'Built for studios',
       bodyEn: 'Switch language any time. Bengali numerals optional.',
-      headlineBn: 'ইংরেজি ও বাংলা — আপনার পছন্দ',
-      bodyBn: 'যেকোনো সময় ভাষা পাল্টান। চাইলে বাংলা সংখ্যাও দেখান।',
+      headlineBn: 'Built for studios',
+      bodyBn: 'Fast, modern, and made for photography teams.',
     ),
   ];
 
@@ -119,7 +119,7 @@ class _OnboardingIntroScreenState extends ConsumerState<OnboardingIntroScreen> {
                           foregroundColor: AppColors.filmDim,
                         ),
                         child: Text(
-                          isBn ? 'এড়িয়ে যান' : 'Skip',
+                          'Skip',
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
@@ -187,8 +187,8 @@ class _OnboardingIntroScreenState extends ConsumerState<OnboardingIntroScreen> {
                             children: [
                               Text(
                                 isLast
-                                    ? (isBn ? 'শুরু করুন' : 'Get Started')
-                                    : (isBn ? 'পরবর্তী' : 'Next'),
+                                    ? ('Get Started')
+                                    : ('Next'),
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w600,
@@ -247,7 +247,7 @@ class _Slide extends StatelessWidget {
             color: AppColors.filmDim,
             height: 1.6,
           )
-        : const TextStyle(
+        : TextStyle(
             fontSize: 14.5,
             color: AppColors.filmDim,
             height: 1.55,

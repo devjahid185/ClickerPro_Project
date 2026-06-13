@@ -98,7 +98,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Column(
@@ -113,7 +113,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-            const Text(
+            Text(
               'Finance',
               style: TextStyle(
                 color: AppColors.film,
@@ -229,7 +229,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Manager role-এ income/profit দেখা যায় না — শুধু বকেয়া ও ক্লায়েন্ট।',
+              'Income/profit are hidden for the Manager role — only dues and clients.',
               style: TextStyle(
                 color: AppColors.filmDim.withValues(alpha: 0.9),
                 fontSize: 12.5,
@@ -385,7 +385,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                     const SizedBox(height: 8),
                     Text(
                       a.label,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.film,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
@@ -539,7 +539,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                   children: [
                     Text(
                       label,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.film,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -596,7 +596,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
             icon: Icons.event_note_rounded,
             color: AppColors.film,
             label: 'Booked',
-            sub: 'মোট বুকিং মূল্য',
+            sub: 'Total booking value',
             value: booked,
           ),
           Divider(height: 1, color: AppColors.hairline),
@@ -604,7 +604,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
             icon: Icons.check_circle_outline_rounded,
             color: AppColors.green,
             label: 'Collected',
-            sub: 'আদায় হয়েছে',
+            sub: 'Collected',
             value: collected,
           ),
           Divider(height: 1, color: AppColors.hairline),
@@ -612,7 +612,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
             icon: Icons.hourglass_bottom_rounded,
             color: AppColors.coral,
             label: 'Due',
-            sub: 'বকেয়া — নিচের Activity Log দেখুন',
+            sub: 'Due — see the Activity Log below',
             value: due,
           ),
         ],
@@ -787,7 +787,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
               border: Border.all(color: AppColors.glassBorder),
             ),
             child: Text(
-              'কোনো বকেয়া নেই 🎉',
+              'No dues 🎉',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: AppColors.filmDim.withValues(alpha: 0.8),
@@ -857,7 +857,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                     display,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.film,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,

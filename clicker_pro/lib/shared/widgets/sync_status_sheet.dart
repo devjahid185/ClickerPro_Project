@@ -56,7 +56,7 @@ class SyncStatusSheet extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             loc.sync_title,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.film,
               fontFamily: 'Poppins',
               fontSize: 22,
@@ -177,7 +177,7 @@ class _PendingSummary extends StatelessWidget {
                   count == 0
                       ? loc.sync_no_pending
                       : loc.sync_pending_count(count),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.film,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -283,7 +283,7 @@ class _StuckRow extends StatelessWidget {
               children: [
                 Text(
                   '${row.entityType} · ${row.op}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.film,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,

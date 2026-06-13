@@ -80,10 +80,10 @@ class BookingDetailScreen extends ConsumerWidget {
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.film),
+            icon: Icon(Icons.arrow_back, color: AppColors.film),
             onPressed: () => Navigator.of(context).maybePop(),
           ),
-          title: const Text(
+          title: Text(
             'Booking',
             style: TextStyle(
               color: AppColors.film,
@@ -127,14 +127,14 @@ class BookingDetailScreen extends ConsumerWidget {
                         style: TextStyle(color: AppColors.red),
                       ),
                     ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: _DetailMenuAction.calendar,
                     child: Text(
                       'Add to Google Calendar',
                       style: TextStyle(color: AppColors.film),
                     ),
                   ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: _DetailMenuAction.refresh,
                     child: Text(
                       'Refresh from server',
@@ -247,8 +247,8 @@ class BookingDetailScreen extends ConsumerWidget {
         )) {
       _showSnack(
         context,
-        'ইভেন্টের সময় (${booking.date.day}/${booking.date.month} ${booking.endTime}) '
-        'শেষ হওয়ার আগে "${_titleCase(to.name)}" মার্ক করা যাবে না।',
+        'Event time (${booking.date.day}/${booking.date.month} ${booking.endTime}) '
+        'cannot mark "${_titleCase(to.name)}" before it has ended.',
       );
       return;
     }
@@ -678,7 +678,7 @@ class _CancelReasonDialogState extends State<_CancelReasonDialog> {
                 Expanded(
                   child: TextButton(
                     onPressed: () => Navigator.of(context).pop(null),
-                    child: const Text(
+                    child: Text(
                       'Back',
                       style: TextStyle(color: AppColors.filmDim),
                     ),
@@ -1020,7 +1020,7 @@ class _InvoiceSheet extends StatelessWidget {
                         const SizedBox(height: 6),
                         Text(
                           data.clientName,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.film,
                             fontFamily: 'Poppins',
                             fontSize: 17,
@@ -1066,7 +1066,7 @@ class _InvoiceSheet extends StatelessWidget {
                                   Expanded(
                                     child: Text(
                                       line,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         color: AppColors.film,
                                         fontSize: 13,
                                       ),
@@ -1264,7 +1264,7 @@ class _InvoiceSheet extends StatelessWidget {
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.film,
               fontSize: 13,
               fontWeight: FontWeight.w500,
@@ -1473,7 +1473,7 @@ class _QuickActionsSection extends StatelessWidget {
       );
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('PDF তৈরি করা যায়নি: $e')),
+        SnackBar(content: Text('Could not create PDF: $e')),
       );
     }
   }

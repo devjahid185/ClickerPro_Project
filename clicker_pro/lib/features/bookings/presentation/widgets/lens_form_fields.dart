@@ -69,7 +69,7 @@ class LensTextField extends StatelessWidget {
             maxLength: maxLength,
             keyboardType: keyboardType,
             onChanged: onChanged,
-            style: const TextStyle(color: AppColors.film, fontSize: 13.5),
+            style: TextStyle(color: AppColors.film, fontSize: 13.5),
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(
@@ -172,7 +172,7 @@ class LensSelector<T> extends StatelessWidget {
                 isExpanded: true,
                 dropdownColor: AppColors.voidElevated,
                 iconEnabledColor: AppColors.filmDim,
-                style: const TextStyle(color: AppColors.film, fontSize: 13.5),
+                style: TextStyle(color: AppColors.film, fontSize: 13.5),
                 onChanged: onChanged,
                 items: items
                     .map(
@@ -234,7 +234,7 @@ class LensSwitchTile extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.film,
                       fontSize: 13.5,
                       fontWeight: FontWeight.w500,

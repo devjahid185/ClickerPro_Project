@@ -89,7 +89,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(
+            child: Text(
               'Cancel',
               style: TextStyle(color: AppColors.filmDim),
             ),
@@ -130,7 +130,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: const Text(
@@ -390,7 +390,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
         SnackBar(
           content: Text(
             message,
-            style: const TextStyle(color: AppColors.film, fontSize: 13),
+            style: TextStyle(color: AppColors.film, fontSize: 13),
           ),
           backgroundColor: AppColors.voidElevated,
           behavior: SnackBarBehavior.floating,

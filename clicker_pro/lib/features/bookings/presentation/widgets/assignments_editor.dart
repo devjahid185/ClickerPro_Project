@@ -219,7 +219,7 @@ class _AssignmentRow extends ConsumerWidget {
                   memberName ?? 'User ${assignment.userId}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.film,
                     fontSize: 13.5,
                     fontWeight: FontWeight.w600,
@@ -365,7 +365,7 @@ class _AssignmentEditDialogState extends State<_AssignmentEditDialog> {
           children: [
             Text(
               isEdit ? 'Edit assignment' : 'Add assignment',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.film,
                 fontFamily: 'Poppins',
                 fontSize: 22,
@@ -389,7 +389,7 @@ class _AssignmentEditDialogState extends State<_AssignmentEditDialog> {
                         widget.memberName!,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.film,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -429,7 +429,7 @@ class _AssignmentEditDialogState extends State<_AssignmentEditDialog> {
                 Expanded(
                   child: TextButton(
                     onPressed: () => Navigator.of(context).pop(null),
-                    child: const Text(
+                    child: Text(
                       'Cancel',
                       style: TextStyle(color: AppColors.filmDim),
                     ),

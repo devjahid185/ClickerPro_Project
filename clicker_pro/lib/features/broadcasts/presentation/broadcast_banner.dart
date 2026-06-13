@@ -116,7 +116,7 @@ class _BroadcastBannerState extends ConsumerState<BroadcastBanner> {
                             b.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.film,
                               fontSize: 14,
                               fontWeight: FontWeight.w700,

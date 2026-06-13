@@ -102,7 +102,7 @@ class _TeamMemberPickerSheetState extends ConsumerState<TeamMemberPickerSheet> {
             const SizedBox(height: 8),
             Text(
               widget.title,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.film,
                 fontFamily: 'Poppins',
                 fontSize: 20,
@@ -271,7 +271,7 @@ class _TeamMemberPickerSheetState extends ConsumerState<TeamMemberPickerSheet> {
               activeColor: widget.accentColor,
               checkColor: AppColors.voidBlack,
             )
-          : const Icon(
+          : Icon(
               Icons.chevron_right_rounded,
               color: AppColors.filmMuted,
             ),

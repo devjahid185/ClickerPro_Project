@@ -163,18 +163,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     final String msg;
     if (error is ApiException) {
       if (error.isUnauthorized) {
-        msg = 'ইমেইল বা পাসওয়ার্ড ভুল।';
+        msg = 'Wrong email or password.';
       } else if (error.isRateLimited) {
-        msg = 'অনেকবার চেষ্টা হয়েছে — ১ মিনিট অপেক্ষা করে আবার চেষ্টা করুন।';
+        msg = 'Too many attempts — wait 1 minute and try again.';
       } else if (error.statusCode == 403) {
-        msg = 'অ্যাকাউন্টটি নিষ্ক্রিয় করা আছে। সাপোর্টে যোগাযোগ করুন।';
+        msg = 'This account is disabled. Please contact support.';
       } else if (error.isNetwork) {
-        msg = 'সার্ভারের সাথে যোগাযোগ করা যাচ্ছে না। ইন্টারনেট চেক করুন।';
+        msg = 'Cannot reach the server. Check your internet.';
       } else {
-        msg = 'লগইন ব্যর্থ হয়েছে (${error.statusCode})। আবার চেষ্টা করুন।';
+        msg = 'Login failed (${error.statusCode}). Please try again.';
       }
     } else {
-      msg = 'লগইন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।';
+      msg = 'Login failed. Please try again.';
     }
     _showError(msg);
   }
@@ -221,8 +221,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         // google-services.json (SHA fingerprint not registered in
         // Firebase). See GOOGLE_SIGNIN_SETUP.md at the repo root.
         _showError(
-          'Google সাইন-ইন এই বিল্ডে এখনো কনফিগার করা হয়নি — '
-          'আপাতত ইমেইল দিয়ে লগইন করুন।',
+          'Google sign-in is not configured in this build yet — '
+          'please log in with email for now.',
         );
         return;
       }
@@ -244,9 +244,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       // beat a generic "failed".
       final error = session.error;
       if (error is ApiException && error.isNetwork) {
-        _showError('সার্ভারের সাথে যোগাযোগ করা যাচ্ছে না। ইন্টারনেট চেক করুন।');
+        _showError('Cannot reach the server. Check your internet.');
       } else if (error is ApiException && error.statusCode == 403) {
-        _showError('অ্যাকাউন্টটি নিষ্ক্রিয় করা আছে। সাপোর্টে যোগাযোগ করুন।');
+        _showError('This account is disabled. Please contact support.');
       } else {
         _showError('Google sign-in failed. Please try again.');
       }
@@ -259,12 +259,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       if (text.contains('ApiException: 10') ||
           text.contains('DEVELOPER_ERROR')) {
         _showError(
-          'Google সাইন-ইন এই বিল্ডে এখনো কনফিগার করা হয়নি — '
-          'আপাতত ইমেইল দিয়ে লগইন করুন।',
+          'Google sign-in is not configured in this build yet — '
+          'please log in with email for now.',
         );
       } else if (text.contains('network_error') ||
           text.contains('ApiException: 7')) {
-        _showError('ইন্টারনেট সংযোগ নেই। নেটওয়ার্ক চেক করুন।');
+        _showError('No internet connection. Check your network.');
       } else {
         _showError('Google sign-in failed. Please try again.');
       }
@@ -312,7 +312,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       SnackBar(
         content: Text(
           message,
-          style: const TextStyle(color: AppColors.film, fontSize: 13),
+          style: TextStyle(color: AppColors.film, fontSize: 13),
         ),
         backgroundColor: AppColors.voidElevated,
         behavior: SnackBarBehavior.floating,
@@ -432,9 +432,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          lang == 'bn'
-                              ? 'কোম্পানি ম্যানেজমেন্ট'
-                              : 'COMPANY MANAGEMENT',
+                          'COMPANY MANAGEMENT',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontFamily: 'Montserrat',
@@ -457,7 +455,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           icon: Icons.mail_outline_rounded,
                           keyboardType: TextInputType.emailAddress,
                           validator: (v) =>
-                              v == null || v.isEmpty ? "ইমেইল লিখুন" : null,
+                              v == null || v.isEmpty ? "Enter email" : null,
                         ),
                         const SizedBox(height: 14),
 
@@ -468,7 +466,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           icon: Icons.lock_outline_rounded,
                           isPassword: true,
                           validator: (v) => v == null || v.isEmpty
-                              ? "পাসওয়ার্ড লিখুন"
+                              ? "Enter password"
                               : null,
                         ),
 
@@ -522,7 +520,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                   horizontal: 12,
                                 ),
                                 child: Text(
-                                  lang == 'bn' ? 'অথবা' : 'OR',
+                                  'OR',
                                   style: TextStyle(
                                     fontFamily: 'Montserrat',
                                     fontSize: 9.5,
@@ -543,9 +541,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           ),
                           const SizedBox(height: 18),
                           _SocialButton(
-                            label: lang == 'bn'
-                                ? 'Google দিয়ে লগইন'
-                                : 'Continue with Google',
+                            label: 'Continue with Google',
                             icon: _kGoogleIcon,
                             loading: _googleLoading,
                             onTap: _handleGoogleSignIn,
@@ -554,9 +550,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           if (defaultTargetPlatform == TargetPlatform.iOS) ...[
                             const SizedBox(height: 10),
                             _SocialButton(
-                              label: lang == 'bn'
-                                  ? 'Apple দিয়ে লগইন'
-                                  : 'Continue with Apple',
+                              label: 'Continue with Apple',
                               icon: _kAppleIcon,
                               loading: _appleLoading,
                               onTap: _handleAppleSignIn,
@@ -706,7 +700,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         controller: controller,
         obscureText: isPassword && _obscurePassword,
         keyboardType: keyboardType,
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.film,
           fontSize: 14.5,
           fontWeight: FontWeight.w500,
@@ -913,7 +907,7 @@ class _AppleIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Icon(Icons.apple, size: 22, color: AppColors.film);
+    return Icon(Icons.apple, size: 22, color: AppColors.film);
   }
 }
 
@@ -960,7 +954,7 @@ class _SocialButton extends StatelessWidget {
                   const SizedBox(width: 10),
                   Text(
                     label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.film,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,

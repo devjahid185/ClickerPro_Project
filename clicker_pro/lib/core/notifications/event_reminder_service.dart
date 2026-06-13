@@ -96,8 +96,8 @@ class EventReminderService {
 
       final tzFire = tz.TZDateTime.from(fireAt, tz.local);
       final body = venue != null && venue.trim().isNotEmpty
-          ? '১ ঘণ্টা পর শুরু — $venue'
-          : '১ ঘণ্টা পর আপনার ইভেন্ট শুরু হবে';
+          ? 'Starts in 1 hour — $venue'
+          : 'Your event starts in 1 hour';
 
       await _plugin.zonedSchedule(
         _idFor(bookingId),

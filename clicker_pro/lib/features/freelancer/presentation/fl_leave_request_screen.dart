@@ -67,10 +67,10 @@ class _FlLeaveRequestScreenState extends ConsumerState<FlLeaveRequestScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Leave Request',
           style: TextStyle(
             color: AppColors.film,
@@ -90,7 +90,7 @@ class _FlLeaveRequestScreenState extends ConsumerState<FlLeaveRequestScreen> {
           padding: const EdgeInsets.all(16),
           children: [
             // ── Existing Requests ──
-            const Text(
+            Text(
               'PAST REQUESTS',
               style: TextStyle(
                 color: AppColors.filmMuted,
@@ -114,7 +114,7 @@ class _FlLeaveRequestScreenState extends ConsumerState<FlLeaveRequestScreen> {
                   return Container(
                     padding: const EdgeInsets.all(20),
                     decoration: AppColors.glassCardDecoration(),
-                    child: const Text(
+                    child: Text(
                       'No leave requests yet.',
                       style: TextStyle(
                         color: AppColors.filmMuted,
@@ -135,7 +135,7 @@ class _FlLeaveRequestScreenState extends ConsumerState<FlLeaveRequestScreen> {
             const SizedBox(height: 24),
 
             // ── New Request Form ──
-            const Text(
+            Text(
               'NEW REQUEST',
               style: TextStyle(
                 color: AppColors.filmMuted,
@@ -160,10 +160,10 @@ class _FlLeaveRequestScreenState extends ConsumerState<FlLeaveRequestScreen> {
             DropdownButtonFormField<String>(
               initialValue: _reason,
               dropdownColor: AppColors.voidElevated,
-              style: const TextStyle(color: AppColors.film),
+              style: TextStyle(color: AppColors.film),
               decoration: InputDecoration(
                 labelText: 'Reason',
-                labelStyle: const TextStyle(color: AppColors.filmMuted),
+                labelStyle: TextStyle(color: AppColors.filmMuted),
                 filled: true,
                 fillColor: AppColors.voidElevated,
                 border: OutlineInputBorder(
@@ -186,10 +186,10 @@ class _FlLeaveRequestScreenState extends ConsumerState<FlLeaveRequestScreen> {
             TextField(
               controller: _notesController,
               maxLines: 3,
-              style: const TextStyle(color: AppColors.film),
+              style: TextStyle(color: AppColors.film),
               decoration: InputDecoration(
                 hintText: 'Additional notes (optional)',
-                hintStyle: const TextStyle(color: AppColors.filmMuted),
+                hintStyle: TextStyle(color: AppColors.filmMuted),
                 filled: true,
                 fillColor: AppColors.voidElevated,
                 border: OutlineInputBorder(
@@ -304,7 +304,7 @@ class _FlLeaveRequestScreenState extends ConsumerState<FlLeaveRequestScreen> {
           builder: (context, child) {
             return Theme(
               data: Theme.of(context).copyWith(
-                colorScheme: const ColorScheme.light(
+                colorScheme: ColorScheme.light(
                   primary: AppColors.teal,
                   surface: AppColors.voidElevated,
                 ),
@@ -327,7 +327,7 @@ class _FlLeaveRequestScreenState extends ConsumerState<FlLeaveRequestScreen> {
           children: [
             Text(
               label,
-              style: const TextStyle(color: AppColors.filmMuted, fontSize: 13),
+              style: TextStyle(color: AppColors.filmMuted, fontSize: 13),
             ),
             Text(
               display,
@@ -391,7 +391,7 @@ class _LeaveRequestRow extends StatelessWidget {
               children: [
                 Text(
                   '$startStr – $endStr  ·  ${request.durationDays} day${request.durationDays > 1 ? 's' : ''}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.film,
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -400,7 +400,7 @@ class _LeaveRequestRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   request.reason,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.filmDim,
                     fontSize: 12,
                   ),

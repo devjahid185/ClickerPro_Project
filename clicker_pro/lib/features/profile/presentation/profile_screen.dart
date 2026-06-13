@@ -125,10 +125,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       backgroundColor: Colors.transparent,
       elevation: 0,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: AppColors.film),
+        icon: Icon(Icons.arrow_back, color: AppColors.film),
         onPressed: () => Navigator.of(context).maybePop(),
       ),
-      title: const Text(
+      title: Text(
         'Profile',
         style: TextStyle(
           color: AppColors.film,
@@ -139,7 +139,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       actions: [
         PopupMenuButton<String>(
           tooltip: 'More',
-          icon: const Icon(Icons.more_vert_rounded, color: AppColors.film),
+          icon: Icon(Icons.more_vert_rounded, color: AppColors.film),
           color: AppColors.voidElevated,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -411,7 +411,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     backgroundColor: AppColors.accent,
                     radius: 18,
                     child: IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.camera_alt,
                         size: 18,
                         color: AppColors.film,
@@ -468,7 +468,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         alignment: Alignment.centerLeft,
         child: Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.filmDim,
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -542,7 +542,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        hasBank ? bankName : 'Bank Account যোগ করুন',
+                        hasBank ? bankName : 'Add Bank Account',
                         style: TextStyle(
                           color: hasBank ? AppColors.film : AppColors.filmDim,
                           fontSize: 14,
@@ -552,8 +552,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       const SizedBox(height: 2),
                       Text(
                         hasBank
-                            ? 'বিস্তারিত দেখতে/বদলাতে ট্যাপ করুন'
-                            : 'ব্যাংক নাম, একাউন্ট নম্বর, ব্রাঞ্চ, হোল্ডারের নাম',
+                            ? 'Tap to view / edit details'
+                            : 'Bank name, account number, branch, holder name',
                         style: TextStyle(
                           color: AppColors.filmDim.withValues(alpha: 0.7),
                           fontSize: 11.5,
@@ -568,7 +568,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     color: AppColors.teal,
                     size: 18,
                   ),
-                const Icon(
+                Icon(
                   Icons.chevron_right_rounded,
                   color: AppColors.filmMuted,
                   size: 20,
@@ -613,7 +613,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
+              Text(
                 'Bank Account Details',
                 style: TextStyle(
                   color: AppColors.film,
@@ -627,10 +627,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 TextField(
                   controller: ctrls[i],
                   keyboardType: i == 1 ? TextInputType.number : null,
-                  style: const TextStyle(color: AppColors.film, fontSize: 14),
+                  style: TextStyle(color: AppColors.film, fontSize: 14),
                   decoration: InputDecoration(
                     labelText: labels[i],
-                    labelStyle: const TextStyle(
+                    labelStyle: TextStyle(
                       color: AppColors.filmDim,
                       fontSize: 13,
                     ),
@@ -638,13 +638,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     fillColor: AppColors.voidBlack,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(
+                      borderSide: BorderSide(
                         color: AppColors.glassBorder,
                       ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(
+                      borderSide: BorderSide(
                         color: AppColors.glassBorder,
                       ),
                     ),
@@ -697,7 +697,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       _showSnack('Bank details saved');
     } catch (_) {
       if (!mounted) return;
-      _showSnack('সেভ করা যায়নি — আবার চেষ্টা করুন।');
+      _showSnack('Could not save — please try again.');
     }
   }
 
@@ -757,7 +757,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          children: const [
+          children: [
             Icon(Icons.star_outline, size: 16, color: AppColors.accent),
             SizedBox(width: 8),
             Text(
@@ -775,7 +775,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         const SizedBox(height: 10),
         if (visibleOptions.isEmpty)
           Text(
-            'কোনো স্কিল সেভ করা নেই — Edit চাপুন।',
+            'No skills saved — tap Edit.',
             style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 12,
@@ -869,7 +869,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.filmMuted,
                   fontSize: 12,
                 ),
@@ -880,7 +880,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   initialValue: value,
                   onChanged: onChanged,
                   keyboardType: keyboardType,
-                  style: const TextStyle(color: AppColors.film, fontSize: 16),
+                  style: TextStyle(color: AppColors.film, fontSize: 16),
                   decoration: const InputDecoration(
                     isDense: true,
                     contentPadding: EdgeInsets.symmetric(vertical: 4),
@@ -948,7 +948,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           children: [
             Text(
               t('prof_gear'),
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.film,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -1016,7 +1016,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           const Icon(Icons.camera, color: AppColors.gold, size: 18),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(subtitle, style: const TextStyle(color: AppColors.film)),
+            child: Text(subtitle, style: TextStyle(color: AppColors.film)),
           ),
           if (_isEditing)
             IconButton(
@@ -1051,7 +1051,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       children: [
         Text(
           t('my_companies'),
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.film,
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -1083,7 +1083,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 children: [
                   const Icon(Icons.business, color: AppColors.indigo, size: 18),
                   const SizedBox(width: 10),
-                  Text(company, style: const TextStyle(color: AppColors.film)),
+                  Text(company, style: TextStyle(color: AppColors.film)),
                   const Spacer(),
                   const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
                 ],
@@ -1131,7 +1131,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Manager invite code',
                   style: TextStyle(
@@ -1145,7 +1145,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          const Text(
+          Text(
             'Generate a 6-digit code to invite a manager into your company.\nCode expires in 24 hours.',
             style: TextStyle(
               fontFamily: 'Inter',
@@ -1174,7 +1174,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                   ],
                 ),
-                child: const Text(
+                child: Text(
                   'Generate Invite Code',
                   style: TextStyle(
                     fontFamily: 'Inter',
@@ -1263,7 +1263,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               : Text(
                   value,
                   key: ValueKey(value),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.film,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -1276,7 +1276,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         const SizedBox(height: 2),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.filmMuted,
             fontSize: 11,
             letterSpacing: 0.4,
@@ -1304,10 +1304,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             _isEditing = true;
             _draft = user.copyWith();
           }),
-          icon: const Icon(Icons.edit_rounded, color: AppColors.film, size: 18),
+          icon: Icon(Icons.edit_rounded, color: AppColors.film, size: 18),
           label: Text(
             t('edit_profile'),
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.film,
               fontWeight: FontWeight.bold,
             ),
@@ -1365,7 +1365,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 200),
                     child: _isSaving
-                        ? const SizedBox(
+                        ? SizedBox(
                             key: ValueKey('saving'),
                             width: 20,
                             height: 20,
@@ -1377,7 +1377,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         : Text(
                             t('save_changes'),
                             key: const ValueKey('save'),
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.film,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 0.3,
@@ -1464,7 +1464,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
           title: Text(
             t('add_gear'),
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.film,
               fontFamily: 'Poppins',
             ),
@@ -1472,12 +1472,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           content: TextField(
             controller: controller,
             autofocus: true,
-            style: const TextStyle(color: AppColors.film),
+            style: TextStyle(color: AppColors.film),
             decoration: InputDecoration(
               hintText: 'e.g. Canon EOS R5',
-              hintStyle: const TextStyle(color: AppColors.filmMuted),
+              hintStyle: TextStyle(color: AppColors.filmMuted),
               errorText: errorText,
-              enabledBorder: const OutlineInputBorder(
+              enabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: AppColors.glassBorder),
               ),
               focusedBorder: const OutlineInputBorder(
@@ -1488,7 +1488,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text(
+              child: Text(
                 'Cancel',
                 style: TextStyle(color: AppColors.filmDim),
               ),
@@ -1505,7 +1505,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 }
                 Navigator.of(ctx).pop(true);
               },
-              child: const Text('Save', style: TextStyle(color: AppColors.film)),
+              child: Text('Save', style: TextStyle(color: AppColors.film)),
             ),
           ],
         ),
@@ -1545,6 +1545,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         _showSnack('Could not change role');
         return;
       }
+      // Pull the authoritative profile back + refresh the role-driven
+      // providers so the whole UI (capabilities, tabs, finance) reflects
+      // the new role immediately — not just after a restart.
+      await ref.read(userRepositoryProvider).refreshFromRemote();
+      if (!mounted) return;
+      ref.invalidate(currentUserProvider);
       _showSnack('Role updated to ${picked.displayLabel}');
     } catch (_) {
       if (!mounted) return;
@@ -1583,7 +1589,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
         ),
-        title: const Text(
+        title: Text(
           'Manager invite',
           style: TextStyle(
             color: AppColors.film,
@@ -1625,7 +1631,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             const SizedBox(height: 14),
             Text(
               hours > 0 ? 'Expires in $hours hours' : 'Expires soon',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.filmMuted,
                 fontSize: 12,
                 letterSpacing: 0.6,
@@ -1649,7 +1655,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text(
+            child: Text(
               'Close',
               style: TextStyle(color: AppColors.filmDim),
             ),
@@ -1666,7 +1672,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         SnackBar(
           content: Text(
             message,
-            style: const TextStyle(color: AppColors.film, fontSize: 13),
+            style: TextStyle(color: AppColors.film, fontSize: 13),
           ),
           backgroundColor: AppColors.voidElevated,
           behavior: SnackBarBehavior.floating,

@@ -238,7 +238,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: AppColors.glassBorder),
               ),
-              child: const Icon(Icons.menu, color: AppColors.film, size: 20),
+              child: Icon(Icons.menu, color: AppColors.film, size: 20),
             ),
           ),
         ),
@@ -260,7 +260,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: AppColors.glassBorder),
               ),
-              child: const Icon(Icons.search, color: AppColors.film, size: 20),
+              child: Icon(Icons.search, color: AppColors.film, size: 20),
             ),
           ),
         ),
@@ -277,7 +277,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: AppColors.glassBorder),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.notifications_none_rounded,
                 color: AppColors.film,
                 size: 20,
@@ -1074,14 +1074,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     }
 
     return announcementsAsync.when(
-      loading: () => placeholderBox('এনাউন্সমেন্ট লোড হচ্ছে…'),
+      loading: () => placeholderBox('Loading announcements…'),
       error: (_, _) =>
-          placeholderBox('এনাউন্সমেন্ট আনা যায়নি — ট্যাপ করে আবার দেখুন।'),
+          placeholderBox('Could not load announcements — tap to retry.'),
       data: (items) {
         final active = items.where((a) => !a.isExpired).toList();
         if (active.isEmpty) {
           return placeholderBox(
-            'এখনো কোনো এনাউন্সমেন্ট নেই — নতুন পোস্ট করতে ট্যাপ করুন।',
+            'No announcements yet — tap to post one.',
           );
         }
         final a = active.first;
@@ -1205,8 +1205,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       ),
                     ),
                   ),
-                  const Text(
-                    'বকেয়া আছে যেসব ইভেন্টে',
+                  Text(
+                    'Events with outstanding due',
                     style: TextStyle(
                       color: AppColors.film,
                       fontFamily: 'Poppins',
@@ -1224,7 +1224,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       error: (_, _) => Padding(
                         padding: const EdgeInsets.symmetric(vertical: 24),
                         child: Text(
-                          'বকেয়ার তালিকা আনা যায়নি।',
+                          'Could not load the due list.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: AppColors.filmDim.withValues(alpha: 0.85),
@@ -1236,7 +1236,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                           return Padding(
                             padding: const EdgeInsets.symmetric(vertical: 24),
                             child: Text(
-                              'কোনো বকেয়া নেই 🎉',
+                              'No dues 🎉',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: AppColors.filmDim.withValues(
@@ -1279,7 +1279,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                     : e.title,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: AppColors.film,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 14,
@@ -1478,8 +1478,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 ),
               ),
               Text(
-                '🎉 ${DateFormat.MMMM().format(now)} — এ মাসের ছুটি',
-                style: const TextStyle(
+                '🎉 ${DateFormat.MMMM().format(now)} — holidays this month',
+                style: TextStyle(
                   color: AppColors.film,
                   fontFamily: 'Poppins',
                   fontSize: 18,
@@ -1491,7 +1491,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 20),
                   child: Text(
-                    'এই মাসে কোনো সরকারি ছুটি নেই।',
+                    'No public holidays this month.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: AppColors.filmDim.withValues(alpha: 0.85),
@@ -1532,7 +1532,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                             children: [
                               Text(
                                 h.name,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: AppColors.film,
                                   fontSize: 13.5,
                                   fontWeight: FontWeight.w500,
@@ -1556,7 +1556,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               if (holidays.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Text(
-                  '* চাঁদ দেখার ওপর নির্ভর করে ±১ দিন এদিক-ওদিক হতে পারে।',
+                  '* May shift ±1 day depending on the moon sighting.',
                   style: TextStyle(
                     color: AppColors.filmDim.withValues(alpha: 0.6),
                     fontSize: 10.5,
@@ -1689,7 +1689,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               ),
             ),
           ),
-          const Text(
+          Text(
             'Dhaka, BD',
             style: TextStyle(
               fontSize: 12,
@@ -1713,7 +1713,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       backgroundColor: Colors.transparent,
       width: 260,
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.surface,
           border: Border(right: BorderSide(color: AppColors.glassBorder, width: 1)),
         ),
@@ -2156,7 +2156,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(fontSize: 13.5, color: AppColors.film),
+                style: TextStyle(fontSize: 13.5, color: AppColors.film),
               ),
             ),
             Text(
@@ -2440,7 +2440,7 @@ class _AnnouncementCardView extends StatelessWidget {
               const Spacer(),
               Text(
                 announcement.timeAgo,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
                   color: AppColors.filmDim,
                 ),
@@ -2450,7 +2450,7 @@ class _AnnouncementCardView extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             announcement.title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
               color: AppColors.film,
@@ -2462,7 +2462,7 @@ class _AnnouncementCardView extends StatelessWidget {
             announcement.body,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12.5,
               color: AppColors.filmDim,
               height: 1.5,
@@ -2474,7 +2474,7 @@ class _AnnouncementCardView extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               '${announcement.readCount} read',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 10,
                 color: AppColors.filmDim,
               ),

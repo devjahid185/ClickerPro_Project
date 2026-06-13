@@ -228,7 +228,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 const SizedBox(height: 22),
                 FadeTransition(
                   opacity: _brandFade,
-                  child: const Text.rich(
+                  child: Text.rich(
                     TextSpan(
                       style: TextStyle(
                         fontFamily: 'Poppins',

@@ -39,7 +39,7 @@ String formatCurrencyBdt(
   bool bengaliNumerals = false,
 }) {
   final f = NumberFormat.currency(
-    locale: lang == 'bn' ? 'bn_BD' : 'en_BD',
+    locale: 'en_BD',
     symbol: '৳ ',
   );
   final raw = f.format(value);

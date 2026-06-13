@@ -36,18 +36,18 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.voidLight,
-        title: const Text(
+        title: Text(
           'Delete announcement',
           style: TextStyle(color: AppColors.film),
         ),
-        content: const Text(
+        content: Text(
           'This action cannot be undone.',
           style: TextStyle(color: AppColors.filmDim),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(
+            child: Text(
               'Cancel',
               style: TextStyle(color: AppColors.filmDim),
             ),
@@ -81,10 +81,10 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Announcements',
           style: TextStyle(
             color: AppColors.film,
@@ -263,7 +263,7 @@ class _AnnouncementCard extends StatelessWidget {
                           value: 'pin',
                           child: Text(
                             announcement.pinned ? 'Unpin' : 'Pin',
-                            style: const TextStyle(color: AppColors.film),
+                            style: TextStyle(color: AppColors.film),
                           ),
                         ),
                         const PopupMenuItem(
@@ -280,7 +280,7 @@ class _AnnouncementCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   announcement.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -291,7 +291,7 @@ class _AnnouncementCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   preview,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12.5,
                     color: AppColors.filmDim,
                     height: 1.5,

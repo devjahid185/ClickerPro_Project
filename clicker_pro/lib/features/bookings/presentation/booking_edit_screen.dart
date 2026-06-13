@@ -220,7 +220,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.close_rounded, color: AppColors.film),
+            icon: Icon(Icons.close_rounded, color: AppColors.film),
             tooltip: loc.bookings_cancel,
             onPressed: () async {
               final shouldDiscard = !_dirty || await _confirmDiscard();
@@ -232,7 +232,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
             isCreate
                 ? loc.bookings_new_booking_screen
                 : loc.bookings_edit_booking_screen,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.film,
               fontFamily: 'Poppins',
               fontSize: 22,
@@ -756,7 +756,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.inventory_2_outlined,
                   size: 18,
                   color: AppColors.filmDim,
@@ -793,7 +793,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                 AnimatedRotation(
                   turns: _packageSectionExpanded ? 0.5 : 0,
                   duration: const Duration(milliseconds: 200),
-                  child: const Icon(
+                  child: Icon(
                     Icons.expand_more_rounded,
                     size: 20,
                     color: AppColors.filmMuted,
@@ -853,7 +853,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.celebration_outlined,
                   size: 18,
                   color: AppColors.filmDim,
@@ -876,7 +876,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                       const SizedBox(height: 2),
                       Text(
                         _titleCase(draft.eventType.name),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.film,
                           fontSize: 13.5,
                           fontWeight: FontWeight.w500,
@@ -888,7 +888,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                 AnimatedRotation(
                   turns: _eventTypesExpanded ? 0.5 : 0,
                   duration: const Duration(milliseconds: 200),
-                  child: const Icon(
+                  child: Icon(
                     Icons.expand_more_rounded,
                     size: 20,
                     color: AppColors.filmMuted,
@@ -1322,7 +1322,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
             surface: AppColors.surface,
             onSurface: AppColors.film,
           ),
-          dialogTheme: const DialogThemeData(
+          dialogTheme: DialogThemeData(
             backgroundColor: AppColors.voidElevated,
           ),
         ),
@@ -1372,7 +1372,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
         if (pkg.includesChief) 'chief',
       ];
       if (parts.isNotEmpty && mounted) {
-        _showSnack('${pkg.name}: ${parts.join(' · ')} — টিম এড করুন');
+        _showSnack('${pkg.name}: ${parts.join(' · ')} — add the team');
       }
     }
   }
@@ -1411,18 +1411,18 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
         backgroundColor: AppColors.voidElevated,
         title: Text(
           loc.bookings_discard_changes,
-          style: const TextStyle(color: AppColors.film),
+          style: TextStyle(color: AppColors.film),
         ),
         content: Text(
           loc.bookings_discard_body,
-          style: const TextStyle(color: AppColors.filmDim),
+          style: TextStyle(color: AppColors.filmDim),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
             child: Text(
               loc.bookings_discard_keep,
-              style: const TextStyle(color: AppColors.filmDim),
+              style: TextStyle(color: AppColors.filmDim),
             ),
           ),
           FilledButton(
@@ -1500,7 +1500,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
       final isNewBooking = widget.bookingId == null;
       // 🎉 celebrate a freshly created booking.
       if (isNewBooking) Celebration.confetti(context);
-      _showSnack('Saved ✓ — ক্যালেন্ডারে যোগ হচ্ছে');
+      _showSnack('Saved ✓ — adding to calendar');
       // Schedule (or reschedule) the on-device "1 hour before" reminder.
       // Fire-and-forget — never blocks the save flow.
       EventReminderService.instance.scheduleForBooking(
@@ -1548,15 +1548,15 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.voidElevated,
-        title: const Text(
-          'এই শিফট-এ আগে থেকেই বুকিং আছে',
+        title: Text(
+          'This shift is already booked',
           style: TextStyle(color: AppColors.film, fontSize: 18),
         ),
         content: Text(
-          'একজন ফ্রিল্যান্সার এক শিফটে একটাই ইভেন্ট নিতে পারবেন।'
-          '${clashTitle != null ? '\n\nএই দিন/শিফটে আগে থেকেই আছে: "$clashTitle"।' : ''}\n\n'
-          'আগের বুকিংটা বদলান বা অন্য শিফট/তারিখ বেছে নিন।',
-          style: const TextStyle(color: AppColors.filmDim, fontSize: 13.5),
+          'A freelancer can take only one event per shift.'
+          '${clashTitle != null ? '\n\nAlready booked this day/shift: "$clashTitle".' : ''}\n\n'
+          'Change the existing booking or pick another shift/date.',
+          style: TextStyle(color: AppColors.filmDim, fontSize: 13.5),
         ),
         actions: [
           FilledButton(
@@ -1565,7 +1565,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('বুঝেছি'),
+            child: const Text('Got it'),
           ),
         ],
       ),
@@ -1579,21 +1579,21 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.voidElevated,
-        title: const Text(
-          'এই শিফট-এ আগে থেকেই বুকিং আছে',
+        title: Text(
+          'This shift is already booked',
           style: TextStyle(color: AppColors.film, fontSize: 18),
         ),
         content: Text(
-          '${clashTitle != null ? '"$clashTitle" — ' : ''}এই দিন/শিফটে আগে থেকেই একটি ইভেন্ট আছে।\n\n'
-          'একসাথে একাধিক ইভেন্ট নিতে চাইলে Profile → Distribution mode চালু করুন।\n\n'
-          'তবুও এই বুকিংটা সেভ করবেন?',
-          style: const TextStyle(color: AppColors.filmDim, fontSize: 13.5),
+          '${clashTitle != null ? '"$clashTitle" — ' : ''}there is already an event on this day/shift.\n\n'
+          'To take multiple events at once, turn on Profile → Distribution mode.\n\n'
+          'Save this booking anyway?',
+          style: TextStyle(color: AppColors.filmDim, fontSize: 13.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(
-              'বাতিল',
+            child: Text(
+              'Cancel',
               style: TextStyle(color: AppColors.filmDim),
             ),
           ),
@@ -1603,7 +1603,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('হ্যাঁ, সেভ করুন'),
+            child: const Text('Yes, save'),
           ),
         ],
       ),
@@ -1670,7 +1670,7 @@ class _PackagePickerSheet extends ConsumerWidget {
         children: [
           const _SheetHandle(),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Pick a package',
             style: TextStyle(
               color: AppColors.film,
@@ -1707,7 +1707,7 @@ class _PackagePickerSheet extends ConsumerWidget {
                     contentPadding: EdgeInsets.zero,
                     title: Text(
                       p.name,
-                      style: const TextStyle(color: AppColors.film, fontSize: 14),
+                      style: TextStyle(color: AppColors.film, fontSize: 14),
                     ),
                     subtitle: Text(
                       'Base ${p.basePrice.toStringAsFixed(0)}'
@@ -1722,7 +1722,7 @@ class _PackagePickerSheet extends ConsumerWidget {
                             Icons.check_circle_rounded,
                             color: AppColors.orange,
                           )
-                        : const Icon(
+                        : Icon(
                             Icons.chevron_right_rounded,
                             color: AppColors.filmMuted,
                           ),

@@ -32,7 +32,7 @@ class OfflineBanner extends ConsumerWidget {
               color: AppColors.yellow.withValues(alpha: 0.18),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Icon(
                     Icons.cloud_off_rounded,
                     color: AppColors.yellow,

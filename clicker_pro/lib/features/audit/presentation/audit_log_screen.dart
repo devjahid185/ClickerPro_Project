@@ -59,10 +59,10 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Audit Log',
           style: TextStyle(
             color: AppColors.film,
@@ -135,7 +135,7 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
                     _selectedDateRange != null
                         ? '${_formatShortDate(_selectedDateRange!.start)} — ${_formatShortDate(_selectedDateRange!.end)}'
                         : 'Any date',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.filmDim,
                       fontSize: 11,
                     ),
@@ -265,7 +265,7 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
               Expanded(
                 child: RichText(
                   text: TextSpan(
-                    style: const TextStyle(color: AppColors.film, fontSize: 13),
+                    style: TextStyle(color: AppColors.film, fontSize: 13),
                     children: [
                       TextSpan(
                         text: entry.actorName,
@@ -363,7 +363,7 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
+            colorScheme: ColorScheme.light(
               primary: AppColors.teal,
               surface: AppColors.voidElevated,
             ),
@@ -421,7 +421,7 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
         SnackBar(
           content: Text(
             message,
-            style: const TextStyle(color: AppColors.film, fontSize: 13),
+            style: TextStyle(color: AppColors.film, fontSize: 13),
           ),
           backgroundColor: AppColors.voidElevated,
           behavior: SnackBarBehavior.floating,

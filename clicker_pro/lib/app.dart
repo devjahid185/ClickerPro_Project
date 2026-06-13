@@ -9,6 +9,7 @@ import 'features/bookings/application/booking_providers.dart';
 import 'features/onboarding/presentation/splash_screen.dart';
 import 'features/settings/application/language_controller.dart';
 import 'l10n/app_localizations.dart';
+import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
 import 'theme/app_theme_mode.dart';
 
@@ -19,13 +20,21 @@ class ClickerProApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(activeLocaleProvider);
     final themeMode = ref.watch(resolvedThemeModeProvider);
+    // Flip the AppColors palette (custom-painted surfaces read this flag)
+    // to match the resolved theme. `system` follows the device brightness.
+    final platformDark =
+        WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+        Brightness.dark;
+    AppColors.isDark =
+        themeMode == ThemeMode.dark ||
+        (themeMode == ThemeMode.system && platformDark);
     return MaterialApp(
       title: 'Clicker Pro',
       debugShowCheckedModeBanner: false,
-      // Single-theme app: Orange Horizon Pro for both slots so the look is
-      // consistent regardless of the resolved light/dark mode.
+      // Light = Orange Horizon Pro · Dark = Deep Ocean. The Settings
+      // toggle drives `themeMode`.
       theme: AppTheme.orangeHorizon(),
-      darkTheme: AppTheme.orangeHorizon(),
+      darkTheme: AppTheme.oceanDeep(),
       themeMode: themeMode,
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,

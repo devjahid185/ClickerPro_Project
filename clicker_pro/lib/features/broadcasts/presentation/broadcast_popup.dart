@@ -210,7 +210,7 @@ class _BroadcastPopupDialogState extends State<_BroadcastPopupDialog>
                         const SizedBox(height: 12),
                         Text(
                           b.title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.film,
                             fontSize: 18,
                             height: 1.25,

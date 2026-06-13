@@ -47,7 +47,7 @@ class PublicBookingSuccessScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 'Request received',
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -97,7 +97,7 @@ class PublicBookingSuccessScreen extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       shortRef,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.film,
                         fontFamily: 'Montserrat',
                         fontSize: 13,

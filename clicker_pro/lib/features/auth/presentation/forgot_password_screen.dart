@@ -52,8 +52,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
   String? _validateEmail(String? v) {
     final t = (v ?? '').trim();
-    if (t.isEmpty) return 'ইমেইল লিখুন';
-    if (!_emailRegex.hasMatch(t)) return 'সঠিক ইমেইল লিখুন';
+    if (t.isEmpty) return 'Enter email';
+    if (!_emailRegex.hasMatch(t)) return 'Enter a valid email';
     return null;
   }
 
@@ -69,13 +69,13 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           .forgotPassword(email: _emailController.text.trim());
       if (!mounted) return;
       setState(() => _codeSent = true);
-      _showInfo('কোড পাঠানো হয়েছে — ইমেইল চেক করুন (Spam ফোল্ডারও দেখুন)।');
+      _showInfo('Code sent — check your email (also check Spam).');
     } on ApiException catch (e) {
       if (!mounted) return;
       _showError(e.message);
     } catch (_) {
       if (!mounted) return;
-      _showError('সার্ভারের সাথে যোগাযোগ করা যাচ্ছে না।');
+      _showError('Cannot reach the server.');
     } finally {
       if (mounted) setState(() => _isSending = false);
     }
@@ -85,11 +85,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     final code = _codeController.text.trim();
     final password = _passwordController.text;
     if (code.length != 6) {
-      _showError('ইমেইলে পাঠানো ৬ সংখ্যার কোডটি দিন।');
+      _showError('Enter the 6-digit code sent to your email.');
       return;
     }
     if (password.length < 8) {
-      _showError('পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে।');
+      _showError('Password must be at least 8 characters.');
       return;
     }
     setState(() => _isResetting = true);
@@ -104,8 +104,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text(
-            'পাসওয়ার্ড বদলানো হয়েছে ✓ — নতুন পাসওয়ার্ড দিয়ে লগইন করুন।',
+          content: Text(
+            'Password changed ✓ — log in with your new password.',
             style: TextStyle(color: AppColors.film, fontSize: 13),
           ),
           backgroundColor: AppColors.voidElevated,
@@ -122,13 +122,13 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       if (e.statusCode == 422) {
-        _showError('কোডটি ভুল বা মেয়াদ শেষ — আবার "Send Reset Code" চাপুন।');
+        _showError('Code is wrong or expired — tap "Send Reset Code" again.');
       } else {
         _showError(e.message);
       }
     } catch (_) {
       if (!mounted) return;
-      _showError('সার্ভারের সাথে যোগাযোগ করা যাচ্ছে না।');
+      _showError('Cannot reach the server.');
     } finally {
       if (mounted) setState(() => _isResetting = false);
     }
@@ -142,7 +142,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       SnackBar(
         content: Text(
           message,
-          style: const TextStyle(color: AppColors.film, fontSize: 13),
+          style: TextStyle(color: AppColors.film, fontSize: 13),
         ),
         backgroundColor: AppColors.voidElevated,
         behavior: SnackBarBehavior.floating,
@@ -209,7 +209,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                       const SizedBox(height: 36),
                       _smallBrandLogo(),
                       const SizedBox(height: 28),
-                      const Text(
+                      Text(
                         'Forgot your\npassword?',
                         textAlign: TextAlign.center,
                         style: TextStyle(
@@ -242,8 +242,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                       const SizedBox(height: 12),
                       Text(
                         _codeSent
-                            ? 'ইমেইলে পাঠানো ৬ সংখ্যার কোড আর নতুন পাসওয়ার্ড নিচে দিন।'
-                            : 'রেজিস্টার করা ইমেইল দিন — আমরা একটি রিসেট কোড পাঠাবো।',
+                            ? 'Enter the 6-digit code from your email and a new password below.'
+                            : 'Enter your registered email — we will send a reset code.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 13,
@@ -332,7 +332,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             left: 8,
             child: SafeArea(
               child: IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.arrow_back_ios_new_rounded,
                   size: 18,
                   color: AppColors.film,
@@ -406,7 +406,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         obscureText: obscure,
         enabled: enabled,
         autovalidateMode: AutovalidateMode.onUserInteraction,
-        style: const TextStyle(color: AppColors.film, fontSize: 14.5),
+        style: TextStyle(color: AppColors.film, fontSize: 14.5),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(

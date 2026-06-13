@@ -113,7 +113,7 @@ class _DeliveryChecklistSheetState
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Delivery Checklist',
                   style: TextStyle(
                     color: AppColors.film,
@@ -156,7 +156,7 @@ class _DeliveryChecklistSheetState
                           setState(() => _state[step.key] = v ?? false),
                 title: Text(
                   step.label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.film,
                     fontSize: 14,
                   ),

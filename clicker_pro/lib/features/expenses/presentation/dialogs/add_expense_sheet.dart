@@ -83,7 +83,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
       lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(
+          colorScheme: ColorScheme.light(
             primary: AppColors.orange,
             surface: AppColors.voidLight,
             onSurface: AppColors.film,
@@ -157,7 +157,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
               ),
               Text(
                 loc.expenses_add,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.film,
                   fontFamily: 'Poppins',
                   fontSize: 22,
@@ -175,7 +175,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                 ],
-                style: const TextStyle(color: AppColors.film),
+                style: TextStyle(color: AppColors.film),
                 decoration: _decoration(loc.expenses_amount),
                 validator: (raw) {
                   final v = double.tryParse((raw ?? '').trim());
@@ -190,7 +190,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
               // Category chip selector
               Text(
                 loc.expenses_category,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.filmDim,
                   fontSize: 12,
                   letterSpacing: 1.0,
@@ -251,10 +251,10 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                           '${_incurredAt.year}-'
                           '${_incurredAt.month.toString().padLeft(2, '0')}-'
                           '${_incurredAt.day.toString().padLeft(2, '0')}',
-                          style: const TextStyle(color: AppColors.film),
+                          style: TextStyle(color: AppColors.film),
                         ),
                       ),
-                      const Icon(
+                      Icon(
                         Icons.chevron_right,
                         color: AppColors.filmMuted,
                       ),
@@ -268,7 +268,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
               TextFormField(
                 controller: _noteCtl,
                 maxLines: 2,
-                style: const TextStyle(color: AppColors.film),
+                style: TextStyle(color: AppColors.film),
                 decoration: _decoration(loc.expenses_note_optional),
               ),
               const SizedBox(height: 20),
@@ -283,7 +283,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                           : () => Navigator.of(context).pop(),
                       child: Text(
                         loc.expenses_cancel,
-                        style: const TextStyle(color: AppColors.filmDim),
+                        style: TextStyle(color: AppColors.filmDim),
                       ),
                     ),
                   ),
@@ -316,16 +316,16 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
   InputDecoration _decoration(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: AppColors.filmDim),
+      labelStyle: TextStyle(color: AppColors.filmDim),
       filled: true,
       fillColor: AppColors.voidElevated,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.glassBorder),
+        borderSide: BorderSide(color: AppColors.glassBorder),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.glassBorder),
+        borderSide: BorderSide(color: AppColors.glassBorder),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

@@ -9,7 +9,6 @@ import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
-import '../../settings/application/language_controller.dart';
 import '../application/gear_providers.dart';
 import 'dialogs/add_gear_sheet.dart';
 import 'widgets/gear_row.dart';
@@ -29,18 +28,18 @@ class GearScreen extends ConsumerWidget {
         backgroundColor: AppColors.voidLight,
         title: Text(
           loc.gear_delete_confirm_title,
-          style: const TextStyle(color: AppColors.film),
+          style: TextStyle(color: AppColors.film),
         ),
         content: Text(
           loc.gear_delete_confirm_subtitle,
-          style: const TextStyle(color: AppColors.filmDim),
+          style: TextStyle(color: AppColors.filmDim),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
             child: Text(
               loc.gear_cancel,
-              style: const TextStyle(color: AppColors.filmDim),
+              style: TextStyle(color: AppColors.filmDim),
             ),
           ),
           FilledButton(
@@ -65,9 +64,7 @@ class GearScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final loc = AppLocalizations.of(context);
-    final lang = ref.watch(activeLocaleProvider).languageCode == 'bn'
-        ? 'bn'
-        : 'en';
+    final lang = 'en';
     final async = ref.watch(gearListControllerProvider);
     final total = ref.watch(totalGearValueProvider);
 
@@ -77,12 +74,12 @@ class GearScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
           loc.gear_title,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.film,
             fontFamily: 'Poppins',
             fontSize: 22,
@@ -112,7 +109,7 @@ class GearScreen extends ConsumerWidget {
                   children: [
                     Text(
                       loc.gear_total_value.toUpperCase(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.filmMuted,
                         fontSize: 10,
                         letterSpacing: 1.2,

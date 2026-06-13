@@ -26,12 +26,12 @@ class TeamScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
           loc.menu_team,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.film,
             fontFamily: 'Poppins',
             fontSize: 22,
@@ -142,8 +142,8 @@ class _PendingInvitesBanner extends ConsumerWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    '${invite.ownerName} আপনাকে টিমে যোগ দিতে ইনভাইট করেছেন',
-                    style: const TextStyle(
+                    '${invite.ownerName} invited you to join the team',
+                    style: TextStyle(
                       color: AppColors.film,
                       fontSize: 12.5,
                       height: 1.35,
@@ -194,14 +194,14 @@ class _PendingInvitesBanner extends ConsumerWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                accept ? 'টিমে যোগ হয়ে গেছেন ✓' : 'ইনভাইট বাতিল করা হয়েছে',
+                accept ? 'Joined the team ✓' : 'Invite declined',
               ),
             ),
           );
         } catch (_) {
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('কাজ করা যায়নি — আবার চেষ্টা করুন।')),
+            const SnackBar(content: Text('Could not complete — please try again.')),
           );
         }
       },
@@ -240,7 +240,7 @@ class _JoinTeamSheetState extends ConsumerState<_JoinTeamSheet> {
     final code = _codeCtrl.text.trim();
     if (code.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('৬ সংখ্যার কোডটি দিন।')),
+        const SnackBar(content: Text('Enter the 6-digit code.')),
       );
       return;
     }
@@ -250,13 +250,13 @@ class _JoinTeamSheetState extends ConsumerState<_JoinTeamSheet> {
       if (!mounted) return;
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('টিমে যোগ হয়ে গেছেন ✓')),
+        const SnackBar(content: Text('Joined the team ✓')),
       );
     } catch (_) {
       if (!mounted) return;
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('কোডটি ভুল বা মেয়াদ শেষ।')),
+        const SnackBar(content: Text('Code is wrong or expired.')),
       );
     }
   }
@@ -282,8 +282,8 @@ class _JoinTeamSheetState extends ConsumerState<_JoinTeamSheet> {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
-            'টিমে যোগ দিন',
+          Text(
+            'Join a team',
             style: TextStyle(
               color: AppColors.film,
               fontFamily: 'Poppins',
@@ -293,7 +293,7 @@ class _JoinTeamSheetState extends ConsumerState<_JoinTeamSheet> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Owner-এর দেওয়া ৬ সংখ্যার কোডটি লিখুন।',
+            'Enter the 6-digit code from the Owner.',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: AppColors.filmDim.withValues(alpha: 0.7),
@@ -412,7 +412,7 @@ class _TeamMemberTile extends ConsumerWidget {
               children: [
                 Text(
                   member.fullName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.film,
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
@@ -455,18 +455,18 @@ class _TeamMemberTile extends ConsumerWidget {
                     backgroundColor: AppColors.voidLight,
                     title: Text(
                       loc.team_remove_confirm_title,
-                      style: const TextStyle(color: AppColors.film),
+                      style: TextStyle(color: AppColors.film),
                     ),
                     content: Text(
                       '${loc.team_remove_confirm_body} ${member.fullName}?',
-                      style: const TextStyle(color: AppColors.filmDim),
+                      style: TextStyle(color: AppColors.filmDim),
                     ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.of(ctx).pop(false),
                         child: Text(
                           loc.gear_cancel,
-                          style: const TextStyle(color: AppColors.filmDim),
+                          style: TextStyle(color: AppColors.filmDim),
                         ),
                       ),
                       FilledButton(
@@ -586,7 +586,7 @@ class _MemberProfileSheet extends ConsumerWidget {
               Center(
                 child: Text(
                   member.fullName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.film,
                     fontFamily: 'Poppins',
                     fontSize: 20,
@@ -634,7 +634,7 @@ class _MemberProfileSheet extends ConsumerWidget {
                         // Open a direct WhatsApp chat with a friendly
                         // pre-filled greeting.
                         final hi = Uri.encodeComponent(
-                          'হ্যালো ${member.fullName.split(' ').first}, ',
+                          'Hi ${member.fullName.split(' ').first}, ',
                         );
                         launchUrl(
                           Uri.parse('https://wa.me/$intl?text=$hi'),
@@ -654,7 +654,7 @@ class _MemberProfileSheet extends ConsumerWidget {
                 error: (_, _) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Text(
-                    'বিস্তারিত আনা যায়নি।',
+                    'Could not load details.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: AppColors.filmDim.withValues(alpha: 0.8),
@@ -710,7 +710,7 @@ class _MemberProfileSheet extends ConsumerWidget {
                     const SizedBox(height: 8),
                     if (p.gear.isEmpty)
                       Text(
-                        'কোনো গিয়ার যোগ করা নেই।',
+                        'No gear added.',
                         style: TextStyle(
                           color: AppColors.filmDim.withValues(alpha: 0.7),
                           fontSize: 12.5,
@@ -735,7 +735,7 @@ class _MemberProfileSheet extends ConsumerWidget {
                                     if ((g.category ?? '').isNotEmpty)
                                       g.category!,
                                   ].join(' · '),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: AppColors.film,
                                     fontSize: 13,
                                   ),
@@ -851,7 +851,7 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
     final email = _emailCtrl.text.trim();
     if (email.isEmpty || !email.contains('@')) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('সঠিক ইমেইল লিখুন।')),
+        const SnackBar(content: Text('Enter a valid email।')),
       );
       return;
     }
@@ -863,7 +863,7 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '$email-কে ইনভাইট পাঠানো হয়েছে — অ্যাপে কনফার্ম করলেই টিমে যোগ হবে।',
+            'Invite sent to $email — they join once they confirm in the app.',
           ),
         ),
       );
@@ -871,8 +871,8 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
       if (!mounted) return;
       setState(() => _emailSending = false);
       final msg = e.toString().contains('No registered account')
-          ? 'এই ইমেইলে কোনো রেজিস্টার করা অ্যাকাউন্ট নেই।'
-          : 'ইনভাইট পাঠানো যায়নি — আবার চেষ্টা করুন।';
+          ? 'No registered account with this email.'
+          : 'Could not send the invite — please try again.';
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(msg)));
@@ -902,7 +902,7 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
           const SizedBox(height: 20),
           Text(
             widget.loc.team_invite_member,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.film,
               fontFamily: 'Poppins',
               fontSize: 20,
@@ -983,7 +983,7 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
                   ),
                 ),
                 child: _loading
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
@@ -1006,7 +1006,7 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: Text(
-                    'অথবা ইমেইল দিয়ে',
+                    'Or by email',
                     style: TextStyle(
                       color: AppColors.filmDim.withValues(alpha: 0.6),
                       fontSize: 11,
@@ -1025,9 +1025,9 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
             TextField(
               controller: _emailCtrl,
               keyboardType: TextInputType.emailAddress,
-              style: const TextStyle(color: AppColors.film, fontSize: 14),
+              style: TextStyle(color: AppColors.film, fontSize: 14),
               decoration: InputDecoration(
-                hintText: 'রেজিস্টার করা Gmail / ইমেইল',
+                hintText: 'Registered Gmail / email',
                 hintStyle: TextStyle(
                   color: AppColors.filmDim.withValues(alpha: 0.5),
                   fontSize: 13,
@@ -1074,7 +1074,7 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
                     : const Icon(Icons.send_rounded,
                         color: AppColors.gold, size: 18),
                 label: const Text(
-                  'ইনভাইট পাঠান',
+                  'Send invite',
                   style: TextStyle(color: AppColors.gold),
                 ),
                 style: OutlinedButton.styleFrom(

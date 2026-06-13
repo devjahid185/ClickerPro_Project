@@ -73,10 +73,10 @@ class FollowupScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Client Follow-up',
           style: TextStyle(
             color: AppColors.film,
@@ -196,7 +196,7 @@ class _AddFollowupSheetState extends State<_AddFollowupSheet> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'New Follow-up',
             style: TextStyle(
               color: AppColors.film,
@@ -208,7 +208,7 @@ class _AddFollowupSheetState extends State<_AddFollowupSheet> {
           const SizedBox(height: 16),
           TextField(
             controller: _bookingCtrl,
-            style: const TextStyle(color: AppColors.film),
+            style: TextStyle(color: AppColors.film),
             decoration: InputDecoration(
               labelText: 'Booking ID / Client Name',
               labelStyle: TextStyle(color: AppColors.filmDim),
@@ -225,7 +225,7 @@ class _AddFollowupSheetState extends State<_AddFollowupSheet> {
             ),
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'Type',
             style: TextStyle(
               color: AppColors.filmDim,
@@ -284,7 +284,7 @@ class _AddFollowupSheetState extends State<_AddFollowupSheet> {
             ),
             title: Text(
               'Scheduled: ${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}',
-              style: const TextStyle(color: AppColors.film, fontSize: 14),
+              style: TextStyle(color: AppColors.film, fontSize: 14),
             ),
             onTap: () async {
               final picked = await showDatePicker(
@@ -401,7 +401,7 @@ class _FollowupRow extends StatelessWidget {
         ),
         title: Text(
           followup.type.name[0].toUpperCase() + followup.type.name.substring(1),
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.film,
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -440,7 +440,7 @@ class _FollowupRow extends StatelessWidget {
             const SizedBox(width: 6),
             GestureDetector(
               onTap: onDelete,
-              child: const Padding(
+              child: Padding(
                 padding: EdgeInsets.all(4),
                 child: Icon(Icons.close, color: AppColors.filmMuted, size: 16),
               ),

@@ -28,7 +28,6 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/providers.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_theme.dart';
-import '../../settings/application/language_controller.dart';
 import '../application/session_controller.dart';
 import '../domain/otp_purpose.dart';
 import '../domain/user_role.dart';
@@ -75,8 +74,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   // ── Validators ─────────────────────────────────────────────────
   String? _validateName(String? v) {
     final t = (v ?? '').trim();
-    if (t.isEmpty) return 'নাম লিখুন';
-    if (t.length > 80) return 'নাম খুব বড়';
+    if (t.isEmpty) return 'Enter name';
+    if (t.length > 80) return 'Name is too long';
     return null;
   }
 
@@ -84,35 +83,35 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final needs = _role == UserRole.owner || _role == UserRole.both;
     if (!needs) return null;
     final t = (v ?? '').trim();
-    if (t.isEmpty) return 'কোম্পানির নাম লিখুন';
-    if (t.length > 80) return 'নাম খুব বড়';
+    if (t.isEmpty) return 'Enter company name';
+    if (t.length > 80) return 'Name is too long';
     return null;
   }
 
   String? _validateEmail(String? v) {
     final t = (v ?? '').trim();
-    if (t.isEmpty) return 'ইমেইল লিখুন';
-    if (!t.contains('@') || !_emailRegex.hasMatch(t)) return 'সঠিক ইমেইল লিখুন';
+    if (t.isEmpty) return 'Enter email';
+    if (!t.contains('@') || !_emailRegex.hasMatch(t)) return 'Enter a valid email';
     return null;
   }
 
   String? _validatePhone(String? v) {
     final t = (v ?? '').trim();
-    if (t.isEmpty) return 'ফোন নম্বর লিখুন';
-    if (!RegExp(r'^\d{10,}$').hasMatch(t)) return 'কমপক্ষে ১০ সংখ্যা';
+    if (t.isEmpty) return 'Enter phone number';
+    if (!RegExp(r'^\d{10,}$').hasMatch(t)) return 'At least 10 digits';
     return null;
   }
 
   String? _validatePassword(String? v) {
     final t = v ?? '';
-    if (t.length < 8) return 'কমপক্ষে ৮ অক্ষর';
-    if (!RegExp(r'[A-Za-z]').hasMatch(t)) return 'কমপক্ষে ১টি অক্ষর প্রয়োজন';
-    if (!RegExp(r'\d').hasMatch(t)) return 'কমপক্ষে ১টি সংখ্যা প্রয়োজন';
+    if (t.length < 8) return 'At least 8 characters';
+    if (!RegExp(r'[A-Za-z]').hasMatch(t)) return 'At least 1 letter required';
+    if (!RegExp(r'\d').hasMatch(t)) return 'At least 1 number required';
     return null;
   }
 
   String? _validateConfirm(String? v) {
-    if ((v ?? '') != _passwordController.text) return 'পাসওয়ার্ড মিলছে না';
+    if ((v ?? '') != _passwordController.text) return 'Passwords do not match';
     return null;
   }
 
@@ -144,12 +143,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       if (state.hasError) {
         final err = state.error;
         if (err is ApiException && err.statusCode == 409) {
-          setState(() => _emailError = 'এই ইমেইল ইতিমধ্যে রেজিস্টার্ড');
+          setState(() => _emailError = 'This email is already registered');
         } else {
           _showError(
             err is ApiException
                 ? err.message
-                : 'রেজিস্ট্রেশন সম্পন্ন করা যাচ্ছে না।',
+                : 'Could not complete registration.',
           );
         }
         return;
@@ -179,10 +178,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     } catch (e) {
       if (!mounted) return;
       if (e is ApiException && e.statusCode == 409) {
-        setState(() => _emailError = 'এই ইমেইল ইতিমধ্যে রেজিস্টার্ড');
+        setState(() => _emailError = 'This email is already registered');
       } else {
         _showError(
-          e is ApiException ? e.message : 'রেজিস্ট্রেশন সম্পন্ন করা যাচ্ছে না।',
+          e is ApiException ? e.message : 'Could not complete registration.',
         );
       }
     } finally {
@@ -195,7 +194,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       SnackBar(
         content: Text(
           message,
-          style: const TextStyle(color: AppColors.film, fontSize: 13),
+          style: TextStyle(color: AppColors.film, fontSize: 13),
         ),
         backgroundColor: AppColors.voidElevated,
         behavior: SnackBarBehavior.floating,
@@ -211,9 +210,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final lang = ref
-        .watch(languageControllerProvider)
-        .maybeWhen(data: (c) => c, orElse: () => 'en');
 
     return Scaffold(
       backgroundColor: AppColors.voidBlack,
@@ -418,9 +414,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 style: const TextStyle(fontSize: 13),
                                 children: [
                                   TextSpan(
-                                    text: lang == 'bn'
-                                        ? 'ইতিমধ্যে অ্যাকাউন্ট আছে? '
-                                        : 'Already have an account? ',
+                                    text: 'Already have an account? ',
                                     style: TextStyle(
                                       color: AppColors.filmDim.withValues(
                                         alpha: 0.75,
@@ -428,7 +422,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                     ),
                                   ),
                                   TextSpan(
-                                    text: lang == 'bn' ? 'সাইন ইন' : 'Sign In',
+                                    text: 'Sign In',
                                     style: const TextStyle(
                                       color: AppColors.orange,
                                       fontWeight: FontWeight.w600,
@@ -452,7 +446,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             left: 8,
             child: SafeArea(
               child: IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.arrow_back_ios_new_rounded,
                   size: 18,
                   color: AppColors.film,
@@ -531,7 +525,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         validator: validator,
         onChanged: onChanged,
         autovalidateMode: AutovalidateMode.onUserInteraction,
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.film,
           fontSize: 14.5,
           fontWeight: FontWeight.w400,

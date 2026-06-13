@@ -123,7 +123,7 @@ class PaymentSummaryCard extends ConsumerWidget {
                     ),
                     icon: const Icon(Icons.check_circle_outline, size: 18),
                     label: Text(
-                      'বকেয়া ৳${outstanding.toStringAsFixed(0)} পেয়েছি — মার্ক করুন',
+                      'Mark ৳${outstanding.toStringAsFixed(0)} due as received',
                     ),
                     onPressed: () =>
                         _markDueReceived(context, ref, outstanding),
@@ -151,19 +151,19 @@ class PaymentSummaryCard extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.voidElevated,
-        title: const Text(
-          'পেমেন্ট পেয়েছি?',
+        title: Text(
+          'Payment received?',
           style: TextStyle(color: AppColors.film, fontSize: 18),
         ),
         content: Text(
-          'বকেয়া ৳${amount.toStringAsFixed(0)} আদায় হয়েছে বলে মার্ক করলে এটা '
-          'কালেকশন-এ যোগ হবে এবং আর কোনো বকেয়া থাকবে না।',
-          style: const TextStyle(color: AppColors.filmDim, fontSize: 13.5),
+          'Marking ৳${amount.toStringAsFixed(0)} as received will add it to '
+          'collection and clear the remaining due.',
+          style: TextStyle(color: AppColors.filmDim, fontSize: 13.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('বাতিল',
+            child: Text('Cancel',
                 style: TextStyle(color: AppColors.filmDim)),
           ),
           FilledButton(
@@ -172,7 +172,7 @@ class PaymentSummaryCard extends ConsumerWidget {
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('হ্যাঁ, পেয়েছি'),
+            child: const Text('Yes, received'),
           ),
         ],
       ),
@@ -201,11 +201,11 @@ class PaymentSummaryCard extends ConsumerWidget {
       // 🪙 payment received — coin-pop celebration.
       if (context.mounted) Celebration.coinPop(context);
       messenger.showSnackBar(
-        const SnackBar(content: Text('বকেয়া কালেকশন-এ যোগ হয়েছে ✓')),
+        const SnackBar(content: Text('Due added to collection ✓')),
       );
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('মার্ক করা যায়নি: $e')),
+        SnackBar(content: Text('Could not mark: $e')),
       );
     }
   }

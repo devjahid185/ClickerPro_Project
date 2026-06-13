@@ -92,7 +92,7 @@ class _SendTicketSheetState extends ConsumerState<SendTicketSheet> {
               ),
               Text(
                 loc.help_send_ticket,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.film,
                   fontFamily: 'Poppins',
                   fontSize: 22,
@@ -102,7 +102,7 @@ class _SendTicketSheetState extends ConsumerState<SendTicketSheet> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _subjectCtl,
-                style: const TextStyle(color: AppColors.film),
+                style: TextStyle(color: AppColors.film),
                 decoration: _decoration(loc.help_ticket_subject),
                 validator: (v) => (v == null || v.trim().isEmpty)
                     ? loc.help_ticket_validation_subject
@@ -112,7 +112,7 @@ class _SendTicketSheetState extends ConsumerState<SendTicketSheet> {
               TextFormField(
                 controller: _messageCtl,
                 maxLines: 4,
-                style: const TextStyle(color: AppColors.film),
+                style: TextStyle(color: AppColors.film),
                 decoration: _decoration(loc.help_ticket_message),
                 validator: (v) => (v == null || v.trim().isEmpty)
                     ? loc.help_ticket_validation_message
@@ -128,7 +128,7 @@ class _SendTicketSheetState extends ConsumerState<SendTicketSheet> {
                           : () => Navigator.of(context).pop(false),
                       child: Text(
                         loc.help_ticket_cancel,
-                        style: const TextStyle(color: AppColors.filmDim),
+                        style: TextStyle(color: AppColors.filmDim),
                       ),
                     ),
                   ),
@@ -160,16 +160,16 @@ class _SendTicketSheetState extends ConsumerState<SendTicketSheet> {
 
   InputDecoration _decoration(String label) => InputDecoration(
     labelText: label,
-    labelStyle: const TextStyle(color: AppColors.filmDim),
+    labelStyle: TextStyle(color: AppColors.filmDim),
     filled: true,
     fillColor: AppColors.voidElevated,
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.glassBorder),
+      borderSide: BorderSide(color: AppColors.glassBorder),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.glassBorder),
+      borderSide: BorderSide(color: AppColors.glassBorder),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),

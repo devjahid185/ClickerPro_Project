@@ -162,7 +162,7 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // ── Header ────────────────────────────────────────
-              const Text(
+              Text(
                 'Change role',
                 style: TextStyle(
                   fontFamily: 'Poppins',
@@ -381,7 +381,7 @@ class _RoleOption extends StatelessWidget {
                 ),
               ),
               child: selected
-                  ? const Icon(
+                  ? Icon(
                       Icons.check_rounded,
                       color: AppColors.film,
                       size: 12,
@@ -395,7 +395,7 @@ class _RoleOption extends StatelessWidget {
                 children: [
                   Text(
                     role.displayLabel,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.film,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -456,7 +456,7 @@ class _ConfirmButton extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 14),
               alignment: Alignment.center,
-              child: const Text(
+              child: Text(
                 'Confirm',
                 style: TextStyle(
                   color: AppColors.film,

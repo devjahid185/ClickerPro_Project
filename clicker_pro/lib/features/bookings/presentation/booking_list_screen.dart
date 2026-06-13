@@ -139,13 +139,13 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
       await SharePlus.instance.share(
         ShareParams(
           text:
-              'আমাদের স্টুডিওতে বুকিং দিতে এই লিংকে আপনার তথ্য দিন:\n${issued.url}',
+              'Fill in your details at this link to book our studio:\n${issued.url}',
           subject: 'Booking link',
         ),
       );
     } catch (_) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('লিংক আনা যায়নি — আবার চেষ্টা করুন।')),
+        const SnackBar(content: Text('Could not fetch the link — please try again.')),
       );
     }
   }
@@ -165,12 +165,12 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
           loc.bookings_title,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.film,
             fontFamily: 'Poppins',
             fontSize: 22,
@@ -225,7 +225,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                 ),
                 child: Text(
                   '$totalCount',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.filmDim,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -401,11 +401,11 @@ class _SearchBar extends StatelessWidget {
         controller: controller,
         onChanged: onChanged,
         autofocus: true,
-        style: const TextStyle(color: AppColors.film, fontSize: 14),
+        style: TextStyle(color: AppColors.film, fontSize: 14),
         decoration: InputDecoration(
           hintText: 'Search bookings...',
-          hintStyle: const TextStyle(color: AppColors.filmMuted),
-          prefixIcon: const Icon(
+          hintStyle: TextStyle(color: AppColors.filmMuted),
+          prefixIcon: Icon(
             Icons.search,
             color: AppColors.filmMuted,
             size: 20,
@@ -415,11 +415,11 @@ class _SearchBar extends StatelessWidget {
           contentPadding: const EdgeInsets.symmetric(vertical: 10),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.glassBorder),
+            borderSide: BorderSide(color: AppColors.glassBorder),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.glassBorder),
+            borderSide: BorderSide(color: AppColors.glassBorder),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
@@ -764,7 +764,7 @@ class _BookingColumnRow extends ConsumerWidget {
                     children: [
                       Text(
                         dayText,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.film,
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
@@ -793,7 +793,7 @@ class _BookingColumnRow extends ConsumerWidget {
                         displayName.trim().isEmpty ? 'Untitled' : displayName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.film,
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -841,7 +841,7 @@ class _BookingColumnRow extends ConsumerWidget {
                   width: 28,
                   height: 32,
                   child: PopupMenuButton<String>(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.more_vert,
                     color: AppColors.filmMuted,
                     size: 18,
@@ -863,7 +863,7 @@ class _BookingColumnRow extends ConsumerWidget {
                     }
                   },
                   itemBuilder: (_) => [
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'duplicate',
                       child: Row(
                         children: [
@@ -945,7 +945,7 @@ class _FilterSheetState extends State<_FilterSheet> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Filters',
             style: TextStyle(
               color: AppColors.film,
@@ -1071,7 +1071,7 @@ class _FilterSection extends StatelessWidget {
       children: [
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.filmDim,
             fontSize: 12,
             fontWeight: FontWeight.w600,

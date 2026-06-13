@@ -116,7 +116,7 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
                   ),
                 ),
               ),
-              const Text(
+              Text(
                 'Record Payment',
                 style: TextStyle(
                   color: AppColors.film,
@@ -136,7 +136,7 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                 ],
-                style: const TextStyle(color: AppColors.film),
+                style: TextStyle(color: AppColors.film),
                 decoration: _decoration('Amount'),
                 validator: (raw) {
                   final v = double.tryParse((raw ?? '').trim());
@@ -149,7 +149,7 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
               const SizedBox(height: 16),
 
               // Method selector
-              const Text(
+              Text(
                 'METHOD',
                 style: TextStyle(
                   color: AppColors.filmDim,
@@ -185,7 +185,7 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
               const SizedBox(height: 16),
 
               // Type selector
-              const Text(
+              Text(
                 'TYPE',
                 style: TextStyle(
                   color: AppColors.filmDim,
@@ -218,13 +218,13 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.visibility_off_outlined,
                       color: AppColors.filmDim,
                       size: 20,
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'Hide from team',
                         style: TextStyle(color: AppColors.film, fontSize: 14),
@@ -248,7 +248,7 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
                       onPressed: _saving
                           ? null
                           : () => Navigator.of(context).pop(),
-                      child: const Text(
+                      child: Text(
                         'Cancel',
                         style: TextStyle(color: AppColors.filmDim),
                       ),
@@ -335,16 +335,16 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
   InputDecoration _decoration(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: AppColors.filmDim),
+      labelStyle: TextStyle(color: AppColors.filmDim),
       filled: true,
       fillColor: AppColors.voidElevated,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.glassBorder),
+        borderSide: BorderSide(color: AppColors.glassBorder),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.glassBorder),
+        borderSide: BorderSide(color: AppColors.glassBorder),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

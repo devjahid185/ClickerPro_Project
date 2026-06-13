@@ -78,10 +78,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Settings',
           style: TextStyle(
             color: AppColors.film,
@@ -414,7 +414,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           borderRadius: BorderRadius.circular(14),
           side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
         ),
-        title: const Text(
+        title: Text(
           'Sign out of Clicker Pro?',
           style: TextStyle(
             color: AppColors.film,
@@ -431,7 +431,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(
+            child: Text(
               'Cancel',
               style: TextStyle(color: AppColors.filmDim),
             ),
@@ -439,7 +439,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.red),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(
+            child: Text(
               'Sign Out',
               style: TextStyle(color: AppColors.film),
             ),
@@ -531,11 +531,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.language, color: AppColors.filmDim, size: 20),
+              Icon(Icons.language, color: AppColors.filmDim, size: 20),
               const SizedBox(width: 12),
               Text(
                 t('pref_lang'),
-                style: const TextStyle(color: AppColors.film, fontSize: 15),
+                style: TextStyle(color: AppColors.film, fontSize: 15),
               ),
             ],
           ),
@@ -580,13 +580,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.palette_outlined,
                 color: AppColors.filmDim,
                 size: 20,
               ),
               const SizedBox(width: 12),
-              const Text(
+              Text(
                 'Theme',
                 style: TextStyle(color: AppColors.film, fontSize: 15),
               ),
@@ -640,7 +640,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const SizedBox(width: 12),
               Text(
                 label,
-                style: const TextStyle(color: AppColors.film, fontSize: 15),
+                style: TextStyle(color: AppColors.film, fontSize: 15),
               ),
             ],
           ),
@@ -708,7 +708,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           children: [
             Image.asset('assets/brand/logo_flower.png', width: 28, height: 28),
             const SizedBox(width: 10),
-            const Text(
+            Text(
               'CLICKER PRO',
               style: TextStyle(color: AppColors.film, fontFamily: 'Poppins'),
             ),
@@ -740,7 +740,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         SnackBar(
           content: Text(
             message,
-            style: const TextStyle(color: AppColors.film, fontSize: 13),
+            style: TextStyle(color: AppColors.film, fontSize: 13),
           ),
           backgroundColor: AppColors.voidElevated,
           behavior: SnackBarBehavior.floating,

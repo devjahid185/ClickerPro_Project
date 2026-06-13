@@ -37,10 +37,10 @@ class FlWorkHistoryScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Work History',
           style: TextStyle(
             color: AppColors.film,
@@ -100,7 +100,7 @@ class FlWorkHistoryScreen extends ConsumerWidget {
     final items = ref.read(flWorkHistoryProvider).value ?? const [];
     if (items.isEmpty) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('রপ্তানি করার মত কোনো ইতিহাস নেই।')),
+        const SnackBar(content: Text('No history to export.')),
       );
       return;
     }
@@ -137,7 +137,7 @@ class FlWorkHistoryScreen extends ConsumerWidget {
       );
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('PDF তৈরি করা যায়নি: $e')),
+        SnackBar(content: Text('Could not create PDF: $e')),
       );
     }
   }
@@ -190,7 +190,7 @@ class _HistoryRow extends StatelessWidget {
               children: [
                 Text(
                   companyName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.film,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -199,7 +199,7 @@ class _HistoryRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   eventType[0].toUpperCase() + eventType.substring(1),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.filmDim,
                     fontSize: 12,
                   ),
@@ -213,7 +213,7 @@ class _HistoryRow extends StatelessWidget {
               if (dateStr != null)
                 Text(
                   '${dateStr.month}/${dateStr.day}/${dateStr.year}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.filmMuted,
                     fontSize: 12,
                   ),

@@ -11,7 +11,6 @@ import '../../../../core/format/booking_format.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/states/lens_loader.dart';
 import '../../../../theme/app_colors.dart';
-import '../../../settings/application/language_controller.dart';
 import '../../application/reports_providers.dart';
 
 class YearlySummaryCard extends ConsumerWidget {
@@ -20,9 +19,7 @@ class YearlySummaryCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final loc = AppLocalizations.of(context);
-    final lang = ref.watch(activeLocaleProvider).languageCode == 'bn'
-        ? 'bn'
-        : 'en';
+    final lang = 'en';
     final year = ref.watch(selectedYearProvider);
 
     if (year == 0) {
@@ -33,7 +30,7 @@ class YearlySummaryCard extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text(
             loc.reports_summary_only_for_year,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.filmDim,
               fontSize: 13,
               height: 1.4,
@@ -166,7 +163,7 @@ class _Metric extends StatelessWidget {
       children: [
         Text(
           label.toUpperCase(),
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.filmMuted,
             fontSize: 10,
             letterSpacing: 1.2,

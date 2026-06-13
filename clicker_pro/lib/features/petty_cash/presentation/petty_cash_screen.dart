@@ -67,10 +67,10 @@ class PettyCashScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Petty Cash Book',
           style: TextStyle(
             color: AppColors.film,
@@ -223,7 +223,7 @@ class PettyCashScreen extends ConsumerWidget {
       );
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('PDF তৈরি করা যায়নি: $e')),
+        SnackBar(content: Text('Could not create PDF: $e')),
       );
     }
   }
@@ -263,7 +263,7 @@ class PettyCashScreen extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  const Text(
+                  Text(
                     'Add Petty Cash Entry',
                     style: TextStyle(
                       color: AppColors.film,
@@ -275,21 +275,21 @@ class PettyCashScreen extends ConsumerWidget {
                   const SizedBox(height: 16),
                   TextField(
                     controller: titleCtrl,
-                    style: const TextStyle(color: AppColors.film),
+                    style: TextStyle(color: AppColors.film),
                     decoration: InputDecoration(
                       labelText: 'Title',
-                      labelStyle: const TextStyle(color: AppColors.filmDim),
+                      labelStyle: TextStyle(color: AppColors.filmDim),
                       filled: true,
                       fillColor: AppColors.voidElevated,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
+                        borderSide: BorderSide(
                           color: AppColors.glassBorder,
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
+                        borderSide: BorderSide(
                           color: AppColors.glassBorder,
                         ),
                       ),
@@ -305,21 +305,21 @@ class PettyCashScreen extends ConsumerWidget {
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
-                    style: const TextStyle(color: AppColors.film),
+                    style: TextStyle(color: AppColors.film),
                     decoration: InputDecoration(
                       labelText: 'Amount',
-                      labelStyle: const TextStyle(color: AppColors.filmDim),
+                      labelStyle: TextStyle(color: AppColors.filmDim),
                       filled: true,
                       fillColor: AppColors.voidElevated,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
+                        borderSide: BorderSide(
                           color: AppColors.glassBorder,
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
+                        borderSide: BorderSide(
                           color: AppColors.glassBorder,
                         ),
                       ),
@@ -450,7 +450,7 @@ class _PettyCashRow extends StatelessWidget {
         ),
         title: Text(
           entry.title,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.film,
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -476,7 +476,7 @@ class _PettyCashRow extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.delete_outline,
                 color: AppColors.filmMuted,
                 size: 18,

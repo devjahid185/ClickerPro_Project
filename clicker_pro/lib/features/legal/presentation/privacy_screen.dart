@@ -45,10 +45,10 @@ class PrivacyScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Privacy Policy',
           style: TextStyle(
             color: AppColors.film,
@@ -76,32 +76,32 @@ class PrivacyScreen extends ConsumerWidget {
 }
 
 MarkdownStyleSheet _markdownStyle() {
-  const baseColor = AppColors.film;
-  const dimColor = AppColors.filmDim;
+  final baseColor = AppColors.film;
+  final dimColor = AppColors.filmDim;
   return MarkdownStyleSheet(
-    p: const TextStyle(color: baseColor, fontSize: 14, height: 1.55),
-    h1: const TextStyle(
+    p: TextStyle(color: baseColor, fontSize: 14, height: 1.55),
+    h1: TextStyle(
       color: AppColors.film,
       fontFamily: 'Poppins',
       fontSize: 28,
       fontWeight: FontWeight.w600,
     ),
-    h2: const TextStyle(
+    h2: TextStyle(
       color: AppColors.film,
       fontFamily: 'Poppins',
       fontSize: 22,
       fontWeight: FontWeight.w600,
     ),
-    h3: const TextStyle(
+    h3: TextStyle(
       color: AppColors.film,
       fontFamily: 'Poppins',
       fontSize: 18,
       fontWeight: FontWeight.w600,
     ),
-    strong: const TextStyle(color: AppColors.film, fontWeight: FontWeight.w700),
-    em: const TextStyle(color: baseColor, fontStyle: FontStyle.italic),
-    listBullet: const TextStyle(color: dimColor, fontSize: 14, height: 1.55),
-    blockquote: const TextStyle(
+    strong: TextStyle(color: AppColors.film, fontWeight: FontWeight.w700),
+    em: TextStyle(color: baseColor, fontStyle: FontStyle.italic),
+    listBullet: TextStyle(color: dimColor, fontSize: 14, height: 1.55),
+    blockquote: TextStyle(
       color: dimColor,
       fontStyle: FontStyle.italic,
       fontSize: 14,
@@ -127,12 +127,7 @@ MarkdownStyleSheet _markdownStyle() {
   );
 }
 
-String _fallbackPrivacy(String lang) {
-  if (lang == 'bn') {
-    return _privacyBn;
-  }
-  return _privacyEn;
-}
+String _fallbackPrivacy(String lang) => _privacyEn;
 
 const String _privacyEn = '''
 Clicker Pro respects your privacy.
@@ -157,25 +152,3 @@ Firebase Analytics, Google OAuth (if used).
 support@clickerpro.app
 ''';
 
-const String _privacyBn = '''
-Clicker Pro আপনার গোপনীয়তাকে সম্মান করে।
-
-**আমরা কী সংগ্রহ করি**
-- আপনি যে অ্যাকাউন্ট তথ্য দেন (নাম, ইমেইল, ফোন)
-- আপনার তৈরি বুকিং, পেমেন্ট এবং গিয়ার ডেটা
-- সিঙ্কের জন্য ডিভাইস আইডি এবং ভাষা
-
-**আমরা কীভাবে ব্যবহার করি**
-- আপনার স্টুডিও চালাতে ও ডিভাইসগুলোর মধ্যে সিঙ্ক করতে
-- আপনি যেসব সার্ভিস নোটিফিকেশন বেছে নিয়েছেন সেগুলো পাঠাতে
-
-**থার্ড-পার্টি সার্ভিস**
-Firebase Analytics, Google OAuth (যদি ব্যবহার করা হয়)।
-
-**আপনার অধিকার**
-- যেকোনো সময় Settings → Account থেকে ডেটা এক্সপোর্ট করুন
-- অ্যাকাউন্ট ডিলিট করুন; ৭-দিনের গ্রেস উইন্ডোর পরে সম্পূর্ণ মুছে ফেলা হয়
-
-**যোগাযোগ**
-support@clickerpro.app
-''';

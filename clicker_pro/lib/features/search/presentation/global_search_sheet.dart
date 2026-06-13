@@ -139,7 +139,7 @@ class _GlobalSearchSheetState extends ConsumerState<GlobalSearchSheet> {
           maxHeight: MediaQuery.of(context).size.height * 0.8,
         ),
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
@@ -164,13 +164,13 @@ class _GlobalSearchSheetState extends ConsumerState<GlobalSearchSheet> {
               onChanged: _onChanged,
               textInputAction: TextInputAction.search,
               onSubmitted: _run,
-              style: const TextStyle(color: AppColors.film),
+              style: TextStyle(color: AppColors.film),
               decoration: InputDecoration(
                 hintText: 'Search bookings, clients, team, packages…',
                 hintStyle: TextStyle(
                   color: AppColors.filmDim.withValues(alpha: 0.7),
                 ),
-                prefixIcon: const Icon(Icons.search, color: AppColors.filmDim),
+                prefixIcon: Icon(Icons.search, color: AppColors.filmDim),
                 filled: true,
                 fillColor: Colors.black.withValues(alpha: 0.04),
                 border: OutlineInputBorder(
@@ -244,7 +244,7 @@ class _GlobalSearchSheetState extends ConsumerState<GlobalSearchSheet> {
             hit.title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.film,
               fontWeight: FontWeight.w600,
               fontSize: 14,

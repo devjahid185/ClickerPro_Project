@@ -14,21 +14,41 @@ class AppColors {
   AppColors._();
 
   // ============================================================
-  // ☀️ SURFACES — warm porcelain (luxury light)
-  //   Cool blue-gray reads clinical; a faint ivory warmth under white
-  //   cards is what makes the palette feel premium.
-  //   App #FAF8F5 · Surface #FFFFFF · Secondary #F5F1EA
+  // 🌗 THEME SWITCH
+  //   `isDark` is flipped by app.dart from the persisted theme mode.
+  //   The surface + text tokens below are GETTERS that read it, so the
+  //   whole app (incl. custom-painted cards) recolors when dark mode is
+  //   toggled — no per-screen rewrite needed.
   // ============================================================
-  static const Color appBg = Color(0xFFFAF8F5); // Warm porcelain background
-  static const Color surface = Color(0xFFFFFFFF); // Card / surface
-  static const Color surfaceAlt = Color(0xFFF5F1EA); // Warm linen surface
+  static bool isDark = false;
 
-  // 🔁 Backward-compat: old dark "void" names now map to light surfaces.
-  static const Color voidBlack = appBg; // Main BG
-  static const Color voidLight = surface; // Elevated surface
-  static const Color voidElevated = surfaceAlt; // More elevated surface
-  static const Color void3 = surfaceAlt;
-  static const Color void2 = surface;
+  // Deep Ocean dark surfaces (mirror AppTheme.oceanDeep).
+  static const Color _dkBg = Color(0xFF0A1222);
+  static const Color _dkSurface = Color(0xFF111B2E);
+  static const Color _dkSurfaceAlt = Color(0xFF18253C);
+  static const Color _dkInk = Color(0xFFEAF1FB);
+  static const Color _dkInkDim = Color(0xFF9DB0CC);
+  static const Color _dkInkMuted = Color(0xFF6B7E9C);
+  static const Color _dkBorder = Color(0x1FFFFFFF); // white 12%
+  static const Color _dkHairline = Color(0x14FFFFFF); // white 8%
+
+  // ============================================================
+  // ☀️ SURFACES — warm porcelain (light) / deep ocean (dark)
+  // ============================================================
+  static const Color _ltBg = Color(0xFFFAF8F5); // Warm porcelain background
+  static const Color _ltSurface = Color(0xFFFFFFFF); // Card / surface
+  static const Color _ltSurfaceAlt = Color(0xFFF5F1EA); // Warm linen surface
+
+  static Color get appBg => isDark ? _dkBg : _ltBg;
+  static Color get surface => isDark ? _dkSurface : _ltSurface;
+  static Color get surfaceAlt => isDark ? _dkSurfaceAlt : _ltSurfaceAlt;
+
+  // 🔁 Backward-compat: old dark "void" names now map to themed surfaces.
+  static Color get voidBlack => appBg; // Main BG
+  static Color get voidLight => surface; // Elevated surface
+  static Color get voidElevated => surfaceAlt; // More elevated surface
+  static Color get void3 => surfaceAlt;
+  static Color get void2 => surface;
 
   // ============================================================
   // 🔶 PRIMARY ORANGE (Orange Horizon Pro)
@@ -76,13 +96,17 @@ class AppColors {
   // ============================================================
   // 📝 TEXT (Gray scale on light)
   // ============================================================
-  static const Color film = Color(0xFF1C1917); // Warm ink — primary text
-  static const Color filmDim = Color(0xFF78716C); // Warm stone — secondary
-  static const Color filmMuted = Color(0xFFA8A29E); // Warm stone — tertiary
+  static const Color _ltFilm = Color(0xFF1C1917); // Warm ink — primary text
+  static const Color _ltFilmDim = Color(0xFF78716C); // Warm stone — secondary
+  static const Color _ltFilmMuted = Color(0xFFA8A29E); // tertiary
 
-  static const Color textPrimary = film;
-  static const Color textSecondary = filmDim;
-  static const Color textMuted = filmMuted;
+  static Color get film => isDark ? _dkInk : _ltFilm;
+  static Color get filmDim => isDark ? _dkInkDim : _ltFilmDim;
+  static Color get filmMuted => isDark ? _dkInkMuted : _ltFilmMuted;
+
+  static Color get textPrimary => film;
+  static Color get textSecondary => filmDim;
+  static Color get textMuted => filmMuted;
 
   // Warm-neutral ramp (stone) — borders, dividers, fills
   static const Color gray50 = Color(0xFFFAFAF9);
@@ -120,18 +144,19 @@ class AppColors {
   // ============================================================
   // 🪟 CARD SURFACES (soft shadows, not transparency)
   // ============================================================
-  static const Color glass = Color(0xFFFFFFFF); // White card bg
-  static const Color glassBorder = Color(0x1A803500); // deep-orange @10% — warm border
-  static const Color glassHover = Color(0xFFFFF4EB); // hover (primary 50)
-  static const Color hairline = Color(0x12803500); // ~7% warm — divider
+  static Color get glass => isDark ? _dkSurface : _ltSurface; // card bg
+  static Color get glassBorder => isDark ? _dkBorder : const Color(0x1A803500);
+  static Color get glassHover => isDark ? _dkSurfaceAlt : const Color(0xFFFFF4EB);
+  static Color get hairline => isDark ? _dkHairline : const Color(0x12803500);
 
   // Topbar surface (sticky header)
-  static const Color topbarBg = Color(0xFFFFFFFF);
-  static const Color topbarBorder = Color(0x1A803500); // warm 10%
+  static Color get topbarBg => isDark ? _dkBg : _ltSurface;
+  static Color get topbarBorder => isDark ? _dkBorder : const Color(0x1A803500);
 
   // Bottom nav surface
-  static const Color bottomNavBg = Color(0xFFFFFFFF);
-  static const Color bottomNavBorder = Color(0x1A803500); // warm 10%
+  static Color get bottomNavBg => isDark ? _dkSurface : _ltSurface;
+  static Color get bottomNavBorder =>
+      isDark ? _dkBorder : const Color(0x1A803500);
 
   // ============================================================
   // 🌈 GRADIENTS (helpers)

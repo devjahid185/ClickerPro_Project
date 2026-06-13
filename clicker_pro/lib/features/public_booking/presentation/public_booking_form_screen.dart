@@ -54,7 +54,7 @@ class PublicBookingFormScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Book with us',
           style: TextStyle(
             color: AppColors.film,
@@ -299,13 +299,13 @@ class _FormState extends ConsumerState<_Form> {
       lastDate: today.add(const Duration(days: 730)),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(
+          colorScheme: ColorScheme.light(
             primary: AppColors.orange,
             onPrimary: Colors.white,
             surface: AppColors.voidElevated,
             onSurface: AppColors.film,
           ),
-          dialogTheme: const DialogThemeData(
+          dialogTheme: DialogThemeData(
             backgroundColor: AppColors.voidElevated,
           ),
         ),
@@ -329,7 +329,7 @@ class _FormState extends ConsumerState<_Form> {
       ),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(
+          colorScheme: ColorScheme.light(
             primary: AppColors.orange,
             onPrimary: Colors.white,
             surface: AppColors.voidElevated,
@@ -470,7 +470,7 @@ class _Header extends StatelessWidget {
         children: [
           Text(
             meta.studioName,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.film,
               fontFamily: 'Poppins',
               fontSize: 22,

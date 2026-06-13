@@ -172,7 +172,7 @@ class _TaskProgressSectionState extends ConsumerState<TaskProgressSection> {
                   lang: lang,
                   bnNumerals: lang == 'bn',
                 ),
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.film,
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -228,7 +228,7 @@ class _TaskProgressSectionState extends ConsumerState<TaskProgressSection> {
                     bnNumerals: lang == 'bn',
                   ),
                   textAlign: TextAlign.right,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.film,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -243,7 +243,7 @@ class _TaskProgressSectionState extends ConsumerState<TaskProgressSection> {
             controller: _noteCtrl,
             maxLines: 3,
             maxLength: 500,
-            style: const TextStyle(color: AppColors.film, fontSize: 13.5),
+            style: TextStyle(color: AppColors.film, fontSize: 13.5),
             decoration: InputDecoration(
               hintText: 'Optional note',
               hintStyle: TextStyle(
@@ -277,7 +277,7 @@ class _TaskProgressSectionState extends ConsumerState<TaskProgressSection> {
               Expanded(
                 child: TextButton(
                   onPressed: () => setState(() => _editing = false),
-                  child: const Text(
+                  child: Text(
                     'Cancel',
                     style: TextStyle(color: AppColors.filmDim),
                   ),
@@ -398,7 +398,7 @@ class _AllProgressRow extends StatelessWidget {
                   'User ${progress.userId}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.film,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,

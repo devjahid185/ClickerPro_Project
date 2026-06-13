@@ -34,7 +34,6 @@ import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
 import '../../profile/application/profile_controllers.dart';
-import '../../settings/application/language_controller.dart';
 import '../application/fl_earning_providers.dart';
 import '../domain/fl_earning.dart';
 
@@ -50,9 +49,7 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final lang = ref.watch(activeLocaleProvider).languageCode == 'bn'
-        ? 'bn'
-        : 'en';
+    final lang = 'en';
     final async = ref.watch(flEarningOverviewControllerProvider);
 
     return Scaffold(
@@ -61,10 +58,10 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Earnings',
           style: TextStyle(
             color: AppColors.film,
@@ -376,19 +373,19 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
             context: context,
             builder: (ctx) => AlertDialog(
               backgroundColor: AppColors.voidLight,
-              title: const Text(
+              title: Text(
                 'Request Payment',
                 style: TextStyle(color: AppColors.film),
               ),
-              content: const Text(
-                'Owner-কে অ্যাপের মধ্যেই ডিউ পেমেন্ট রিকুয়েস্ট পাঠানো হবে — '
-                'আপনার প্রোফাইলের bKash ও ব্যাংক তথ্যসহ।',
+              content: Text(
+                'A due-payment request will be sent to the Owner in-app — '
+                'including your profile bKash & bank details.',
                 style: TextStyle(color: AppColors.filmDim),
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(false),
-                  child: const Text(
+                  child: Text(
                     'Cancel',
                     style: TextStyle(color: AppColors.filmDim),
                   ),
@@ -425,7 +422,7 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
               SnackBar(
                 content: Text(
                   sent
-                      ? 'ডিউ পেমেন্ট রিকুয়েস্ট Owner-এর অ্যাপে পাঠানো হয়েছে ✓'
+                      ? 'Due-payment request sent to the Owner ✓'
                       : 'Failed to send the request',
                 ),
                 backgroundColor: sent ? AppColors.green : AppColors.red,
@@ -434,7 +431,7 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
           } catch (e) {
             if (!context.mounted) return;
             final msg = e.toString().contains('not in any owner')
-                ? 'আপনি এখনো কোনো Owner-এর টিমে নেই — আগে টিমে যোগ দিন।'
+                ? 'You are not in any Owner team yet — join a team first.'
                 : 'Network error — try again';
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(msg), backgroundColor: AppColors.red),
@@ -578,7 +575,7 @@ class _OwnerCard extends StatelessWidget {
                   children: [
                     Text(
                       owner.ownerName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -728,7 +725,7 @@ class _PendingPaymentRow extends StatelessWidget {
               children: [
                 Text(
                   payment.ownerName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 15,
                     fontWeight: FontWeight.w600,

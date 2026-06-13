@@ -82,7 +82,7 @@ class BookingListRow extends ConsumerWidget {
                             booking.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.film,
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
@@ -142,7 +142,7 @@ class BookingListRow extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
                 color: AppColors.filmMuted,
                 size: 22,
@@ -187,7 +187,7 @@ class _DateBlock extends StatelessWidget {
         children: [
           Text(
             dayText,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.film,
               fontSize: 18,
               fontWeight: FontWeight.w700,

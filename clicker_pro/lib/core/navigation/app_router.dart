@@ -350,12 +350,12 @@ class _ComingSoonRoute extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
           name,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.film,
             fontFamily: 'Poppins',
             fontWeight: FontWeight.w600,
@@ -380,7 +380,7 @@ class _ComingSoonRoute extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Coming soon',
               style: TextStyle(
                 color: AppColors.film,
