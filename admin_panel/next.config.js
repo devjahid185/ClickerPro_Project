@@ -34,9 +34,9 @@ const nextConfig = {
   // the CSP can stay `connect-src 'self'`). In dev that's localhost:5000;
   // in production it's the live API. Override with API_PROXY_TARGET.
   async rewrites() {
-    const target =
-      process.env.API_PROXY_TARGET ||
-      (isDev ? 'http://localhost:5000' : 'https://api.deyalghori.com');
+    // Default to the LIVE API — NODE_ENV isn't reliably 'production' under
+    // Passenger/cPanel. Set API_PROXY_TARGET=http://localhost:5000 for dev.
+    const target = process.env.API_PROXY_TARGET || 'https://api.deyalghori.com';
     return [{ source: '/api/:path*', destination: `${target}/api/:path*` }];
   },
 };

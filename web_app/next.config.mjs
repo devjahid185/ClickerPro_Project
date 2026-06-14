@@ -43,13 +43,11 @@ const nextConfig = {
         },
         async rewrites() {
           // The browser calls same-origin /api/* and Next proxies it to the
-          // backend (no CORS). In dev that's localhost:5000; in production
-          // the live API. WITHOUT this production default, an unset API_URL
-          // proxied register/login to a dead localhost:5000 → "Error 500".
-          const isDev = process.env.NODE_ENV !== 'production';
-          const target =
-            process.env.API_URL ||
-            (isDev ? 'http://localhost:5000' : 'https://api.deyalghori.com');
+          // backend (no CORS). Default to the LIVE API — NODE_ENV is not
+          // reliably 'production' under Passenger/cPanel, so relying on it
+          // sent register/login to a dead localhost:5000 → "Error 500".
+          // For local dev, set API_URL=http://localhost:5000 explicitly.
+          const target = process.env.API_URL || 'https://api.deyalghori.com';
           return [{ source: '/api/:path*', destination: `${target}/api/:path*` }];
         },
       }),
