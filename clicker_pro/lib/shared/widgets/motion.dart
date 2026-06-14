@@ -37,10 +37,11 @@ class FadeUpIn extends StatefulWidget {
 
 class _FadeUpInState extends State<FadeUpIn> {
   bool _shown = false;
+  bool _scheduled = false;
 
-  @override
-  void initState() {
-    super.initState();
+  void _scheduleReveal() {
+    if (_scheduled) return;
+    _scheduled = true;
     Future.delayed(
       Duration(milliseconds: 60 + widget.order * 70),
       () {
@@ -51,6 +52,13 @@ class _FadeUpInState extends State<FadeUpIn> {
 
   @override
   Widget build(BuildContext context) {
+    // Honour the platform "remove animations" / reduce-motion setting — also
+    // the right escape hatch for low-RAM phones where the staggered entrance
+    // janks. When disabled we render the child immediately, fully in place.
+    if (MediaQuery.of(context).disableAnimations) {
+      return widget.child;
+    }
+    _scheduleReveal();
     return AnimatedSlide(
       offset: _shown ? Offset.zero : Offset(0, widget.offset),
       duration: widget.duration,
@@ -94,6 +102,14 @@ class _TapScaleState extends State<TapScale> {
 
   @override
   Widget build(BuildContext context) {
+    // Reduce-motion / low-RAM: keep the tap working but drop the scale.
+    if (MediaQuery.of(context).disableAnimations) {
+      return GestureDetector(
+        onTap: widget.onTap,
+        behavior: HitTestBehavior.opaque,
+        child: widget.child,
+      );
+    }
     return GestureDetector(
       onTap: widget.onTap,
       onTapDown: (_) => _set(true),

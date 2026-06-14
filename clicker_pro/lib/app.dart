@@ -12,6 +12,7 @@ import 'l10n/app_localizations.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
 import 'theme/app_theme_mode.dart';
+import 'theme/reduce_motion.dart';
 
 class ClickerProApp extends ConsumerWidget {
   const ClickerProApp({super.key});
@@ -20,6 +21,7 @@ class ClickerProApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(activeLocaleProvider);
     final themeMode = ref.watch(resolvedThemeModeProvider);
+    final reduceMotion = ref.watch(reduceMotionProvider);
     // Flip the AppColors palette (custom-painted surfaces read this flag)
     // to match the resolved theme. `system` follows the device brightness.
     final platformDark =
@@ -47,10 +49,21 @@ class ClickerProApp extends ConsumerWidget {
       // the resolved brightness forces the visible page to rebuild on every
       // switch, while the MaterialApp's Navigator (kept outside this builder)
       // preserves the navigation stack.
-      builder: (context, child) => KeyedSubtree(
-        key: ValueKey(isDark ? 'dark' : 'light'),
-        child: child ?? const SizedBox.shrink(),
-      ),
+      builder: (context, child) {
+        final media = MediaQuery.of(context);
+        // Fold the manual "reduce motion" toggle into the platform flag so
+        // every motion primitive (which already honours disableAnimations)
+        // also obeys the in-app setting — the low-RAM escape hatch.
+        return MediaQuery(
+          data: media.copyWith(
+            disableAnimations: media.disableAnimations || reduceMotion,
+          ),
+          child: KeyedSubtree(
+            key: ValueKey(isDark ? 'dark' : 'light'),
+            child: child ?? const SizedBox.shrink(),
+          ),
+        );
+      },
       // Splash drives the initial routing decision (onboarding / login /
       // dashboard). `onGenerateRoute` is wired so any `pushNamed` call
       // throughout the app resolves through the central route table.

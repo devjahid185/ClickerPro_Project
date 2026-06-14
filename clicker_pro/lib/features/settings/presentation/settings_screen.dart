@@ -27,6 +27,7 @@ import '../../../shared/states/offline_banner.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_strings.dart';
 import '../../../theme/app_theme_mode.dart';
+import '../../../theme/reduce_motion.dart';
 import '../../auth/application/session_controller.dart';
 import '../../auth/presentation/login_screen.dart';
 import '../../profile/application/profile_controllers.dart';
@@ -163,6 +164,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   const SizedBox(height: 30),
                   _sectionHeader('App'),
                   _buildSettingsGroup([
+                    // Reduce motion — drops entrance/press animations for a
+                    // smoother feel on low-RAM phones.
+                    _buildBoolRow(
+                      label: 'Reduce motion',
+                      icon: Icons.animation_rounded,
+                      value: ref
+                          .watch(reduceMotionControllerProvider)
+                          .maybeWhen(data: (v) => v, orElse: () => null),
+                      onChanged: (v) => ref
+                          .read(reduceMotionControllerProvider.notifier)
+                          .setReduceMotion(v),
+                    ),
                     if (user != null)
                       _buildBoolRow(
                         label: 'Bengali Numerals',
