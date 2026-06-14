@@ -582,7 +582,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             // ── Left: Big today count card ──
             Expanded(
               child: GestureDetector(
-                onTap: () => _pushNamed(RouteNames.bookings),
+                onTap: _openTodayEvents,
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -677,14 +677,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     title: 'Upcoming',
                     value: '${m.upcomingEvents}',
                     color: AppColors.gold,
-                    onTap: () => _pushNamed(RouteNames.bookings),
+                    onTap: _openUpcomingEvents,
                   ),
                   const SizedBox(height: 10),
                   _miniHeroCard(
                     title: 'Total',
                     value: '${m.totalEvents}',
                     color: AppColors.indigo,
-                    onTap: () => _pushNamed(RouteNames.bookings),
+                    onTap: _openAllEvents,
                   ),
                 ],
               ),
@@ -1568,6 +1568,40 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         ),
       ),
     );
+  }
+
+  /// Opens the booking list showing ONLY today's events (date range =
+  /// today → tomorrow), so the Today card never surfaces future dates.
+  void _openTodayEvents() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    ref.read(bookingFilterProvider.notifier).state = ref
+        .read(bookingFilterProvider)
+        .copyWith(
+          from: today,
+          to: today.add(const Duration(days: 1)),
+          statuses: {},
+        );
+    _pushNamed(RouteNames.bookings);
+  }
+
+  /// Upcoming = tomorrow → 6 months ahead (matches the dashboard count).
+  void _openUpcomingEvents() {
+    final now = DateTime.now();
+    final tomorrow = DateTime(now.year, now.month, now.day + 1);
+    final sixMonths = DateTime(now.year, now.month + 6, now.day);
+    ref.read(bookingFilterProvider.notifier).state = ref
+        .read(bookingFilterProvider)
+        .copyWith(from: tomorrow, to: sixMonths, statuses: {});
+    _pushNamed(RouteNames.bookings);
+  }
+
+  /// Total = every booking, no date/status filter.
+  void _openAllEvents() {
+    ref.read(bookingFilterProvider.notifier).state = ref
+        .read(bookingFilterProvider)
+        .copyWith(clearFrom: true, clearTo: true, statuses: {});
+    _pushNamed(RouteNames.bookings);
   }
 
   /// Opens the booking list showing ONLY cancelled events.

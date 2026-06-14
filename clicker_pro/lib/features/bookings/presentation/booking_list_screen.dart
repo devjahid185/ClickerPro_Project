@@ -89,6 +89,13 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
     return _StatusChip.successful;
   }
 
+  /// Date with the time stripped — so same-day events group together
+  /// regardless of their shift start time.
+  static DateTime _dayOnly(DateTime d) => DateTime(d.year, d.month, d.day);
+
+  /// Day shift sorts before Night within the same date; Both counts as Day.
+  static int _shiftRank(Shift s) => s == Shift.night ? 1 : 0;
+
   Set<BookingStatus> _statusesForChip(_StatusChip chip) {
     switch (chip) {
       case _StatusChip.all:
@@ -343,12 +350,22 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                     ),
                   ),
                   data: (bookings) {
-                    // One unified list — no চলমান/শেষ হওয়া split. Every
-                    // event (including cancelled) shows here, sorted by
-                    // date so the nearest events surface first. Use the
-                    // status chips to narrow by status.
+                    // ONE chronological list — strictly by date+time ascending
+                    // so the 14th always appears before the 15th. The old
+                    // Day|Night two-column layout made a 14th-night event look
+                    // like it came "after" a 15th-day event. Each row now
+                    // carries its own Day/Night badge instead.
                     final visible = bookings.toList()
-                      ..sort((a, b) => a.date.compareTo(b.date));
+                      ..sort((a, b) {
+                        final byDate = _dayOnly(
+                          a.date,
+                        ).compareTo(_dayOnly(b.date));
+                        if (byDate != 0) return byDate;
+                        // Same day → Day shift before Night shift.
+                        return _shiftRank(a.shift).compareTo(
+                          _shiftRank(b.shift),
+                        );
+                      });
                     if (visible.isEmpty) {
                       return Center(
                         child: Padding(
@@ -360,20 +377,8 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                         ),
                       );
                     }
-                    final dayBookings = visible
-                        .where(
-                          (b) => b.shift == Shift.day || b.shift == Shift.both,
-                        )
-                        .toList();
-                    final nightBookings = visible
-                        .where(
-                          (b) =>
-                              b.shift == Shift.night || b.shift == Shift.both,
-                        )
-                        .toList();
-                    return _DayNightColumns(
-                      dayBookings: dayBookings,
-                      nightBookings: nightBookings,
+                    return _BookingListColumn(
+                      bookings: visible,
                       scrollController: _scrollController,
                     );
                   },
@@ -546,146 +551,38 @@ class _ActiveFilterChips extends StatelessWidget {
   }
 }
 
-class _DayNightColumns extends StatelessWidget {
-  const _DayNightColumns({
-    required this.dayBookings,
-    required this.nightBookings,
+/// Single chronological booking list. Each row's left border + shift icon
+/// is gold for Day and purple for Night, so the Day/Night distinction is
+/// still obvious without breaking the date order.
+class _BookingListColumn extends StatelessWidget {
+  const _BookingListColumn({
+    required this.bookings,
     required this.scrollController,
   });
 
-  final List<Booking> dayBookings;
-  final List<Booking> nightBookings;
+  final List<Booking> bookings;
   final ScrollController scrollController;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          child: Row(
-            children: [
-              Expanded(
-                child: _ColumnHeader(
-                  label: 'DAY',
-                  count: dayBookings.length,
-                  color: AppColors.gold,
-                ),
-              ),
-              Container(width: 1, height: 24, color: AppColors.glassBorder),
-              Expanded(
-                child: _ColumnHeader(
-                  label: 'NIGHT',
-                  count: nightBookings.length,
-                  color: AppColors.purple,
-                ),
-              ),
-            ],
+    return ListView.builder(
+      controller: scrollController,
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+      itemCount: bookings.length,
+      itemBuilder: (context, index) {
+        final b = bookings[index];
+        final isNight = b.shift == Shift.night;
+        final accent = isNight ? AppColors.purple : AppColors.gold;
+        return FadeUpIn(
+          order: index.clamp(0, 8),
+          child: _BookingColumnRow(
+            booking: b,
+            borderSide: BorderSide(color: accent, width: 2),
+            iconColor: accent,
           ),
-        ),
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          height: 1,
-          color: AppColors.glassBorder,
-        ),
-        Expanded(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  controller: scrollController,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(16, 8, 8, 96),
-                  itemCount: dayBookings.length,
-                  itemBuilder: (context, index) => FadeUpIn(
-                    order: index.clamp(0, 8),
-                    child: _BookingColumnRow(
-                      booking: dayBookings[index],
-                      borderSide: const BorderSide(
-                        color: AppColors.gold,
-                        width: 2,
-                      ),
-                      iconColor: AppColors.gold,
-                    ),
-                  ),
-                ),
-              ),
-              Container(width: 1, color: AppColors.glassBorder),
-              Expanded(
-                child: ListView.builder(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(8, 8, 16, 96),
-                  itemCount: nightBookings.length,
-                  itemBuilder: (context, index) => FadeUpIn(
-                    order: index.clamp(0, 8),
-                    child: _BookingColumnRow(
-                      booking: nightBookings[index],
-                      borderSide: const BorderSide(
-                        color: AppColors.purple,
-                        width: 2,
-                      ),
-                      iconColor: AppColors.purple,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ColumnHeader extends StatelessWidget {
-  const _ColumnHeader({
-    required this.label,
-    required this.count,
-    required this.color,
-  });
-
-  final String label;
-  final int count;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: TextStyle(
-            color: color,
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.2,
-          ),
-        ),
-        const SizedBox(width: 6),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            '$count',
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 }
