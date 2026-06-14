@@ -29,10 +29,14 @@ const nextConfig = {
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }];
   },
-  // The admin panel talks to the Clicker Pro API. In dev we proxy /api/*
-  // to the backend so the browser never hits CORS. Override with API_PROXY_TARGET.
+  // The admin panel talks to the Clicker Pro API. The browser calls
+  // same-origin /api/* and Next proxies it to the backend (no CORS, and
+  // the CSP can stay `connect-src 'self'`). In dev that's localhost:5000;
+  // in production it's the live API. Override with API_PROXY_TARGET.
   async rewrites() {
-    const target = process.env.API_PROXY_TARGET || 'http://localhost:5000';
+    const target =
+      process.env.API_PROXY_TARGET ||
+      (isDev ? 'http://localhost:5000' : 'https://api.deyalghori.com');
     return [{ source: '/api/:path*', destination: `${target}/api/:path*` }];
   },
 };

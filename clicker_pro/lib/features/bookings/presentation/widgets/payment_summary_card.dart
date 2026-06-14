@@ -251,6 +251,6 @@ class PaymentSummaryCard extends ConsumerWidget {
   Widget _divider() => Container(
     height: 1,
     margin: const EdgeInsets.symmetric(vertical: 2),
-    color: Colors.black.withValues(alpha: 0.04),
+    color: AppColors.line(0.04),
   );
 }

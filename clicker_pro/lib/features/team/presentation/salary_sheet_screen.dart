@@ -513,7 +513,7 @@ class _SalaryMemberCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Container(height: 1, color: Colors.black.withValues(alpha: 0.06)),
+          Container(height: 1, color: AppColors.line(0.06)),
           const SizedBox(height: 10),
           Row(
             children: [

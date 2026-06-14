@@ -143,7 +143,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           color: AppColors.voidElevated,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+            side: BorderSide(color: AppColors.line(0.08)),
           ),
           onSelected: _onMenuSelected,
           itemBuilder: (context) => <PopupMenuEntry<String>>[
@@ -799,12 +799,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 decoration: BoxDecoration(
                   color: isOn
                       ? AppColors.accent.withValues(alpha: 0.16)
-                      : Colors.black.withValues(alpha: 0.04),
+                      : AppColors.line(0.04),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isOn
                         ? AppColors.accent.withValues(alpha: 0.55)
-                        : Colors.black.withValues(alpha: 0.10),
+                        : AppColors.line(0.10),
                   ),
                 ),
                 child: Row(
@@ -1330,7 +1330,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               onPressed: _isSaving ? null : _onCancel,
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.filmDim,
-                side: BorderSide(color: Colors.black.withValues(alpha: 0.18)),
+                side: BorderSide(color: AppColors.line(0.18)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1460,7 +1460,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           backgroundColor: AppColors.voidElevated,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
-            side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+            side: BorderSide(color: AppColors.line(0.08)),
           ),
           title: Text(
             t('add_gear'),
@@ -1587,7 +1587,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         backgroundColor: AppColors.voidElevated,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+          side: BorderSide(color: AppColors.line(0.08)),
         ),
         title: Text(
           'Manager invite',
@@ -1679,7 +1679,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           margin: const EdgeInsets.all(12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
-            side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+            side: BorderSide(color: AppColors.line(0.08)),
           ),
           duration: const Duration(seconds: 2),
         ),

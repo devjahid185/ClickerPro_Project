@@ -230,7 +230,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+              border: Border.all(color: AppColors.line(0.08)),
             ),
             child: TextField(
               controller: _confirmController,
@@ -267,7 +267,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.filmDim,
                       side: BorderSide(
-                        color: Colors.black.withValues(alpha: 0.18),
+                        color: AppColors.line(0.18),
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

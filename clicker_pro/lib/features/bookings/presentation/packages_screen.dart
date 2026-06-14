@@ -934,9 +934,9 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: AppColors.line(0.04),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+              border: Border.all(color: AppColors.line(0.08)),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
@@ -988,9 +988,9 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: AppColors.line(0.04),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+              border: Border.all(color: AppColors.line(0.08)),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
@@ -1093,7 +1093,7 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
                       decoration: InputDecoration(
                         isDense: true,
                         filled: true,
-                        fillColor: Colors.black.withValues(alpha: 0.04),
+                        fillColor: AppColors.line(0.04),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 10,
                           vertical: 8,
@@ -1101,13 +1101,13 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide(
-                            color: Colors.black.withValues(alpha: 0.08),
+                            color: AppColors.line(0.08),
                           ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide(
-                            color: Colors.black.withValues(alpha: 0.08),
+                            color: AppColors.line(0.08),
                           ),
                         ),
                         focusedBorder: OutlineInputBorder(

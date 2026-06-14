@@ -153,7 +153,7 @@ class _GlobalSearchSheetState extends ConsumerState<GlobalSearchSheet> {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.18),
+                  color: AppColors.line(0.18),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -172,7 +172,7 @@ class _GlobalSearchSheetState extends ConsumerState<GlobalSearchSheet> {
                 ),
                 prefixIcon: Icon(Icons.search, color: AppColors.filmDim),
                 filled: true,
-                fillColor: Colors.black.withValues(alpha: 0.04),
+                fillColor: AppColors.line(0.04),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -224,7 +224,7 @@ class _GlobalSearchSheetState extends ConsumerState<GlobalSearchSheet> {
       itemCount: _hits.length,
       separatorBuilder: (_, _) => Divider(
         height: 1,
-        color: Colors.black.withValues(alpha: 0.05),
+        color: AppColors.line(0.05),
       ),
       itemBuilder: (_, i) {
         final hit = _hits[i];

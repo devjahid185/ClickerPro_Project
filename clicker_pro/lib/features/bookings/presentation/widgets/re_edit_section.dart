@@ -89,7 +89,7 @@ class ReEditSection extends ConsumerWidget {
                     Container(
                       height: 1,
                       margin: const EdgeInsets.symmetric(vertical: 4),
-                      color: Colors.black.withValues(alpha: 0.04),
+                      color: AppColors.line(0.04),
                     ),
                 ],
               ],
@@ -241,7 +241,7 @@ class _ReEditRow extends ConsumerWidget {
               color: AppColors.voidElevated,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
-                side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+                side: BorderSide(color: AppColors.line(0.08)),
               ),
               itemBuilder: (_) => [
                 for (final s in allowedTransitions)
@@ -451,7 +451,7 @@ class _RequestReEditDialogState extends State<_RequestReEditDialog> {
         decoration: BoxDecoration(
           color: AppColors.voidElevated,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+          border: Border.all(color: AppColors.line(0.08)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

@@ -281,7 +281,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
         color: AppColors.voidElevated,
         border: Border(
           bottom: BorderSide(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: AppColors.line(0.06),
             width: 0.5,
           ),
         ),
@@ -333,7 +333,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
                 color: _hidePaymentVisible
-                    ? Colors.black.withValues(alpha: 0.06)
+                    ? AppColors.line(0.06)
                     : AppColors.gold.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -379,9 +379,9 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.04),
+        color: AppColors.line(0.04),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+        border: Border.all(color: AppColors.line(0.08)),
       ),
       child: Row(
         children: [
@@ -687,12 +687,12 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                   // and it's obvious which shift is picked.
                   color: isSelected
                       ? AppColors.teal
-                      : Colors.black.withValues(alpha: 0.04),
+                      : AppColors.line(0.04),
                   borderRadius: BorderRadius.circular(9),
                   border: Border.all(
                     color: isSelected
                         ? AppColors.teal
-                        : Colors.black.withValues(alpha: 0.08),
+                        : AppColors.line(0.08),
                     width: isSelected ? 1.2 : 1,
                   ),
                 ),
@@ -750,9 +750,9 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: AppColors.line(0.04),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+              border: Border.all(color: AppColors.line(0.08)),
             ),
             child: Row(
               children: [
@@ -847,9 +847,9 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: AppColors.line(0.04),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+              border: Border.all(color: AppColors.line(0.08)),
             ),
             child: Row(
               children: [
@@ -921,12 +921,12 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                     decoration: BoxDecoration(
                       color: isSelected
                           ? AppColors.teal.withValues(alpha: 0.15)
-                          : Colors.black.withValues(alpha: 0.04),
+                          : AppColors.line(0.04),
                       borderRadius: BorderRadius.circular(999),
                       border: Border.all(
                         color: isSelected
                             ? AppColors.teal.withValues(alpha: 0.5)
-                            : Colors.black.withValues(alpha: 0.08),
+                            : AppColors.line(0.08),
                       ),
                     ),
                     child: Text(
@@ -969,12 +969,12 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
             decoration: BoxDecoration(
               color: isEnabled
                   ? AppColors.gold.withValues(alpha: 0.06)
-                  : Colors.black.withValues(alpha: 0.04),
+                  : AppColors.line(0.04),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: isEnabled
                     ? AppColors.gold.withValues(alpha: 0.35)
-                    : Colors.black.withValues(alpha: 0.08),
+                    : AppColors.line(0.08),
               ),
             ),
             child: Row(
@@ -1023,7 +1023,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                   activeThumbColor: Colors.white,
                   activeTrackColor: AppColors.gold,
                   inactiveThumbColor: AppColors.filmMuted,
-                  inactiveTrackColor: Colors.black.withValues(alpha: 0.08),
+                  inactiveTrackColor: AppColors.line(0.08),
                 ),
               ],
             ),
@@ -1229,12 +1229,12 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
               decoration: BoxDecoration(
                 color: flashValue > 0
                     ? AppColors.teal.withValues(alpha: flashValue * 0.08)
-                    : Colors.black.withValues(alpha: 0.04),
+                    : AppColors.line(0.04),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: flashValue > 0
                       ? AppColors.teal.withValues(alpha: flashValue * 0.4)
-                      : Colors.black.withValues(alpha: 0.08),
+                      : AppColors.line(0.08),
                 ),
               ),
               child: Column(
@@ -1698,7 +1698,7 @@ class _PackagePickerSheet extends ConsumerWidget {
                 itemCount: packages.length,
                 separatorBuilder: (_, _) => Container(
                   height: 1,
-                  color: Colors.black.withValues(alpha: 0.04),
+                  color: AppColors.line(0.04),
                 ),
                 itemBuilder: (_, i) {
                   final p = packages[i];
@@ -1768,7 +1768,7 @@ class _SheetHandle extends StatelessWidget {
         width: 36,
         height: 4,
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.18),
+          color: AppColors.line(0.18),
           borderRadius: BorderRadius.circular(999),
         ),
       ),

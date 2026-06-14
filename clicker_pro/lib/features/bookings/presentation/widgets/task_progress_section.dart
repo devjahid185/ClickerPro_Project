@@ -160,7 +160,7 @@ class _TaskProgressSectionState extends ConsumerState<TaskProgressSection> {
                   child: LinearProgressIndicator(
                     value: pct / 100,
                     minHeight: 8,
-                    backgroundColor: Colors.black.withValues(alpha: 0.06),
+                    backgroundColor: AppColors.line(0.06),
                     valueColor: const AlwaysStoppedAnimation(AppColors.orange),
                   ),
                 ),
@@ -213,7 +213,7 @@ class _TaskProgressSectionState extends ConsumerState<TaskProgressSection> {
                   max: 100,
                   divisions: 20, // step 5
                   activeColor: AppColors.orange,
-                  inactiveColor: Colors.black.withValues(alpha: 0.08),
+                  inactiveColor: AppColors.line(0.08),
                   label: '$_draftPercentage%',
                   onChanged: (v) =>
                       setState(() => _draftPercentage = v.round()),
@@ -251,17 +251,17 @@ class _TaskProgressSectionState extends ConsumerState<TaskProgressSection> {
               ),
               counterText: '',
               filled: true,
-              fillColor: Colors.black.withValues(alpha: 0.04),
+              fillColor: AppColors.line(0.04),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
-                  color: Colors.black.withValues(alpha: 0.08),
+                  color: AppColors.line(0.08),
                 ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
-                  color: Colors.black.withValues(alpha: 0.08),
+                  color: AppColors.line(0.08),
                 ),
               ),
               focusedBorder: OutlineInputBorder(
@@ -316,7 +316,7 @@ class _TaskProgressSectionState extends ConsumerState<TaskProgressSection> {
               Container(
                 height: 1,
                 margin: const EdgeInsets.symmetric(vertical: 4),
-                color: Colors.black.withValues(alpha: 0.04),
+                color: AppColors.line(0.04),
               ),
           ],
         ],
@@ -410,7 +410,7 @@ class _AllProgressRow extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: pct / 100,
                     minHeight: 5,
-                    backgroundColor: Colors.black.withValues(alpha: 0.06),
+                    backgroundColor: AppColors.line(0.06),
                     valueColor: const AlwaysStoppedAnimation(AppColors.orange),
                   ),
                 ),

@@ -144,6 +144,14 @@ class AppColors {
   // ============================================================
   // 🪟 CARD SURFACES (soft shadows, not transparency)
   // ============================================================
+  /// Theme-aware subtle overlay used for hairline borders / faint fills.
+  /// In light mode it's a faint black tint; in dark mode a faint white
+  /// tint — so borders/dividers stay visible after dark mode is on. Pass
+  /// the same alpha you'd have used with `Colors.black.withValues`.
+  static Color line([double alpha = 0.08]) => isDark
+      ? Colors.white.withValues(alpha: (alpha * 1.4).clamp(0.0, 1.0))
+      : Colors.black.withValues(alpha: alpha);
+
   static Color get glass => isDark ? _dkSurface : _ltSurface; // card bg
   static Color get glassBorder => isDark ? _dkBorder : const Color(0x1A803500);
   static Color get glassHover => isDark ? _dkSurfaceAlt : const Color(0xFFFFF4EB);

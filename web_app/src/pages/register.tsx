@@ -154,9 +154,9 @@ export default function RegisterPage() {
               <div className="field">
                 <label htmlFor="role">Your Role</label>
                 <select id="role" value={form.role} onChange={set('role')} disabled={loading}>
-                  <option value="OWNER">Studio Owner</option>
+                  <option value="OWNER">Owner</option>
                   <option value="FREELANCER">Freelancer</option>
-                  <option value="BOTH">Both (Owner + Freelancer)</option>
+                  <option value="BOTH">Both</option>
                 </select>
               </div>
 

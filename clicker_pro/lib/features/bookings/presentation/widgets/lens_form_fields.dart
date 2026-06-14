@@ -87,7 +87,7 @@ class LensTextField extends StatelessWidget {
               errorText: errorText,
               isDense: true,
               filled: true,
-              fillColor: Colors.black.withValues(alpha: 0.04),
+              fillColor: AppColors.line(0.04),
               counterText: '',
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
@@ -110,7 +110,7 @@ class LensTextField extends StatelessWidget {
         ? AppColors.red
         : focused
         ? AppColors.orange
-        : Colors.black.withValues(alpha: 0.08);
+        : AppColors.line(0.08);
     return OutlineInputBorder(
       borderRadius: BorderRadius.circular(10),
       borderSide: BorderSide(color: color, width: focused ? 1.2 : 1),
@@ -158,12 +158,12 @@ class LensSelector<T> extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: AppColors.line(0.04),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: errorText != null
                     ? AppColors.red
-                    : Colors.black.withValues(alpha: 0.08),
+                    : AppColors.line(0.08),
               ),
             ),
             child: DropdownButtonHideUnderline(
@@ -222,9 +222,9 @@ class LensSwitchTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.04),
+          color: AppColors.line(0.04),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+          border: Border.all(color: AppColors.line(0.08)),
         ),
         child: Row(
           children: [
@@ -259,7 +259,7 @@ class LensSwitchTile extends StatelessWidget {
               activeThumbColor: Colors.white,
               activeTrackColor: activeColor ?? AppColors.orange,
               inactiveThumbColor: AppColors.filmMuted,
-              inactiveTrackColor: Colors.black.withValues(alpha: 0.08),
+              inactiveTrackColor: AppColors.line(0.08),
             ),
           ],
         ),
@@ -319,12 +319,12 @@ class LensPickerRow extends StatelessWidget {
                   vertical: 14,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.04),
+                  color: AppColors.line(0.04),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: errorText != null
                         ? AppColors.red
-                        : Colors.black.withValues(alpha: 0.08),
+                        : AppColors.line(0.08),
                   ),
                 ),
                 child: Row(

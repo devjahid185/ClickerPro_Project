@@ -295,7 +295,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         preferredSize: const Size.fromHeight(1),
         child: Container(
           height: 1,
-          color: Colors.black.withValues(alpha: 0.04),
+          color: AppColors.line(0.04),
         ),
       ),
     );
@@ -313,7 +313,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             shape: BoxShape.circle,
             color: AppColors.accent,
             border: Border.all(
-              color: Colors.black.withValues(alpha: 0.12),
+              color: AppColors.line(0.12),
               width: 2,
             ),
           ),
@@ -439,7 +439,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.07)),
+        border: Border.all(color: AppColors.line(0.07)),
       ),
       child: Row(
         children: List.generate(days.length, (int i) {
@@ -464,10 +464,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 )
               : isSelected
               ? BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.08),
+                  color: AppColors.line(0.08),
                   borderRadius: BorderRadius.circular(9),
                   border: Border.all(
-                    color: Colors.black.withValues(alpha: 0.10),
+                    color: AppColors.line(0.10),
                   ),
                 )
               : null;
@@ -732,7 +732,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+          border: Border.all(color: AppColors.line(0.08)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -775,7 +775,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.10)),
+        border: Border.all(color: AppColors.line(0.10)),
       ),
       child: const LensLoader(size: 22),
     );
@@ -788,7 +788,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.10)),
+        border: Border.all(color: AppColors.line(0.10)),
       ),
       child: ErrorState(
         message: 'Failed to load',
@@ -806,7 +806,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.10)),
+          border: Border.all(color: AppColors.line(0.10)),
         ),
         child: const LensLoader(size: 22),
       ),
@@ -983,7 +983,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+            border: Border.all(color: AppColors.line(0.08)),
           ),
           child: Column(
             children: [
@@ -1034,7 +1034,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+            border: Border.all(color: AppColors.line(0.08)),
           ),
           child: Row(
             children: [
@@ -1200,7 +1200,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       height: 4,
                       margin: const EdgeInsets.only(bottom: 14),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.18),
+                        color: AppColors.line(0.18),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -1252,7 +1252,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                           itemCount: entries.length,
                           separatorBuilder: (_, _) => Divider(
                             height: 1,
-                            color: Colors.black.withValues(alpha: 0.05),
+                            color: AppColors.line(0.05),
                           ),
                           itemBuilder: (_, i) {
                             final e = entries[i];
@@ -1355,7 +1355,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+        border: Border.all(color: AppColors.line(0.08)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1472,7 +1472,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 14),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.18),
+                    color: AppColors.line(0.18),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -1592,7 +1592,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+        border: Border.all(color: AppColors.line(0.08)),
       ),
       child: Row(
         children: [
@@ -1732,7 +1732,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     color: AppColors.accent.withValues(alpha: 0.06),
                     border: Border(
                       bottom: BorderSide(
-                        color: Colors.black.withValues(alpha: 0.05),
+                        color: AppColors.line(0.05),
                       ),
                     ),
                   ),
@@ -1745,7 +1745,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                           shape: BoxShape.circle,
                           color: AppColors.accent,
                           border: Border.all(
-                            color: Colors.black.withValues(alpha: 0.15),
+                            color: AppColors.line(0.15),
                             width: 2,
                           ),
                         ),
@@ -1922,7 +1922,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       horizontal: 20,
                       vertical: 8,
                     ),
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: AppColors.line(0.05),
                   ),
                   _sbGroup('FREELANCER'),
                   _sbItem(Icons.account_balance_wallet_outlined, 'My Earnings', () {
@@ -1955,7 +1955,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       horizontal: 20,
                       vertical: 8,
                     ),
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: AppColors.line(0.05),
                   ),
                   _sbGroup('ADMIN'),
                   _sbItem(Icons.backup_outlined, 'Backup & Restore', () {
@@ -1976,7 +1976,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       horizontal: 20,
                       vertical: 8,
                     ),
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: AppColors.line(0.05),
                   ),
                   _sbGroup('ACCOUNT'),
                   _sbItem(Icons.person_outline, 'Profile', () {
@@ -2014,7 +2014,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               decoration: BoxDecoration(
                 border: Border(
-                  top: BorderSide(color: Colors.black.withValues(alpha: 0.05)),
+                  top: BorderSide(color: AppColors.line(0.05)),
                 ),
               ),
               child: Row(
@@ -2054,7 +2054,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         backgroundColor: AppColors.voidElevated,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+          side: BorderSide(color: AppColors.line(0.08)),
         ),
         title: Text(
           'Sign out of Clicker Pro?',
@@ -2184,10 +2184,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+          border: Border.all(color: AppColors.line(0.06)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.10),
+              color: AppColors.line(0.10),
               blurRadius: 20,
               spreadRadius: -2,
               offset: const Offset(0, 6),
@@ -2470,7 +2470,7 @@ class _AnnouncementCardView extends StatelessWidget {
           ),
           if (announcement.readCount > 0) ...[
             const SizedBox(height: 10),
-            Container(height: 1, color: Colors.black.withValues(alpha: 0.06)),
+            Container(height: 1, color: AppColors.line(0.06)),
             const SizedBox(height: 8),
             Text(
               '${announcement.readCount} read',

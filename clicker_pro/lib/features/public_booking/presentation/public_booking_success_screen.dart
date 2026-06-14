@@ -75,10 +75,10 @@ class PublicBookingSuccessScreen extends StatelessWidget {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.04),
+                  color: AppColors.line(0.04),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: Colors.black.withValues(alpha: 0.08),
+                    color: AppColors.line(0.08),
                   ),
                 ),
                 child: Row(

@@ -326,7 +326,7 @@ class _AnnouncementCard extends StatelessWidget {
                 const SizedBox(height: 10),
                 Container(
                   height: 1,
-                  color: Colors.black.withValues(alpha: 0.06),
+                  color: AppColors.line(0.06),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -373,7 +373,7 @@ class _AnnouncementCard extends StatelessWidget {
               width: 5,
               height: 5,
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.2),
+                color: AppColors.line(0.2),
                 shape: BoxShape.circle,
               ),
             ),

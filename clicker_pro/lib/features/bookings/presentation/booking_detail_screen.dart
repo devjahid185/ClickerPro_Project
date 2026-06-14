@@ -114,7 +114,7 @@ class BookingDetailScreen extends ConsumerWidget {
               color: AppColors.voidElevated,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
-                side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+                side: BorderSide(color: AppColors.line(0.08)),
               ),
               itemBuilder: (_) {
                 final canCancel = policy.can(Capability.cancelBooking);
@@ -616,7 +616,7 @@ class _CancelReasonDialogState extends State<_CancelReasonDialog> {
         decoration: BoxDecoration(
           color: AppColors.voidElevated,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+          border: Border.all(color: AppColors.line(0.08)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -653,17 +653,17 @@ class _CancelReasonDialogState extends State<_CancelReasonDialog> {
                   color: AppColors.filmMuted.withValues(alpha: 0.7),
                 ),
                 filled: true,
-                fillColor: Colors.black.withValues(alpha: 0.04),
+                fillColor: AppColors.line(0.04),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide(
-                    color: Colors.black.withValues(alpha: 0.08),
+                    color: AppColors.line(0.08),
                   ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide(
-                    color: Colors.black.withValues(alpha: 0.08),
+                    color: AppColors.line(0.08),
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
@@ -1000,7 +1000,7 @@ class _InvoiceSheet extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+          border: Border.all(color: AppColors.line(0.08)),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -1398,7 +1398,7 @@ class _QuickActionsSection extends StatelessWidget {
           Container(
             height: 1,
             margin: const EdgeInsets.symmetric(vertical: 4),
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppColors.line(0.04),
           ),
           _ActionTile(
             icon: Icons.picture_as_pdf_outlined,
@@ -1410,7 +1410,7 @@ class _QuickActionsSection extends StatelessWidget {
           Container(
             height: 1,
             margin: const EdgeInsets.symmetric(vertical: 4),
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppColors.line(0.04),
           ),
           _ActionTile(
             icon: Icons.checklist_rounded,

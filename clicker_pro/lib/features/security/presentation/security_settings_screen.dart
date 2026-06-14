@@ -221,7 +221,7 @@ class _SecuritySettingsScreenState
           preferredSize: const Size.fromHeight(1),
           child: Container(
             height: 1,
-            color: Colors.black.withValues(alpha: 0.06),
+            color: AppColors.line(0.06),
           ),
         ),
       ),
@@ -401,18 +401,18 @@ class _SecuritySettingsScreenState
             fontSize: 13,
           ),
           filled: true,
-          fillColor: Colors.black.withValues(alpha: 0.04),
+          fillColor: AppColors.line(0.04),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 14,
             vertical: 12,
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+            borderSide: BorderSide(color: AppColors.line(0.08)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+            borderSide: BorderSide(color: AppColors.line(0.08)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
@@ -562,7 +562,7 @@ class _SecuritySettingsScreenState
             decoration: BoxDecoration(
               color: isCurrent
                   ? AppColors.accent.withValues(alpha: 0.12)
-                  : Colors.black.withValues(alpha: 0.05),
+                  : AppColors.line(0.05),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -712,7 +712,7 @@ class _SecuritySettingsScreenState
           margin: const EdgeInsets.all(12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
-            side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+            side: BorderSide(color: AppColors.line(0.08)),
           ),
           duration: const Duration(seconds: 2),
         ),

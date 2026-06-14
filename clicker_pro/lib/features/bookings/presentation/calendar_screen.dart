@@ -313,11 +313,11 @@ class _DayCell extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             color: isToday
                 ? AppColors.orange.withValues(alpha: 0.10)
-                : Colors.black.withValues(alpha: 0.02),
+                : AppColors.line(0.02),
             border: Border.all(
               color: isToday
                   ? AppColors.orange.withValues(alpha: 0.45)
-                  : Colors.black.withValues(alpha: 0.04),
+                  : AppColors.line(0.04),
             ),
           ),
           child: Column(
@@ -389,7 +389,7 @@ class _DayBottomSheet extends StatelessWidget {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.18),
+                color: AppColors.line(0.18),
                 borderRadius: BorderRadius.circular(999),
               ),
             ),

@@ -79,7 +79,7 @@ class SyncStatusSheet extends ConsumerWidget {
                 itemCount: stuckAsync.value!.length,
                 separatorBuilder: (_, _) => Container(
                   height: 1,
-                  color: Colors.black.withValues(alpha: 0.04),
+                  color: AppColors.line(0.04),
                 ),
                 itemBuilder: (_, i) {
                   final row = stuckAsync.value![i];
@@ -340,7 +340,7 @@ class _SheetHandle extends StatelessWidget {
         width: 36,
         height: 4,
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.18),
+          color: AppColors.line(0.18),
           borderRadius: BorderRadius.circular(999),
         ),
       ),

@@ -146,7 +146,7 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
         decoration: BoxDecoration(
           color: AppColors.voidElevated,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+          border: Border.all(color: AppColors.line(0.08)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.5),
@@ -204,7 +204,7 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.03),
+                            color: AppColors.line(0.03),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: AppColors.gold.withValues(alpha: 0.25),
@@ -289,7 +289,7 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                           side: BorderSide(
-                            color: Colors.black.withValues(alpha: 0.12),
+                            color: AppColors.line(0.12),
                           ),
                         ),
                       ),
@@ -355,12 +355,12 @@ class _RoleOption extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected
               ? AppColors.orange.withValues(alpha: 0.12)
-              : Colors.black.withValues(alpha: 0.03),
+              : AppColors.line(0.03),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected
                 ? AppColors.orange.withValues(alpha: 0.6)
-                : Colors.black.withValues(alpha: 0.08),
+                : AppColors.line(0.08),
             width: 1.4,
           ),
         ),

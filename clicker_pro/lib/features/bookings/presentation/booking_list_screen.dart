@@ -755,7 +755,7 @@ class _BookingColumnRow extends ConsumerWidget {
                     color: AppColors.voidElevated,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: Colors.black.withValues(alpha: 0.06),
+                      color: AppColors.line(0.06),
                     ),
                   ),
                   alignment: Alignment.center,
