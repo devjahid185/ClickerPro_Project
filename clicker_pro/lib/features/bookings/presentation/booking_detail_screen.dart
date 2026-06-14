@@ -864,13 +864,19 @@ class _InvoiceAction extends ConsumerWidget {
         ? me!.companyName!.trim()
         : (me?.name ?? 'CLICKER PRO');
     final studioPhone = me?.phone ?? '';
+    final studioAddress = me?.studioAddress?.trim() ?? '';
+
+    final brideName = booking.brideName?.trim();
+    final groomName = booking.groomName?.trim();
 
     final lines = <String>[
       'DATE: $dateStr',
       'TIME: ${booking.startTime} – ${booking.endTime}',
       'EVENT: ${_titleCase(booking.eventType.name)}',
+      if (brideName?.isNotEmpty ?? false) 'BRIDE: $brideName',
+      if (groomName?.isNotEmpty ?? false) 'GROOM: $groomName',
       'CLIENT: $clientName',
-      'PHONE: $clientPhone',
+      'CLIENT NUMBER: $clientPhone',
       'VENUE: ${booking.venue ?? '—'}',
       'CHIEF: $chiefName',
       if (teamLines.isEmpty)
@@ -883,10 +889,16 @@ class _InvoiceAction extends ConsumerWidget {
       if (showPayment) ...[
         'TOTAL: ${money(total)}',
         'ADVANCE: ${money(advance)}',
-        'DUE: ${money(due)}',
+        'DUE COLLECT: ${money(due)}',
       ],
     ];
-    final invoiceText = '$studioName\n\n${lines.join('\n')}';
+    // Header carries the studio identity (name + contact), footer-style.
+    final header = <String>[
+      studioName,
+      if (studioPhone.isNotEmpty) 'Contact: $studioPhone',
+      if (studioAddress.isNotEmpty) studioAddress,
+    ].join('\n');
+    final invoiceText = '$header\n\n${lines.join('\n')}';
 
     // Short, stable invoice number derived from the booking id's digits.
     final idDigits = booking.id.replaceAll(RegExp(r'[^0-9]'), '');
@@ -897,10 +909,15 @@ class _InvoiceAction extends ConsumerWidget {
     final data = _InvoiceData(
       studioName: studioName,
       studioPhone: studioPhone,
+      studioAddress: studioAddress,
+      logoUrl: me?.logoUrl,
+      signatureUrl: me?.signatureUrl,
       invoiceNo: invoiceNo,
       dateStr: dateStr,
       timeStr: '${booking.startTime} – ${booking.endTime}',
       eventType: _titleCase(booking.eventType.name),
+      brideName: brideName,
+      groomName: groomName,
       clientName: clientName,
       clientPhone: clientPhone,
       venue: booking.venue ?? '—',
@@ -944,10 +961,15 @@ class _InvoiceData {
   const _InvoiceData({
     required this.studioName,
     required this.studioPhone,
+    required this.studioAddress,
+    required this.logoUrl,
+    required this.signatureUrl,
     required this.invoiceNo,
     required this.dateStr,
     required this.timeStr,
     required this.eventType,
+    required this.brideName,
+    required this.groomName,
     required this.clientName,
     required this.clientPhone,
     required this.venue,
@@ -963,10 +985,15 @@ class _InvoiceData {
 
   final String studioName;
   final String studioPhone;
+  final String studioAddress;
+  final String? logoUrl;
+  final String? signatureUrl;
   final String invoiceNo;
   final String dateStr;
   final String timeStr;
   final String eventType;
+  final String? brideName;
+  final String? groomName;
   final String clientName;
   final String clientPhone;
   final String venue;
@@ -1045,6 +1072,10 @@ class _InvoiceSheet extends StatelessWidget {
                         _sectionLabel('EVENT DETAILS'),
                         const SizedBox(height: 8),
                         _kv('Event', data.eventType),
+                        if (data.brideName?.isNotEmpty ?? false)
+                          _kv('Bride', data.brideName!),
+                        if (data.groomName?.isNotEmpty ?? false)
+                          _kv('Groom', data.groomName!),
                         _kv('Date', data.dateStr),
                         _kv('Time', data.timeStr),
                         _kv('Venue', data.venue),
@@ -1286,49 +1317,153 @@ class _InvoiceSheet extends StatelessWidget {
       top: false,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-        child: Row(
+        child: Column(
           children: [
-            Expanded(
-              child: _ShareButton(
-                icon: Icons.copy_rounded,
-                label: 'Copy',
-                onTap: () {
-                  Clipboard.setData(ClipboardData(text: invoiceText));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Invoice copied.')),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _ShareButton(
-                icon: Icons.chat_rounded,
-                label: 'WhatsApp',
-                color: const Color(0xFF25D366),
-                onTap: () => launchUrl(
-                  Uri.parse(
-                    'https://wa.me/?text=${Uri.encodeComponent(invoiceText)}',
+            // Row 1 — share the plain event-details text (client / team).
+            Row(
+              children: [
+                Expanded(
+                  child: _ShareButton(
+                    icon: Icons.copy_rounded,
+                    label: 'Copy',
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: invoiceText));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Details copied.')),
+                      );
+                    },
                   ),
-                  mode: LaunchMode.externalApplication,
                 ),
-              ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _ShareButton(
+                    icon: Icons.chat_rounded,
+                    label: 'WhatsApp',
+                    color: const Color(0xFF25D366),
+                    onTap: () => launchUrl(
+                      Uri.parse(
+                        'https://wa.me/?text=${Uri.encodeComponent(invoiceText)}',
+                      ),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _ShareButton(
+                    icon: Icons.ios_share_rounded,
+                    label: 'Share',
+                    color: AppColors.indigo,
+                    onTap: () => SharePlus.instance.share(
+                      ShareParams(text: invoiceText),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _ShareButton(
-                icon: Icons.ios_share_rounded,
-                label: 'Share',
-                color: AppColors.indigo,
-                onTap: () => SharePlus.instance.share(
-                  ShareParams(text: invoiceText),
+            const SizedBox(height: 8),
+            // Row 2 — the formal booking invoice PDF: Print (blank signature)
+            // or Download (saved signature embedded).
+            Row(
+              children: [
+                Expanded(
+                  child: _ShareButton(
+                    icon: Icons.print_rounded,
+                    label: 'Print',
+                    color: AppColors.teal,
+                    onTap: () => _exportInvoicePdf(context, forPrint: true),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _ShareButton(
+                    icon: Icons.download_rounded,
+                    label: 'Download',
+                    color: AppColors.gold,
+                    onTap: () => _exportInvoicePdf(context, forPrint: false),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
     );
+  }
+
+  /// Builds the formal booking-invoice PDF from [data]. [forPrint] leaves the
+  /// signature blank and opens the print dialog; otherwise the saved
+  /// signature is embedded and the file is shared/downloaded.
+  Future<void> _exportInvoicePdf(
+    BuildContext context, {
+    required bool forPrint,
+  }) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      // Fetch logo + (download-only) signature as image bytes. Fail-soft:
+      // a missing/broken URL just omits that image.
+      final logo = await PdfExporter.fetchImageBytes(data.logoUrl);
+      final signature = forPrint
+          ? null
+          : await PdfExporter.fetchImageBytes(data.signatureUrl);
+
+      final detailRows = <PdfRow>[
+        PdfRow('Bill To', data.clientName),
+        if (data.clientPhone != '—') PdfRow('Client Number', data.clientPhone),
+        PdfRow('Event', data.eventType),
+        if (data.brideName?.isNotEmpty ?? false)
+          PdfRow('Bride', data.brideName!),
+        if (data.groomName?.isNotEmpty ?? false)
+          PdfRow('Groom', data.groomName!),
+        PdfRow('Date', data.dateStr),
+        PdfRow('Time', data.timeStr),
+        PdfRow('Venue', data.venue),
+        if (data.packageName != null) PdfRow('Package', data.packageName!),
+        PdfRow('Chief', data.chiefName),
+      ];
+
+      final doc = PdfDocumentData(
+        documentTitle: 'Invoice',
+        fileName: 'invoice_${data.invoiceNo}',
+        companyName: data.studioName,
+        companyPhone: data.studioPhone,
+        companyAddress: data.studioAddress,
+        logoBytes: logo,
+        signatureBytes: signature,
+        subtitle: data.invoiceNo,
+        detailRows: detailRows,
+        table: data.teamLines.isEmpty
+            ? null
+            : PdfTable(
+                headers: const ['Team'],
+                rows: [for (final l in data.teamLines) [l]],
+              ),
+        summary: data.showPayment
+            ? [
+                PdfRow('Total', data.totalText),
+                PdfRow('Advance', data.advanceText),
+                PdfRow('Due', data.dueText, emphasize: true),
+              ]
+            : const [],
+        footnote: 'Generated by ${data.studioName} · CLICKER PRO',
+      );
+
+      if (forPrint) {
+        await PdfExporter.printDocument(doc);
+      } else {
+        await PdfExporter.download(doc);
+      }
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Could not create the invoice PDF: $e',
+            style: TextStyle(color: AppColors.film),
+          ),
+          backgroundColor: AppColors.voidElevated,
+        ),
+      );
+    }
   }
 }
 
