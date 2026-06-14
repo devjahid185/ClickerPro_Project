@@ -22,12 +22,22 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(append: [
             \App\Http\Middleware\SecurityHeaders::class,
         ]);
+        // This is an API-only backend with NO `login` named route. When an
+        // unauthenticated request reaches `auth:sanctum`, Laravel's default
+        // guest handler tries to redirect to route('login') and crashes
+        // with "Route [login] not defined" → a 500. Returning null here
+        // disables the redirect so the AuthenticationException renderer
+        // below produces a clean 401 JSON for EVERY unauthenticated request
+        // (even when the client didn't send `Accept: application/json`).
+        $middleware->redirectGuestsTo(fn () => null);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // This is an API-only backend with no `login` named route. An
-        // unauthenticated request (missing / expired Sanctum token) must
-        // return a clean 401 JSON — NOT crash with "Route [login] not
-        // defined" (which surfaced as a 500 in the admin panel).
+        // Force JSON for the whole API surface, then render auth failures
+        // as 401 JSON.
+        $exceptions->shouldRenderJsonWhen(
+            fn (Request $request) =>
+                $request->is('api/*') || $request->expectsJson()
+        );
         $exceptions->render(function (AuthenticationException $e, Request $request) {
             return response()->json(['message' => 'Unauthenticated.'], 401);
         });
