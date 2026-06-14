@@ -301,6 +301,96 @@ class TeamController extends Controller
     }
 
     /**
+     * Owner-side staff payout sheet: every team member's assignment earnings
+     * across the owner's events, with a per-event breakdown so one member
+     * working three events shows all three payouts grouped under them.
+     *
+     * Shape (per member):
+     *   { userId, name, avatar, events, earned, paid, due,
+     *     items: [{ assignmentId, eventId, eventTitle, date, role,
+     *               amount, paid }] }
+     */
+    public function staffPayouts(Request $request)
+    {
+        $ownerId = (int) $request->user()->id;
+        $eventIds = \App\Models\Event::where('owner_id', $ownerId)->pluck('id');
+
+        $assignments = \App\Models\Assignment::whereIn('event_id', $eventIds)
+            ->with(['user:id,name,avatar', 'event:id,title,event_type,date'])
+            ->get();
+
+        $members = $assignments
+            ->filter(fn ($a) => $a->user !== null)
+            ->groupBy('user_id')
+            ->map(function ($group) {
+                $user = $group->first()->user;
+                $earned = (float) $group->sum('payout');
+                $paid = (float) $group->where('payout_paid', true)->sum('payout');
+
+                $items = $group->map(fn ($a) => [
+                    'assignmentId' => (string) $a->id,
+                    'eventId' => (string) $a->event_id,
+                    'eventTitle' => $a->event?->title
+                        ?? $a->event?->event_type
+                        ?? 'Event',
+                    'date' => $a->event?->date,
+                    'role' => $a->role,
+                    'amount' => (float) $a->payout,
+                    'paid' => (bool) $a->payout_paid,
+                ])->values();
+
+                return [
+                    'userId' => (string) $user->id,
+                    'name' => $user->name,
+                    'avatar' => $user->avatar,
+                    'events' => $group->count(),
+                    'earned' => $earned,
+                    'paid' => $paid,
+                    'due' => max($earned - $paid, 0),
+                    'items' => $items,
+                ];
+            })
+            ->values();
+
+        return response()->json([
+            'data' => [
+                'totalEarned' => (float) $assignments->sum('payout'),
+                'totalPaid' => (float) $assignments
+                    ->where('payout_paid', true)
+                    ->sum('payout'),
+                'members' => $members,
+            ],
+        ]);
+    }
+
+    /**
+     * Marks a team member's outstanding payouts as paid. Pass an optional
+     * `assignmentId` to settle a single event; otherwise every unpaid
+     * assignment for that member (within the owner's events) is settled.
+     */
+    public function markPayoutPaid(Request $request, $userId)
+    {
+        $data = $request->validate([
+            'assignmentId' => 'nullable',
+        ]);
+
+        $ownerId = (int) $request->user()->id;
+        $eventIds = \App\Models\Event::where('owner_id', $ownerId)->pluck('id');
+
+        $query = \App\Models\Assignment::whereIn('event_id', $eventIds)
+            ->where('user_id', $userId)
+            ->where('payout_paid', false);
+
+        if (!empty($data['assignmentId'])) {
+            $query->where('id', $data['assignmentId']);
+        }
+
+        $updated = $query->update(['payout_paid' => true]);
+
+        return response()->json(['data' => ['updated' => $updated]]);
+    }
+
+    /**
      * Detach a member from the caller's team. The account itself is kept
      * (it may have history elsewhere) — only the team link is severed.
      */

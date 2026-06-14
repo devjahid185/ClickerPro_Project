@@ -8,6 +8,7 @@
 //   DELETE /api/team/members/:userId      → { message: ok }
 
 import '../../../core/network/api_client.dart';
+import '../domain/staff_payout.dart';
 import '../domain/team_member.dart';
 
 class TeamApi {
@@ -91,6 +92,26 @@ class TeamApi {
     await _client.post(
       '/api/team/invites/$inviteId/respond',
       body: {'accept': accept},
+    );
+  }
+
+  /// `GET /api/team/payouts` — owner-side staff payout sheet (each member's
+  /// assignment earnings + per-event breakdown across the owner's events).
+  Future<StaffPayoutSheet> payouts() async {
+    final r = await _client.get('/api/team/payouts');
+    final d = (r is Map && r['data'] is Map)
+        ? (r['data'] as Map).cast<String, dynamic>()
+        : <String, dynamic>{};
+    return StaffPayoutSheet.fromJson(d);
+  }
+
+  /// `POST /api/team/members/{userId}/payouts/pay` — settle one member's
+  /// payouts. Pass [assignmentId] to settle a single event, or omit it to
+  /// mark every outstanding payout for that member as paid.
+  Future<void> markPayoutPaid(String userId, {String? assignmentId}) async {
+    await _client.post(
+      '/api/team/members/$userId/payouts/pay',
+      body: {'assignmentId': ?assignmentId},
     );
   }
 }

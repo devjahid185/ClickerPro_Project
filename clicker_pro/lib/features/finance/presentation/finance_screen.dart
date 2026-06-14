@@ -347,7 +347,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
           route: RouteNames.reports,
         ),
       (
-        label: 'Salary',
+        label: 'Staff Pay',
         icon: Icons.groups_outlined,
         route: RouteNames.teamSalarySheet,
       ),

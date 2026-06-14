@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers.dart';
 import '../data/team_api.dart';
 import '../data/team_repository_impl.dart';
+import '../domain/staff_payout.dart';
 import '../domain/team_member.dart';
 import '../domain/team_repository.dart';
 
@@ -25,6 +26,12 @@ final pendingTeamInvitesProvider = FutureProvider<List<PendingTeamInvite>>((
 ) {
   ref.watch(teamRefreshProvider);
   return ref.read(teamRepositoryProvider).pendingInvites();
+});
+
+/// Owner-side staff payout sheet (assignment earnings per team member).
+final staffPayoutsProvider = FutureProvider<StaffPayoutSheet>((ref) {
+  ref.watch(teamRefreshProvider);
+  return ref.read(teamApiProvider).payouts();
 });
 
 final teamRefreshProvider = StateProvider<int>((ref) => 0);
@@ -101,8 +108,25 @@ class TeamController extends Notifier<AsyncValue<void>> {
     }
   }
 
+  /// Settle a member's payout — one event ([assignmentId] set) or all of
+  /// their outstanding payouts (omitted) — then refresh the sheet.
+  Future<void> markPayoutPaid(String userId, {String? assignmentId}) async {
+    state = const AsyncValue.loading();
+    try {
+      await ref
+          .read(teamApiProvider)
+          .markPayoutPaid(userId, assignmentId: assignmentId);
+      state = const AsyncValue.data(null);
+      ref.invalidate(staffPayoutsProvider);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      rethrow;
+    }
+  }
+
   void refresh() {
     ref.invalidate(teamMembersProvider);
     ref.invalidate(pendingTeamInvitesProvider);
+    ref.invalidate(staffPayoutsProvider);
   }
 }

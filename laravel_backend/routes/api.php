@@ -169,6 +169,8 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::get('team/invites/pending', [TeamController::class, 'pendingInvites']);
     Route::post('team/invites/{id}/respond', [TeamController::class, 'respondInvite']);
     Route::get('team/members', [TeamController::class, 'members']);
+    Route::get('team/payouts', [TeamController::class, 'staffPayouts']);
+    Route::post('team/members/{userId}/payouts/pay', [TeamController::class, 'markPayoutPaid']);
     Route::get('team/members/{userId}/profile', [TeamController::class, 'memberProfile']);
     Route::patch('team/members/{userId}/permissions', [TeamController::class, 'updatePermissions']);
     Route::delete('team/members/{userId}', [TeamController::class, 'removeMember']);
