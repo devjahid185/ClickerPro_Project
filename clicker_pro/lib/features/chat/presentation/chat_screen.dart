@@ -11,6 +11,8 @@
 //      `ChatThreadController.send` shows the row immediately + reconciles
 //      when the server echoes back।
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -109,9 +111,36 @@ class _ChatThreadViewState extends ConsumerState<_ChatThreadView> {
   final _composerCtl = TextEditingController();
   final _scrollCtl = ScrollController();
   bool _sending = false;
+  Timer? _pollTimer;
+
+  // Live chat: poll the thread every few seconds so new messages from other
+  // members appear without a manual refresh. `poll()` is a silent refresh
+  // (no loading flicker, skips while a send is in flight).
+  static const _pollInterval = Duration(seconds: 4);
+
+  @override
+  void initState() {
+    super.initState();
+    // Mark the thread seen on open (read receipts for other members).
+    WidgetsBinding.instance.addPostFrameCallback((_) => _markRead());
+    _pollTimer = Timer.periodic(_pollInterval, (_) {
+      if (!mounted) return;
+      ref.read(chatThreadControllerProvider(widget.groupId).notifier).poll();
+      // Keep marking newly-arrived messages as seen while the thread is open.
+      _markRead();
+    });
+  }
+
+  void _markRead() {
+    ref
+        .read(chatRepositoryProvider)
+        .markRead(widget.groupId)
+        .catchError((_) {});
+  }
 
   @override
   void dispose() {
+    _pollTimer?.cancel();
     _composerCtl.dispose();
     _scrollCtl.dispose();
     super.dispose();

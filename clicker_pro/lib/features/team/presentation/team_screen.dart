@@ -407,26 +407,15 @@ class _TeamMemberTile extends ConsumerWidget {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  member.fullName,
-                  style: TextStyle(
-                    color: AppColors.film,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  member.email,
-                  style: TextStyle(
-                    color: AppColors.filmDim.withValues(alpha: 0.7),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
+            // Only the teammate's display name is shown — email and other
+            // personal identifiers are intentionally hidden in the team list.
+            child: Text(
+              member.fullName,
+              style: TextStyle(
+                color: AppColors.film,
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+              ),
             ),
           ),
           Container(
@@ -665,37 +654,41 @@ class _MemberProfileSheet extends ConsumerWidget {
                 data: (p) => Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // ── Finance ──
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppColors.voidBlack,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: AppColors.gold.withValues(alpha: 0.25),
+                    // ── Payment details (how the owner pays this member) ──
+                    if ((p.bkash ?? '').isNotEmpty ||
+                        (p.bankDetails ?? '').isNotEmpty) ...[
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.voidBlack,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: AppColors.gold.withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if ((p.bkash ?? '').isNotEmpty)
+                              _payRow(
+                                Icons.account_balance_wallet_outlined,
+                                'bKash',
+                                p.bkash!,
+                              ),
+                            if ((p.bkash ?? '').isNotEmpty &&
+                                (p.bankDetails ?? '').isNotEmpty)
+                              const SizedBox(height: 10),
+                            if ((p.bankDetails ?? '').isNotEmpty)
+                              _payRow(
+                                Icons.account_balance_outlined,
+                                'Bank',
+                                p.bankDetails!,
+                              ),
+                          ],
                         ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _financeStat('Events', '${p.financeEvents}'),
-                          _financeStat(
-                            'Earned',
-                            '৳${p.financeEarned.toStringAsFixed(0)}',
-                          ),
-                          _financeStat(
-                            'Paid',
-                            '৳${p.financePaid.toStringAsFixed(0)}',
-                          ),
-                          _financeStat(
-                            'Due',
-                            '৳${p.financeDue.toStringAsFixed(0)}',
-                            color: AppColors.red,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 14),
+                      const SizedBox(height: 14),
+                    ],
                     // ── Gear ──
                     Text(
                       'GEAR',
@@ -772,23 +765,29 @@ class _MemberProfileSheet extends ConsumerWidget {
     );
   }
 
-  Widget _financeStat(String label, String value, {Color? color}) {
-    return Column(
+  Widget _payRow(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          value,
-          style: TextStyle(
-            color: color ?? AppColors.gold,
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 2),
+        Icon(icon, color: AppColors.gold, size: 18),
+        const SizedBox(width: 10),
         Text(
           label,
           style: TextStyle(
-            color: AppColors.filmDim.withValues(alpha: 0.7),
-            fontSize: 10.5,
+            color: AppColors.filmDim.withValues(alpha: 0.8),
+            fontSize: 12.5,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              color: AppColors.film,
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ],

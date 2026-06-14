@@ -54,4 +54,9 @@ class ChatApi {
             as Map<String, dynamic>;
     return ChatMessage.fromJson((r['data'] as Map).cast<String, dynamic>());
   }
+
+  /// Marks the group's messages as read by the current user (read receipts).
+  Future<void> markRead(String groupId) async {
+    await _client.post('/api/chat/groups/$groupId/read');
+  }
 }

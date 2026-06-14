@@ -147,6 +147,8 @@ class TeamMemberProfile {
     this.phone,
     this.avatar,
     required this.role,
+    this.bkash,
+    this.bankDetails,
     this.gear = const [],
     this.financeEvents = 0,
     this.financeEarned = 0,
@@ -159,6 +161,8 @@ class TeamMemberProfile {
   final String? phone;
   final String? avatar;
   final String role;
+  final String? bkash;
+  final String? bankDetails;
   final List<({String name, String? category, String? condition})> gear;
   final int financeEvents;
   final double financeEarned;
@@ -174,6 +178,8 @@ class TeamMemberProfile {
       phone: j['phone'] as String?,
       avatar: j['avatar'] as String?,
       role: (j['role'] ?? '').toString(),
+      bkash: j['bkash'] as String?,
+      bankDetails: j['bankDetails'] as String?,
       gear: gearRaw
           .whereType<Map>()
           .map(

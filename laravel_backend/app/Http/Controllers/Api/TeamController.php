@@ -287,8 +287,11 @@ class TeamController extends Controller
                 'id' => $member->id,
                 'name' => $member->name,
                 'phone' => $member->phone,
+                'whatsapp' => $member->phone,
                 'avatar' => $member->avatar,
                 'role' => $member->role,
+                'bkash' => $member->bkash_number,
+                'bankDetails' => $member->bank_details,
                 'gear' => $gear,
                 'finance' => [
                     'events' => $assignments->count(),

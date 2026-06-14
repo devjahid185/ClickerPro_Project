@@ -211,6 +211,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::post('chat/groups', [ChatController::class, 'createGroup']);
     Route::get('chat/groups/{groupId}/messages', [ChatController::class, 'messages']);
     Route::post('chat/groups/{groupId}/messages', [ChatController::class, 'sendMessage']);
+    Route::post('chat/groups/{groupId}/read', [ChatController::class, 'markRead']);
 
     // Support
     Route::get('support', [SupportController::class, 'index']);

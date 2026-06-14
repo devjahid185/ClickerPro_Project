@@ -44,6 +44,22 @@ class ChatThreadController
     );
   }
 
+  /// Silent live-refresh for polling: fetches the latest messages WITHOUT
+  /// flipping to a loading state, so the thread updates in place with no
+  /// flicker. Skips the update while a message is mid-send (an unreconciled
+  /// `_local-` provisional row is present) so the optimistic row isn't wiped.
+  Future<void> poll() async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+    if (current.any((m) => m.id.startsWith('_local-'))) return;
+    try {
+      final fresh = await ref.read(chatRepositoryProvider).messages(arg);
+      state = AsyncData(fresh);
+    } catch (_) {
+      // Transient poll failure — keep the existing messages on screen.
+    }
+  }
+
   /// Sends a message, optimistic-append while the request is in flight।
   /// On success the provisional row is replaced with the server-stamped
   /// one (which carries the real id + sentAt)।  On failure the

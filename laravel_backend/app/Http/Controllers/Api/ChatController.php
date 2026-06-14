@@ -99,6 +99,34 @@ class ChatController extends Controller
         );
     }
 
+    /**
+     * Marks every message in the group as read by the requester (except the
+     * ones they sent). Called when a member opens the thread, so senders can
+     * see who has seen their messages.
+     */
+    public function markRead(Request $request, $groupId)
+    {
+        $group = $this->authorizedGroup($request, $groupId);
+        if (!$group) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $userId = (int) $request->user()->id;
+        $messages = ChatMessage::where('group_id', $group->id)
+            ->where('sender_id', '!=', $userId)
+            ->get();
+
+        foreach ($messages as $message) {
+            $readBy = $message->read_by ?? [];
+            if (!in_array($userId, array_map('intval', $readBy), true)) {
+                $readBy[] = $userId;
+                $message->forceFill(['read_by' => $readBy])->save();
+            }
+        }
+
+        return response()->json(['message' => 'ok']);
+    }
+
     /** A group is accessible iff it belongs to the requester's team. */
     private function authorizedGroup(Request $request, $groupId): ?ChatGroup
     {

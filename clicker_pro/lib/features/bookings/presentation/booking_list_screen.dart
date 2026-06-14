@@ -498,110 +498,136 @@ class _BookingListColumn extends StatelessWidget {
   final List<Booking> bookings;
   final ScrollController scrollController;
 
+  /// Sort by start time ("HH:mm") then date so each column reads time-wise.
+  static int _byTime(Booking a, Booking b) {
+    final byTime = a.startTime.compareTo(b.startTime);
+    if (byTime != 0) return byTime;
+    return a.date.compareTo(b.date);
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Day / Night tallies. A Both (full-day) booking covers both shifts,
-    // so it is counted in each — matching how the shift filter treats it.
-    final dayCount = bookings
-        .where((b) => b.shift == Shift.day || b.shift == Shift.both)
-        .length;
-    final nightCount = bookings
-        .where((b) => b.shift == Shift.night || b.shift == Shift.both)
-        .length;
+    // Two columns: Day on the left, Night on the right. A Both (full-day)
+    // booking covers both shifts, so it appears in each column. Within a
+    // column the rows are ordered by start time.
+    final dayBookings =
+        bookings
+            .where((b) => b.shift == Shift.day || b.shift == Shift.both)
+            .toList()
+          ..sort(_byTime);
+    final nightBookings =
+        bookings
+            .where((b) => b.shift == Shift.night || b.shift == Shift.both)
+            .toList()
+          ..sort(_byTime);
 
-    return ListView.builder(
+    return SingleChildScrollView(
       controller: scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-      // +1 for the Day/Night summary header pinned at the top of the list.
-      itemCount: bookings.length + 1,
-      itemBuilder: (context, index) {
-        if (index == 0) {
-          return _ShiftSummaryBar(dayCount: dayCount, nightCount: nightCount);
-        }
-        final b = bookings[index - 1];
-        final isNight = b.shift == Shift.night;
-        final accent = isNight ? AppColors.purple : AppColors.gold;
-        return FadeUpIn(
-          order: (index - 1).clamp(0, 8),
-          child: _BookingColumnRow(
-            booking: b,
-            borderSide: BorderSide(color: accent, width: 2),
-            iconColor: accent,
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 96),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: _ShiftColumn(
+              title: 'DAY',
+              icon: Icons.wb_sunny_outlined,
+              color: AppColors.gold,
+              bookings: dayBookings,
+            ),
           ),
-        );
-      },
+          const SizedBox(width: 8),
+          Expanded(
+            child: _ShiftColumn(
+              title: 'NIGHT',
+              icon: Icons.nightlight_outlined,
+              color: AppColors.purple,
+              bookings: nightBookings,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-/// Compact "Day N · Night N" tally shown above the booking list so the
-/// day/night split is visible at a glance.
-class _ShiftSummaryBar extends StatelessWidget {
-  const _ShiftSummaryBar({required this.dayCount, required this.nightCount});
+/// One side of the Day | Night split: a labelled header with the count and a
+/// vertical, time-ordered list of bookings for that shift.
+class _ShiftColumn extends StatelessWidget {
+  const _ShiftColumn({
+    required this.title,
+    required this.icon,
+    required this.color,
+    required this.bookings,
+  });
 
-  final int dayCount;
-  final int nightCount;
+  final String title;
+  final IconData icon;
+  final Color color;
+  final List<Booking> bookings;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10, top: 2),
-      child: Row(
-        children: [
-          _chip(
-            icon: Icons.wb_sunny_outlined,
-            label: 'Day',
-            count: dayCount,
-            color: AppColors.gold,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: color.withValues(alpha: 0.3)),
           ),
-          const SizedBox(width: 10),
-          _chip(
-            icon: Icons.nightlight_outlined,
-            label: 'Night',
-            count: nightCount,
-            color: AppColors.purple,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 15),
+              const SizedBox(width: 6),
+              Text(
+                title,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.0,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '${bookings.length}',
+                style: TextStyle(
+                  color: AppColors.film,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _chip({
-    required IconData icon,
-    required String label,
-    required int count,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 15),
-          const SizedBox(width: 6),
-          Text(
-            '$label  ',
-            style: TextStyle(
-              color: AppColors.filmDim,
-              fontSize: 12.5,
-              fontWeight: FontWeight.w500,
+        ),
+        const SizedBox(height: 8),
+        if (bookings.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Text(
+              'No $title bookings',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.filmDim.withValues(alpha: 0.6),
+                fontSize: 11.5,
+              ),
             ),
-          ),
-          Text(
-            '$count',
-            style: TextStyle(
-              color: color,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
+          )
+        else
+          for (var i = 0; i < bookings.length; i++)
+            FadeUpIn(
+              order: i.clamp(0, 8),
+              child: _BookingColumnRow(
+                booking: bookings[i],
+                borderSide: BorderSide(color: color, width: 2),
+                iconColor: color,
+              ),
             ),
-          ),
-        ],
-      ),
+      ],
     );
   }
 }
@@ -717,23 +743,22 @@ class _BookingColumnRow extends ConsumerWidget {
                       ),
                       const SizedBox(height: 3),
                       Row(
-                        // Only take the width the icon + label need; without
-                        // this the label's letterSpacing pushed the row ~17px
-                        // past the narrow DAY/NIGHT column and overflowed.
+                        // The DAY/NIGHT column header already states the shift,
+                        // so each row shows its start–end time instead.
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(shiftIcon, color: iconColor, size: 12),
                           const SizedBox(width: 3),
                           Flexible(
                             child: Text(
-                              booking.shift.name.toUpperCase(),
+                              '${booking.startTime}–${booking.endTime}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: iconColor,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
-                                letterSpacing: 0.5,
+                                letterSpacing: 0.3,
                               ),
                             ),
                           ),

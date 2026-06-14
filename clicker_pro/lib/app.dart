@@ -25,9 +25,10 @@ class ClickerProApp extends ConsumerWidget {
     final platformDark =
         WidgetsBinding.instance.platformDispatcher.platformBrightness ==
         Brightness.dark;
-    AppColors.isDark =
+    final isDark =
         themeMode == ThemeMode.dark ||
         (themeMode == ThemeMode.system && platformDark);
+    AppColors.isDark = isDark;
     return MaterialApp(
       title: 'Clicker Pro',
       debugShowCheckedModeBanner: false,
@@ -39,6 +40,17 @@ class ClickerProApp extends ConsumerWidget {
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
+      // Many surfaces are custom-painted and read the static AppColors.isDark
+      // flag directly rather than the inherited Theme, so they only adopt the
+      // new palette when they rebuild — toggling the mode used to leave stale
+      // dark/light patches until a manual refresh. Keying the routed subtree on
+      // the resolved brightness forces the visible page to rebuild on every
+      // switch, while the MaterialApp's Navigator (kept outside this builder)
+      // preserves the navigation stack.
+      builder: (context, child) => KeyedSubtree(
+        key: ValueKey(isDark ? 'dark' : 'light'),
+        child: child ?? const SizedBox.shrink(),
+      ),
       // Splash drives the initial routing decision (onboarding / login /
       // dashboard). `onGenerateRoute` is wired so any `pushNamed` call
       // throughout the app resolves through the central route table.

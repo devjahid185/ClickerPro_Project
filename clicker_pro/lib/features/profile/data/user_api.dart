@@ -43,6 +43,11 @@ class UserApi {
       if (partial['companyName'] != null)
         'business_name': partial['companyName'],
       if (partial['avatarUrl'] != null) 'avatar': partial['avatarUrl'],
+      // Payout details — persisted so a team owner can see how to pay this
+      // member from the member-profile sheet.
+      if (partial['bkash'] != null) 'bkash_number': partial['bkash'],
+      if (partial['bankDetails'] != null)
+        'bank_details': partial['bankDetails'],
     };
     final r = await _client.patch('/api/profile', body: body);
     return _user(r);

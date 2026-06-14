@@ -55,6 +55,13 @@ class _FakeChatRepo implements ChatRepository {
     thread = [...thread, saved];
     return saved;
   }
+
+  final List<String> readGroups = [];
+
+  @override
+  Future<void> markRead(String groupId) async {
+    readGroups.add(groupId);
+  }
 }
 
 Future<void> _pump(WidgetTester tester, {required ChatRepository repo}) async {
