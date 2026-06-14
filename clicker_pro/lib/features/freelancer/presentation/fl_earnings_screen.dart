@@ -29,7 +29,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/format/booking_format.dart';
-import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
@@ -86,16 +85,10 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
                   .refresh(),
             ),
           ),
-          data: (overview) {
-            if (overview.totalEarnings == 0 && overview.owners.isEmpty) {
-              return EmptyState(
-                message:
-                    'No earnings data yet\nPayments from owners will appear here',
-                icon: Icons.account_balance_wallet_outlined,
-              );
-            }
-            return _buildContent(context, overview, lang);
-          },
+          // Always render the full dashboard — when there are no earnings yet
+          // the summary cards simply read ৳0 (a clean premium "00" template)
+          // instead of a bare empty page.
+          data: (overview) => _buildContent(context, overview, lang),
         ),
       ),
     );
@@ -118,12 +111,18 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
         const SizedBox(height: 20),
         _buildSectionHeader('Per-Owner Breakdown'),
         const SizedBox(height: 10),
-        ...overview.owners.map(
-          (o) => Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: _OwnerCard(owner: o, lang: lang),
+        if (overview.owners.isEmpty)
+          _buildEmptyHint(
+            'No payouts yet',
+            'Earnings from the studios you work with will show up here.',
+          )
+        else
+          ...overview.owners.map(
+            (o) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _OwnerCard(owner: o, lang: lang),
+            ),
           ),
-        ),
         if (overview.pendingPayments.isNotEmpty) ...[
           const SizedBox(height: 10),
           _buildSectionHeader('Pending Payments'),
@@ -463,6 +462,49 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
         letterSpacing: 1.2,
         fontWeight: FontWeight.w600,
         color: AppColors.filmMuted,
+      ),
+    );
+  }
+
+  /// Soft inline placeholder shown inside the dashboard when a section has no
+  /// data yet — keeps the premium "00" layout instead of a blank gap.
+  Widget _buildEmptyHint(String title, String subtitle) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.glass,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.glassBorder),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.account_balance_wallet_outlined,
+            color: AppColors.teal.withValues(alpha: 0.7),
+            size: 26,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.film,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              color: AppColors.filmDim.withValues(alpha: 0.75),
+              height: 1.4,
+            ),
+          ),
+        ],
       ),
     );
   }
