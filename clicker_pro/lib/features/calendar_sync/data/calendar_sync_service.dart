@@ -70,7 +70,8 @@ class CalendarSyncService {
 
   static Future<bool> isAutoSyncEnabled() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(autoSyncPrefKey) ?? false;
+    // Default ON — bookings sync to the device calendar without a manual step.
+    return prefs.getBool(autoSyncPrefKey) ?? true;
   }
 
   /// Builds the Google Calendar "create event" URL pre-filled with the
@@ -105,8 +106,14 @@ class CalendarSyncService {
 
   /// Adds the booking to the phone's calendar. First tries a SILENT write
   /// via device_calendar (no Google web page, no manual Save) — if calendar
-  /// permission is granted the event just appears. Only if that fails does
-  /// it fall back to opening the pre-filled Google Calendar web page.
+  /// permission is granted the event just appears.
+  ///
+  /// [allowWebFallback] controls what happens when the silent write fails:
+  ///   • true  → open the pre-filled Google Calendar web page (user taps
+  ///             Save there). Used for an explicit user-triggered add.
+  ///   • false → give up silently. Used for automatic background sync, where
+  ///             yanking the user to a browser to tap "Save" is exactly the
+  ///             "manual save" annoyance we want to avoid.
   static Future<bool> openGoogleCalendar({
     required String title,
     required DateTime date,
@@ -114,6 +121,7 @@ class CalendarSyncService {
     required String endTime,
     String? venue,
     String? description,
+    bool allowWebFallback = true,
   }) async {
     final silent = await _addToDeviceCalendar(
       title: title,
@@ -123,7 +131,7 @@ class CalendarSyncService {
       venue: venue,
       description: description,
     );
-    if (silent) return true;
+    if (silent || !allowWebFallback) return silent;
 
     // Fallback: open the pre-filled Google Calendar create page.
     final uri = googleCalendarUrl(

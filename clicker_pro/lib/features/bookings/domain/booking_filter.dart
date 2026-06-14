@@ -13,6 +13,7 @@
 import '../../../core/booking_status/booking_status.dart';
 import 'booking_sort.dart';
 import 'event_type.dart';
+import 'shift.dart';
 
 /// Filter criteria for the booking list and month-of-bookings queries.
 ///
@@ -41,6 +42,13 @@ class BookingFilter {
   /// An empty set means "no event-type restriction".
   final Set<EventType> types;
 
+  /// Restrict results to bookings whose coverage `shift` matches.
+  ///
+  /// `null` means "no shift restriction". A [Shift.day] / [Shift.night]
+  /// filter also matches [Shift.both] bookings, since a full-day shoot
+  /// covers that shift.
+  final Shift? shift;
+
   /// Restrict results to bookings whose `clientId` matches.
   final String? clientId;
 
@@ -55,6 +63,7 @@ class BookingFilter {
     this.to,
     this.statuses = const {},
     this.types = const {},
+    this.shift,
     this.clientId,
     this.search,
     this.sort = BookingSort.dateDesc,
@@ -70,6 +79,7 @@ class BookingFilter {
       to == null &&
       statuses.isEmpty &&
       types.isEmpty &&
+      shift == null &&
       clientId == null &&
       (search == null || search!.isEmpty) &&
       sort == BookingSort.dateDesc;
@@ -85,11 +95,13 @@ class BookingFilter {
     DateTime? to,
     Set<BookingStatus>? statuses,
     Set<EventType>? types,
+    Shift? shift,
     String? clientId,
     String? search,
     BookingSort? sort,
     bool clearFrom = false,
     bool clearTo = false,
+    bool clearShift = false,
     bool clearClientId = false,
     bool clearSearch = false,
   }) {
@@ -98,6 +110,7 @@ class BookingFilter {
       to: clearTo ? null : (to ?? this.to),
       statuses: statuses ?? this.statuses,
       types: types ?? this.types,
+      shift: clearShift ? null : (shift ?? this.shift),
       clientId: clearClientId ? null : (clientId ?? this.clientId),
       search: clearSearch ? null : (search ?? this.search),
       sort: sort ?? this.sort,
@@ -112,6 +125,7 @@ class BookingFilter {
         to == other.to &&
         _setEquals(statuses, other.statuses) &&
         _setEquals(types, other.types) &&
+        shift == other.shift &&
         clientId == other.clientId &&
         search == other.search &&
         sort == other.sort;
@@ -125,6 +139,7 @@ class BookingFilter {
     // with different iteration order still hash to the same bucket.
     _setHash(statuses),
     _setHash(types),
+    shift,
     clientId,
     search,
     sort,
@@ -134,7 +149,7 @@ class BookingFilter {
   String toString() =>
       'BookingFilter('
       'from: $from, to: $to, '
-      'statuses: $statuses, types: $types, '
+      'statuses: $statuses, types: $types, shift: $shift, '
       'clientId: $clientId, search: $search, sort: $sort)';
 }
 

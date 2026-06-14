@@ -171,27 +171,105 @@ class FreelancerController extends Controller
     }
 
     // ── Earnings summary (freelancer dashboard) ──
+    /**
+     * Freelancer earnings: a freelancer earns through ASSIGNMENT payouts on
+     * the events they are booked on — NOT through Payment rows (those are the
+     * client→owner cash flow). The old version queried events the freelancer
+     * *owns* (always none for a pure freelancer), so the screen was always
+     * empty. This rebuilds the full overview the dashboard expects: totals,
+     * per-owner breakdown, pending list, and a 6-month chart.
+     */
     public function earnings(Request $request)
     {
         $userId = $request->user()->id;
-        $eventIds = Event::where('owner_id', $userId)->pluck('id');
 
-        $byKind = Payment::whereIn('event_id', $eventIds)
-            ->selectRaw('kind, SUM(amount) as total')
-            ->groupBy('kind')->pluck('total', 'kind');
+        // Every assignment for this freelancer, joined to its event + owner,
+        // so we can group payouts by the studio owner who booked them.
+        $assignments = \App\Models\Assignment::where('user_id', $userId)
+            ->with(['event:id,owner_id,date,event_type', 'event.owner:id,name,phone'])
+            ->get();
 
-        $received = (float) ($byKind['PAYOUT'] ?? 0);
-        $total = (float) Payment::whereIn('event_id', $eventIds)->sum('amount');
+        $earned = (float) $assignments->sum('payout');
+        $received = (float) $assignments->where('payout_paid', true)->sum('payout');
+        $pending = max($earned - $received, 0);
+
+        // ── Per-owner breakdown (FL-02) ──
+        $owners = $assignments
+            ->filter(fn ($a) => $a->event && $a->event->owner)
+            ->groupBy(fn ($a) => $a->event->owner_id)
+            ->map(function ($group) {
+                $owner = $group->first()->event->owner;
+                $ownerEarned = (float) $group->sum('payout');
+                $ownerPaid = (float) $group->where('payout_paid', true)->sum('payout');
+                $lastPaid = $group->where('payout_paid', true)
+                    ->max(fn ($a) => optional($a->event)->date);
+
+                return [
+                    'ownerId' => (string) $owner->id,
+                    'ownerName' => $owner->name,
+                    'eventsCount' => $group->count(),
+                    'earnedAmount' => $ownerEarned,
+                    'pendingAmount' => max($ownerEarned - $ownerPaid, 0),
+                    'lastPaymentDate' => $lastPaid,
+                ];
+            })
+            ->values();
+
+        // ── Pending payments per owner (FL-03) ──
+        $pendingPayments = $assignments
+            ->where('payout_paid', false)
+            ->filter(fn ($a) => $a->event && $a->event->owner)
+            ->groupBy(fn ($a) => $a->event->owner_id)
+            ->map(function ($group) {
+                $owner = $group->first()->event->owner;
+                $oldest = $group->min(fn ($a) => optional($a->event)->date);
+                $days = $oldest
+                    ? max(now()->diffInDays(\Illuminate\Support\Carbon::parse($oldest)), 0)
+                    : 0;
+
+                return [
+                    'ownerId' => (string) $owner->id,
+                    'ownerName' => $owner->name,
+                    'ownerPhone' => $owner->phone ?? '',
+                    'amount' => (float) $group->sum('payout'),
+                    'pendingDays' => (int) $days,
+                ];
+            })
+            ->values();
+
+        // ── 6-month chart + yearly recap (FL-04) ──
+        $monthly = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $m = now()->copy()->subMonths($i);
+            $amount = (float) $assignments
+                ->filter(fn ($a) => optional($a->event)->date &&
+                    \Illuminate\Support\Carbon::parse($a->event->date)->isSameMonth($m))
+                ->sum('payout');
+            $monthly[] = ['month' => $m->format('M'), 'amount' => $amount];
+        }
+        $bestMonth = collect($monthly)->sortByDesc('amount')->first();
+        $bestOwner = $owners->sortByDesc('earnedAmount')->first();
 
         return response()->json([
             'data' => [
-                'totalEarnings' => $total,
+                'totalEarnings' => $earned,
                 'receivedAmount' => $received,
-                'pendingAmount' => max($total - $received, 0),
-                'advance' => (float) ($byKind['ADVANCE'] ?? 0),
-                'due' => (float) ($byKind['DUE'] ?? 0),
-                'extra' => (float) ($byKind['EXTRA'] ?? 0),
-                'payout' => $received,
+                'pendingAmount' => $pending,
+                'owners' => $owners,
+                'pendingPayments' => $pendingPayments,
+                'yearlyRecap' => [
+                    'monthly' => $monthly,
+                    'bestMonth' => ($bestMonth && $bestMonth['amount'] > 0)
+                        ? $bestMonth
+                        : null,
+                    'bestOwner' => $bestOwner
+                        ? [
+                            'ownerName' => $bestOwner['ownerName'],
+                            'totalEarned' => $bestOwner['earnedAmount'],
+                            'eventsCount' => $bestOwner['eventsCount'],
+                        ]
+                        : null,
+                ],
             ],
         ]);
     }

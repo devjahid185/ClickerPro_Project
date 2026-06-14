@@ -14,7 +14,9 @@ class CalendarSyncSettings extends StatefulWidget {
 
 class _CalendarSyncSettingsState extends State<CalendarSyncSettings> {
   static const _keyAutoSync = 'calendar_auto_sync';
-  bool _autoSync = false;
+  // Auto-sync defaults ON so a freshly created booking lands in the device
+  // calendar silently, with no manual "Save" step.
+  bool _autoSync = true;
   String? _lastSyncTime;
 
   @override
@@ -26,7 +28,7 @@ class _CalendarSyncSettingsState extends State<CalendarSyncSettings> {
   Future<void> _loadPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _autoSync = prefs.getBool(_keyAutoSync) ?? false;
+      _autoSync = prefs.getBool(_keyAutoSync) ?? true;
       _lastSyncTime = prefs.getString('calendar_last_sync');
     });
   }

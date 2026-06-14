@@ -66,8 +66,10 @@ class ChatController extends Controller
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
+        // Only public sender columns — eager-loading the whole User row
+        // would leak manager_permissions, tokens and email to every teammate.
         $messages = ChatMessage::where('group_id', $group->id)
-            ->with('sender')
+            ->with('sender:id,name,avatar,role')
             ->orderBy('created_at', 'asc')
             ->get();
 
@@ -91,7 +93,10 @@ class ChatController extends Controller
             'body' => $data['body'],
         ]);
 
-        return response()->json(['data' => $message->load('sender')], 201);
+        return response()->json(
+            ['data' => $message->load('sender:id,name,avatar,role')],
+            201
+        );
     }
 
     /** A group is accessible iff it belongs to the requester's team. */

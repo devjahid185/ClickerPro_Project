@@ -288,7 +288,13 @@ class BookingDetailScreen extends ConsumerWidget {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(message),
+          // Force a light label: the dark `voidElevated` background + the
+          // theme's default (dark) snackbar text rendered error messages
+          // invisible (dark-on-dark) in light mode.
+          content: Text(
+            message,
+            style: TextStyle(color: AppColors.film),
+          ),
           backgroundColor: AppColors.voidElevated,
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),

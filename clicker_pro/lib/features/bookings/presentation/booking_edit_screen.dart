@@ -1512,10 +1512,12 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
         startTime: saved.startTime,
         venue: saved.venue,
       );
-      // MOD-61: a new booking is ALWAYS auto-added to Google Calendar —
-      // no "do you want to add?" dialog. The pre-filled Google Calendar
-      // page opens immediately so the user just taps Save there.
+      // MOD-61: a new booking is auto-added to the device calendar. When the
+      // user has Auto-sync ON we ONLY do the silent device-calendar write —
+      // no Google web page, no manual "Save" tap. With Auto-sync OFF we keep
+      // the old behaviour (open the pre-filled page) as a manual fallback.
       if (isNewBooking) {
+        final autoSync = await CalendarSyncService.isAutoSyncEnabled();
         await CalendarSyncService.openGoogleCalendar(
           title: saved.title,
           date: saved.date,
@@ -1527,6 +1529,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
             if (saved.clientPhone != null) 'Phone: ${saved.clientPhone}',
             'Booked via CLICKER PRO',
           ].join('\n'),
+          allowWebFallback: !autoSync,
         );
       }
       if (!mounted) return;

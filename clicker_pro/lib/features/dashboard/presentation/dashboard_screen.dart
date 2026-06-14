@@ -51,6 +51,8 @@ import '../../../theme/app_strings.dart';
 import '../../../theme/app_theme.dart';
 import '../../auth/application/session_controller.dart';
 import '../../auth/domain/user_role.dart';
+import '../../../core/role/capability.dart';
+import '../../../core/role/role_policy.dart';
 import '../../../core/booking_status/booking_status.dart';
 import '../../bookings/application/booking_providers.dart';
 import '../../broadcasts/presentation/broadcast_popup.dart';
@@ -1741,6 +1743,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   // ─── Drawer ────────────────────────────────────────────────────────
   Widget _buildSidebar(UserModel? user) {
+    final policy = RolePolicy(user?.role ?? UserRole.owner);
     final initials = user?.avatarInitials ?? '..';
     final name = user?.name ?? 'Welcome';
     final headerLine =
@@ -1859,22 +1862,25 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     Navigator.pop(context);
                     _pushNamed(RouteNames.bookings);
                   }),
-                  _sbItem(Icons.edit_note_outlined, 'Re-edit Requests', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.reEditRequests);
-                  }),
+                  if (policy.can(Capability.requestReEdit))
+                    _sbItem(Icons.edit_note_outlined, 'Re-edit Requests', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.reEditRequests);
+                    }),
                   _sbItem(Icons.chat_bubble_outline, 'Team Chat', () {
                     Navigator.pop(context);
                     _pushNamed(RouteNames.chat);
                   }),
-                  _sbItem(Icons.people_outline, 'Team & Staff', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.team);
-                  }),
-                  _sbItem(Icons.campaign_outlined, 'Announcements', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.announcements);
-                  }),
+                  if (policy.can(Capability.accessTeam))
+                    _sbItem(Icons.people_outline, 'Team & Staff', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.team);
+                    }),
+                  if (policy.can(Capability.viewAnnouncements))
+                    _sbItem(Icons.campaign_outlined, 'Announcements', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.announcements);
+                    }),
                   _sbItem(Icons.cell_tower_outlined, 'Platform Updates', () {
                     Navigator.pop(context);
                     _pushNamed(RouteNames.broadcasts);
@@ -1884,10 +1890,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     Navigator.pop(context);
                     _pushNamed(RouteNames.paymentEntry);
                   }),
-                  _sbItem(Icons.receipt_long_outlined, 'Invoices', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.invoice);
-                  }),
+                  if (policy.can(Capability.accessInvoice))
+                    _sbItem(Icons.receipt_long_outlined, 'Invoices', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.invoice);
+                    }),
                   _sbItem(Icons.money_off_outlined, 'Expenses', () {
                     Navigator.pop(context);
                     _pushNamed(RouteNames.finance);
@@ -1900,10 +1907,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     Navigator.pop(context);
                     _pushNamed(RouteNames.performance);
                   }),
-                  _sbItem(Icons.calculate_outlined, 'Tax / VAT (NBR)', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.finance);
-                  }),
+                  if (policy.can(Capability.accessTax))
+                    _sbItem(Icons.calculate_outlined, 'Tax / VAT (NBR)', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.finance);
+                    }),
                   _sbItem(Icons.timeline_outlined, 'Cash Flow', () {
                     Navigator.pop(context);
                     _pushNamed(RouteNames.cashFlow);
@@ -1913,38 +1921,53 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     _pushNamed(RouteNames.pettyCash);
                   }),
                   _sbGroup('OPERATIONS'),
-                  _sbItem(Icons.task_alt, 'Daily Tasks', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.bookings);
-                  }),
+                  if (policy.can(Capability.accessDailyTasks))
+                    _sbItem(Icons.task_alt, 'Daily Tasks', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.bookings);
+                    }),
                   _sbItem(Icons.camera_alt_outlined, 'Gear & Equipment', () {
                     Navigator.pop(context);
                     _pushNamed(RouteNames.gear);
                   }),
-                  _sbItem(Icons.swap_horiz, 'Rent Tracking', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.rent);
-                  }),
-                  _sbItem(Icons.local_shipping_outlined, 'Delivery System', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.bookings);
-                  }),
-                  _sbItem(Icons.inventory_2_outlined, 'Packages', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.packages);
-                  }),
-                  _sbItem(Icons.follow_the_signs_outlined, 'Client Follow-up', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.followup);
-                  }),
-                  _sbItem(Icons.alarm_outlined, 'Reminders', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.reminders);
-                  }),
-                  _sbItem(Icons.hourglass_empty_outlined, 'Waitlist', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.waitlist);
-                  }),
+                  if (policy.can(Capability.accessRentTracking))
+                    _sbItem(Icons.swap_horiz, 'Rent Tracking', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.rent);
+                    }),
+                  if (policy.can(Capability.accessDelivery))
+                    _sbItem(
+                      Icons.local_shipping_outlined,
+                      'Delivery System',
+                      () {
+                        Navigator.pop(context);
+                        _pushNamed(RouteNames.bookings);
+                      },
+                    ),
+                  if (policy.can(Capability.accessPackages))
+                    _sbItem(Icons.inventory_2_outlined, 'Packages', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.packages);
+                    }),
+                  if (policy.can(Capability.accessFollowup))
+                    _sbItem(
+                      Icons.follow_the_signs_outlined,
+                      'Client Follow-up',
+                      () {
+                        Navigator.pop(context);
+                        _pushNamed(RouteNames.followup);
+                      },
+                    ),
+                  if (policy.can(Capability.accessReminders))
+                    _sbItem(Icons.alarm_outlined, 'Reminders', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.reminders);
+                    }),
+                  if (policy.can(Capability.accessWaitlist))
+                    _sbItem(Icons.hourglass_empty_outlined, 'Waitlist', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.waitlist);
+                    }),
                   _sbItem(Icons.home_outlined, 'Home Widget', () {
                     Navigator.pop(context);
                     _pushNamed(RouteNames.widgetSettings);
@@ -1953,60 +1976,72 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     Navigator.pop(context);
                     _pushNamed(RouteNames.calendarSyncSettings);
                   }),
-                  Container(
-                    height: 1,
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 8,
+                  if (policy.can(Capability.editGearInventory)) ...[
+                    Container(
+                      height: 1,
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 8,
+                      ),
+                      color: AppColors.line(0.05),
                     ),
-                    color: AppColors.line(0.05),
-                  ),
-                  _sbGroup('FREELANCER'),
-                  _sbItem(Icons.account_balance_wallet_outlined, 'My Earnings', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.freelancerEarnings);
-                  }),
-                  _sbItem(Icons.military_tech_outlined, 'My Badges', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.freelancerBadges);
-                  }),
-                  _sbItem(Icons.event_available_outlined, 'My Availability', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.freelancerAvailability);
-                  }),
-                  _sbItem(Icons.login_outlined, 'Check-In', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.freelancerCheckin);
-                  }),
-                  _sbItem(Icons.beach_access_outlined, 'Leave Request', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.freelancerLeave);
-                  }),
-                  _sbItem(Icons.history_outlined, 'Work History', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.freelancerWorkHistory);
-                  }),
-                  Container(
-                    height: 1,
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 8,
+                    _sbGroup('FREELANCER'),
+                    _sbItem(
+                      Icons.account_balance_wallet_outlined,
+                      'My Earnings',
+                      () {
+                        Navigator.pop(context);
+                        _pushNamed(RouteNames.freelancerEarnings);
+                      },
                     ),
-                    color: AppColors.line(0.05),
-                  ),
-                  _sbGroup('ADMIN'),
-                  _sbItem(Icons.backup_outlined, 'Backup & Restore', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.backup);
-                  }),
-                  _sbItem(Icons.history_edu_outlined, 'Audit Log', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.auditLog);
-                  }),
-                  _sbItem(Icons.bug_report_outlined, 'Crash Reports', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.crashSettings);
-                  }),
+                    _sbItem(Icons.military_tech_outlined, 'My Badges', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.freelancerBadges);
+                    }),
+                    _sbItem(
+                      Icons.event_available_outlined,
+                      'My Availability',
+                      () {
+                        Navigator.pop(context);
+                        _pushNamed(RouteNames.freelancerAvailability);
+                      },
+                    ),
+                    _sbItem(Icons.login_outlined, 'Check-In', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.freelancerCheckin);
+                    }),
+                    _sbItem(Icons.beach_access_outlined, 'Leave Request', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.freelancerLeave);
+                    }),
+                    _sbItem(Icons.history_outlined, 'Work History', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.freelancerWorkHistory);
+                    }),
+                  ],
+                  if (policy.can(Capability.viewFinancials)) ...[
+                    Container(
+                      height: 1,
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 8,
+                      ),
+                      color: AppColors.line(0.05),
+                    ),
+                    _sbGroup('ADMIN'),
+                    _sbItem(Icons.backup_outlined, 'Backup & Restore', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.backup);
+                    }),
+                    _sbItem(Icons.history_edu_outlined, 'Audit Log', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.auditLog);
+                    }),
+                    _sbItem(Icons.bug_report_outlined, 'Crash Reports', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.crashSettings);
+                    }),
+                  ],
                   Container(
                     height: 1,
                     margin: const EdgeInsets.symmetric(

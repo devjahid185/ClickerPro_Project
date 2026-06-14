@@ -192,12 +192,17 @@ class TeamController extends Controller
 
         // Allowlist the fields — raw User rows leak internal columns
         // (manager_permissions, activity metadata) to every teammate.
-        // ownerId may be stored as int OR string depending on which
-        // join path wrote it — match both.
+        //
+        // Match on the JSON `ownerId` via the `->>` text-extract operator.
+        // `whereJsonContains` does NOT work here: the column is a plain `json`
+        // (not jsonb) on Postgres, where containment is unsupported, and it
+        // also mis-handled the scalar match on MySQL. `->>` text extraction is
+        // supported by BOTH Postgres and MySQL 5.7+, so it is the portable
+        // form. We compare as text ('2') because the stored value may be an
+        // int or a string depending on which join path wrote it.
         $members = User::where(function ($q) use ($teamOwnerId) {
                 $q->where('id', $teamOwnerId)
-                  ->orWhereJsonContains('manager_permissions->ownerId', $teamOwnerId)
-                  ->orWhereJsonContains('manager_permissions->ownerId', (string) $teamOwnerId);
+                  ->orWhereRaw("manager_permissions->>'ownerId' = ?", [(string) $teamOwnerId]);
             })
             ->where('id', '!=', $user->id)
             ->get()

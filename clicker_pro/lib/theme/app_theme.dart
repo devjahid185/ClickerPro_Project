@@ -5,6 +5,7 @@
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
@@ -353,6 +354,12 @@ class AppTheme {
         foregroundColor: oceanInk,
         elevation: 0,
         scrolledUnderElevation: 1,
+        // Dark background → LIGHT status-bar icons.
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: oceanSurface,
@@ -435,6 +442,17 @@ class AppTheme {
         foregroundColor: AppColors.film,
         elevation: 0,
         scrolledUnderElevation: 1,
+        // Match the status-bar icons to the active surface so time/network/
+        // battery stay legible: dark icons on a light surface, light on dark.
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: AppColors.isDark
+              ? Brightness.light
+              : Brightness.dark,
+          statusBarBrightness: AppColors.isDark
+              ? Brightness.dark
+              : Brightness.light,
+        ),
       ),
     );
   }

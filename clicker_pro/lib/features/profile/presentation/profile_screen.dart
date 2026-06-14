@@ -238,13 +238,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               onChanged: null,
               isReadOnly: true,
             ),
-            _buildInfoField(
-              label: t('studio_address'),
-              value: view.studioAddress ?? '',
-              icon: Icons.location_on,
-              onChanged: (val) =>
-                  _updateDraft((d) => d.copyWith(studioAddress: val)),
-            ),
+            // Studio address is company information — a pure Freelancer has
+            // no studio, so this field is hidden for them.
+            if (policy.can(Capability.editStudioBranding))
+              _buildInfoField(
+                label: t('studio_address'),
+                value: view.studioAddress ?? '',
+                icon: Icons.location_on,
+                onChanged: (val) =>
+                    _updateDraft((d) => d.copyWith(studioAddress: val)),
+              ),
             _buildInfoField(
               label: t('bio'),
               value: view.bio ?? '',

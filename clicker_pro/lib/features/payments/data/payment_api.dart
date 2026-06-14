@@ -21,8 +21,9 @@ class PaymentApi {
   }
 
   Future<List<PaymentRecord>> listByEvent(String eventId) async {
+    // Laravel exposes per-event payments at /api/payments/event/{id}.
     final r =
-        await _client.get('/api/payments', query: {'eventId': eventId})
+        await _client.get('/api/payments/event/$eventId')
             as Map<String, dynamic>;
     final raw = (r['data'] as List?) ?? const <dynamic>[];
     return raw
@@ -32,10 +33,13 @@ class PaymentApi {
   }
 
   Future<PaymentRecord> create(PaymentRecord draft) async {
+    // Laravel wraps the created row in `data` (not `payment`); reading the
+    // wrong key made every successful save look like a failure in the UI.
     final r =
         await _client.post('/api/payments', body: draft.toCreateJson())
             as Map<String, dynamic>;
-    final created = (r['payment'] as Map).cast<String, dynamic>();
+    final created = ((r['data'] ?? r['payment']) as Map)
+        .cast<String, dynamic>();
     return PaymentRecord.fromJson(created);
   }
 

@@ -15,6 +15,8 @@
 
 import 'package:flutter/material.dart';
 
+import '../role/capability.dart';
+import '../role/role_gated_screen.dart';
 import '../../features/entitlements/application/entitlement_providers.dart';
 import '../../features/entitlements/presentation/gated_screen.dart';
 import '../../features/auth/presentation/forgot_password_screen.dart';
@@ -175,11 +177,23 @@ class AppRouter {
       case RouteNames.gear:
         return lensPageRoute<void>(const GearScreen());
       case RouteNames.rent:
-        return lensPageRoute<void>(const RentScreen());
+        return lensPageRoute<void>(
+          const RoleGatedScreen(
+            capability: Capability.accessRentTracking,
+            title: 'Rent Tracking',
+            child: RentScreen(),
+          ),
+        );
       case RouteNames.chat:
         return lensPageRoute<void>(const ChatScreen());
       case RouteNames.team:
-        return lensPageRoute<void>(const TeamScreen());
+        return lensPageRoute<void>(
+          const RoleGatedScreen(
+            capability: Capability.accessTeam,
+            title: 'Team & Staff',
+            child: TeamScreen(),
+          ),
+        );
       case RouteNames.announcements:
         return lensPageRoute<void>(const AnnouncementsScreen());
       case RouteNames.freelancerEarnings:
@@ -195,7 +209,13 @@ class AppRouter {
       case RouteNames.freelancerWorkHistory:
         return lensPageRoute<void>(const FlWorkHistoryScreen());
       case RouteNames.teamSalarySheet:
-        return lensPageRoute<void>(const SalarySheetScreen());
+        return lensPageRoute<void>(
+          const RoleGatedScreen(
+            capability: Capability.accessTeam,
+            title: 'Salary Sheet',
+            child: SalarySheetScreen(),
+          ),
+        );
 
       // Public booking flow — explicitly NOT auth-guarded; the visitor
       // arrives via a token-bearing deep link.
@@ -215,20 +235,49 @@ class AppRouter {
       case RouteNames.pendingPublicBookings:
         return lensPageRoute<void>(const PendingPublicBookingsScreen());
       case RouteNames.packages:
-        return lensPageRoute<void>(const PackagesScreen());
+        return lensPageRoute<void>(
+          const RoleGatedScreen(
+            capability: Capability.accessPackages,
+            title: 'Packages',
+            child: PackagesScreen(),
+          ),
+        );
 
       case RouteNames.invoice:
         final invoice = settings.arguments;
-        if (invoice is Invoice) {
-          return lensPageRoute<void>(InvoiceScreen(invoice: invoice));
-        }
-        return lensPageRoute<void>(const InvoiceScreen());
+        return lensPageRoute<void>(
+          RoleGatedScreen(
+            capability: Capability.accessInvoice,
+            title: 'Invoices',
+            child: invoice is Invoice
+                ? InvoiceScreen(invoice: invoice)
+                : const InvoiceScreen(),
+          ),
+        );
       case RouteNames.backup:
-        return lensPageRoute<void>(const BackupScreen());
+        return lensPageRoute<void>(
+          const RoleGatedScreen(
+            capability: Capability.viewFinancials,
+            title: 'Backup & Restore',
+            child: BackupScreen(),
+          ),
+        );
       case RouteNames.auditLog:
-        return lensPageRoute<void>(const AuditLogScreen());
+        return lensPageRoute<void>(
+          const RoleGatedScreen(
+            capability: Capability.viewFinancials,
+            title: 'Audit Log',
+            child: AuditLogScreen(),
+          ),
+        );
       case RouteNames.crashSettings:
-        return lensPageRoute<void>(const CrashSettingsScreen());
+        return lensPageRoute<void>(
+          const RoleGatedScreen(
+            capability: Capability.viewFinancials,
+            title: 'Crash Reports',
+            child: CrashSettingsScreen(),
+          ),
+        );
       case RouteNames.whatsappShare:
         final args = settings.arguments;
         if (args is Map<String, String>) {
@@ -253,18 +302,26 @@ class AppRouter {
         return lensPageRoute<void>(const CalendarSyncSettings());
       case RouteNames.reminders:
         return lensPageRoute<void>(
-          const GatedScreen(
-            featureKey: Features.reminders,
-            featureName: 'Reminders',
-            child: RemindersScreen(),
+          const RoleGatedScreen(
+            capability: Capability.accessReminders,
+            title: 'Reminders',
+            child: GatedScreen(
+              featureKey: Features.reminders,
+              featureName: 'Reminders',
+              child: RemindersScreen(),
+            ),
           ),
         );
       case RouteNames.waitlist:
         return lensPageRoute<void>(
-          const GatedScreen(
-            featureKey: Features.waitlist,
-            featureName: 'Waitlist',
-            child: WaitlistScreen(),
+          const RoleGatedScreen(
+            capability: Capability.accessWaitlist,
+            title: 'Waitlist',
+            child: GatedScreen(
+              featureKey: Features.waitlist,
+              featureName: 'Waitlist',
+              child: WaitlistScreen(),
+            ),
           ),
         );
       case RouteNames.cashFlow:
@@ -272,13 +329,25 @@ class AppRouter {
       case RouteNames.pettyCash:
         return lensPageRoute<void>(const PettyCashScreen());
       case RouteNames.followup:
-        return lensPageRoute<void>(const FollowupScreen());
+        return lensPageRoute<void>(
+          const RoleGatedScreen(
+            capability: Capability.accessFollowup,
+            title: 'Client Follow-up',
+            child: FollowupScreen(),
+          ),
+        );
       case RouteNames.widgetSettings:
         return lensPageRoute<void>(const WidgetSettingsScreen());
       case RouteNames.performance:
         return lensPageRoute<void>(const PerformanceScreen());
       case RouteNames.reEditRequests:
-        return lensPageRoute<void>(const ReEditRequestsScreen());
+        return lensPageRoute<void>(
+          const RoleGatedScreen(
+            capability: Capability.requestReEdit,
+            title: 'Re-edit Requests',
+            child: ReEditRequestsScreen(),
+          ),
+        );
       case RouteNames.calendarSync:
         return lensPageRoute<void>(const CalendarSyncSettings());
       case RouteNames.paymentEntry:

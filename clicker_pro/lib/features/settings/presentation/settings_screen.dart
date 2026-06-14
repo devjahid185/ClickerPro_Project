@@ -102,7 +102,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   _sectionHeader('Preferences · System'),
                   _buildSettingsGroup([
                     _buildThemeToggle(lang, t),
-                    _buildLanguageRow(lang, t),
+                    // Language toggle removed — the app ships English only for
+                    // now, so a Bengali switch that does nothing was misleading.
                     _buildListItem(
                       label: t('pref_customize_dashboard'),
                       icon: Icons.tune_outlined,
@@ -111,7 +112,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         RouteNames.dashboardCustomize,
                       ),
                     ),
-                    if (user != null) _buildNotificationsGroup(user.id, t),
+                    if (user != null)
+                      _buildNotificationsGroup(
+                        user.id,
+                        t,
+                        // A pure Freelancer manages no team and runs no
+                        // marketing, so those notification toggles are hidden.
+                        showTeamAndMarketing: policy.can(
+                          Capability.viewTeamSection,
+                        ),
+                      ),
                   ]),
 
                   if (policy.can(Capability.toggleDistribution) ||
@@ -325,7 +335,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   // ── Notification preferences (Drift stream) ───────────────────
-  Widget _buildNotificationsGroup(String userId, String Function(String) t) {
+  Widget _buildNotificationsGroup(
+    String userId,
+    String Function(String) t, {
+    required bool showTeamAndMarketing,
+  }) {
     final prefsAsync = ref.watch(notificationPrefsProvider(userId));
     return prefsAsync.when(
       loading: () => const Padding(
@@ -366,13 +380,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onChanged: (v) =>
                 _saveNotifPrefs(userId, prefs.copyWith(paymentDue: v)),
           ),
-          _buildBoolRow(
-            label: t('notif_team_messages'),
-            icon: Icons.chat_bubble_outline_rounded,
-            value: prefs.teamMessages,
-            onChanged: (v) =>
-                _saveNotifPrefs(userId, prefs.copyWith(teamMessages: v)),
-          ),
+          if (showTeamAndMarketing)
+            _buildBoolRow(
+              label: t('notif_team_messages'),
+              icon: Icons.chat_bubble_outline_rounded,
+              value: prefs.teamMessages,
+              onChanged: (v) =>
+                  _saveNotifPrefs(userId, prefs.copyWith(teamMessages: v)),
+            ),
           _buildBoolRow(
             label: t('notif_announcements'),
             icon: Icons.campaign_outlined,
@@ -380,13 +395,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onChanged: (v) =>
                 _saveNotifPrefs(userId, prefs.copyWith(announcements: v)),
           ),
-          _buildBoolRow(
-            label: t('notif_marketing'),
-            icon: Icons.local_offer_outlined,
-            value: prefs.marketing,
-            onChanged: (v) =>
-                _saveNotifPrefs(userId, prefs.copyWith(marketing: v)),
-          ),
+          if (showTeamAndMarketing)
+            _buildBoolRow(
+              label: t('notif_marketing'),
+              icon: Icons.local_offer_outlined,
+              value: prefs.marketing,
+              onChanged: (v) =>
+                  _saveNotifPrefs(userId, prefs.copyWith(marketing: v)),
+            ),
         ],
       ),
     );
@@ -521,50 +537,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       return AppColors.gold;
     }
     return AppColors.orange;
-  }
-
-  Widget _buildLanguageRow(String currentLang, String Function(String) t) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.language, color: AppColors.filmDim, size: 20),
-              const SizedBox(width: 12),
-              Text(
-                t('pref_lang'),
-                style: TextStyle(color: AppColors.film, fontSize: 15),
-              ),
-            ],
-          ),
-          SizedBox(
-            width: 140,
-            child: SegmentedButton<String>(
-              showSelectedIcon: false,
-              style: ButtonStyle(
-                padding: WidgetStateProperty.all(
-                  const EdgeInsets.symmetric(horizontal: 6),
-                ),
-                visualDensity: VisualDensity.compact,
-              ),
-              segments: const [
-                ButtonSegment(value: 'en', label: Text('EN')),
-                ButtonSegment(value: 'bn', label: Text('BN')),
-              ],
-              selected: {currentLang},
-              onSelectionChanged: (val) async {
-                final newLang = val.first;
-                await ref
-                    .read(languageControllerProvider.notifier)
-                    .setLanguage(newLang);
-              },
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildThemeToggle(String lang, String Function(String) t) {

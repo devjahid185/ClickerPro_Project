@@ -303,27 +303,6 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                     .copyWith(statuses: _statusesForChip(chip));
               },
             ),
-            if (!filter.isEmpty)
-              _ActiveFilterChips(
-                filter: filter,
-                onDismiss: (type) {
-                  final current = ref.read(bookingFilterProvider);
-                  switch (type) {
-                    case _FilterType.status:
-                      ref.read(bookingFilterProvider.notifier).state = current
-                          .copyWith(statuses: {});
-                      break;
-                    case _FilterType.dateRange:
-                      ref.read(bookingFilterProvider.notifier).state = current
-                          .copyWith(clearFrom: true, clearTo: true);
-                      break;
-                    case _FilterType.search:
-                      ref.read(bookingFilterProvider.notifier).state = current
-                          .copyWith(clearSearch: true);
-                      break;
-                  }
-                },
-              ),
             Expanded(
               child: RefreshIndicator(
                 color: AppColors.teal,
@@ -350,12 +329,26 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                     ),
                   ),
                   data: (bookings) {
+                    // Shift filter is applied in-memory: a Day (or Night)
+                    // filter also keeps Both bookings, because a full-day
+                    // shoot covers that shift. `null` = no shift restriction.
+                    final shiftFilter = filter.shift;
+                    final filtered = shiftFilter == null
+                        ? bookings
+                        : bookings
+                              .where(
+                                (b) =>
+                                    b.shift == shiftFilter ||
+                                    b.shift == Shift.both,
+                              )
+                              .toList();
+
                     // ONE chronological list — strictly by date+time ascending
                     // so the 14th always appears before the 15th. The old
                     // Day|Night two-column layout made a 14th-night event look
                     // like it came "after" a 15th-day event. Each row now
                     // carries its own Day/Night badge instead.
-                    final visible = bookings.toList()
+                    final visible = filtered.toList()
                       ..sort((a, b) {
                         final byDate = _dayOnly(
                           a.date,
@@ -493,64 +486,6 @@ class _StatusChips extends StatelessWidget {
   }
 }
 
-enum _FilterType { status, dateRange, search }
-
-class _ActiveFilterChips extends StatelessWidget {
-  const _ActiveFilterChips({required this.filter, required this.onDismiss});
-
-  final BookingFilter filter;
-  final ValueChanged<_FilterType> onDismiss;
-
-  @override
-  Widget build(BuildContext context) {
-    final chips = <Widget>[];
-
-    if (filter.statuses.isNotEmpty) {
-      chips.add(_buildChip('Status', () => onDismiss(_FilterType.status)));
-    }
-    if (filter.from != null || filter.to != null) {
-      chips.add(
-        _buildChip('Date Range', () => onDismiss(_FilterType.dateRange)),
-      );
-    }
-    if (filter.search != null && filter.search!.isNotEmpty) {
-      chips.add(
-        _buildChip('"${filter.search}"', () => onDismiss(_FilterType.search)),
-      );
-    }
-
-    if (chips.isEmpty) return const SizedBox.shrink();
-
-    return SizedBox(
-      height: 36,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        children: chips,
-      ),
-    );
-  }
-
-  Widget _buildChip(String label, VoidCallback onDismiss) {
-    return Container(
-      margin: const EdgeInsets.only(right: 6),
-      child: Chip(
-        label: Text(
-          label,
-          style: const TextStyle(color: AppColors.teal, fontSize: 11),
-        ),
-        deleteIcon: const Icon(Icons.close, size: 14, color: AppColors.teal),
-        onDeleted: onDismiss,
-        backgroundColor: AppColors.teal.withValues(alpha: 0.08),
-        side: const BorderSide(color: AppColors.teal, width: 0.5),
-        padding: EdgeInsets.zero,
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        visualDensity: VisualDensity.compact,
-      ),
-    );
-  }
-}
-
 /// Single chronological booking list. Each row's left border + shift icon
 /// is gold for Day and purple for Night, so the Day/Night distinction is
 /// still obvious without breaking the date order.
@@ -565,17 +500,30 @@ class _BookingListColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Day / Night tallies. A Both (full-day) booking covers both shifts,
+    // so it is counted in each — matching how the shift filter treats it.
+    final dayCount = bookings
+        .where((b) => b.shift == Shift.day || b.shift == Shift.both)
+        .length;
+    final nightCount = bookings
+        .where((b) => b.shift == Shift.night || b.shift == Shift.both)
+        .length;
+
     return ListView.builder(
       controller: scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-      itemCount: bookings.length,
+      // +1 for the Day/Night summary header pinned at the top of the list.
+      itemCount: bookings.length + 1,
       itemBuilder: (context, index) {
-        final b = bookings[index];
+        if (index == 0) {
+          return _ShiftSummaryBar(dayCount: dayCount, nightCount: nightCount);
+        }
+        final b = bookings[index - 1];
         final isNight = b.shift == Shift.night;
         final accent = isNight ? AppColors.purple : AppColors.gold;
         return FadeUpIn(
-          order: index.clamp(0, 8),
+          order: (index - 1).clamp(0, 8),
           child: _BookingColumnRow(
             booking: b,
             borderSide: BorderSide(color: accent, width: 2),
@@ -583,6 +531,77 @@ class _BookingListColumn extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// Compact "Day N · Night N" tally shown above the booking list so the
+/// day/night split is visible at a glance.
+class _ShiftSummaryBar extends StatelessWidget {
+  const _ShiftSummaryBar({required this.dayCount, required this.nightCount});
+
+  final int dayCount;
+  final int nightCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10, top: 2),
+      child: Row(
+        children: [
+          _chip(
+            icon: Icons.wb_sunny_outlined,
+            label: 'Day',
+            count: dayCount,
+            color: AppColors.gold,
+          ),
+          const SizedBox(width: 10),
+          _chip(
+            icon: Icons.nightlight_outlined,
+            label: 'Night',
+            count: nightCount,
+            color: AppColors.purple,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _chip({
+    required IconData icon,
+    required String label,
+    required int count,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 15),
+          const SizedBox(width: 6),
+          Text(
+            '$label  ',
+            style: TextStyle(
+              color: AppColors.filmDim,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Text(
+            '$count',
+            style: TextStyle(
+              color: color,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -799,6 +818,14 @@ class _FilterSheetState extends State<_FilterSheet> {
   Shift? _selectedShift;
   _DateRangePreset _dateRange = _DateRangePreset.any;
 
+  @override
+  void initState() {
+    super.initState();
+    // Reflect the already-applied filter so reopening the sheet keeps the
+    // current shift selection instead of silently resetting to "Any".
+    _selectedShift = widget.filter.shift;
+  }
+
   ({DateTime? from, DateTime? to}) _computeDateRange(_DateRangePreset preset) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -931,6 +958,8 @@ class _FilterSheetState extends State<_FilterSheet> {
                     to: range.to,
                     clearFrom: range.from == null,
                     clearTo: range.to == null,
+                    shift: _selectedShift,
+                    clearShift: _selectedShift == null,
                   ),
                 );
                 Navigator.of(context).pop();

@@ -45,13 +45,17 @@ class PaymentRecord {
     );
   }
 
+  /// Payload for `POST /api/payments`. The Laravel PaymentController
+  /// validates snake_case `event_id`, an UPPERCASE `kind`
+  /// (ADVANCE/DUE/EXTRA/PAYOUT) and an UPPERCASE `method`
+  /// (CASH/BKASH/NAGAD/BANK/CARD/OTHER), so map the local lowercase values
+  /// up here.
   Map<String, dynamic> toCreateJson() {
     return <String, dynamic>{
-      'eventId': eventId,
+      'event_id': eventId,
       'amount': amount,
-      'method': method,
-      'type': type,
-      'hidden': hidden,
+      'kind': type.toUpperCase(),
+      'method': method.toUpperCase(),
     };
   }
 
@@ -67,17 +71,22 @@ class PaymentRecord {
     };
   }
 
+  /// Tolerant of BOTH the Laravel wire shape (snake_case, int id, UPPERCASE
+  /// `kind`/`method`) and the older local camelCase shape (offline cache).
   factory PaymentRecord.fromJson(Map<String, dynamic> json) {
+    final createdRaw = (json['created_at'] ?? json['createdAt'])?.toString();
     return PaymentRecord(
-      id: json['id'] as String,
-      eventId: json['eventId'] as String,
-      amount: (json['amount'] as num).toDouble(),
-      method: (json['method'] as String?) ?? 'cash',
-      type: (json['type'] as String?) ?? 'due',
+      id: (json['id'] ?? '').toString(),
+      eventId: (json['event_id'] ?? json['eventId'] ?? '').toString(),
+      amount: (json['amount'] as num?)?.toDouble() ??
+          double.tryParse('${json['amount']}') ??
+          0,
+      method: ((json['method'] as String?) ?? 'cash').toLowerCase(),
+      type: ((json['kind'] ?? json['type']) as String? ?? 'due').toLowerCase(),
       hidden: json['hidden'] as bool? ?? false,
-      createdAt: json['createdAt'] == null
+      createdAt: (createdRaw == null || createdRaw.isEmpty)
           ? DateTime.now()
-          : DateTime.parse(json['createdAt'] as String),
+          : DateTime.tryParse(createdRaw) ?? DateTime.now(),
     );
   }
 

@@ -131,6 +131,29 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
         return 'Update task progress';
       case Capability.createAnnouncement:
         return 'Create announcements';
+      case Capability.viewAnnouncements:
+        return 'View announcements';
+      // ── Studio-management surfaces ───────────────────────
+      case Capability.accessTeam:
+        return 'Access team & staff';
+      case Capability.accessInvoice:
+        return 'Access invoices';
+      case Capability.accessTax:
+        return 'Access tax / VAT';
+      case Capability.accessPackages:
+        return 'Manage packages';
+      case Capability.accessDelivery:
+        return 'Access delivery system';
+      case Capability.accessDailyTasks:
+        return 'Access daily tasks';
+      case Capability.accessFollowup:
+        return 'Access client follow-up';
+      case Capability.accessReminders:
+        return 'Access reminders';
+      case Capability.accessWaitlist:
+        return 'Access waitlist';
+      case Capability.accessRentTracking:
+        return 'Access rent tracking';
     }
   }
 
