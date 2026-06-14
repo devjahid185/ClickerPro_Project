@@ -65,6 +65,8 @@ Route::middleware('throttle:30,1')->group(function () {
     Route::post('public-booking/{token}', [PublicBookingController::class, 'store']);
     Route::post('contact', [\App\Http\Controllers\Api\ContactController::class, 'store']);
     Route::post('crash-reports', [\App\Http\Controllers\Api\CrashReportController::class, 'store']);
+    // Over-the-air update channel: the mobile app polls this on launch.
+    Route::get('app/version', [\App\Http\Controllers\Api\AppVersionController::class, 'show']);
 });
 
 // Protected routes — authenticated + general per-user throttle.
@@ -269,6 +271,8 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
         Route::get('export', [AdminController::class, 'exportCsv']);
         // Frontend uses /export/<type>.csv — map to the same handler.
         Route::get('export/{file}', [AdminController::class, 'exportCsv']);
+        // OTA app-version control (set latest version + APK url).
+        Route::patch('app/version', [\App\Http\Controllers\Api\AppVersionController::class, 'update']);
 
         // All-studio bookings & payments
         Route::get('bookings', [AdminController::class, 'bookings']);

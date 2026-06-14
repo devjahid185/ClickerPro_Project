@@ -161,7 +161,7 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── Header ────────────────────────────────────────
+              // ── Header (fixed) ────────────────────────────────
               Text(
                 'Change role',
                 style: TextStyle(
@@ -183,6 +183,16 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
               ),
               const SizedBox(height: 16),
 
+              // ── Scrollable middle: roles + lost-capabilities ──
+              // Without this, a long "you will lose access to" list pushed
+              // the Cancel/Confirm buttons off-screen so role change was
+              // impossible. The buttons below now stay fixed and visible.
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
               // ── Target list ───────────────────────────────────
               for (final r in _targets) ...[
                 _RoleOption(
@@ -275,10 +285,14 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
                         ),
                       ),
               ),
+                    ],
+                  ),
+                ),
+              ),
 
               const SizedBox(height: 20),
 
-              // ── Buttons ───────────────────────────────────────
+              // ── Buttons (fixed, always visible) ───────────────
               Row(
                 children: [
                   Expanded(

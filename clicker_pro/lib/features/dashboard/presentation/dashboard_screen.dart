@@ -39,6 +39,7 @@ import 'package:intl/intl.dart';
 import '../../../core/format/bd_holidays.dart';
 import '../../../core/navigation/route_names.dart';
 import '../../../core/notifications/event_reminder_service.dart';
+import '../../../core/update/app_update_service.dart';
 import '../../../core/providers.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
@@ -115,6 +116,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       // Prime the on-device event-reminder channel + permissions so the
       // "1 hour before" alarms can be scheduled (fail-soft).
       EventReminderService.instance.init();
+      // Over-the-air update check — prompts if a newer APK is published.
+      AppUpdateService.checkAndPrompt(context, ref.read(apiClientProvider));
     });
   }
 
