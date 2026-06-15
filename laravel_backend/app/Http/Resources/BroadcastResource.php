@@ -33,6 +33,8 @@ class BroadcastResource extends JsonResource
             'imageUrl' => $this->image_url ?? null,
             'link' => $this->link ?? null,
             'buttonLabel' => $this->button_label ?? null,
+            'timesPerDay' => (int) ($this->times_per_day ?? 1),
+            'times_per_day' => (int) ($this->times_per_day ?? 1),
 
             // targeting + status (snake + camel)
             'target_role' => $this->target_role,

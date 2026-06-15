@@ -9,6 +9,7 @@
 //   • Each broadcast is shown once; seen ids persist in KvStore.
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,12 +23,16 @@ import '../domain/broadcast.dart';
 /// How long the popup stays before auto-closing.
 const Duration kBroadcastPopupDuration = Duration(seconds: 10);
 
-/// Maximum number of seen broadcast ids kept in storage.
-const int _kMaxSeenIds = 50;
+String _today() {
+  final n = DateTime.now();
+  return '${n.year}-${n.month.toString().padLeft(2, '0')}-${n.day.toString().padLeft(2, '0')}';
+}
 
-/// Checks for an unseen broadcast and presents it as a modal. Safe to call
-/// on every app open — already-seen ids are skipped, and any network error
-/// silently no-ops (the dashboard banner remains the fallback surface).
+/// Presents every active broadcast the user hasn't yet hit its daily cap for,
+/// one after another. Each broadcast may pop up `timesPerDay` times per day
+/// (set per broadcast in the admin panel); counts reset at midnight and are
+/// tracked per broadcast id in KvStore. Safe to call on every app open — any
+/// network error silently no-ops.
 Future<void> showBroadcastPopupIfNeeded(
   BuildContext context,
   WidgetRef ref,
@@ -41,42 +46,80 @@ Future<void> showBroadcastPopupIfNeeded(
   if (items.isEmpty) return;
 
   final kv = KvStore();
-  final seenRaw = await kv.readString(KvKeys.seenBroadcastIds) ?? '';
-  final seen = seenRaw.split(',').where((s) => s.isNotEmpty).toSet();
+  final counts = await _readCounts(kv);
+  final today = _today();
 
-  final unseen = items.where((b) => b.id.isNotEmpty && !seen.contains(b.id)).toList()
+  // Newest first; show each broadcast still under its per-day cap.
+  final due = items
+      .where((b) => b.id.isNotEmpty)
+      .where((b) {
+        final rec = counts[b.id];
+        final shownToday = (rec != null && rec['date'] == today)
+            ? (rec['count'] as int? ?? 0)
+            : 0;
+        return shownToday < b.timesPerDay;
+      })
+      .toList()
     ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-  if (unseen.isEmpty) return;
-  final broadcast = unseen.first;
 
-  // Persist BEFORE showing so a crash or hot-restart can never loop the
-  // same popup forever.
-  seen.add(broadcast.id);
-  final kept = seen.toList();
-  final trimmed = kept.length > _kMaxSeenIds
-      ? kept.sublist(kept.length - _kMaxSeenIds)
-      : kept;
-  await kv.writeString(KvKeys.seenBroadcastIds, trimmed.join(','));
+  if (due.isEmpty) return;
 
-  if (!context.mounted) return;
-  await showGeneralDialog<void>(
-    context: context,
-    barrierDismissible: true,
-    barrierLabel: 'Broadcast',
-    barrierColor: Colors.black.withValues(alpha: 0.55),
-    transitionDuration: const Duration(milliseconds: 260),
-    pageBuilder: (_, _, _) => _BroadcastPopupDialog(broadcast: broadcast),
-    transitionBuilder: (context, anim, _, child) {
-      final curved = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
-      return FadeTransition(
-        opacity: curved,
-        child: ScaleTransition(
-          scale: Tween<double>(begin: 0.92, end: 1).animate(curved),
-          child: child,
-        ),
-      );
-    },
-  );
+  for (final broadcast in due) {
+    if (!context.mounted) return;
+
+    // Count it BEFORE showing so a crash/hot-restart can't loop forever.
+    final rec = counts[broadcast.id];
+    final shownToday = (rec != null && rec['date'] == today)
+        ? (rec['count'] as int? ?? 0)
+        : 0;
+    counts[broadcast.id] = {'date': today, 'count': shownToday + 1};
+    await _writeCounts(kv, counts);
+    if (!context.mounted) return;
+
+    await showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Broadcast',
+      barrierColor: Colors.black.withValues(alpha: 0.55),
+      transitionDuration: const Duration(milliseconds: 260),
+      pageBuilder: (_, _, _) => _BroadcastPopupDialog(broadcast: broadcast),
+      transitionBuilder: (context, anim, _, child) {
+        final curved =
+            CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
+        return FadeTransition(
+          opacity: curved,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.92, end: 1).animate(curved),
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Per-broadcast daily show counts: `{ id: {date: 'yyyy-mm-dd', count: n} }`.
+Future<Map<String, Map<String, dynamic>>> _readCounts(KvStore kv) async {
+  final raw = await kv.readString(KvKeys.broadcastShowCounts) ?? '';
+  if (raw.isEmpty) return {};
+  try {
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    return decoded.map(
+      (k, v) => MapEntry(k, Map<String, dynamic>.from(v as Map)),
+    );
+  } catch (_) {
+    return {};
+  }
+}
+
+Future<void> _writeCounts(
+  KvStore kv,
+  Map<String, Map<String, dynamic>> counts,
+) async {
+  // Drop stale (not-today) entries so storage doesn't grow unbounded.
+  final today = _today();
+  counts.removeWhere((_, v) => v['date'] != today);
+  await kv.writeString(KvKeys.broadcastShowCounts, jsonEncode(counts));
 }
 
 class _BroadcastPopupDialog extends StatefulWidget {
@@ -155,59 +198,52 @@ class _BroadcastPopupDialogState extends State<_BroadcastPopupDialog>
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // ── Header: image or accent band, with the (×) on top ──
-                  Stack(
-                    children: [
-                      if (b.imageUrl != null)
+                  // ── Header: ONLY the banner image (if one is set), with the
+                  // (×) on top. No accent band, no ANNOUNCEMENT badge. ──
+                  if (b.imageUrl != null && b.imageUrl!.trim().isNotEmpty)
+                    Stack(
+                      children: [
                         Image.network(
                           b.imageUrl!,
-                          height: 150,
+                          width: double.infinity,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) =>
-                              _AccentBand(accent: accent, broadcast: b),
-                        )
-                      else
-                        _AccentBand(accent: accent, broadcast: b),
-                      Positioned(
-                        top: 10,
-                        right: 10,
-                        child: _CloseButton(
-                          onTap: () => Navigator.of(context).maybePop(),
+                          // Cap height so very tall images don't dominate, but
+                          // let normal banners show fully.
+                          errorBuilder: (_, _, _) => const SizedBox.shrink(),
                         ),
-                      ),
-                    ],
-                  ),
+                        Positioned(
+                          top: 10,
+                          right: 10,
+                          child: _CloseButton(
+                            onTap: () => Navigator.of(context).maybePop(),
+                          ),
+                        ),
+                      ],
+                    ),
 
                   // ── Body ──
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(22, 18, 22, 20),
+                    padding: EdgeInsets.fromLTRB(
+                      22,
+                      // When there's no image header, leave room for the (×)
+                      // and add a close button inline at the top-right.
+                      b.imageUrl != null && b.imageUrl!.trim().isNotEmpty
+                          ? 18
+                          : 14,
+                      22,
+                      20,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 9,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: accent.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                b.type.toUpperCase(),
-                                style: TextStyle(
-                                  color: accent,
-                                  fontSize: 9.5,
-                                  letterSpacing: 1.2,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
+                        // Inline close button when there is no image header.
+                        if (!(b.imageUrl != null && b.imageUrl!.trim().isNotEmpty))
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: _CloseButton(
+                              onTap: () => Navigator.of(context).maybePop(),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
+                          ),
                         Text(
                           b.title,
                           style: TextStyle(
@@ -275,48 +311,6 @@ class _BroadcastPopupDialogState extends State<_BroadcastPopupDialog>
                 ],
               ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Gradient accent band used when the broadcast has no image.
-class _AccentBand extends StatelessWidget {
-  const _AccentBand({required this.accent, required this.broadcast});
-
-  final Color accent;
-  final Broadcast broadcast;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 92,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            accent.withValues(alpha: 0.22),
-            accent.withValues(alpha: 0.08),
-          ],
-        ),
-      ),
-      child: Center(
-        child: Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: accent.withValues(alpha: 0.16),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            broadcast.isEmergency
-                ? Icons.warning_amber_rounded
-                : Icons.campaign_rounded,
-            color: accent,
-            size: 26,
           ),
         ),
       ),

@@ -13,6 +13,7 @@ class KvKeys {
   static const String pendingDeleteUntil = 'pending_delete_until';
   static const String appThemeMode = 'app_theme_mode';
   static const String seenBroadcastIds = 'seen_broadcast_ids';
+  static const String broadcastShowCounts = 'broadcast_show_counts';
   static const String reduceMotion = 'reduce_motion';
 
   static const Set<String> _allowed = {
@@ -22,6 +23,7 @@ class KvKeys {
     pendingDeleteUntil,
     appThemeMode,
     seenBroadcastIds,
+    broadcastShowCounts,
     reduceMotion,
   };
   static bool isAllowed(String key) => _allowed.contains(key);

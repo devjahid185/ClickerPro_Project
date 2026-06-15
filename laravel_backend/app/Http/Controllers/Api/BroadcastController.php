@@ -68,6 +68,7 @@ class BroadcastController extends Controller
             'image_url' => 'nullable|string|max:1000',
             'link' => 'nullable|string|max:1000',
             'button_label' => 'nullable|string|max:100',
+            'times_per_day' => 'nullable|integer|min:1|max:20',
         ]);
 
         $data['created_by'] = $request->user()->id;
@@ -109,6 +110,7 @@ class BroadcastController extends Controller
             'image_url' => 'nullable|string|max:1000',
             'link' => 'nullable|string|max:1000',
             'button_label' => 'nullable|string|max:100',
+            'times_per_day' => 'nullable|integer|min:1|max:20',
         ]);
 
         $broadcast->update(array_filter($data, fn($v) => $v !== null));
@@ -135,6 +137,9 @@ class BroadcastController extends Controller
         }
         if ($request->has('buttonLabel')) {
             $request->merge(['button_label' => $request->input('buttonLabel')]);
+        }
+        if ($request->has('timesPerDay') && !$request->has('times_per_day')) {
+            $request->merge(['times_per_day' => $request->input('timesPerDay')]);
         }
         if ($request->filled('status')) {
             $request->merge(['is_active' => strtoupper((string) $request->input('status')) === 'ACTIVE']);

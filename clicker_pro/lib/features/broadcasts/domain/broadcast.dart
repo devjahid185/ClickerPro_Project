@@ -10,6 +10,10 @@ class Broadcast {
   final String? imageUrl;
   final String? link;
   final String? buttonLabel;
+
+  /// How many times per day this broadcast may pop up for a user. Set by the
+  /// admin per broadcast; defaults to 1. The app tracks per-day counts.
+  final int timesPerDay;
   final DateTime createdAt;
 
   const Broadcast({
@@ -21,6 +25,7 @@ class Broadcast {
     this.imageUrl,
     this.link,
     this.buttonLabel,
+    this.timesPerDay = 1,
     required this.createdAt,
   });
 
@@ -44,6 +49,11 @@ class Broadcast {
       imageUrl: s(json['imageUrl']),
       link: s(json['link']),
       buttonLabel: s(json['buttonLabel']),
+      timesPerDay: () {
+        final v = json['timesPerDay'] ?? json['times_per_day'];
+        final n = (v is num) ? v.toInt() : int.tryParse(v?.toString() ?? '');
+        return (n == null || n < 1) ? 1 : n;
+      }(),
       createdAt: json['createdAt'] == null
           ? DateTime.now()
           : DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now(),

@@ -121,9 +121,10 @@ function NewBroadcastModal({ onClose, onDone }: { onClose: () => void; onDone: (
   const [priority, setPriority] = useState('Normal');
   const [type, setType] = useState('Announcement');
   const [link, setLink] = useState('');
-  const [buttonLabel, setButtonLabel] = useState('');
+  const [buttonLabel, setButtonLabel] = useState('Learn more');
   const [audience, setAudience] = useState('all');
   const [imageUrl, setImageUrl] = useState('');
+  const [timesPerDay, setTimesPerDay] = useState(1);
   const [err, setErr] = useState('');
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -178,6 +179,7 @@ function NewBroadcastModal({ onClose, onDone }: { onClose: () => void; onDone: (
           imageUrl: imageUrl.trim() || null,
           link: url || null,
           buttonLabel: url ? (buttonLabel.trim() || 'Learn more') : null,
+          times_per_day: timesPerDay,
         },
       });
       onDone();
@@ -265,13 +267,23 @@ function NewBroadcastModal({ onClose, onDone }: { onClose: () => void; onDone: (
         {link.trim() && (
           <div className="field">
             <label>Button label</label>
-            <input
-              placeholder="Learn more"
-              value={buttonLabel}
-              onChange={(e) => setButtonLabel(e.target.value)}
-            />
+            <select value={buttonLabel} onChange={(e) => setButtonLabel(e.target.value)}>
+              <option>Learn more</option>
+              <option>Shop now</option>
+              <option>Full View</option>
+            </select>
           </div>
         )}
+        <div className="field">
+          <label>Show per day (how many times a user sees this popup daily)</label>
+          <input
+            type="number"
+            min={1}
+            max={20}
+            value={timesPerDay}
+            onChange={(e) => setTimesPerDay(Math.max(1, Math.min(20, Number(e.target.value) || 1)))}
+          />
+        </div>
         {err && <div className="error">{err}</div>}
         <div className="row" style={{ marginTop: 18, justifyContent: 'flex-end' }}>
           <button className="btn secondary" onClick={onClose}>Cancel</button>
