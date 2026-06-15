@@ -146,8 +146,14 @@ cd ~/clickerpro/web_app
 source ~/nodevenv/clickerpro/web_app/*/bin/activate
 npm install
 echo "API_URL=https://api.deyalghori.com" > .env.production
-npm run build
+# Build with the shared-host flags. RAYON_NUM_THREADS=1 avoids the thread-cap
+# SIGABRT. Give Node enough heap — do NOT cap it to 512MB (the Next build worker
+# crashes with exit 3221226505 / "worker exited"). 1536–2048MB is safe on 1GB+.
+RAYON_NUM_THREADS=1 NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS=--max-old-space-size=1536 npm run build
 ```
+> If the web build still OOMs on the 1 GB plan, build it **locally** (`cd web_app
+> && npm run build`) and upload the `web_app/.next` folder via cPanel File
+> Manager — same prebuilt approach as admin. Then just `npm start` on the server.
 Back on the **Setup Node.js App** page → set **Start command** to `npm start`
 (or startup file to `node_modules/.bin/next start`) → **Restart**.
 
@@ -155,7 +161,13 @@ Test: `https://app.deyalghori.com` → landing/login page loads.
 
 ---
 
-## STEP 5 — admin_panel (Next.js) — same pattern
+## STEP 5 — admin_panel (Next.js) — **DO NOT build on the server**
+
+> ⚠️ The admin panel is an **App-Router** Next.js app. Its `next build` **crashes
+> on this shared host** (thread cap → `pthread_create: Resource temporarily
+> unavailable` / SIGABRT). So the **prebuilt `.next` is committed to git** and
+> already came down with `git clone`/`git pull`. On the server you only
+> `npm install` + `npm start` — **never `npm run build` here.**
 
 cPanel → **Setup Node.js App** → **Create Application**:
 - Application root: `clickerpro/admin_panel`
@@ -163,9 +175,11 @@ cPanel → **Setup Node.js App** → **Create Application**:
 ```bash
 cd ~/clickerpro/admin_panel
 source ~/nodevenv/clickerpro/admin_panel/*/bin/activate
-npm install
+npm install --omit=dev               # deps only; .next is already built (committed)
 echo "API_PROXY_TARGET=https://api.deyalghori.com" > .env.production
-npm run build
+# NO build step — the committed .next is used as-is.
+# Sanity check the prebuilt output is present:
+test -f .next/BUILD_ID && echo "prebuilt .next OK" || echo "MISSING .next — re-pull the repo"
 ```
 Start command: `npm start` (it runs on port 3001 per package.json; cPanel maps
 the subdomain to it). **Restart**.
@@ -175,16 +189,21 @@ Test: `https://admin.deyalghori.com` → admin login. Sign in with
 
 ---
 
-## STEP 6 — Mobile app (Flutter) → point at the live API
+## STEP 6 — Mobile app (Flutter) → already points at the live API ✅
 
-The phone app isn't "hosted" — we build an APK that talks to the live API.
-On **this PC** (I run these), set the API base and build:
+The phone app isn't "hosted" — the installed APK talks to the live API.
+**Good news:** the bundled `clicker_pro/.env` already sets
+`API_BASE_URL=https://api.deyalghori.com`, so the APK currently on both phones
+will hit the live server the moment the backend (STEP 3) is up — **no rebuild
+needed** for this test.
+
+If you ever change the API host, edit `clicker_pro/.env` (or pass
+`--dart-define=API_BASE_URL=...`) and rebuild:
 ```bash
-cd clicker_pro
-flutter build apk --release --dart-define=API_BASE_URL=https://api.deyalghori.com
+cd clicker_pro && flutter build apk --release        # then reinstall on the phones
 ```
-Then install the APK on your phone (I'll give the transfer/install command).
-Now the phone uses the real server over HTTPS — true end-to-end test.
+Once STEP 3 is live, open the app on the phone → log in → create a booking →
+record a payment. That's the true end-to-end test over HTTPS.
 
 ---
 
@@ -218,11 +237,27 @@ Now the phone uses the real server over HTTPS — true end-to-end test.
 
 ## Updating later (after code changes)
 ```bash
-cd ~/clickerpro && git pull
-# backend:
-cd laravel_backend && composer install --no-dev -o && php artisan migrate --force && php artisan config:cache
-# web/admin: source the nodevenv, then: npm install && npm run build, Restart in Node App page
+cd ~/clickerpro && git pull          # pulls new code AND the committed admin .next
+
+# backend (run migrate only if there are new migrations):
+cd ~/clickerpro/laravel_backend
+composer install --no-dev -o
+php artisan migrate --force
+php artisan config:cache && php artisan route:cache
+
+# web_app — rebuild on server (or upload a local .next if it OOMs):
+cd ~/clickerpro/web_app && source ~/nodevenv/clickerpro/web_app/*/bin/activate
+npm install && RAYON_NUM_THREADS=1 NODE_OPTIONS=--max-old-space-size=1536 npm run build
+
+# admin_panel — DO NOT build; the new .next came from git pull. Just:
+cd ~/clickerpro/admin_panel && source ~/nodevenv/clickerpro/admin_panel/*/bin/activate
+npm install --omit=dev
+
+# Finally: Restart BOTH apps from the "Setup Node.js App" page.
 ```
+> ⚠️ This release fixed a live bug: Admin **Analytics** and **Reports** pages
+> threw 500 on PostgreSQL (MySQL-only `DATE_FORMAT` → now `TO_CHAR`). After this
+> `git pull` + `config:cache`, those pages will work. No new migration needed.
 
 ---
 
