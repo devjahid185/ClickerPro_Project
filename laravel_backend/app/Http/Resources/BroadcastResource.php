@@ -30,7 +30,11 @@ class BroadcastResource extends JsonResource
             // optional presentation fields (not all columns exist; safe defaults)
             'priority' => $this->priority ?? 'Normal',
             'type' => $this->type ?? 'Announcement',
-            'imageUrl' => $this->image_url ?? null,
+            // Absolutise the image path so mobile/web can load it directly.
+            // Uploads come back as "/storage/uploads/…"; prefix the app host
+            // when it isn't already an absolute http(s) URL.
+            'imageUrl' => $this->absoluteUrl($this->image_url),
+            'image_url' => $this->absoluteUrl($this->image_url),
             'link' => $this->link ?? null,
             'buttonLabel' => $this->button_label ?? null,
             'timesPerDay' => (int) ($this->times_per_day ?? 1),
@@ -52,5 +56,21 @@ class BroadcastResource extends JsonResource
             'created_at' => $this->created_at,
             'createdAt' => $this->created_at?->toIso8601String(),
         ];
+    }
+
+    /**
+     * Turns a stored path into an absolute URL. Leaves already-absolute
+     * http(s) URLs untouched; prefixes the app host for "/storage/…" paths.
+     */
+    private function absoluteUrl(?string $path): ?string
+    {
+        $p = trim((string) $path);
+        if ($p === '') {
+            return null;
+        }
+        if (preg_match('#^https?://#i', $p)) {
+            return $p;
+        }
+        return url($p);
     }
 }
