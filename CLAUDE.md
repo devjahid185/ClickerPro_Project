@@ -1,29 +1,42 @@
-# Jetro Agent Context
+# Clicker Pro — Agent / Developer Context
 
-> Finance features: **Enabled**
-> Offline — backend not connected. Sign in to unlock full capabilities.
+Clicker Pro is a photography-studio SaaS with four parts in this monorepo:
 
----
+| Dir | Stack | Purpose | Default port |
+|-----|-------|---------|--------------|
+| `clicker_pro/` | Flutter (Dart 3) | Mobile app (Android/iOS) | — |
+| `laravel_backend/` | Laravel 11 (PHP 8.2) | REST API + DB | 5000 |
+| `web_app/` | Next.js 14 (Pages router) | Public web app + public booking | 3000 |
+| `admin_panel/` | Next.js 14 (App router) | Studio/admin dashboard | 3001 |
 
-You are an assistant for the Jetro research platform.
+> **Full file/code map for developers:** see [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md).
+> **Shared-hosting deploy:** see [SHARED_HOSTING_DEPLOY.md](SHARED_HOSTING_DEPLOY.md).
 
-## Getting Started
+## Key conventions (do not break)
 
-The user is not authenticated. Core features (skills, data API) require sign-in.
-You can still:
-- Use `jet_render` to create canvas elements (charts, tables, frames, notes, KPI cards)
-- Use `jet_canvas` to manage canvas layout (move, resize, arrange, delete elements)
-- Use `jet_query` to query any local DuckDB data
-- Use `jet_exec` to run Python/R code
-- Use `jet_parse` to convert documents to markdown (PDF, DOCX, PPTX, XLSX, HTML, EPUB, RTF, EML, images with OCR)
-- Use `jet_template` to access report templates (available offline)
+- **API response wrapper:** Laravel returns payloads as `{ "data": ... }`. Clients must unwrap `data`.
+- **Postgres JSON:** never use `whereJsonContains` blindly on PG — see DEVELOPER_GUIDE Gotchas.
+- **Shared host build:** `web_app` builds with `RAYON_NUM_THREADS=1` (cPanel thread cap). On low-RAM machines do NOT cap `--max-old-space-size` too low (512 MB crashes the Next worker; use 2048+ or omit). `admin_panel` (App router) must ship a **prebuilt `.next`** — never build on the shared server; run `next start`.
+- **Secrets:** `keystores/`, `*.jks`, `.env`, firebase admin keys are gitignored. Never commit them.
+- **i18n:** Flutter strings live in `clicker_pro/lib/l10n/` (English + Bengali). Regenerate with `flutter gen-l10n`.
 
-To unlock all features, sign in via the Jetro sidebar.
+## Build / run quick reference
 
-## Available Skills
+```bash
+# Flutter
+cd clicker_pro && flutter pub get && flutter analyze && flutter test
+flutter build apk --release           # signed via android/key.properties
 
-Sign in to access skills. Call `jet.skill({ name: "Skill Name" })` after authentication.
+# Backend
+cd laravel_backend && composer install && php artisan migrate && php artisan serve --port=5000
 
-## Available Templates
+# Web app
+cd web_app && npx next build && npx next start          # add RAYON_NUM_THREADS=1 on shared host
 
-To use a template, call `jet_template({ name: "Template Name" })` to fetch the full content.
+# Admin (ship prebuilt .next, then)
+cd admin_panel && npx next start -p 3001
+```
+
+## Test logins / seed
+
+See [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) → "Local setup & seed data".

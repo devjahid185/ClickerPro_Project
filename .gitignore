@@ -32,13 +32,22 @@ firebase-adminsdk*.json
 _*_log.txt
 _google_login_log.txt
 
-# local debug screenshots
+# local debug screenshots & adb UI dumps (large, regenerated on demand)
 _p0_*.png
 _r_*.png
 _s.png
 _s_s.png
 _set*.png
 _t_*.png
+clicker_pro/screen_*.png
+clicker_pro/flutter_*.png
+clicker_pro/flutter_*.log
+clicker_pro/coverage_run.log
+clicker_pro/_raw.png
+clicker_pro/_drawer_raw.png
+clicker_pro/_ui*.xml
+clicker_pro/ui_dump.xml
+clicker_pro/a.log
 
 # local tool state (never commit — contains credentials/caches)
 .jetro/
