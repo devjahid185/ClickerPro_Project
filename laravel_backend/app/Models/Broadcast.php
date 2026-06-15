@@ -12,6 +12,7 @@ class Broadcast extends Model
     protected $fillable = [
         'created_by', 'title', 'body', 'target_role',
         'is_active', 'scheduled_at', 'view_count', 'click_count',
+        'priority', 'type', 'image_url', 'link', 'button_label',
     ];
 
     protected $casts = [

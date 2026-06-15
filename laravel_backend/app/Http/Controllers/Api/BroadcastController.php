@@ -52,12 +52,22 @@ class BroadcastController extends Controller
 
     public function adminStore(Request $request)
     {
+        // The admin composer sends `content`/`audience` (and the optional
+        // presentation fields); normalise those to the stored columns before
+        // validating so a broadcast actually saves with its full content.
+        $this->normalizeBroadcastInput($request);
+
         $data = $request->validate([
             'title' => 'required|string|max:255',
             'body' => 'required|string',
             'target_role' => 'nullable|string',
             'is_active' => 'nullable|boolean',
             'scheduled_at' => 'nullable|date',
+            'priority' => 'nullable|string|max:50',
+            'type' => 'nullable|string|max:50',
+            'image_url' => 'nullable|string|max:1000',
+            'link' => 'nullable|string|max:1000',
+            'button_label' => 'nullable|string|max:100',
         ]);
 
         $data['created_by'] = $request->user()->id;
@@ -86,17 +96,49 @@ class BroadcastController extends Controller
             return response()->json(['message' => 'Not found'], 404);
         }
 
+        $this->normalizeBroadcastInput($request);
+
         $data = $request->validate([
             'title' => 'nullable|string|max:255',
             'body' => 'nullable|string',
             'target_role' => 'nullable|string',
             'is_active' => 'nullable|boolean',
             'scheduled_at' => 'nullable|date',
+            'priority' => 'nullable|string|max:50',
+            'type' => 'nullable|string|max:50',
+            'image_url' => 'nullable|string|max:1000',
+            'link' => 'nullable|string|max:1000',
+            'button_label' => 'nullable|string|max:100',
         ]);
 
         $broadcast->update(array_filter($data, fn($v) => $v !== null));
 
         return response()->json(['data' => new BroadcastResource($broadcast->fresh())]);
+    }
+
+    /**
+     * Maps the admin composer's client-side field names onto the stored
+     * columns: content→body, audience→target_role, imageUrl→image_url,
+     * buttonLabel→button_label, and the status alias (ACTIVE/ARCHIVED)→is_active.
+     */
+    private function normalizeBroadcastInput(Request $request): void
+    {
+        if ($request->filled('content') && !$request->filled('body')) {
+            $request->merge(['body' => $request->input('content')]);
+        }
+        if ($request->filled('audience') && !$request->filled('target_role')) {
+            $aud = strtolower((string) $request->input('audience'));
+            $request->merge(['target_role' => $aud === 'all' ? null : $aud]);
+        }
+        if ($request->has('imageUrl')) {
+            $request->merge(['image_url' => $request->input('imageUrl')]);
+        }
+        if ($request->has('buttonLabel')) {
+            $request->merge(['button_label' => $request->input('buttonLabel')]);
+        }
+        if ($request->filled('status')) {
+            $request->merge(['is_active' => strtoupper((string) $request->input('status')) === 'ACTIVE']);
+        }
     }
 
     public function adminDestroy($id)
