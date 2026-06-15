@@ -1,18 +1,30 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-
-const inter = Inter({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'] });
 
 export const metadata: Metadata = {
   title: 'Clicker Pro — Admin',
   description: 'Platform administration for Clicker Pro',
 };
 
+// Shared-hosting build fix: this host hard-caps threads/processes, so the
+// `next/font/google` build-time font optimizer (Rust/rayon) crashed the build
+// worker with SIGABRT ("global thread pool not initialized / Resource
+// temporarily unavailable"). We use a system font stack instead — no
+// build-time native font pipeline, no external request, and the tight admin
+// CSP (`font-src 'self'`) stays untouched.
+//
+// `force-dynamic` also skips App-Router static prerendering (another
+// worker-spawning step). Every admin page is a token-authenticated,
+// client-rendered dashboard, so there is nothing to statically prerender.
+export const dynamic = 'force-dynamic';
+
+const FONT_STACK =
+  "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.className}>
-      <body>{children}</body>
+    <html lang="en">
+      <body style={{ fontFamily: FONT_STACK }}>{children}</body>
     </html>
   );
 }
