@@ -21,17 +21,25 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [period, setPeriod] = useState('This Month');
+  const [teamPerf, setTeamPerf] = useState<any[]>([]);
+  const [yearly, setYearly] = useState<any>(null);
 
   useEffect(() => {
     Promise.all([
       api<any>('/api/bookings?limit=500'),
       api<any>('/api/payments').catch(() => []),
       api<any>('/api/expenses').catch(() => []),
+      // Dedicated server reports — authoritative figures (mobile parity).
+      api<any>('/api/reports/team-performance').catch(() => null),
+      api<any>('/api/reports/yearly-summary').catch(() => null),
     ])
-      .then(([b, p, e]) => {
+      .then(([b, p, e, tp, ys]) => {
         setBookings(Array.isArray(b) ? b : b?.data ?? []);
         setPayments(Array.isArray(p) ? p : p?.data ?? []);
         setExpenses(Array.isArray(e) ? e : e?.data ?? []);
+        const tpRows = tp?.data?.teamPerformance ?? tp?.teamPerformance ?? [];
+        setTeamPerf(Array.isArray(tpRows) ? tpRows : []);
+        setYearly(ys?.data ?? ys ?? null);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -236,6 +244,55 @@ export default function ReportsPage() {
                 </div>
               </div>
             </div>
+
+            {/* Yearly Summary (server figures) */}
+            {yearly?.summary && (
+              <div className="panel" style={{ marginTop: 20 }}>
+                <div className="panel-header"><span className="panel-title">Yearly Summary {yearly.year ? `· ${yearly.year}` : ''}</span></div>
+                <div className="panel-body">
+                  <div className="cards cards-4">
+                    {[
+                      ['Revenue', yearly.summary.totalRevenue, 'var(--green)'],
+                      ['Expenses', yearly.summary.totalExpenses, 'var(--red)'],
+                      ['Freelancer Payouts', yearly.summary.totalFreelancerPayouts, 'var(--orange)'],
+                      ['Net Profit', yearly.summary.netProfit, 'var(--film)'],
+                    ].map(([label, val, color]) => (
+                      <div key={label as string} className="card" style={{ textAlign: 'center' }}>
+                        <div className="muted text-sm" style={{ marginBottom: 6 }}>{label as string}</div>
+                        <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 26, color: color as string }}>{tk(Number(val) || 0)}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Team Performance leaderboard (server figures) */}
+            {teamPerf.length > 0 && (
+              <div className="panel" style={{ marginTop: 20 }}>
+                <div className="panel-header"><span className="panel-title">Team Performance</span></div>
+                <div className="panel-body">
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr><th>#</th><th>Member</th><th>Role</th><th>Events</th><th>Earnings</th><th>Pending Re-edits</th><th>Score</th></tr>
+                    </thead>
+                    <tbody>
+                      {teamPerf.map((m, i) => (
+                        <tr key={m.userId}>
+                          <td>{i + 1}</td>
+                          <td>{m.name}</td>
+                          <td><span className={`badge ${m.role === 'OWNER' ? 'gold' : m.role === 'MANAGER' ? 'blue' : 'gray'}`}>{m.role}</span></td>
+                          <td>{m.totalEvents}</td>
+                          <td>{tk(Number(m.totalEarnings) || 0)}</td>
+                          <td>{m.pendingReEdits}</td>
+                          <td style={{ fontWeight: 700, color: 'var(--orange)' }}>{m.performanceScore}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
