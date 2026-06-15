@@ -40,6 +40,12 @@ class UserResource extends JsonResource
             'bio' => $this->bio,
             'avatar' => $this->avatar,
 
+            // Studio logo + digital signature (snake_case + camelCase aliases).
+            'logo_url' => $this->logo_url,
+            'logoUrl' => $this->logo_url,
+            'signature_url' => $this->signature_url,
+            'signatureUrl' => $this->signature_url,
+
             // Owner's own public booking link (needed by Settings).
             'public_booking_token' => $this->public_booking_token,
             'publicToken' => $this->public_booking_token,

@@ -21,6 +21,9 @@ class ProfileController extends Controller
             'bio' => 'nullable|string',
             'business_name' => 'nullable|string|max:255',
             'avatar' => 'nullable|string',
+            // Studio logo + digital signature (remote URL or base64 data-URI).
+            'logo_url' => 'nullable|string',
+            'signature_url' => 'nullable|string',
             // Payout details so a team owner can see how to pay this member.
             'bkash_number' => 'nullable|string|max:30',
             'bank_details' => 'nullable|string|max:500',

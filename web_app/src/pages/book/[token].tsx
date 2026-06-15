@@ -25,11 +25,14 @@ export default function PublicBookingPage() {
   useEffect(() => {
     if (!token) return;
     fetch(`/api/public-booking/${token}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.error) { setError(data.error); return; }
-        setStudioInfo(data.studio || data.owner || data);
-        setPackages(data.packages || []);
+      .then(async (r) => ({ ok: r.ok, body: await r.json().catch(() => ({})) }))
+      .then(({ ok, body }) => {
+        if (!ok) { setError(body?.message || 'Invalid booking link'); return; }
+        // API shape: { data: { studio: {name,bio,avatar}, packages: [] } }
+        const d = body?.data ?? body;
+        const studio = d?.studio ?? d?.owner ?? d ?? {};
+        setStudioInfo({ businessName: studio.name || studio.businessName || '', avatar: studio.avatar || '', bio: studio.bio || '' });
+        setPackages(Array.isArray(d?.packages) ? d.packages : []);
       })
       .catch(() => setError('Failed to load booking page.'))
       .finally(() => setLoading(false));
@@ -45,13 +48,26 @@ export default function PublicBookingPage() {
     }
     setSubmitting(true); setSubmitError('');
     try {
+      // The API validates snake_case keys: name, phone, event_type, date,
+      // venue, package_id, notes. (camelCase silently failed validation.)
       const res = await fetch(`/api/public-booking/${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, packageId: selectedPkg }),
+        body: JSON.stringify({
+          name: form.clientName,
+          phone: form.clientPhone || null,
+          event_type: form.eventType,
+          date: form.date,
+          venue: form.venue || null,
+          package_id: selectedPkg ? Number(selectedPkg) : null,
+          notes: [form.shift ? `Shift: ${form.shift}` : '', form.notes].filter(Boolean).join('\n') || null,
+        }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Submission failed');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const fieldErr = data?.errors ? (Object.values(data.errors)[0] as string[])?.[0] : undefined;
+        throw new Error(data.message || fieldErr || 'Submission failed');
+      }
       setSubmitted(true);
     } catch (e: any) { setSubmitError(e.message); }
     finally { setSubmitting(false); }
@@ -86,10 +102,14 @@ export default function PublicBookingPage() {
       {/* Header */}
       <div className="pub-header">
         <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 28, color: '#FF6200', letterSpacing: '0.05em' }}>ClickerPro</div>
-        {studioInfo?.businessName && (
+        {(studioInfo?.businessName || studioInfo?.avatar) && (
           <>
             <div style={{ width: 1, height: 28, background: 'rgba(255,255,255,0.15)' }} />
-            <div style={{ fontSize: 15, fontWeight: 600 }}>{studioInfo.businessName}</div>
+            {studioInfo?.avatar && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={studioInfo.avatar} alt="" style={{ height: 28, width: 28, objectFit: 'contain', borderRadius: 6 }} />
+            )}
+            {studioInfo?.businessName && <div style={{ fontSize: 15, fontWeight: 600 }}>{studioInfo.businessName}</div>}
           </>
         )}
       </div>
@@ -129,7 +149,7 @@ export default function PublicBookingPage() {
                 <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.4)', marginBottom: 14 }}>Select a Package (Optional)</div>
                 <div className="pub-grid">
                   {packages.map((p) => {
-                    const net = (Number(p.price) || 0) - (Number(p.discount) || 0);
+                    const net = (Number(p.base_price ?? p.price) || 0) - (Number(p.discount) || 0);
                     return (
                       <div
                         key={p.id}

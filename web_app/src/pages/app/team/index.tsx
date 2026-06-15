@@ -36,12 +36,19 @@ export default function TeamPage() {
   const [settling, setSettling] = useState<string | null>(null);
 
   const load = async () => {
-    setLoading(true);
+    setLoading(true); setError('');
     try {
       const res = await api<any>('/api/team');
       setMembers(Array.isArray(res) ? res : res?.data ?? res?.members ?? []);
-    } catch (e: any) { setError(e.message); }
-    finally { setLoading(false); }
+    } catch (e: any) {
+      // A 5xx here used to blank the whole page. Keep the page usable
+      // (invite/join still work) and show a friendly, non-fatal notice.
+      const msg = /error 5\d\d/i.test(e.message || '')
+        ? 'Could not load team members right now. Invite & join still work — try refreshing in a moment.'
+        : e.message;
+      setError(msg);
+      setMembers([]);
+    } finally { setLoading(false); }
   };
 
   const loadInvite = async () => {
@@ -136,10 +143,11 @@ export default function TeamPage() {
 
   const openPerms = (m: any) => {
     setPermMember(m);
+    const p = m.manager_permissions?.permissions ?? m.permissions ?? {};
     setPerms({
-      can_see_finance: m.permissions?.can_see_finance ?? m.canSeeFinance ?? false,
-      can_create_booking: m.permissions?.can_create_booking ?? m.canCreateBooking ?? false,
-      can_manage_team: m.permissions?.can_manage_team ?? m.canManageTeam ?? false,
+      can_see_finance: p.can_see_finance ?? m.canSeeFinance ?? false,
+      can_create_booking: p.can_create_booking ?? m.canCreateBooking ?? false,
+      can_manage_team: p.can_manage_team ?? m.canManageTeam ?? false,
     });
     setShowPermModal(true);
   };
@@ -147,7 +155,9 @@ export default function TeamPage() {
   const savePerms = async () => {
     if (!permMember) return;
     try {
-      await api(`/api/team/members/${permMember.id}/permissions`, { method: 'PATCH', body: perms });
+      // Backend validates `{ permissions: {...} }` and stores it under
+      // manager_permissions.permissions — wrap accordingly.
+      await api(`/api/team/members/${permMember.id}/permissions`, { method: 'PATCH', body: { permissions: perms } });
       setShowPermModal(false);
       load();
     } catch (e: any) { alert(e.message); }

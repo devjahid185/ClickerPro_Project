@@ -385,16 +385,6 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                         letterSpacing: 0.8,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Demo mode: enter 123456',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppColors.teal.withValues(alpha: 0.7),
-                        letterSpacing: 0.3,
-                      ),
-                    ),
                     const SizedBox(height: 24),
 
                     // ── Digit cells (with shake) ────────────────

@@ -78,7 +78,6 @@ export default function ClientsPage() {
         <div className="toolbar" style={{ marginBottom: 16 }}>
           <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 24 }}>Clients</div>
           <span className="spacer" />
-          <button className="btn" style={{ background: 'var(--orange)', color: '#000' }} onClick={openNew}>+ New Client</button>
         </div>
 
         {error && <div className="error" style={{ marginBottom: 12 }}>{error}</div>}

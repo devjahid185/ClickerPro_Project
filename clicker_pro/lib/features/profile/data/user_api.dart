@@ -43,6 +43,11 @@ class UserApi {
       if (partial['companyName'] != null)
         'business_name': partial['companyName'],
       if (partial['avatarUrl'] != null) 'avatar': partial['avatarUrl'],
+      // Studio logo + digital signature — now persisted server-side so the
+      // "Uploaded / Attached" state survives a reload.
+      if (partial['logoUrl'] != null) 'logo_url': partial['logoUrl'],
+      if (partial['signatureUrl'] != null)
+        'signature_url': partial['signatureUrl'],
       // Payout details — persisted so a team owner can see how to pay this
       // member from the member-profile sheet.
       if (partial['bkash'] != null) 'bkash_number': partial['bkash'],

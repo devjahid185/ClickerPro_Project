@@ -25,7 +25,9 @@ class PublicBookingController extends Controller
                 'studio' => [
                     'name' => $owner->business_name ?? $owner->name,
                     'bio' => $owner->bio,
-                    'avatar' => $owner->avatar,
+                    // Prefer the studio logo; fall back to the avatar photo.
+                    'avatar' => $owner->logo_url ?: $owner->avatar,
+                    'logo_url' => $owner->logo_url,
                 ],
                 'packages' => $packages,
             ],

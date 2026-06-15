@@ -88,7 +88,7 @@ export default function CalendarPage() {
               <button className={`chip${view === 'month' ? ' active' : ''}`} onClick={() => setView('month')}>Month</button>
               <button className={`chip${view === 'week' ? ' active' : ''}`} onClick={() => setView('week')}>Week</button>
             </div>
-            <button className="btn" style={{ background: 'var(--orange)', color: '#000' }} onClick={() => router.push('/app/bookings')}>+ Add Booking</button>
+            <button className="btn" style={{ background: 'var(--orange)', color: '#000' }} onClick={() => router.push('/app/bookings?new=1')}>+ Add Booking</button>
           </div>
         </div>
 
@@ -128,25 +128,22 @@ export default function CalendarPage() {
                     return (
                       <div
                         key={day}
-                        className="cal-day"
+                        className="cal-day compact"
                         onClick={() => setSelectedDay(day === selectedDay ? null : day)}
                         style={{
-                          padding: '8px 6px',
-                          borderRadius: 6,
                           cursor: 'pointer',
                           background: isSelected ? 'var(--orange-dim)' : dayBookings.length > 0 ? 'rgba(255,98,0,0.06)' : 'var(--surface-3)',
-                          border: isToday ? '2px solid var(--orange)' : isSelected ? '1px solid var(--orange)' : '1px solid transparent',
-                          minHeight: 60,
+                          border: isToday ? '2px solid var(--orange)' : isSelected ? '1px solid var(--orange)' : '1px solid var(--border-2)',
                           position: 'relative',
                         }}
                       >
-                        <div style={{ fontSize: 13, fontWeight: isToday ? 700 : 400, color: isToday ? 'var(--orange)' : 'var(--film)', marginBottom: 4 }}>{day}</div>
+                        <div style={{ fontSize: 12, fontWeight: isToday ? 700 : 400, color: isToday ? 'var(--orange)' : 'var(--film)', marginBottom: 2 }}>{day}</div>
                         <div className="row" style={{ gap: 3, flexWrap: 'wrap' }}>
-                          {hasDayShift && <div className="cal-event-dot" style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--gold)' }} />}
-                          {hasNightShift && <div className="cal-event-dot" style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--purple)' }} />}
+                          {hasDayShift && <div className="cal-event-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--gold)' }} />}
+                          {hasNightShift && <div className="cal-event-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--purple)' }} />}
                         </div>
                         {dayBookings.length > 0 && (
-                          <div style={{ fontSize: 9, color: 'var(--film-muted)', fontFamily: 'JetBrains Mono, monospace', marginTop: 4 }}>{dayBookings.length} event{dayBookings.length !== 1 ? 's' : ''}</div>
+                          <div style={{ fontSize: 9, color: 'var(--film-muted)', fontFamily: 'JetBrains Mono, monospace', marginTop: 2 }}>{dayBookings.length}</div>
                         )}
                       </div>
                     );
@@ -211,9 +208,9 @@ export default function CalendarPage() {
                     </div>
                   </Link>
                 ))}
-                <Link href={`/app/bookings?date=${selectedDayStr}`} className="btn ghost sm" style={{ marginTop: 8, width: '100%', justifyContent: 'center' }}>
-                  View All for This Day
-                </Link>
+                <button className="btn sm" style={{ marginTop: 8, width: '100%', justifyContent: 'center', background: 'var(--orange)', color: '#000' }} onClick={() => router.push(`/app/bookings?new=1&date=${selectedDayStr}`)}>
+                  + Add Booking This Day
+                </button>
               </div>
             </div>
           )}

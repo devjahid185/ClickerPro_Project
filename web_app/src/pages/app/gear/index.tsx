@@ -6,11 +6,9 @@ import { tk } from '@/lib/format';
 const fmtDate = (d: string) =>
   d ? new Date(d).toLocaleDateString('en-BD', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
 
-const CONDITIONS = ['GOOD', 'FAIR', 'DAMAGED'];
-const COND_COLORS: Record<string, string> = { GOOD: 'green', FAIR: 'gold', DAMAGED: 'red' };
-const STATUS_FILTERS = ['ALL', 'Available', 'In Use', 'Maintenance', 'Damaged'];
+const STATUS_FILTERS = ['ALL', 'Available', 'In Use'];
 
-const blank = () => ({ name: '', category: '', serialNumber: '', condition: 'GOOD', purchaseValue: '', notes: '' });
+const blank = () => ({ name: '', category: '', serialNumber: '' });
 
 export default function GearPage() {
   const [gear, setGear] = useState<any[]>([]);
@@ -57,16 +55,14 @@ export default function GearPage() {
 
   const filtered = gear.filter((g) => {
     if (filter === 'ALL') return true;
-    if (filter === 'Available') return g.available !== false && g.condition !== 'DAMAGED';
-    if (filter === 'Damaged') return g.condition === 'DAMAGED';
+    if (filter === 'Available') return g.available !== false;
     if (filter === 'In Use') return g.available === false;
-    if (filter === 'Maintenance') return g.condition === 'FAIR';
     return true;
   });
 
   const openNew = () => { setForm(blank()); setEditId(null); setModalError(''); setShowModal(true); };
   const openEdit = (g: any) => {
-    setForm({ name: g.name || '', category: g.category || '', serialNumber: g.serialNumber || g.serial || '', condition: g.condition || 'GOOD', purchaseValue: g.purchaseValue || g.value || '', notes: g.notes || '' });
+    setForm({ name: g.name || '', category: g.category || '', serialNumber: g.serialNumber || g.serial || '' });
     setEditId(g.id); setModalError(''); setShowModal(true);
   };
 
@@ -76,9 +72,9 @@ export default function GearPage() {
     setSubmitting(true); setModalError('');
     try {
       if (editId) {
-        await api(`/api/gear/${editId}`, { method: 'PATCH', body: { ...form, purchaseValue: Number(form.purchaseValue) } });
+        await api(`/api/gear/${editId}`, { method: 'PATCH', body: form });
       } else {
-        await api('/api/gear', { method: 'POST', body: { ...form, purchaseValue: Number(form.purchaseValue) } });
+        await api('/api/gear', { method: 'POST', body: form });
       }
       setShowModal(false);
       load();
@@ -145,7 +141,7 @@ export default function GearPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--surface-3)' }}>
-                    {['Name', 'Category', 'Serial', 'Condition', 'Value', 'Available', 'Actions'].map((h) => (
+                    {['Name', 'Category', 'Serial', 'Available', 'Actions'].map((h) => (
                       <th key={h} style={{ textAlign: 'left', padding: '8px 10px', fontSize: 11, fontFamily: 'JetBrains Mono, monospace', color: 'var(--film-muted)', textTransform: 'uppercase' }}>{h}</th>
                     ))}
                   </tr>
@@ -156,8 +152,6 @@ export default function GearPage() {
                       <td style={{ padding: '10px', fontSize: 14, fontWeight: 600 }}>{g.name}</td>
                       <td style={{ padding: '10px', fontSize: 13 }}>{g.category || '—'}</td>
                       <td style={{ padding: '10px', fontSize: 12, fontFamily: 'JetBrains Mono, monospace', color: 'var(--film-muted)' }}>{g.serialNumber || g.serial || '—'}</td>
-                      <td style={{ padding: '10px' }}><span className={`badge ${COND_COLORS[g.condition] || 'gray'}`}>{g.condition}</span></td>
-                      <td style={{ padding: '10px', fontSize: 13, color: 'var(--orange)' }}>{tk(Number(g.purchaseValue || g.value) || 0)}</td>
                       <td style={{ padding: '10px' }}>
                         <label className="toggle-row" style={{ gap: 8 }}>
                           <span className="toggle">
@@ -234,20 +228,6 @@ export default function GearPage() {
                 <div className="field">
                   <label>Serial Number</label>
                   <input className="field" value={form.serialNumber} onChange={(e) => setForm({ ...form, serialNumber: e.target.value })} placeholder="SN-XXXX" />
-                </div>
-                <div className="field">
-                  <label>Condition</label>
-                  <select className="field" value={form.condition} onChange={(e) => setForm({ ...form, condition: e.target.value })}>
-                    {CONDITIONS.map((c) => <option key={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div className="field">
-                  <label>Purchase Value (৳)</label>
-                  <input type="number" className="field" value={form.purchaseValue} onChange={(e) => setForm({ ...form, purchaseValue: e.target.value })} placeholder="0" />
-                </div>
-                <div className="field" style={{ gridColumn: '1/-1' }}>
-                  <label>Notes</label>
-                  <textarea className="field" rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
                 </div>
               </div>
               <div className="row" style={{ gap: 10, marginTop: 16, justifyContent: 'flex-end' }}>

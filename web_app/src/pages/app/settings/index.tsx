@@ -14,11 +14,13 @@ export default function SettingsPage() {
   const [profileErr, setProfileErr] = useState('');
   const [profileLoading, setProfileLoading] = useState(false);
 
-  // Studio
-  const [studio, setStudio] = useState({ businessName: '', logoUrl: '', signatureUrl: '', distributionMode: false, publicToken: '' });
+  // Studio. `logo` is a data-URL/base64 string stored on the user's logo_url
+  // field (separate from the personal profile photo / avatar).
+  const [studio, setStudio] = useState({ businessName: '', logo: '', distributionMode: false, publicToken: '' });
   const [studioMsg, setStudioMsg] = useState('');
   const [studioErr, setStudioErr] = useState('');
   const [studioCopied, setStudioCopied] = useState(false);
+  const [logoUploading, setLogoUploading] = useState(false);
 
   // Security
   const [security, setSecurity] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -38,7 +40,7 @@ export default function SettingsPage() {
   useEffect(() => {
     if (user) {
       setProfile({ name: user.name || '', email: user.email || '', phone: user.phone || '', bio: user.bio || '' });
-      setStudio({ businessName: user.studioName || user.businessName || '', logoUrl: user.logoUrl || '', signatureUrl: user.signatureUrl || '', distributionMode: user.distributionMode || false, publicToken: user.publicToken || user.bookingToken || '' });
+      setStudio({ businessName: user.studioName || user.businessName || '', logo: user.logoUrl || user.logo_url || '', distributionMode: user.distributionMode || false, publicToken: user.publicToken || user.bookingToken || '' });
     }
     const savedLang = localStorage.getItem('cp_lang') || 'English';
     setLang(savedLang);
@@ -60,9 +62,27 @@ export default function SettingsPage() {
     e.preventDefault();
     setStudioErr(''); setStudioMsg('');
     try {
-      await api('/api/profile', { method: 'PATCH', body: { businessName: studio.businessName, logoUrl: studio.logoUrl, signatureUrl: studio.signatureUrl, distributionMode: studio.distributionMode } });
+      // Backend accepts snake_case `business_name` and `logo_url` (the studio
+      // logo — separate from the personal `avatar` profile photo).
+      await api('/api/profile', { method: 'PATCH', body: { business_name: studio.businessName, logo_url: studio.logo, distributionMode: studio.distributionMode } });
+      // Keep the cached user in sync so the logo persists on reload.
+      const cached = getUser() || {};
+      localStorage.setItem('cp_web_user', JSON.stringify({ ...cached, businessName: studio.businessName, logoUrl: studio.logo }));
       setStudioMsg('Studio settings updated.');
     } catch (e: any) { setStudioErr(e.message); }
+  };
+
+  // Read an image file as a base64 data-URL. Capped at ~512KB so the
+  // payload stays small (logos are tiny) — bigger files are rejected.
+  const onLogoFile = (file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { setStudioErr('Please choose an image file.'); return; }
+    if (file.size > 512 * 1024) { setStudioErr('Logo must be under 512KB.'); return; }
+    setStudioErr(''); setLogoUploading(true);
+    const reader = new FileReader();
+    reader.onload = () => { setStudio((s) => ({ ...s, logo: String(reader.result) })); setLogoUploading(false); };
+    reader.onerror = () => { setStudioErr('Could not read that file.'); setLogoUploading(false); };
+    reader.readAsDataURL(file);
   };
 
   const changePassword = async (e: FormEvent) => {
@@ -172,8 +192,25 @@ export default function SettingsPage() {
               {studioErr && <div className="error" style={{ marginBottom: 12 }}>{studioErr}</div>}
               <form onSubmit={saveStudio}>
                 <div className="field" style={{ marginBottom: 12 }}><label>Business Name</label><input className="field" value={studio.businessName} onChange={(e) => setStudio({ ...studio, businessName: e.target.value })} /></div>
-                <div className="field" style={{ marginBottom: 12 }}><label>Studio Logo URL</label><input className="field" value={studio.logoUrl} onChange={(e) => setStudio({ ...studio, logoUrl: e.target.value })} placeholder="https://..." /></div>
-                <div className="field" style={{ marginBottom: 16 }}><label>Signature URL</label><input className="field" value={studio.signatureUrl} onChange={(e) => setStudio({ ...studio, signatureUrl: e.target.value })} placeholder="https://..." /></div>
+                <div className="field" style={{ marginBottom: 16 }}>
+                  <label>Studio Logo</label>
+                  <div className="row" style={{ gap: 14, alignItems: 'center' }}>
+                    <div style={{ width: 64, height: 64, borderRadius: 10, background: 'var(--surface-3)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flex: '0 0 64px' }}>
+                      {studio.logo
+                        // eslint-disable-next-line @next/next/no-img-element
+                        ? <img src={studio.logo} alt="Studio logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                        : <span className="muted text-sm">No logo</span>}
+                    </div>
+                    <div className="row" style={{ gap: 8 }}>
+                      <label className="btn ghost sm" style={{ cursor: 'pointer' }}>
+                        {logoUploading ? 'Reading…' : studio.logo ? 'Change' : 'Upload Logo'}
+                        <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => onLogoFile(e.target.files?.[0] || null)} />
+                      </label>
+                      {studio.logo && <button type="button" className="btn ghost sm" onClick={() => setStudio({ ...studio, logo: '' })}>Remove</button>}
+                    </div>
+                  </div>
+                  <div className="field-hint">PNG or JPG, under 512KB. The owner&apos;s logo appears on shared booking pages.</div>
+                </div>
 
                 <ToggleRow label="Distribution Mode (allow multiple bookings same date/shift)" checked={studio.distributionMode} onChange={(v) => setStudio({ ...studio, distributionMode: v })} />
 

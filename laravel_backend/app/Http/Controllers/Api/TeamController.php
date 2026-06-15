@@ -190,22 +190,31 @@ class TeamController extends Controller
         $teamOwnerId = (int) ($user->manager_permissions['ownerId'] ?? 0)
             ?: (int) $user->id;
 
-        // Allowlist the fields — raw User rows leak internal columns
-        // (manager_permissions, activity metadata) to every teammate.
-        //
-        // Match on the JSON `ownerId` via the `->>` text-extract operator.
-        // `whereJsonContains` does NOT work here: the column is a plain `json`
-        // (not jsonb) on Postgres, where containment is unsupported, and it
-        // also mis-handled the scalar match on MySQL. `->>` text extraction is
-        // supported by BOTH Postgres and MySQL 5.7+, so it is the portable
-        // form. We compare as text ('2') because the stored value may be an
-        // int or a string depending on which join path wrote it.
-        $members = User::where(function ($q) use ($teamOwnerId) {
-                $q->where('id', $teamOwnerId)
-                  ->orWhereRaw("manager_permissions->>'ownerId' = ?", [(string) $teamOwnerId]);
+        // Engine-agnostic + 500-proof: a raw `manager_permissions->>'ownerId'`
+        // JSON operator 500'd on the live DB (column type / non-object rows
+        // differ across Postgres/MySQL deployments and broke both web & mobile
+        // Team screens). Instead we pull the small candidate set — the owner
+        // row plus everyone who has ANY manager_permissions — and match the
+        // ownerId in PHP via the model's `array` cast, which always decodes
+        // safely. The member set per studio is tiny, so this is cheap.
+        $candidates = User::where('id', $teamOwnerId)
+            ->orWhereNotNull('manager_permissions')
+            ->get();
+
+        $members = $candidates
+            ->filter(function (User $u) use ($teamOwnerId, $user) {
+                if ((int) $u->id === (int) $user->id) {
+                    return false; // never list myself
+                }
+                if ((int) $u->id === $teamOwnerId) {
+                    return true; // the studio owner is part of the team
+                }
+                $perm = $u->manager_permissions;
+                $ownerId = is_array($perm) ? ($perm['ownerId'] ?? null) : null;
+                return $ownerId !== null && (int) $ownerId === $teamOwnerId;
             })
-            ->where('id', '!=', $user->id)
-            ->get()
+            // Allowlist fields — raw User rows would leak internal columns
+            // (manager_permissions, activity metadata) to every teammate.
             ->map(fn (User $u) => [
                 'id' => $u->id,
                 'name' => $u->name,

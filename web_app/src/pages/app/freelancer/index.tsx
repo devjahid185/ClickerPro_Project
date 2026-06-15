@@ -1,7 +1,7 @@
 import { useEffect, useState, FormEvent } from 'react';
 import Link from 'next/link';
 import AppShell from '@/components/AppShell';
-import { api } from '@/lib/api';
+import { api, getUser } from '@/lib/api';
 import { tk } from '@/lib/format';
 
 const fmtDate = (d: string) =>
@@ -42,25 +42,30 @@ const leaveBadge = (status: string) => {
 const RECURRENCE_COLORS: Record<string, string> = { none: 'gray', weekly: 'blue', monthly: 'teal', yearly: 'purple' };
 const RECURRENCES = ['none', 'weekly', 'monthly', 'yearly'];
 
-const METHODS = ['CASH', 'BKASH', 'NAGAD', 'BANK'];
-
 // ── Blank form factories ────────────────────────────────────────
-const blankPayment = () => ({ event_id: '', amount: '', method: 'CASH', note: '' });
 const blankBlackout = () => ({ date: '', end_date: '', reason: '', recurrence: 'none' });
 const blankLeave = () => ({ start_date: '', end_date: '', reason: '', notes: '' });
 
+// A freelancer requesting due payment from a studio owner sends their
+// payout details — this is app-to-app, the owner gets a push (FL request).
+const blankRequest = () => ({ amount: '', bkash: '', bankDetails: '', note: '' });
+
 export default function FreelancerPage() {
+  const role = (getUser()?.role || 'OWNER').toUpperCase();
+  // A pure studio owner does not request payment — they PAY freelancers
+  // (that view lives on Team → Payouts). FREELANCER / BOTH can request.
+  const canRequestPayment = role === 'FREELANCER' || role === 'BOTH';
   const [tab, setTab] = useState(0);
 
   // ── Earnings ──────────────────────────────────────────────────
   const [earnings, setEarnings] = useState<any>({
-    totalEarnings: 0, receivedAmount: 0, pendingAmount: 0, advance: 0, due: 0, extra: 0, payout: 0,
+    totalEarnings: 0, receivedAmount: 0, pendingAmount: 0,
+    owners: [], pendingPayments: [],
   });
   const [earnLoading, setEarnLoading] = useState(true);
   const [earnError, setEarnError] = useState('');
-  const [bookings, setBookings] = useState<any[]>([]);
   const [showPayModal, setShowPayModal] = useState(false);
-  const [payForm, setPayForm] = useState<any>(blankPayment());
+  const [payForm, setPayForm] = useState<any>(blankRequest());
   const [paySubmitting, setPaySubmitting] = useState(false);
   const [payError, setPayError] = useState('');
   const [paySuccess, setPaySuccess] = useState('');
@@ -100,21 +105,16 @@ export default function FreelancerPage() {
   const loadEarnings = async () => {
     setEarnLoading(true); setEarnError('');
     try {
-      const [resE, resB] = await Promise.all([
-        api<any>('/api/freelancer/earnings'),
-        api<any>('/api/bookings?limit=200'),
-      ]);
+      const resE = await api<any>('/api/freelancer/earnings');
       const e = resE?.data ?? resE ?? {};
       setEarnings({
         totalEarnings: Number(e.totalEarnings) || 0,
         receivedAmount: Number(e.receivedAmount) || 0,
         pendingAmount: Number(e.pendingAmount) || 0,
-        advance: Number(e.advance) || 0,
-        due: Number(e.due) || 0,
-        extra: Number(e.extra) || 0,
-        payout: Number(e.payout) || 0,
+        // Per-company (owner) breakdown — which studio pays what / pending.
+        owners: Array.isArray(e.owners) ? e.owners : [],
+        pendingPayments: Array.isArray(e.pendingPayments) ? e.pendingPayments : [],
       });
-      setBookings(Array.isArray(resB) ? resB : resB?.data ?? []);
     } catch (e: any) { setEarnError(e.message); }
     finally { setEarnLoading(false); }
   };
@@ -188,26 +188,24 @@ export default function FreelancerPage() {
     else if (tab === 5) loadDashboard();
   }, [tab]);
 
-  // ── Payment request ───────────────────────────────────────────
-  const openPay = () => { setPayForm(blankPayment()); setPayError(''); setPaySuccess(''); setShowPayModal(true); };
+  // ── Payment request (freelancer → studio owner) ───────────────
+  const openPay = () => { setPayForm(blankRequest()); setPayError(''); setPaySuccess(''); setShowPayModal(true); };
   const submitPayment = async (e: FormEvent) => {
     e.preventDefault();
-    if (!payForm.amount) { setPayError('Amount is required.'); return; }
     setPaySubmitting(true); setPayError('');
     try {
-      await api('/api/payments', {
+      const res = await api<any>('/api/freelancer/earnings/request-payment', {
         method: 'POST',
         body: {
-          amount: Number(payForm.amount),
-          kind: 'PAYOUT',
-          method: payForm.method,
-          note: payForm.note,
-          event_id: payForm.event_id || null,
+          amount: payForm.amount ? Number(payForm.amount) : null,
+          bkash: payForm.bkash || null,
+          bankDetails: payForm.bankDetails || null,
+          note: payForm.note || null,
         },
       });
+      const ownerName = res?.ownerName ?? res?.data?.ownerName;
       setShowPayModal(false);
-      setPaySuccess('Payment request submitted successfully.');
-      loadEarnings();
+      setPaySuccess(ownerName ? `Request sent to ${ownerName}.` : 'Payment request sent.');
     } catch (e: any) { setPayError(e.message); }
     finally { setPaySubmitting(false); }
   };
@@ -282,7 +280,7 @@ export default function FreelancerPage() {
             <p className="page-sub">Your earnings, availability and work history</p>
           </div>
           <span className="spacer" />
-          {tab === 0 && <button className="btn" style={{ background: 'var(--orange)', color: '#000' }} onClick={openPay}>Request Payment</button>}
+          {tab === 0 && canRequestPayment && <button className="btn" style={{ background: 'var(--orange)', color: '#000' }} onClick={openPay}>Request Payment</button>}
           {tab === 1 && <button className="btn" style={{ background: 'var(--orange)', color: '#000' }} onClick={openBo}>+ Add Blackout</button>}
           {tab === 2 && <button className="btn" style={{ background: 'var(--orange)', color: '#000' }} onClick={openLeave}>Request Leave</button>}
         </div>
@@ -314,20 +312,42 @@ export default function FreelancerPage() {
               </div>
             </div>
 
+            {/* Owners pay freelancers — point them to the right screen. */}
+            {!canRequestPayment && (
+              <div className="card" style={{ marginBottom: 20, borderLeft: '3px solid var(--orange)' }}>
+                As a studio owner you pay your freelancers from{' '}
+                <Link href="/app/team" style={{ color: 'var(--orange)' }}>Team → Payouts</Link>,
+                where every freelancer&apos;s due amount is listed.
+              </div>
+            )}
+
+            {/* Per-company (studio owner) breakdown — which company pays what. */}
             <div className="panel">
-              <div className="panel-header"><span className="panel-title">Earnings Breakdown</span></div>
+              <div className="panel-header">
+                <span className="panel-title">Payment by Company</span>
+                <span className="badge gray">{earnings.owners.length}</span>
+              </div>
               <div className="panel-body">
                 {earnLoading ? (
-                  [...Array(4)].map((_, i) => <div key={i} className="shimmer" style={{ height: 32, borderRadius: 6, marginBottom: 8 }} />)
+                  [...Array(3)].map((_, i) => <div key={i} className="shimmer" style={{ height: 56, borderRadius: 6, marginBottom: 8 }} />)
+                ) : earnings.owners.length === 0 ? (
+                  <div className="empty">No company payments yet. You&apos;ll see each studio&apos;s earnings here once you&apos;re assigned to events.</div>
                 ) : (
-                  <>
-                    <div className="info-row"><span className="muted">Advance</span><span style={{ fontFamily: 'JetBrains Mono, monospace' }}>{tk(earnings.advance)}</span></div>
-                    <div className="info-row"><span className="muted">Due</span><span style={{ fontFamily: 'JetBrains Mono, monospace' }}>{tk(earnings.due)}</span></div>
-                    <div className="info-row"><span className="muted">Extra</span><span style={{ fontFamily: 'JetBrains Mono, monospace' }}>{tk(earnings.extra)}</span></div>
-                    <div className="info-row"><span className="muted">Payout</span><span style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--green)' }}>{tk(earnings.payout)}</span></div>
-                    <div className="divider" />
-                    <div className="info-row"><span style={{ fontWeight: 700 }}>Total</span><span style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 22, color: 'var(--orange)' }}>{tk(earnings.totalEarnings)}</span></div>
-                  </>
+                  earnings.owners.map((o: any) => (
+                    <div key={o.ownerId} className="info-row" style={{ alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontWeight: 600 }}>{o.ownerName || 'Studio'}</div>
+                        <div className="muted text-sm">{o.eventsCount} event{o.eventsCount === 1 ? '' : 's'}</div>
+                      </div>
+                      <span className="spacer" />
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--green)' }}>{tk(Number(o.earnedAmount) || 0)} earned</div>
+                        {Number(o.pendingAmount) > 0 && (
+                          <div className="text-sm" style={{ color: 'var(--orange)', fontFamily: 'JetBrains Mono, monospace' }}>{tk(Number(o.pendingAmount))} pending</div>
+                        )}
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
             </div>
@@ -553,24 +573,20 @@ export default function FreelancerPage() {
               <button className="btn ghost xs" onClick={() => setShowPayModal(false)}>×</button>
             </div>
             {payError && <div className="error" style={{ marginBottom: 10 }}>{payError}</div>}
+            <p className="muted text-sm" style={{ marginBottom: 12 }}>Sends a due-payment request with your details to the studio owner.</p>
             <form onSubmit={submitPayment}>
               <div className="form-grid">
                 <div className="field">
-                  <label>Amount (৳) *</label>
-                  <input type="number" className="field" required value={payForm.amount} onChange={(e) => setPayForm({ ...payForm, amount: e.target.value })} placeholder="0" />
+                  <label>Amount (৳)</label>
+                  <input type="number" className="field" value={payForm.amount} onChange={(e) => setPayForm({ ...payForm, amount: e.target.value })} placeholder="Optional" />
                 </div>
                 <div className="field">
-                  <label>Method</label>
-                  <select className="field" value={payForm.method} onChange={(e) => setPayForm({ ...payForm, method: e.target.value })}>
-                    {METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
-                  </select>
+                  <label>bKash Number</label>
+                  <input className="field" value={payForm.bkash} onChange={(e) => setPayForm({ ...payForm, bkash: e.target.value })} placeholder="01XXXXXXXXX" />
                 </div>
                 <div className="field" style={{ gridColumn: '1/-1' }}>
-                  <label>Booking (optional)</label>
-                  <select className="field" value={payForm.event_id} onChange={(e) => setPayForm({ ...payForm, event_id: e.target.value })}>
-                    <option value="">Select booking...</option>
-                    {bookings.map((b) => <option key={b.id} value={b.id}>{b.title}</option>)}
-                  </select>
+                  <label>Bank Details</label>
+                  <input className="field" value={payForm.bankDetails} onChange={(e) => setPayForm({ ...payForm, bankDetails: e.target.value })} placeholder="Bank, account name & number" />
                 </div>
                 <div className="field" style={{ gridColumn: '1/-1' }}>
                   <label>Note</label>

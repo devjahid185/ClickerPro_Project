@@ -703,6 +703,48 @@ label {
 .pill.night { background: rgba(168,85,247,0.15); color: var(--purple); }
 .pill.both  { background: rgba(20,184,166,0.15); color: var(--teal); }
 
+/* ── Visible form checkboxes ──
+   Raw <input type=checkbox> renders nearly invisible on the dark surface
+   (Outdoor shoot, Pin to top). Style the native control so the box and its
+   checked state are always legible. */
+input[type="checkbox"] {
+  appearance: none; -webkit-appearance: none;
+  width: 18px; height: 18px; flex: 0 0 18px;
+  border: 1.5px solid var(--border); border-radius: 4px;
+  background: var(--surface-3); cursor: pointer;
+  position: relative; transition: all var(--transition);
+  vertical-align: middle;
+}
+input[type="checkbox"]:hover { border-color: var(--orange); }
+input[type="checkbox"]:checked { background: var(--orange); border-color: var(--orange); }
+input[type="checkbox"]:checked::after {
+  content: ''; position: absolute; left: 5px; top: 1px;
+  width: 5px; height: 10px; border: solid #000;
+  border-width: 0 2px 2px 0; transform: rotate(45deg);
+}
+
+/* ── Shift / choice pill BUTTONS (selectable, not just a label) ── */
+.pill-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 8px 14px; border-radius: 8px;
+  font-size: 12px; font-weight: 600;
+  font-family: 'JetBrains Mono', monospace; letter-spacing: 0.04em;
+  background: var(--surface-3); border: 1px solid var(--border);
+  color: var(--film-dim); cursor: pointer;
+  transition: all var(--transition);
+}
+.pill-btn:hover { border-color: var(--orange); color: var(--film); }
+.pill-btn.active { background: var(--orange); border-color: var(--orange); color: #000; }
+
+/* ── Compact calendar (month cells were huge: aspect-ratio:1 + min-height) ── */
+.cal-day.compact {
+  aspect-ratio: auto;
+  min-height: 56px;
+  padding: 5px 6px;
+  border-radius: 6px;
+}
+.cal-day.compact .cal-day-num { font-size: 12px; margin-bottom: 2px; }
+
 /* ── Drag & drop / sortable indicator ── */
 .draggable { cursor: grab; }
 .draggable:active { cursor: grabbing; opacity: 0.7; }

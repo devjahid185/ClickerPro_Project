@@ -32,6 +32,8 @@
 //   • Page transitions          : AppRouter.lensPageRoute (slide+fade,
 //                                 280ms in / 200ms out, Cubic(0.2,0.8,0.2,1))
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -293,7 +295,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         const SyncIndicator(),
         Padding(
           padding: const EdgeInsets.only(right: 12),
-          child: _avatarButton(initials, user?.id),
+          child: _avatarButton(initials, user?.id, user?.avatarUrl),
         ),
       ],
       bottom: PreferredSize(
@@ -306,7 +308,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-  Widget _avatarButton(String initials, String? userId) {
+  Widget _avatarButton(String initials, String? userId, String? avatarUrl) {
+    final image = _avatarImage(avatarUrl);
     final avatar = Material(
       child: InkWell(
         onTap: () => _pushNamed(RouteNames.profile),
@@ -321,22 +324,49 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               color: AppColors.line(0.12),
               width: 2,
             ),
+            // Show the user's profile photo when set; fall back to initials.
+            image: image == null
+                ? null
+                : DecorationImage(image: image, fit: BoxFit.cover),
           ),
           alignment: Alignment.center,
-          child: Text(
-            initials,
-            style: TextStyle(
-              fontFamily: AppText.brand.fontFamily,
-              fontWeight: FontWeight.w700,
-              fontSize: 13,
-              color: Colors.black,
-            ),
-          ),
+          child: image != null
+              ? null
+              : Text(
+                  initials,
+                  style: TextStyle(
+                    fontFamily: AppText.brand.fontFamily,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: Colors.black,
+                  ),
+                ),
         ),
       ),
     );
     if (userId == null) return avatar;
     return Hero(tag: 'user-avatar-$userId', child: avatar);
+  }
+
+  /// Resolves a profile-photo provider from a stored avatar string, which may
+  /// be a remote URL or a base64 data-URI (the web app stores logos/photos as
+  /// data-URIs). Returns null when there's nothing valid to show.
+  ImageProvider? _avatarImage(String? url) {
+    final raw = url?.trim() ?? '';
+    if (raw.isEmpty) return null;
+    if (raw.startsWith('data:image')) {
+      final comma = raw.indexOf(',');
+      if (comma == -1) return null;
+      try {
+        return MemoryImage(base64Decode(raw.substring(comma + 1)));
+      } catch (_) {
+        return null;
+      }
+    }
+    if (raw.startsWith('http://') || raw.startsWith('https://')) {
+      return NetworkImage(raw);
+    }
+    return null;
   }
 
   // ─── Search bottom sheet (placeholder until search is shipped) ────────
@@ -1778,28 +1808,36 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   ),
                   child: Row(
                     children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.accent,
-                          border: Border.all(
-                            color: AppColors.line(0.15),
-                            width: 2,
+                      Builder(builder: (_) {
+                        final image = _avatarImage(user?.avatarUrl);
+                        return Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.accent,
+                            border: Border.all(
+                              color: AppColors.line(0.15),
+                              width: 2,
+                            ),
+                            image: image == null
+                                ? null
+                                : DecorationImage(image: image, fit: BoxFit.cover),
                           ),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          initials,
-                          style: TextStyle(
-                            fontFamily: AppText.brand.fontFamily,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
+                          alignment: Alignment.center,
+                          child: image != null
+                              ? null
+                              : Text(
+                                  initials,
+                                  style: TextStyle(
+                                    fontFamily: AppText.brand.fontFamily,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 16,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                        );
+                      }),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(

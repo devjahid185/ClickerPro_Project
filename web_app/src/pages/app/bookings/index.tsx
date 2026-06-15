@@ -1,7 +1,8 @@
 import { useEffect, useState, FormEvent } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import AppShell from '@/components/AppShell';
-import { api } from '@/lib/api';
+import { api, getUser } from '@/lib/api';
 import { tk } from '@/lib/format';
 import { Booking } from '@/types/api';
 
@@ -27,17 +28,24 @@ const SHIFT_TIMES: Record<string, string> = {
   BOTH: '12pm–11pm',
 };
 
+// Event types that show Bride / Groom fields (matches mobile parity).
+const BRIDE_GROOM_TYPES = ['Wedding', 'Holud', 'Reception', 'Engagement', 'Anniversary'];
+
 const blank = () => ({
-  clientName: '', clientPhone: '', companyName: '', eventType: 'Wedding',
+  clientName: '', clientPhone: '', eventType: 'Wedding',
   brideName: '', groomName: '', date: '', shift: 'DAY',
   startTime: '', endTime: '', venue: '', mapLink: '',
   outdoor: false, outdoorLocation: '', reportingTime: '',
-  package: '', price: '', customPrice: '', coverageHours: '', extraHourRate: '',
-  advance: '', driveLink: '', chiefPhotographer: '', requirements: '', notes: '',
+  packageId: '', customPrice: '', coverageHours: '', extraHourRate: '',
+  advance: '', chiefPhotographer: '', requirements: '', notes: '',
 });
 
 export default function BookingsPage() {
+  const router = useRouter();
+  const role = (getUser()?.role || 'OWNER').toUpperCase();
+  const isOwnerSide = role === 'OWNER' || role === 'BOTH' || role === 'MANAGER';
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [packages, setPackages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -57,15 +65,26 @@ export default function BookingsPage() {
   // booking lands as PENDING. Token lives on the owner profile.
   const shareBookingLink = async () => {
     try {
-      const res = await api<any>('/api/profile');
-      const d = res?.data ?? res;
-      const u = d?.user ?? d;
-      const token = u?.bookingToken || u?.public_booking_token || u?.publicToken;
-      if (!token) { alert('Booking link token pawa gelo na.'); return; }
+      // Try the cached user first, then the live profile. UserResource
+      // exposes the token as public_booking_token / publicToken / bookingToken.
+      const pickToken = (u: any) =>
+        u?.public_booking_token || u?.publicToken || u?.bookingToken;
+      let token = pickToken(getUser());
+      if (!token) {
+        const res = await api<any>('/api/profile');
+        const d = res?.data ?? res;
+        token = pickToken(d?.user ?? d);
+      }
+      if (!token) { alert('Booking link token pawa gelo na. Logout kore abar login korun.'); return; }
       const url = `${window.location.origin}/book/${token}`;
-      await navigator.clipboard.writeText(url);
-      setShareCopied(true);
-      setTimeout(() => setShareCopied(false), 2500);
+      try {
+        await navigator.clipboard.writeText(url);
+        setShareCopied(true);
+        setTimeout(() => setShareCopied(false), 2500);
+      } catch {
+        // Clipboard blocked (insecure context / permissions) — show the link.
+        prompt('Copy your public booking link:', url);
+      }
     } catch (e: any) { alert(e.message); }
   };
 
@@ -78,7 +97,26 @@ export default function BookingsPage() {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { load(); }, []);
+  const loadPackages = async () => {
+    try {
+      const res = await api<any>('/api/packages');
+      setPackages(Array.isArray(res) ? res : res?.data ?? []);
+    } catch { /* packages optional — custom price still works */ }
+  };
+
+  useEffect(() => { load(); loadPackages(); }, []);
+
+  // Open the New Booking form straight away when arrived via "+ Add Booking"
+  // from the Calendar (which links here with ?new=1[&date=YYYY-MM-DD]).
+  useEffect(() => {
+    if (!router.isReady) return;
+    if (router.query.new === '1') {
+      const presetDate = typeof router.query.date === 'string' ? router.query.date : '';
+      setForm({ ...blank(), date: presetDate });
+      setEditId(null); setModalError(''); setShowModal(true);
+      router.replace('/app/bookings', undefined, { shallow: true });
+    }
+  }, [router.isReady, router.query.new, router.query.date]);
 
   const getDate = (b: any) => b.date?.split('T')[0] || b.event_date?.split('T')[0] || '';
   const getName = (b: any) => b.clientName || b.client_name || b.client?.name || '';
@@ -119,7 +157,6 @@ export default function BookingsPage() {
   const fillFrom = (b: any, keepDate: boolean) => ({
     ...blank(),
     clientName: getName(b), clientPhone: getPhone(b),
-    companyName: b.company_name || b.companyName || '',
     eventType: b.eventType || b.event_type || 'Wedding',
     brideName: b.bride_name || b.brideName || '',
     groomName: b.groom_name || b.groomName || '',
@@ -130,12 +167,11 @@ export default function BookingsPage() {
     outdoor: !!(b.outdoor),
     outdoorLocation: b.outdoor_location || b.outdoorLocation || '',
     reportingTime: b.reporting_time || b.reportingTime || '',
-    package: b.package || '',
-    price: b.price ?? '', customPrice: b.custom_price ?? b.customPrice ?? '',
+    packageId: b.package_id ?? b.packageId ?? '',
+    customPrice: b.custom_price ?? b.customPrice ?? b.price ?? '',
     coverageHours: b.coverage_hours ?? b.coverageHours ?? '',
     extraHourRate: b.extra_hour_rate ?? b.extraHourRate ?? '',
     advance: b.advance_paid ?? b.advance ?? '',
-    driveLink: b.drive_link || b.driveLink || '',
     chiefPhotographer: b.chief_photographer_name || b.chiefPhotographerName || '',
     requirements: b.requirements_note || b.requirementsNote || '',
     notes: b.notes || '',
@@ -157,19 +193,23 @@ export default function BookingsPage() {
       // Laravel expects snake_case keys and a required `title` — the raw
       // camelCase form body failed validation on every save.
       const num = (v: any) => (v !== '' && v != null ? Number(v) : null);
+      // Price = the selected package's base price, else the custom price.
+      const selectedPkg = packages.find((p) => String(p.id) === String(form.packageId));
+      const resolvedPrice = selectedPkg
+        ? Number(selectedPkg.base_price ?? selectedPkg.price) || 0
+        : num(form.customPrice);
       const payload = {
         title: `${form.clientName} — ${form.eventType}`,
         date: form.date,
         event_type: form.eventType,
         shift: form.shift,
         venue: form.venue || null,
-        price: num(form.price),
+        price: resolvedPrice,
         advance_paid: num(form.advance),
         notes: form.notes || null,
         client_name: form.clientName,
         client_phone: form.clientPhone || null,
         // Rich detail fields (mobile↔web parity).
-        company_name: form.companyName || null,
         bride_name: form.brideName || null,
         groom_name: form.groomName || null,
         start_time: form.startTime || null,
@@ -178,10 +218,10 @@ export default function BookingsPage() {
         outdoor: !!form.outdoor,
         outdoor_location: form.outdoorLocation || null,
         reporting_time: form.reportingTime || null,
-        custom_price: num(form.customPrice),
+        package_id: form.packageId || null,
+        custom_price: selectedPkg ? null : num(form.customPrice),
         coverage_hours: num(form.coverageHours),
         extra_hour_rate: num(form.extraHourRate),
-        drive_link: form.driveLink || null,
         chief_photographer_name: form.chiefPhotographer || null,
         requirements_note: form.requirements || null,
       };
@@ -361,66 +401,111 @@ export default function BookingsPage() {
             </div>
             {modalError && <div className="error" style={{ marginBottom: 10 }}>{modalError}</div>}
             <form onSubmit={handleSubmit}>
+              {(() => {
+                const selectedPkg = packages.find((p) => String(p.id) === String(form.packageId));
+                const total = selectedPkg
+                  ? Number(selectedPkg.base_price ?? selectedPkg.price) || 0
+                  : Number(form.customPrice) || 0;
+                const due = Math.max(0, total - (Number(form.advance) || 0));
+                const showBrideGroom = BRIDE_GROOM_TYPES.includes(form.eventType);
+                return (
               <div className="form-grid">
+                {/* 1. Client Name */}
                 <div className="field">
                   <label>Client Name *</label>
-                  <input className="field" required value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} placeholder="Client name" />
+                  <input className="field" required value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} placeholder="e.g. Rahat & Tasnim" />
                 </div>
+                {/* 2. Client Phone */}
                 <div className="field">
                   <label>Client Phone</label>
-                  <input className="field" value={form.clientPhone} onChange={(e) => setForm({ ...form, clientPhone: e.target.value })} placeholder="+880..." />
+                  <input className="field" value={form.clientPhone} onChange={(e) => setForm({ ...form, clientPhone: e.target.value })} placeholder="+880 1XXXXXXXXX" />
                 </div>
+                {/* 3. Shift (before Date, matches mobile) */}
+                <div className="field" style={{ gridColumn: '1/-1' }}>
+                  <label>Shift</label>
+                  <div className="row" style={{ gap: 10, marginTop: 6, flexWrap: 'wrap' }}>
+                    {['DAY', 'NIGHT', 'BOTH'].map((s) => (
+                      <button
+                        key={s} type="button"
+                        className={`pill-btn${form.shift === s ? ' active' : ''}`}
+                        onClick={() => setForm({ ...form, shift: s })}
+                      >{s} · {SHIFT_TIMES[s]}</button>
+                    ))}
+                  </div>
+                </div>
+                {/* 4. Date */}
+                <div className="field">
+                  <label>Date *</label>
+                  <input type="date" className="field" required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+                </div>
+                {/* 5. Event Type */}
                 <div className="field">
                   <label>Event Type</label>
                   <select className="field" value={form.eventType} onChange={(e) => setForm({ ...form, eventType: e.target.value })}>
                     {EVENT_TYPES.map((t) => <option key={t}>{t}</option>)}
                   </select>
                 </div>
-                <div className="field">
-                  <label>Date *</label>
-                  <input type="date" className="field" required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
-                </div>
-                <div className="field" style={{ gridColumn: '1/-1' }}>
-                  <label>Shift</label>
-                  <div className="row" style={{ gap: 10, marginTop: 6 }}>
-                    {['DAY', 'NIGHT', 'BOTH'].map((s) => (
-                      <button
-                        key={s} type="button"
-                        className={`pill ${s === 'DAY' ? 'day' : s === 'NIGHT' ? 'night' : 'both'}`}
-                        style={{ opacity: form.shift === s ? 1 : 0.4, border: form.shift === s ? '1px solid currentColor' : '1px solid transparent' }}
-                        onClick={() => setForm({ ...form, shift: s })}
-                      >{s} · {SHIFT_TIMES[s]}</button>
-                    ))}
-                  </div>
-                </div>
+                {/* 6. Venue */}
                 <div className="field">
                   <label>Venue</label>
-                  <input className="field" value={form.venue} onChange={(e) => setForm({ ...form, venue: e.target.value })} placeholder="Event venue" />
+                  <input className="field" value={form.venue} onChange={(e) => setForm({ ...form, venue: e.target.value })} placeholder="Garden Hall, Banani" />
                 </div>
+                {/* 6b. Location Map */}
+                <div className="field">
+                  <label>Location Map (optional)</label>
+                  <input className="field" value={form.mapLink} onChange={(e) => setForm({ ...form, mapLink: e.target.value })} placeholder="Google Maps link or place" />
+                </div>
+                {/* 7. Package (select) */}
                 <div className="field">
                   <label>Package</label>
-                  <input className="field" value={form.package} onChange={(e) => setForm({ ...form, package: e.target.value })} placeholder="Package name or ID" />
+                  <select className="field" value={form.packageId} onChange={(e) => setForm({ ...form, packageId: e.target.value })}>
+                    <option value="">Custom price (no package)</option>
+                    {packages.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}{(p.base_price ?? p.price) != null ? ` · ${tk(Number(p.base_price ?? p.price) || 0)}` : ''}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <div className="field">
-                  <label>Price (৳)</label>
-                  <input type="number" className="field" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="0" />
+                {/* 7b. Custom Price — directly under the package box. Only when
+                    no package is chosen (a package supplies its own price). */}
+                {!form.packageId && (
+                  <div className="field">
+                    <label>Custom Price (৳)</label>
+                    <input type="number" className="field" value={form.customPrice} onChange={(e) => setForm({ ...form, customPrice: e.target.value })} placeholder="0" />
+                  </div>
+                )}
+                {/* 8. Outdoor toggle (styled, visible checkbox) */}
+                <div className="field" style={{ gridColumn: '1/-1', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <input type="checkbox" id="new-outdoor" checked={form.outdoor} onChange={(e) => setForm({ ...form, outdoor: e.target.checked })} />
+                  <label htmlFor="new-outdoor" style={{ margin: 0 }}>Outdoor shoot</label>
                 </div>
-                <div className="field">
-                  <label>Advance (৳)</label>
-                  <input type="number" className="field" value={form.advance} onChange={(e) => setForm({ ...form, advance: e.target.value })} placeholder="0" />
-                </div>
-                <div className="field">
-                  <label>Company / Studio Name</label>
-                  <input className="field" value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })} placeholder="Studio or brand name" />
-                </div>
-                <div className="field">
-                  <label>Bride</label>
-                  <input className="field" value={form.brideName} onChange={(e) => setForm({ ...form, brideName: e.target.value })} placeholder="Optional" />
-                </div>
-                <div className="field">
-                  <label>Groom</label>
-                  <input className="field" value={form.groomName} onChange={(e) => setForm({ ...form, groomName: e.target.value })} placeholder="Optional" />
-                </div>
+                {form.outdoor && (
+                  <>
+                    <div className="field">
+                      <label>Outdoor Location</label>
+                      <input className="field" value={form.outdoorLocation} onChange={(e) => setForm({ ...form, outdoorLocation: e.target.value })} placeholder="Beach, park, etc." />
+                    </div>
+                    <div className="field">
+                      <label>Reporting Time</label>
+                      <input className="field" value={form.reportingTime} onChange={(e) => setForm({ ...form, reportingTime: e.target.value })} placeholder="e.g. 07:00 AM" />
+                    </div>
+                  </>
+                )}
+                {/* 9. Bride / Groom (only for wedding-type events) */}
+                {showBrideGroom && (
+                  <>
+                    <div className="field">
+                      <label>Bride</label>
+                      <input className="field" value={form.brideName} onChange={(e) => setForm({ ...form, brideName: e.target.value })} placeholder="Optional" />
+                    </div>
+                    <div className="field">
+                      <label>Groom</label>
+                      <input className="field" value={form.groomName} onChange={(e) => setForm({ ...form, groomName: e.target.value })} placeholder="Optional" />
+                    </div>
+                  </>
+                )}
+                {/* 10. Start / End time */}
                 <div className="field">
                   <label>Start Time</label>
                   <input className="field" value={form.startTime} onChange={(e) => setForm({ ...form, startTime: e.target.value })} placeholder="10:00" />
@@ -429,55 +514,47 @@ export default function BookingsPage() {
                   <label>End Time</label>
                   <input className="field" value={form.endTime} onChange={(e) => setForm({ ...form, endTime: e.target.value })} placeholder="18:00" />
                 </div>
-                <div className="field">
-                  <label>Map Link</label>
-                  <input className="field" value={form.mapLink} onChange={(e) => setForm({ ...form, mapLink: e.target.value })} placeholder="https://maps…" />
-                </div>
-                <div className="field" style={{ gridColumn: '1/-1', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <input type="checkbox" id="new-outdoor" checked={form.outdoor} onChange={(e) => setForm({ ...form, outdoor: e.target.checked })} />
-                  <label htmlFor="new-outdoor" style={{ margin: 0 }}>Outdoor shoot</label>
-                </div>
-                {form.outdoor && (
-                  <>
-                    <div className="field">
-                      <label>Outdoor Location</label>
-                      <input className="field" value={form.outdoorLocation} onChange={(e) => setForm({ ...form, outdoorLocation: e.target.value })} />
+                {/* 11. Payment — only owner-side roles enter money; freelancers
+                    don't set client price (matches role separation). */}
+                {isOwnerSide && (
+                  <div className="field" style={{ gridColumn: '1/-1' }}>
+                    <label>Payment</label>
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: 120 }}>
+                        <div className="muted text-sm" style={{ marginBottom: 4 }}>Total (৳)</div>
+                        <input type="number" className="field" value={selectedPkg ? total : form.customPrice}
+                          disabled={!!selectedPkg}
+                          onChange={(e) => setForm({ ...form, customPrice: e.target.value })} placeholder="0" />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 120 }}>
+                        <div className="muted text-sm" style={{ marginBottom: 4 }}>Advance (৳)</div>
+                        <input type="number" className="field" value={form.advance} onChange={(e) => setForm({ ...form, advance: e.target.value })} placeholder="0" />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 120 }}>
+                        <div className="muted text-sm" style={{ marginBottom: 4 }}>Due</div>
+                        <div style={{ padding: '10px 12px', background: 'var(--surface-3)', borderRadius: 6, color: 'var(--orange)', fontFamily: 'JetBrains Mono, monospace' }}>{tk(due)}</div>
+                      </div>
                     </div>
-                    <div className="field">
-                      <label>Reporting Time</label>
-                      <input className="field" value={form.reportingTime} onChange={(e) => setForm({ ...form, reportingTime: e.target.value })} />
-                    </div>
-                  </>
+                  </div>
                 )}
-                <div className="field">
-                  <label>Custom Price (৳)</label>
-                  <input type="number" className="field" value={form.customPrice} onChange={(e) => setForm({ ...form, customPrice: e.target.value })} placeholder="0" />
-                </div>
-                <div className="field">
-                  <label>Coverage Hours</label>
-                  <input type="number" className="field" value={form.coverageHours} onChange={(e) => setForm({ ...form, coverageHours: e.target.value })} placeholder="0" />
-                </div>
-                <div className="field">
-                  <label>Extra Hour Rate (৳)</label>
-                  <input type="number" className="field" value={form.extraHourRate} onChange={(e) => setForm({ ...form, extraHourRate: e.target.value })} placeholder="0" />
-                </div>
+                {/* 12. Chief Photographer */}
                 <div className="field">
                   <label>Chief Photographer</label>
                   <input className="field" value={form.chiefPhotographer} onChange={(e) => setForm({ ...form, chiefPhotographer: e.target.value })} placeholder="Lead photographer name" />
                 </div>
+                {/* 13. Client Requirements */}
                 <div className="field" style={{ gridColumn: '1/-1' }}>
-                  <label>Drive Link</label>
-                  <input className="field" value={form.driveLink} onChange={(e) => setForm({ ...form, driveLink: e.target.value })} placeholder="https://drive.google.com/…" />
+                  <label>Client Requirements (optional)</label>
+                  <textarea className="field" rows={2} value={form.requirements} onChange={(e) => setForm({ ...form, requirements: e.target.value })} placeholder="Print, album, pendrive, delivery system…" />
                 </div>
-                <div className="field" style={{ gridColumn: '1/-1' }}>
-                  <label>Client Requirements</label>
-                  <textarea className="field" rows={2} value={form.requirements} onChange={(e) => setForm({ ...form, requirements: e.target.value })} placeholder="Any specific requirements…" />
-                </div>
+                {/* 14. Notes */}
                 <div className="field" style={{ gridColumn: '1/-1' }}>
                   <label>Notes</label>
                   <textarea className="field" rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Additional notes..." />
                 </div>
               </div>
+                );
+              })()}
               <div className="row" style={{ gap: 10, marginTop: 16, justifyContent: 'flex-end' }}>
                 <button type="button" className="btn ghost" onClick={() => setShowModal(false)}>Cancel</button>
                 <button type="submit" className="btn" style={{ background: 'var(--orange)', color: '#000' }} disabled={submitting}>

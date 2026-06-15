@@ -47,9 +47,9 @@ import '../../team/application/team_providers.dart';
 import '../../team/domain/team_member.dart';
 import '../application/booking_detail_controller.dart';
 import '../application/booking_providers.dart';
-import 'widgets/delivery_checklist_sheet.dart';
 import '../domain/booking.dart';
 import '../domain/booking_detail_envelope.dart';
+import '../domain/shift.dart';
 import 'booking_list_screen.dart'
     show shouldShowPayment, shouldShowPaymentInShare;
 import 'widgets/assignments_section.dart';
@@ -511,7 +511,6 @@ class _DetailBody extends StatelessWidget {
         StatusTimeline(entries: envelope.statusHistory),
         ReEditSection(booking: booking, requests: envelope.reEditRequests),
         _InvoiceAction(booking: booking, envelope: envelope, lang: lang),
-        _QuickActionsSection(booking: booking, envelope: envelope),
         if (booking.notes != null && booking.notes!.isNotEmpty)
           DetailSection(
             title: 'Notes',
@@ -905,45 +904,61 @@ class _InvoiceAction extends ConsumerWidget {
     final brideName = booking.brideName?.trim();
     final groomName = booking.groomName?.trim();
 
-    final lines = <String>[
-      'DATE: $dateStr',
-      'TIME: ${booking.startTime} – ${booking.endTime}',
-      'EVENT: ${_titleCase(booking.eventType.name)}',
-      if (brideName?.isNotEmpty ?? false) 'BRIDE: $brideName',
-      if (groomName?.isNotEmpty ?? false) 'GROOM: $groomName',
-      'CLIENT: $clientName',
-      'CLIENT NUMBER: $clientPhone',
-      'VENUE: ${booking.venue ?? '—'}',
-      'CHIEF: $chiefName',
-      if (teamLines.isEmpty)
-        'TEAM: —'
-      else ...[
-        'TEAM:',
-        for (final line in teamLines) '  • $line',
-      ],
-      'TEAM NO: $teamNo',
-      if (showPayment) ...[
-        'TOTAL: ${money(total)}',
-        'ADVANCE: ${money(advance)}',
-        'DUE COLLECT: ${money(due)}',
-      ],
-    ];
-    // Header carries the studio identity (name + contact), footer-style.
-    final header = <String>[
-      studioName,
-      if (studioPhone.isNotEmpty) 'Contact: $studioPhone',
-      if (studioAddress.isNotEmpty) studioAddress,
-    ].join('\n');
-    final invoiceText = '$header\n\n${lines.join('\n')}';
+    // Shift label (Day / Night / Full Day).
+    final shiftLabel = switch (booking.shift) {
+      Shift.day => 'Day',
+      Shift.night => 'Night',
+      Shift.both => 'Full Day',
+    };
 
-    // Short, stable document number derived from the booking id's digits.
-    // Client invoices read INV-####; shared event details read EVT-####.
-    final docLabel = forClient ? 'INVOICE' : 'EVENT DETAILS';
-    final numPrefix = forClient ? 'INV' : 'EVT';
+    // Document number — both client invoice and shared event details read
+    // INV-#### per the requested format.
     final idDigits = booking.id.replaceAll(RegExp(r'[^0-9]'), '');
     final invoiceNo = idDigits.isEmpty
-        ? '$numPrefix-0001'
-        : '$numPrefix-${idDigits.substring(idDigits.length > 4 ? idDigits.length - 4 : 0)}';
+        ? 'INV-0001'
+        : 'INV-${idDigits.substring(idDigits.length > 4 ? idDigits.length - 4 : 0).padLeft(4, '0')}';
+
+    // Due is shown only when the owner has chosen to (showPayment), per the
+    // "Due: (if owner show)" requirement.
+    final docLabel = forClient ? 'INVOICE' : 'EVENT DETAILS';
+
+    // Client line prefers bride/groom names for wedding-type events.
+    final clientLine =
+        (brideName?.isNotEmpty ?? false) || (groomName?.isNotEmpty ?? false)
+        ? [brideName, groomName].where((s) => s?.isNotEmpty ?? false).join(' & ')
+        : clientName;
+
+    // Shared text body — exact field order requested. Team + Team No only
+    // appear on the SHARED event details (team/freelancers), never on the
+    // client invoice.
+    final lines = <String>[
+      'Invoice: $invoiceNo',
+      'Date: $dateStr',
+      'Shift: $shiftLabel',
+      'Time: ${booking.startTime} – ${booking.endTime}',
+      'Event: ${_titleCase(booking.eventType.name)}',
+      'Client: $clientLine',
+      'Client no: $clientPhone',
+      'Venue: ${booking.venue ?? '—'}',
+      if (chiefName != '—') 'Chief: $chiefName',
+      if (!forClient) ...[
+        if (teamLines.isEmpty)
+          'Team: —'
+        else ...[
+          'Team:',
+          for (final line in teamLines) '  • $line',
+        ],
+        'Team no: $teamNo',
+      ],
+      if (showPayment) 'Due: ${money(due)}',
+    ];
+    // Footer carries the studio identity (company name + contact).
+    final footer = <String>[
+      'Company name: $studioName',
+      if (studioPhone.isNotEmpty) 'Contact no: $studioPhone',
+      if (studioAddress.isNotEmpty) studioAddress,
+    ].join('\n');
+    final invoiceText = '${lines.join('\n')}\n\n$footer';
 
     final data = _InvoiceData(
       docLabel: docLabel,
@@ -962,7 +977,10 @@ class _InvoiceAction extends ConsumerWidget {
       clientPhone: clientPhone,
       venue: booking.venue ?? '—',
       chiefName: chiefName,
-      teamLines: teamLines,
+      // Team is for the SHARED event details only — the client invoice never
+      // lists the studio's team / payouts.
+      teamLines: forClient ? const <String>[] : teamLines,
+      shiftLabel: shiftLabel,
       packageName: envelope.package?.name,
       showPayment: showPayment,
       totalText: money(total),
@@ -1007,6 +1025,7 @@ class _InvoiceData {
     required this.signatureUrl,
     required this.invoiceNo,
     required this.dateStr,
+    required this.shiftLabel,
     required this.timeStr,
     required this.eventType,
     required this.brideName,
@@ -1032,6 +1051,7 @@ class _InvoiceData {
   final String? signatureUrl;
   final String invoiceNo;
   final String dateStr;
+  final String shiftLabel;
   final String timeStr;
   final String eventType;
   final String? brideName;
@@ -1119,11 +1139,13 @@ class _InvoiceSheet extends StatelessWidget {
                         if (data.groomName?.isNotEmpty ?? false)
                           _kv('Groom', data.groomName!),
                         _kv('Date', data.dateStr),
+                        _kv('Shift', data.shiftLabel),
                         _kv('Time', data.timeStr),
                         _kv('Venue', data.venue),
                         if (data.packageName != null)
                           _kv('Package', data.packageName!),
-                        _kv('Chief', data.chiefName),
+                        if (data.chiefName != '—')
+                          _kv('Chief', data.chiefName),
                         if (data.teamLines.isNotEmpty) ...[
                           const SizedBox(height: 14),
                           _sectionLabel('TEAM'),
@@ -1555,182 +1577,6 @@ class _ShareButton extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────
-// Quick Actions — WhatsApp share + Delivery checklist
-// ─────────────────────────────────────────────────────────────────────
-
-class _QuickActionsSection extends StatelessWidget {
-  const _QuickActionsSection({required this.booking, required this.envelope});
-
-  final Booking booking;
-  final BookingDetailEnvelope envelope;
-
-  @override
-  Widget build(BuildContext context) {
-    return DetailSection(
-      title: 'Actions',
-      child: Column(
-        children: [
-          _ActionTile(
-            icon: Icons.share_rounded,
-            iconColor: const Color(0xFF25D366),
-            title: 'Share on WhatsApp',
-            subtitle: 'Send booking summary to client',
-            onTap: () => _shareWhatsApp(context),
-          ),
-          Container(
-            height: 1,
-            margin: const EdgeInsets.symmetric(vertical: 4),
-            color: AppColors.line(0.04),
-          ),
-          _ActionTile(
-            icon: Icons.picture_as_pdf_outlined,
-            iconColor: AppColors.teal,
-            title: 'Export PDF',
-            subtitle: 'Save or share booking summary',
-            onTap: () => _exportPdf(context),
-          ),
-          Container(
-            height: 1,
-            margin: const EdgeInsets.symmetric(vertical: 4),
-            color: AppColors.line(0.04),
-          ),
-          _ActionTile(
-            icon: Icons.checklist_rounded,
-            iconColor: AppColors.gold,
-            title: 'Delivery Checklist',
-            subtitle: 'Track delivery progress',
-            onTap: () => showModalBottomSheet<void>(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: AppColors.voidLight,
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              builder: (_) => DeliveryChecklistSheet(bookingId: booking.id),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _shareWhatsApp(BuildContext context) {
-    final clientPhone = envelope.client?.phone ?? '';
-    final text = StringBuffer()
-      ..writeln('*${booking.title}*')
-      ..writeln('Date: ${BookingFormat.dateTime(booking.date, lang: 'en')}')
-      ..writeln('Time: ${booking.startTime} – ${booking.endTime}')
-      ..writeln('Venue: ${booking.venue ?? '—'}')
-      ..writeln('Status: ${_titleCase(booking.status.name)}');
-    final url = clientPhone.isNotEmpty
-        ? 'https://wa.me/$clientPhone?text=${Uri.encodeComponent(text.toString())}'
-        : 'https://wa.me/?text=${Uri.encodeComponent(text.toString())}';
-    launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-  }
-
-  Future<void> _exportPdf(BuildContext context) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final client = envelope.client;
-    try {
-      await PdfExporter.share(
-        PdfDocumentData(
-          documentTitle: 'Booking Summary',
-          fileName: 'booking_${booking.id}',
-          subtitle: booking.title,
-          companyName: client?.name ?? '',
-          companyPhone: client?.phone ?? '',
-          summary: [
-            PdfRow(
-              'Date',
-              BookingFormat.dateTime(booking.date, lang: 'en'),
-            ),
-            PdfRow('Time', '${booking.startTime} – ${booking.endTime}'),
-            PdfRow('Venue', booking.venue?.isNotEmpty == true
-                ? booking.venue!
-                : '—'),
-            PdfRow('Status', _titleCase(booking.status.name), emphasize: true),
-          ],
-          footnote: 'Generated by Clicker Pro',
-        ),
-      );
-    } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text('Could not create PDF: $e')),
-      );
-    }
-  }
-}
-
-class _ActionTile extends StatelessWidget {
-  const _ActionTile({
-    required this.icon,
-    required this.iconColor,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final Color iconColor;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              alignment: Alignment.center,
-              child: Icon(icon, size: 18, color: iconColor),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      color: AppColors.filmDim.withValues(alpha: 0.8),
-                      fontSize: 11.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.filmMuted.withValues(alpha: 0.5),
-              size: 20,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 String _titleCase(String input) {
   if (input.isEmpty) return input;
