@@ -14,9 +14,10 @@
   --border-2:    rgba(0,0,0,0.06);
 
   --film:        #1a1a1a;   /* primary text */
-  --film-dim:    rgba(0,0,0,0.62);
-  --film-muted:  rgba(0,0,0,0.42);
-  --film-faint:  rgba(0,0,0,0.12);
+  --film-dim:    rgba(0,0,0,0.66);  /* secondary text — AA on light bg */
+  --film-muted:  rgba(0,0,0,0.56);  /* labels/hints — bumped from .42 so
+                                       small helper text meets ~4.5:1 contrast */
+  --film-faint:  rgba(0,0,0,0.12);  /* hairlines / track fills only */
 
   --teal:        #0d9488;
   --green:       #16a34a;
@@ -219,7 +220,7 @@ tbody tr:hover { background: var(--orange-glow); }
 .badge.green  { background: rgba(34,197,94,0.15);  color: var(--green);  }
 .badge.red    { background: rgba(239,68,68,0.15);  color: var(--red);    }
 .badge.gold   { background: rgba(214,168,76,0.15); color: var(--gold);   }
-.badge.gray   { background: var(--film-faint);     color: var(--film-muted); }
+.badge.gray   { background: rgba(0,0,0,0.07);      color: var(--film-dim);   }
 .badge.blue   { background: rgba(59,130,246,0.15); color: var(--blue);   }
 .badge.purple { background: rgba(168,85,247,0.15); color: var(--purple); }
 

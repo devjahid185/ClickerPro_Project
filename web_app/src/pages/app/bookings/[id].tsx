@@ -99,6 +99,7 @@ export default function BookingDetailPage() {
         chief_photographer_name: b?.chief_photographer_name || b?.chiefPhotographerName || '',
         requirements_note: b?.requirements_note || b?.requirementsNote || '',
         hide_payment_from_team: !!(b?.hide_payment_from_team ?? b?.hidePaymentFromTeam),
+        show_payment_in_share: !!(b?.show_payment_in_share ?? b?.showPaymentInShare),
         notes: b?.notes || '',
         status: b?.status || 'PENDING',
       });
@@ -525,6 +526,10 @@ export default function BookingDetailPage() {
                   <input type="checkbox" checked={editForm.hide_payment_from_team} onChange={(e) => setEditForm({ ...editForm, hide_payment_from_team: e.target.checked })} id="hidepay-chk" />
                   <label htmlFor="hidepay-chk" style={{ margin: 0 }}>Hide payment from team</label>
                 </div>
+                <div className="field" style={{ gridColumn: '1/-1', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <input type="checkbox" checked={editForm.show_payment_in_share} onChange={(e) => setEditForm({ ...editForm, show_payment_in_share: e.target.checked })} id="showshare-chk" />
+                  <label htmlFor="showshare-chk" style={{ margin: 0 }}>Show payment in shared event details</label>
+                </div>
               </div>
               <div className="row" style={{ gap: 10, marginTop: 16, justifyContent: 'flex-end' }}>
                 <button type="button" className="btn ghost" onClick={() => setShowEditModal(false)}>Cancel</button>
@@ -681,13 +686,15 @@ export default function BookingDetailPage() {
                 {getPhone(booking) !== '—' && <div className="muted text-sm" style={{ marginBottom: 12 }}>{getPhone(booking)}</div>}
 
                 <div style={{ color: 'var(--orange)', fontSize: 10, fontWeight: 700, letterSpacing: 1.6, fontFamily: 'JetBrains Mono, monospace', margin: '14px 0 6px' }}>EVENT DETAILS</div>
-                {[
+                {([
                   ['Event', booking.eventType || booking.event_type || '—'],
+                  ['Bride', booking.bride_name || booking.brideName || ''],
+                  ['Groom', booking.groom_name || booking.groomName || ''],
                   ['Date', fmtDate(getDate(booking))],
                   ['Shift', `${booking.shift || '—'}`],
                   ['Venue', booking.venue || '—'],
                   ...(booking.package ? [['Package', booking.package]] : []),
-                ].map(([k, v]) => (
+                ] as [string, string][]).filter(([, v]) => v !== '').map(([k, v]) => (
                   <div key={k} className="row" style={{ justifyContent: 'space-between', padding: '3px 0', fontSize: 13 }}>
                     <span className="muted">{k}</span><span style={{ color: 'var(--film)', fontWeight: 500 }}>{v}</span>
                   </div>
