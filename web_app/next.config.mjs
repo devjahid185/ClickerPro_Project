@@ -35,6 +35,11 @@ const nextConfig = {
   eslint: { ignoreDuringBuilds: true },
   reactStrictMode: true,
   poweredByHeader: false,
+  // Shared-hosting build fix: this host caps threads/processes hard
+  // (pthread_create: Resource temporarily unavailable / SIGABRT during
+  // "Collecting page data"). Force Next to use a single worker and no extra
+  // worker threads so the build doesn't try to spawn a pool it can't.
+  experimental: { workerThreads: false, cpus: 1 },
   ...(isStaticExport
     ? { output: 'export' }
     : {
