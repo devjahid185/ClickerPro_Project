@@ -74,14 +74,31 @@ export default function BookingDetailPage() {
       const b = await api<any>(`/api/bookings/${id}`);
       setBooking(b?.data ?? b);
       setEditForm({
-        clientName: b?.clientName || b?.client_name || b?.client?.name || '',
-        clientPhone: b?.clientPhone || b?.client_phone || b?.client?.phone || '',
-        eventType: b?.eventType || b?.event_type || '',
+        // snake_case keys — sent verbatim to the Laravel BookingRequest.
+        client_name: b?.clientName || b?.client_name || b?.client?.name || '',
+        client_phone: b?.clientPhone || b?.client_phone || b?.client?.phone || '',
+        company_name: b?.company_name || b?.companyName || '',
+        event_type: b?.eventType || b?.event_type || '',
         date: (b?.date || b?.event_date || '').split('T')[0],
         shift: b?.shift || 'DAY',
         venue: b?.venue || '',
-        price: b?.price || '',
-        advance: b?.advance || '',
+        bride_name: b?.bride_name || b?.brideName || '',
+        groom_name: b?.groom_name || b?.groomName || '',
+        outdoor: !!(b?.outdoor),
+        outdoor_location: b?.outdoor_location || b?.outdoorLocation || '',
+        reporting_time: b?.reporting_time || b?.reportingTime || '',
+        start_time: b?.start_time || b?.startTime || '',
+        end_time: b?.end_time || b?.endTime || '',
+        map_link: b?.map_link || b?.mapLink || '',
+        price: b?.price ?? '',
+        custom_price: b?.custom_price ?? b?.customPrice ?? '',
+        coverage_hours: b?.coverage_hours ?? b?.coverageHours ?? '',
+        extra_hour_rate: b?.extra_hour_rate ?? b?.extraHourRate ?? '',
+        advance_paid: b?.advance_paid ?? b?.advance ?? '',
+        drive_link: b?.drive_link || b?.driveLink || '',
+        chief_photographer_name: b?.chief_photographer_name || b?.chiefPhotographerName || '',
+        requirements_note: b?.requirements_note || b?.requirementsNote || '',
+        hide_payment_from_team: !!(b?.hide_payment_from_team ?? b?.hidePaymentFromTeam),
         notes: b?.notes || '',
         status: b?.status || 'PENDING',
       });
@@ -145,7 +162,16 @@ export default function BookingDetailPage() {
     e.preventDefault();
     setSubmitting(true); setEditErr('');
     try {
-      await api(`/api/bookings/${id}`, { method: 'PATCH', body: editForm });
+      // Numeric fields go as numbers; blank strings are dropped so we never
+      // overwrite a stored value with "". Booleans always sent.
+      const numeric = ['price', 'custom_price', 'coverage_hours', 'extra_hour_rate', 'advance_paid'];
+      const body: any = {};
+      Object.entries(editForm).forEach(([k, v]) => {
+        if (typeof v === 'boolean') { body[k] = v; return; }
+        if (v === '' || v === null || v === undefined) return;
+        body[k] = numeric.includes(k) ? Number(v) : v;
+      });
+      await api(`/api/bookings/${id}`, { method: 'PATCH', body });
       setShowEditModal(false); loadBooking();
     } catch (e: any) { setEditErr(e.message); }
     finally { setSubmitting(false); }
@@ -252,25 +278,57 @@ export default function BookingDetailPage() {
                 </div>
                 <div className="panel-body">
                   <div className="detail-grid">
-                    {[
-                      ['Title', booking.title || '—'],
-                      ['Client', getName(booking)],
-                      ['Phone', getPhone(booking)],
-                      ['Event Type', booking.eventType || booking.event_type || '—'],
-                      ['Date', fmtDate(getDate(booking))],
-                      ['Shift', booking.shift || '—'],
-                      ['Venue', booking.venue || '—'],
-                      ['Price', tk(Number(booking.price) || 0)],
-                      ['Advance', tk(Number(booking.advance) || 0)],
-                      ['Due', tk(Math.max(0, (Number(booking.price) || 0) - (Number(booking.advance) || 0)))],
-                      ['Status', booking.status],
-                      ['Notes', booking.notes || '—'],
-                    ].map(([k, v]) => (
-                      <div key={k} className="info-row">
-                        <span className="info-key">{k}</span>
-                        <span className="info-val">{k === 'Status' ? statusBadge(String(v)) : v}</span>
-                      </div>
-                    ))}
+                    {(() => {
+                      const adv = Number(booking.advance_paid ?? booking.advance) || 0;
+                      const price = Number(booking.price) || 0;
+                      const reqNote = (() => {
+                        const r = booking.requirements_note;
+                        if (!r) return '';
+                        try { const d = JSON.parse(r); return d?.note || Object.values(d).join(', '); }
+                        catch { return r; }
+                      })();
+                      // [label, value, alwaysShow] — falsy values without
+                      // alwaysShow are hidden so the panel stays clean.
+                      const rows: [string, any, boolean?][] = [
+                        ['Title', booking.title || '—', true],
+                        ['Client', getName(booking), true],
+                        ['Phone', getPhone(booking), true],
+                        ['Company', booking.company_name || booking.companyName],
+                        ['Event Type', booking.eventType || booking.event_type || '—', true],
+                        ['Bride', booking.bride_name || booking.brideName],
+                        ['Groom', booking.groom_name || booking.groomName],
+                        ['Date', fmtDate(getDate(booking)), true],
+                        ['Shift', booking.shift || '—', true],
+                        ['Time', [booking.start_time || booking.startTime, booking.end_time || booking.endTime].filter(Boolean).join(' – ')],
+                        ['Venue', booking.venue || '—', true],
+                        ['Outdoor', booking.outdoor ? 'Yes' : ''],
+                        ['Outdoor Location', booking.outdoor_location || booking.outdoorLocation],
+                        ['Reporting Time', booking.reporting_time || booking.reportingTime],
+                        ['Map Link', booking.map_link || booking.mapLink],
+                        ['Coverage Hours', booking.coverage_hours || booking.coverageHours],
+                        ['Extra Hour Rate', (booking.extra_hour_rate || booking.extraHourRate) ? tk(Number(booking.extra_hour_rate || booking.extraHourRate)) : ''],
+                        ['Custom Price', (booking.custom_price || booking.customPrice) ? tk(Number(booking.custom_price || booking.customPrice)) : ''],
+                        ['Chief Photographer', booking.chief_photographer_name || booking.chiefPhotographerName],
+                        ['Drive Link', booking.drive_link || booking.driveLink],
+                        ['Requirements', reqNote],
+                        ['Price', tk(price), true],
+                        ['Advance', tk(adv), true],
+                        ['Due', tk(Math.max(0, price - adv)), true],
+                        ['Status', booking.status, true],
+                        ['Notes', booking.notes || '—', true],
+                      ];
+                      const isLink = (v: any) => typeof v === 'string' && /^https?:\/\//.test(v);
+                      return rows.filter(([, v, always]) => always || (v !== '' && v != null && v !== false)).map(([k, v]) => (
+                        <div key={k} className="info-row">
+                          <span className="info-key">{k}</span>
+                          <span className="info-val">
+                            {k === 'Status' ? statusBadge(String(v))
+                              : isLink(v) ? <a href={String(v)} target="_blank" rel="noreferrer" style={{ color: 'var(--orange)' }}>Open ↗</a>
+                              : v}
+                          </span>
+                        </div>
+                      ));
+                    })()}
                   </div>
                 </div>
               </div>
@@ -428,19 +486,45 @@ export default function BookingDetailPage() {
             {editErr && <div className="error" style={{ marginBottom: 10 }}>{editErr}</div>}
             <form onSubmit={handleEdit}>
               <div className="form-grid">
-                <div className="field"><label>Client Name</label><input className="field" value={editForm.clientName} onChange={(e) => setEditForm({ ...editForm, clientName: e.target.value })} /></div>
-                <div className="field"><label>Client Phone</label><input className="field" value={editForm.clientPhone} onChange={(e) => setEditForm({ ...editForm, clientPhone: e.target.value })} /></div>
-                <div className="field"><label>Event Type</label><input className="field" value={editForm.eventType} onChange={(e) => setEditForm({ ...editForm, eventType: e.target.value })} /></div>
+                <div className="field"><label>Client Name</label><input className="field" value={editForm.client_name} onChange={(e) => setEditForm({ ...editForm, client_name: e.target.value })} /></div>
+                <div className="field"><label>Client Phone</label><input className="field" value={editForm.client_phone} onChange={(e) => setEditForm({ ...editForm, client_phone: e.target.value })} /></div>
+                <div className="field"><label>Company / Studio Name</label><input className="field" value={editForm.company_name} onChange={(e) => setEditForm({ ...editForm, company_name: e.target.value })} placeholder="Studio or brand name" /></div>
+                <div className="field"><label>Event Type</label><input className="field" value={editForm.event_type} onChange={(e) => setEditForm({ ...editForm, event_type: e.target.value })} /></div>
+                <div className="field"><label>Bride</label><input className="field" value={editForm.bride_name} onChange={(e) => setEditForm({ ...editForm, bride_name: e.target.value })} placeholder="Optional" /></div>
+                <div className="field"><label>Groom</label><input className="field" value={editForm.groom_name} onChange={(e) => setEditForm({ ...editForm, groom_name: e.target.value })} placeholder="Optional" /></div>
                 <div className="field"><label>Date</label><input type="date" className="field" value={editForm.date} onChange={(e) => setEditForm({ ...editForm, date: e.target.value })} /></div>
                 <div className="field"><label>Shift</label>
                   <select className="field" value={editForm.shift} onChange={(e) => setEditForm({ ...editForm, shift: e.target.value })}>
                     <option>DAY</option><option>NIGHT</option><option>BOTH</option>
                   </select>
                 </div>
+                <div className="field"><label>Start Time</label><input className="field" value={editForm.start_time} onChange={(e) => setEditForm({ ...editForm, start_time: e.target.value })} placeholder="10:00" /></div>
+                <div className="field"><label>End Time</label><input className="field" value={editForm.end_time} onChange={(e) => setEditForm({ ...editForm, end_time: e.target.value })} placeholder="18:00" /></div>
                 <div className="field"><label>Venue</label><input className="field" value={editForm.venue} onChange={(e) => setEditForm({ ...editForm, venue: e.target.value })} /></div>
+                <div className="field"><label>Map Link</label><input className="field" value={editForm.map_link} onChange={(e) => setEditForm({ ...editForm, map_link: e.target.value })} placeholder="https://maps…" /></div>
+                <div className="field" style={{ gridColumn: '1/-1', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <input type="checkbox" checked={editForm.outdoor} onChange={(e) => setEditForm({ ...editForm, outdoor: e.target.checked })} id="outdoor-chk" />
+                  <label htmlFor="outdoor-chk" style={{ margin: 0 }}>Outdoor shoot</label>
+                </div>
+                {editForm.outdoor && (
+                  <>
+                    <div className="field"><label>Outdoor Location</label><input className="field" value={editForm.outdoor_location} onChange={(e) => setEditForm({ ...editForm, outdoor_location: e.target.value })} /></div>
+                    <div className="field"><label>Reporting Time</label><input className="field" value={editForm.reporting_time} onChange={(e) => setEditForm({ ...editForm, reporting_time: e.target.value })} /></div>
+                  </>
+                )}
                 <div className="field"><label>Price (৳)</label><input type="number" className="field" value={editForm.price} onChange={(e) => setEditForm({ ...editForm, price: e.target.value })} /></div>
-                <div className="field"><label>Advance (৳)</label><input type="number" className="field" value={editForm.advance} onChange={(e) => setEditForm({ ...editForm, advance: e.target.value })} /></div>
+                <div className="field"><label>Custom Price (৳)</label><input type="number" className="field" value={editForm.custom_price} onChange={(e) => setEditForm({ ...editForm, custom_price: e.target.value })} /></div>
+                <div className="field"><label>Coverage Hours</label><input type="number" className="field" value={editForm.coverage_hours} onChange={(e) => setEditForm({ ...editForm, coverage_hours: e.target.value })} /></div>
+                <div className="field"><label>Extra Hour Rate (৳)</label><input type="number" className="field" value={editForm.extra_hour_rate} onChange={(e) => setEditForm({ ...editForm, extra_hour_rate: e.target.value })} /></div>
+                <div className="field"><label>Advance (৳)</label><input type="number" className="field" value={editForm.advance_paid} onChange={(e) => setEditForm({ ...editForm, advance_paid: e.target.value })} /></div>
+                <div className="field"><label>Chief Photographer</label><input className="field" value={editForm.chief_photographer_name} onChange={(e) => setEditForm({ ...editForm, chief_photographer_name: e.target.value })} placeholder="Lead photographer name" /></div>
+                <div className="field" style={{ gridColumn: '1/-1' }}><label>Drive Link</label><input className="field" value={editForm.drive_link} onChange={(e) => setEditForm({ ...editForm, drive_link: e.target.value })} placeholder="https://drive.google.com/…" /></div>
+                <div className="field" style={{ gridColumn: '1/-1' }}><label>Client Requirements</label><textarea className="field" rows={2} value={editForm.requirements_note} onChange={(e) => setEditForm({ ...editForm, requirements_note: e.target.value })} /></div>
                 <div className="field" style={{ gridColumn: '1/-1' }}><label>Notes</label><textarea className="field" rows={3} value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} /></div>
+                <div className="field" style={{ gridColumn: '1/-1', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <input type="checkbox" checked={editForm.hide_payment_from_team} onChange={(e) => setEditForm({ ...editForm, hide_payment_from_team: e.target.checked })} id="hidepay-chk" />
+                  <label htmlFor="hidepay-chk" style={{ margin: 0 }}>Hide payment from team</label>
+                </div>
               </div>
               <div className="row" style={{ gap: 10, marginTop: 16, justifyContent: 'flex-end' }}>
                 <button type="button" className="btn ghost" onClick={() => setShowEditModal(false)}>Cancel</button>

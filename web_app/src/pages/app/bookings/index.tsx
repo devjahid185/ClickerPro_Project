@@ -28,8 +28,12 @@ const SHIFT_TIMES: Record<string, string> = {
 };
 
 const blank = () => ({
-  clientName: '', clientPhone: '', eventType: 'Wedding', date: '', shift: 'DAY',
-  venue: '', package: '', price: '', advance: '', notes: '',
+  clientName: '', clientPhone: '', companyName: '', eventType: 'Wedding',
+  brideName: '', groomName: '', date: '', shift: 'DAY',
+  startTime: '', endTime: '', venue: '', mapLink: '',
+  outdoor: false, outdoorLocation: '', reportingTime: '',
+  package: '', price: '', customPrice: '', coverageHours: '', extraHourRate: '',
+  advance: '', driveLink: '', chiefPhotographer: '', requirements: '', notes: '',
 });
 
 export default function BookingsPage() {
@@ -112,24 +116,36 @@ export default function BookingsPage() {
   const bothCount = filtered.filter((b) => b.shift === 'BOTH').length;
 
   const openNew = () => { setForm(blank()); setEditId(null); setModalError(''); setShowModal(true); };
+  const fillFrom = (b: any, keepDate: boolean) => ({
+    ...blank(),
+    clientName: getName(b), clientPhone: getPhone(b),
+    companyName: b.company_name || b.companyName || '',
+    eventType: b.eventType || b.event_type || 'Wedding',
+    brideName: b.bride_name || b.brideName || '',
+    groomName: b.groom_name || b.groomName || '',
+    date: keepDate ? getDate(b) : '', shift: b.shift || 'DAY',
+    startTime: b.start_time || b.startTime || '',
+    endTime: b.end_time || b.endTime || '',
+    venue: b.venue || '', mapLink: b.map_link || b.mapLink || '',
+    outdoor: !!(b.outdoor),
+    outdoorLocation: b.outdoor_location || b.outdoorLocation || '',
+    reportingTime: b.reporting_time || b.reportingTime || '',
+    package: b.package || '',
+    price: b.price ?? '', customPrice: b.custom_price ?? b.customPrice ?? '',
+    coverageHours: b.coverage_hours ?? b.coverageHours ?? '',
+    extraHourRate: b.extra_hour_rate ?? b.extraHourRate ?? '',
+    advance: b.advance_paid ?? b.advance ?? '',
+    driveLink: b.drive_link || b.driveLink || '',
+    chiefPhotographer: b.chief_photographer_name || b.chiefPhotographerName || '',
+    requirements: b.requirements_note || b.requirementsNote || '',
+    notes: b.notes || '',
+  });
   const openEdit = (b: any) => {
-    setForm({
-      clientName: getName(b), clientPhone: getPhone(b),
-      eventType: b.eventType || b.event_type || 'Wedding',
-      date: getDate(b), shift: b.shift || 'DAY',
-      venue: b.venue || '', package: b.package || '',
-      price: b.price || '', advance: b.advance || '', notes: b.notes || '',
-    });
+    setForm(fillFrom(b, true));
     setEditId(b.id); setModalError(''); setShowModal(true);
   };
   const openDuplicate = (b: any) => {
-    setForm({
-      clientName: getName(b), clientPhone: getPhone(b),
-      eventType: b.eventType || b.event_type || 'Wedding',
-      date: '', shift: b.shift || 'DAY',
-      venue: b.venue || '', package: b.package || '',
-      price: b.price || '', advance: b.advance || '', notes: b.notes || '',
-    });
+    setForm(fillFrom(b, false));
     setEditId(null); setModalError(''); setShowModal(true);
   };
 
@@ -140,17 +156,34 @@ export default function BookingsPage() {
     try {
       // Laravel expects snake_case keys and a required `title` — the raw
       // camelCase form body failed validation on every save.
+      const num = (v: any) => (v !== '' && v != null ? Number(v) : null);
       const payload = {
         title: `${form.clientName} — ${form.eventType}`,
         date: form.date,
         event_type: form.eventType,
         shift: form.shift,
         venue: form.venue || null,
-        price: form.price !== '' && form.price != null ? Number(form.price) : null,
-        advance_paid: form.advance !== '' && form.advance != null ? Number(form.advance) : null,
+        price: num(form.price),
+        advance_paid: num(form.advance),
         notes: form.notes || null,
         client_name: form.clientName,
         client_phone: form.clientPhone || null,
+        // Rich detail fields (mobile↔web parity).
+        company_name: form.companyName || null,
+        bride_name: form.brideName || null,
+        groom_name: form.groomName || null,
+        start_time: form.startTime || null,
+        end_time: form.endTime || null,
+        map_link: form.mapLink || null,
+        outdoor: !!form.outdoor,
+        outdoor_location: form.outdoorLocation || null,
+        reporting_time: form.reportingTime || null,
+        custom_price: num(form.customPrice),
+        coverage_hours: num(form.coverageHours),
+        extra_hour_rate: num(form.extraHourRate),
+        drive_link: form.driveLink || null,
+        chief_photographer_name: form.chiefPhotographer || null,
+        requirements_note: form.requirements || null,
       };
       if (editId) {
         await api(`/api/bookings/${editId}`, { method: 'PATCH', body: payload });
@@ -375,6 +408,70 @@ export default function BookingsPage() {
                 <div className="field">
                   <label>Advance (৳)</label>
                   <input type="number" className="field" value={form.advance} onChange={(e) => setForm({ ...form, advance: e.target.value })} placeholder="0" />
+                </div>
+                <div className="field">
+                  <label>Company / Studio Name</label>
+                  <input className="field" value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })} placeholder="Studio or brand name" />
+                </div>
+                <div className="field">
+                  <label>Bride</label>
+                  <input className="field" value={form.brideName} onChange={(e) => setForm({ ...form, brideName: e.target.value })} placeholder="Optional" />
+                </div>
+                <div className="field">
+                  <label>Groom</label>
+                  <input className="field" value={form.groomName} onChange={(e) => setForm({ ...form, groomName: e.target.value })} placeholder="Optional" />
+                </div>
+                <div className="field">
+                  <label>Start Time</label>
+                  <input className="field" value={form.startTime} onChange={(e) => setForm({ ...form, startTime: e.target.value })} placeholder="10:00" />
+                </div>
+                <div className="field">
+                  <label>End Time</label>
+                  <input className="field" value={form.endTime} onChange={(e) => setForm({ ...form, endTime: e.target.value })} placeholder="18:00" />
+                </div>
+                <div className="field">
+                  <label>Map Link</label>
+                  <input className="field" value={form.mapLink} onChange={(e) => setForm({ ...form, mapLink: e.target.value })} placeholder="https://maps…" />
+                </div>
+                <div className="field" style={{ gridColumn: '1/-1', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <input type="checkbox" id="new-outdoor" checked={form.outdoor} onChange={(e) => setForm({ ...form, outdoor: e.target.checked })} />
+                  <label htmlFor="new-outdoor" style={{ margin: 0 }}>Outdoor shoot</label>
+                </div>
+                {form.outdoor && (
+                  <>
+                    <div className="field">
+                      <label>Outdoor Location</label>
+                      <input className="field" value={form.outdoorLocation} onChange={(e) => setForm({ ...form, outdoorLocation: e.target.value })} />
+                    </div>
+                    <div className="field">
+                      <label>Reporting Time</label>
+                      <input className="field" value={form.reportingTime} onChange={(e) => setForm({ ...form, reportingTime: e.target.value })} />
+                    </div>
+                  </>
+                )}
+                <div className="field">
+                  <label>Custom Price (৳)</label>
+                  <input type="number" className="field" value={form.customPrice} onChange={(e) => setForm({ ...form, customPrice: e.target.value })} placeholder="0" />
+                </div>
+                <div className="field">
+                  <label>Coverage Hours</label>
+                  <input type="number" className="field" value={form.coverageHours} onChange={(e) => setForm({ ...form, coverageHours: e.target.value })} placeholder="0" />
+                </div>
+                <div className="field">
+                  <label>Extra Hour Rate (৳)</label>
+                  <input type="number" className="field" value={form.extraHourRate} onChange={(e) => setForm({ ...form, extraHourRate: e.target.value })} placeholder="0" />
+                </div>
+                <div className="field">
+                  <label>Chief Photographer</label>
+                  <input className="field" value={form.chiefPhotographer} onChange={(e) => setForm({ ...form, chiefPhotographer: e.target.value })} placeholder="Lead photographer name" />
+                </div>
+                <div className="field" style={{ gridColumn: '1/-1' }}>
+                  <label>Drive Link</label>
+                  <input className="field" value={form.driveLink} onChange={(e) => setForm({ ...form, driveLink: e.target.value })} placeholder="https://drive.google.com/…" />
+                </div>
+                <div className="field" style={{ gridColumn: '1/-1' }}>
+                  <label>Client Requirements</label>
+                  <textarea className="field" rows={2} value={form.requirements} onChange={(e) => setForm({ ...form, requirements: e.target.value })} placeholder="Any specific requirements…" />
                 </div>
                 <div className="field" style={{ gridColumn: '1/-1' }}>
                   <label>Notes</label>

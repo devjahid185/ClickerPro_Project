@@ -19,6 +19,8 @@
 //   • Enum values are matched case/underscore-insensitively, falling back
 //     to safe defaults so one bad row never crashes a list.
 
+import 'dart:convert';
+
 import '../../../core/booking_status/booking_status.dart';
 import '../domain/assignment.dart';
 import '../domain/assignment_role.dart';
@@ -155,6 +157,27 @@ EventType eventTypeFromServer(
   return fallback;
 }
 
+/// Decodes the server `requirements_note` column back into the local
+/// `clientRequirements` map. The server stores it as a JSON string (encoded
+/// in [bookingToServer]); older rows or hand-entered text are kept as a
+/// `{'note': <text>}` map so nothing is lost. Returns [fallback] when empty.
+Map<String, dynamic>? _requirementsFromServer(
+  Object? raw, {
+  Map<String, dynamic>? fallback,
+}) {
+  if (raw == null) return fallback;
+  final text = raw.toString().trim();
+  if (text.isEmpty) return fallback;
+  try {
+    final decoded = jsonDecode(text);
+    if (decoded is Map<String, dynamic>) return decoded;
+    if (decoded is Map) return Map<String, dynamic>.from(decoded);
+  } catch (_) {
+    // Not JSON — treat as a plain note.
+  }
+  return {'note': text};
+}
+
 // ───────────────────────── Booking ─────────────────────────
 
 /// Maps a Laravel `events` row (BookingResource output) to a [Booking].
@@ -179,16 +202,25 @@ Booking bookingFromServer(Map<String, dynamic> j, {Booking? fallback}) {
           )
         : fallback?.eventType ?? EventType.other,
     date: serverDate(j['date']) ?? fallback?.date ?? DateTime.now(),
-    // The Laravel schema has no time columns — keep the local values.
-    startTime: fallback?.startTime ?? '10:00',
-    endTime: fallback?.endTime ?? '18:00',
+    startTime:
+        serverString(j, ['start_time', 'startTime']) ??
+        fallback?.startTime ??
+        '10:00',
+    endTime:
+        serverString(j, ['end_time', 'endTime']) ??
+        fallback?.endTime ??
+        '18:00',
     shift: j.containsKey('shift')
         ? shiftFromServer(j['shift'], fallback: fallback?.shift ?? Shift.day)
         : fallback?.shift ?? Shift.day,
     venue: serverString(j, ['venue']) ?? fallback?.venue,
-    outdoor: fallback?.outdoor ?? false,
-    brideName: fallback?.brideName,
-    groomName: fallback?.groomName,
+    outdoor: j.containsKey('outdoor')
+        ? (j['outdoor'] == true || j['outdoor'] == 1 || j['outdoor'] == '1')
+        : fallback?.outdoor ?? false,
+    brideName:
+        serverString(j, ['bride_name', 'brideName']) ?? fallback?.brideName,
+    groomName:
+        serverString(j, ['groom_name', 'groomName']) ?? fallback?.groomName,
     clientId: serverString(j, ['client_id', 'clientId']) ?? fallback?.clientId,
     clientName:
         serverString(j, ['client_name', 'clientName']) ?? fallback?.clientName,
@@ -198,15 +230,30 @@ Booking bookingFromServer(Map<String, dynamic> j, {Booking? fallback}) {
     packageId:
         serverString(j, ['package_id', 'packageId']) ?? fallback?.packageId,
     customPrice:
-        serverDouble(j['price'] ?? j['customPrice']) ?? fallback?.customPrice,
-    coverageHours: fallback?.coverageHours,
-    extraHourRate: fallback?.extraHourRate,
-    driveLink: fallback?.driveLink,
-    clientRequirements: fallback?.clientRequirements,
+        serverDouble(j['custom_price'] ?? j['price'] ?? j['customPrice']) ??
+        fallback?.customPrice,
+    coverageHours:
+        serverDouble(j['coverage_hours'] ?? j['coverageHours']) ??
+        fallback?.coverageHours,
+    extraHourRate:
+        serverDouble(j['extra_hour_rate'] ?? j['extraHourRate']) ??
+        fallback?.extraHourRate,
+    driveLink:
+        serverString(j, ['drive_link', 'driveLink']) ?? fallback?.driveLink,
+    clientRequirements: _requirementsFromServer(
+      j['requirements_note'] ?? j['requirementsNote'],
+      fallback: fallback?.clientRequirements,
+    ),
     notes: serverString(j, ['notes']) ?? fallback?.notes,
-    chiefPhotographerUserId: fallback?.chiefPhotographerUserId,
+    chiefPhotographerUserId:
+        serverString(j, ['chief_photographer_name', 'chiefPhotographerName']) ??
+        fallback?.chiefPhotographerUserId,
     chiefHours: fallback?.chiefHours,
-    hidePaymentFromTeam: fallback?.hidePaymentFromTeam ?? false,
+    hidePaymentFromTeam: j.containsKey('hide_payment_from_team')
+        ? (j['hide_payment_from_team'] == true ||
+              j['hide_payment_from_team'] == 1 ||
+              j['hide_payment_from_team'] == '1')
+        : fallback?.hidePaymentFromTeam ?? false,
     status: j.containsKey('status')
         ? bookingStatusFromServer(
             j['status'],
@@ -243,6 +290,21 @@ Map<String, dynamic> bookingToServer(Booking b) {
     if (b.notes != null) 'notes': b.notes,
     if (b.clientName != null) 'client_name': b.clientName,
     if (b.clientPhone != null) 'client_phone': b.clientPhone,
+    // Rich detail fields — now persisted server-side for mobile↔web parity.
+    'outdoor': b.outdoor,
+    'hide_payment_from_team': b.hidePaymentFromTeam,
+    if (b.brideName != null) 'bride_name': b.brideName,
+    if (b.groomName != null) 'groom_name': b.groomName,
+    if (b.startTime.isNotEmpty) 'start_time': b.startTime,
+    if (b.endTime.isNotEmpty) 'end_time': b.endTime,
+    if (b.coverageHours != null) 'coverage_hours': b.coverageHours,
+    if (b.extraHourRate != null) 'extra_hour_rate': b.extraHourRate,
+    if (b.customPrice != null) 'custom_price': b.customPrice,
+    if (b.driveLink != null) 'drive_link': b.driveLink,
+    if (b.chiefPhotographerUserId != null)
+      'chief_photographer_name': b.chiefPhotographerUserId,
+    if (b.clientRequirements != null)
+      'requirements_note': jsonEncode(b.clientRequirements),
   };
 }
 
