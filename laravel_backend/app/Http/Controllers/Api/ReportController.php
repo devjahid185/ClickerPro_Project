@@ -33,7 +33,7 @@ class ReportController extends Controller
         $monthlyRevenue = Payment::whereIn('event_id', $eventIds)
             ->where('kind', '!=', 'PAYOUT')
             ->select(
-                DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month"),
+                DB::raw("TO_CHAR(created_at, 'YYYY-MM') as month"),
                 DB::raw('SUM(amount) as revenue')
             )
             ->groupBy('month')

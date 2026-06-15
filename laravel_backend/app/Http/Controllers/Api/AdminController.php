@@ -47,13 +47,13 @@ class AdminController extends Controller
     {
         $data = Cache::remember('admin.analytics', self::DASHBOARD_TTL, function () {
             $signups = User::select(
-                    DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month"),
+                    DB::raw("TO_CHAR(created_at, 'YYYY-MM') as month"),
                     DB::raw('COUNT(*) as count')
                 )
                 ->groupBy('month')->orderBy('month')->limit(12)->get();
 
             $bookings = Event::select(
-                    DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month"),
+                    DB::raw("TO_CHAR(created_at, 'YYYY-MM') as month"),
                     DB::raw('COUNT(*) as count')
                 )
                 ->groupBy('month')->orderBy('month')->limit(12)->get();
