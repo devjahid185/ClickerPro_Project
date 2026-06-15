@@ -32,9 +32,19 @@ export default function SettingsPage() {
     setErr('');
     try {
       const r = await api<{ data: Grouped }>('/api/admin/settings');
-      setGroups(r.data);
+      // Normalize to a clean Record<string, Setting[]> — the live API can
+      // return null / a non-object, or a group whose value isn't an array,
+      // and rendering that raw blew up the page with a client-side exception.
+      const raw = (r && typeof r.data === 'object' && r.data) ? r.data : {};
+      const safe: Grouped = {};
+      for (const [group, items] of Object.entries(raw)) {
+        safe[group] = Array.isArray(items)
+          ? items.filter((s): s is Setting => !!s && typeof s.key === 'string')
+          : [];
+      }
+      setGroups(safe);
       const seed: Record<string, string> = {};
-      Object.values(r.data).flat().forEach((s) => { seed[s.key] = s.value; });
+      Object.values(safe).flat().forEach((s) => { seed[s.key] = s.value ?? ''; });
       setEdits(seed);
     } catch (e: any) { setErr(e.message); }
   }, []);

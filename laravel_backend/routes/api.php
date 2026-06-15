@@ -328,7 +328,8 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
         Route::post('security/2fa/disable', [SecurityController::class, 'twoFaDisable']);
 
         Route::get('settings', [SettingsController::class, 'index']);
-        Route::post('settings', [SettingsController::class, 'update']);
+        // Accept both — the admin panel sends PUT, older callers POST.
+        Route::match(['post', 'put'], 'settings', [SettingsController::class, 'update']);
 
         Route::get('feature-flags', [FeatureFlagController::class, 'index']);
         Route::patch('feature-flags/{id}', [FeatureFlagController::class, 'update']);
