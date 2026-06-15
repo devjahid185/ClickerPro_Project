@@ -44,3 +44,13 @@ _t_*.png
 .jetro/
 .cursor/
 .claude/settings.local.json
+
+# build artifacts — generated output, never commit (rebuild on the server)
+*.zip
+*.tar.gz
+*.tgz
+*.apk
+*.aab
+**/tsconfig.tsbuildinfo
+web_app/.next/
+admin_panel/.next/
