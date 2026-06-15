@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getToken, clearToken } from '@/lib/api';
@@ -53,17 +53,19 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
 export default function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [ready, setReady] = useState(false);
 
+  // Auth gate runs AFTER mount only. We must NOT branch the render on a
+  // client-only value (token / a useEffect flag) — under App Router SSR the
+  // server renders one tree and the client's first render must match it
+  // exactly, or React throws #418 (hydration mismatch) and the whole page
+  // blanks with "client-side exception". So the markup below is identical on
+  // server and first client render; an unauthenticated user is bounced to
+  // /login by the effect a tick later.
   useEffect(() => {
     if (!getToken()) {
       router.replace('/login');
-    } else {
-      setReady(true);
     }
   }, [router]);
-
-  if (!ready) return null;
 
   const logout = () => {
     clearToken();
