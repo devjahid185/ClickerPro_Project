@@ -35,7 +35,19 @@ const nextConfig = {
   // (pthread_create: Resource temporarily unavailable / SIGABRT).
   experimental: { workerThreads: false, cpus: 1 },
   async headers() {
-    return [{ source: '/:path*', headers: securityHeaders }];
+    return [
+      { source: '/:path*', headers: securityHeaders },
+      // HTML documents must never be cached by the browser, otherwise a stale
+      // page keeps pointing at an old JS bundle hash after a redeploy (login
+      // failed with "No token returned" on cached pages). Hashed /_next/static
+      // assets stay immutable; only the HTML shell is no-store.
+      {
+        source: '/((?!_next/static|_next/image|favicon.ico).*)',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store, must-revalidate' },
+        ],
+      },
+    ];
   },
   // The admin panel talks to the Clicker Pro API. The browser calls
   // same-origin /api/* and Next proxies it to the backend (no CORS, and

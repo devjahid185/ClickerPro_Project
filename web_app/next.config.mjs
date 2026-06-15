@@ -44,7 +44,18 @@ const nextConfig = {
     ? { output: 'export' }
     : {
         async headers() {
-          return [{ source: '/:path*', headers: securityHeaders }];
+          return [
+            { source: '/:path*', headers: securityHeaders },
+            // No-store the HTML shell so a redeploy is picked up immediately
+            // instead of a cached page loading a stale JS bundle. Hashed
+            // /_next/static assets stay immutable.
+            {
+              source: '/((?!_next/static|_next/image|favicon.ico).*)',
+              headers: [
+                { key: 'Cache-Control', value: 'no-store, must-revalidate' },
+              ],
+            },
+          ];
         },
         async rewrites() {
           // The browser calls same-origin /api/* and Next proxies it to the
