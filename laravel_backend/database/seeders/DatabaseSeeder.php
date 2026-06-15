@@ -16,7 +16,10 @@ class DatabaseSeeder extends Seeder
         // SECURITY: these are well-known dev credentials. Refuse to plant
         // them on a production environment unless explicitly forced
         // (php artisan db:seed --force still respects this guard).
-        if (app()->environment('production') && env('ALLOW_PROD_SEED') !== 'true') {
+        // Accept true / "true" / 1 / "1" — Laravel coerces .env `true` to a
+        // boolean, so a strict `!== 'true'` string check would reject it.
+        $allowProdSeed = filter_var(env('ALLOW_PROD_SEED'), FILTER_VALIDATE_BOOLEAN);
+        if (app()->environment('production') && ! $allowProdSeed) {
             $this->command?->error(
                 'Refusing to seed known dev credentials in production. '
                 . 'Set ALLOW_PROD_SEED=true temporarily if you really mean it.'
