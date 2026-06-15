@@ -29,6 +29,11 @@ export default function TeamPage() {
   const [joinCode, setJoinCode] = useState('');
   const [joining, setJoining] = useState(false);
   const [pendingInvites, setPendingInvites] = useState<any[]>([]);
+  const [tab, setTab] = useState<'members' | 'payouts'>('members');
+  const [payouts, setPayouts] = useState<any>({ totalEarned: 0, totalPaid: 0, members: [] });
+  const [payoutsLoading, setPayoutsLoading] = useState(false);
+  const [expandedPayout, setExpandedPayout] = useState<string | null>(null);
+  const [settling, setSettling] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -53,7 +58,37 @@ export default function TeamPage() {
     } catch { /* none */ }
   };
 
+  const loadPayouts = async () => {
+    setPayoutsLoading(true);
+    try {
+      const res = await api<any>('/api/team/payouts');
+      const d = res?.data ?? res ?? {};
+      setPayouts({
+        totalEarned: Number(d.totalEarned) || 0,
+        totalPaid: Number(d.totalPaid) || 0,
+        members: Array.isArray(d.members) ? d.members : [],
+      });
+    } catch (e: any) { setError(e.message); }
+    finally { setPayoutsLoading(false); }
+  };
+
+  // Settle a single assignment (assignmentId set) or every unpaid payout
+  // for the member (assignmentId omitted).
+  const settlePayout = async (userId: string, assignmentId?: string) => {
+    const key = assignmentId || `all-${userId}`;
+    setSettling(key);
+    try {
+      await api(`/api/team/members/${userId}/payouts/pay`, {
+        method: 'POST',
+        body: assignmentId ? { assignmentId } : {},
+      });
+      await loadPayouts();
+    } catch (e: any) { alert(e.message); }
+    finally { setSettling(null); }
+  };
+
   useEffect(() => { load(); loadInvite(); loadPending(); }, []);
+  useEffect(() => { if (tab === 'payouts') loadPayouts(); }, [tab]);
 
   const sendEmailInvite = async () => {
     if (!inviteEmail.includes('@')) { setEmailMsg('Valid email din.'); return; }
@@ -136,6 +171,13 @@ export default function TeamPage() {
 
         {error && <div className="error" style={{ marginBottom: 12 }}>{error}</div>}
 
+        {/* Members / Payouts tabs */}
+        <div className="tabs" style={{ marginBottom: 20 }}>
+          <button className={`tab${tab === 'members' ? ' active' : ''}`} onClick={() => setTab('members')}>Members</button>
+          <button className={`tab${tab === 'payouts' ? ' active' : ''}`} onClick={() => setTab('payouts')}>Payouts</button>
+        </div>
+
+        {tab === 'members' && (<>
         {/* Pending email invites addressed to me */}
         {pendingInvites.map((inv) => (
           <div key={inv.id} className="card" style={{ marginBottom: 12, borderLeft: '3px solid var(--orange)' }}>
@@ -247,6 +289,78 @@ export default function TeamPage() {
               </div>
             ))}
           </div>
+        )}
+        </>)}
+
+        {tab === 'payouts' && (
+          <>
+            {/* Payout summary */}
+            <div className="cards cards-3" style={{ marginBottom: 20 }}>
+              <div className="card" style={{ textAlign: 'center' }}>
+                <div className="muted text-sm" style={{ marginBottom: 6 }}>Total Earned</div>
+                <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 30, color: 'var(--film)' }}>{tk(payouts.totalEarned)}</div>
+              </div>
+              <div className="card" style={{ textAlign: 'center' }}>
+                <div className="muted text-sm" style={{ marginBottom: 6 }}>Total Paid</div>
+                <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 30, color: 'var(--green)' }}>{tk(payouts.totalPaid)}</div>
+              </div>
+              <div className="card" style={{ textAlign: 'center' }}>
+                <div className="muted text-sm" style={{ marginBottom: 6 }}>Total Due</div>
+                <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 30, color: 'var(--orange)' }}>{tk(Math.max(0, payouts.totalEarned - payouts.totalPaid))}</div>
+              </div>
+            </div>
+
+            {payoutsLoading && (
+              <div className="cards cards-1">
+                {[...Array(4)].map((_, i) => <div key={i} className="shimmer" style={{ height: 80, borderRadius: 8, marginBottom: 10 }} />)}
+              </div>
+            )}
+            {!payoutsLoading && payouts.members.length === 0 && <div className="empty">No payouts yet.</div>}
+
+            {!payoutsLoading && payouts.members.map((mem: any) => {
+              const open = expandedPayout === mem.userId;
+              return (
+                <div key={mem.userId} className="card" style={{ marginBottom: 12 }}>
+                  <div className="row" style={{ gap: 12, alignItems: 'center', cursor: 'pointer' }} onClick={() => setExpandedPayout(open ? null : mem.userId)}>
+                    <div className="avatar avatar-sm">{initials(mem.name || '?')}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600 }} className="truncate">{mem.name || 'Unnamed'}</div>
+                      <div className="muted text-sm">{mem.events} event{mem.events === 1 ? '' : 's'}</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ color: 'var(--orange)', fontFamily: 'Bebas Neue, sans-serif', fontSize: 20 }}>{tk(mem.due)}</div>
+                      <div className="muted text-sm">due of {tk(mem.earned)}</div>
+                    </div>
+                    <span className="muted" style={{ fontSize: 18 }}>{open ? '▾' : '▸'}</span>
+                  </div>
+
+                  {open && (
+                    <div style={{ marginTop: 14, borderTop: '1px solid var(--border-2)', paddingTop: 12 }}>
+                      {mem.items.map((it: any) => (
+                        <div key={it.assignmentId} className="row" style={{ gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border-2)' }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div className="truncate" style={{ fontSize: 14 }}>{it.eventTitle}</div>
+                            <div className="muted text-sm">{it.role}{it.date ? ' · ' + new Date(it.date).toLocaleDateString() : ''}</div>
+                          </div>
+                          <div style={{ color: 'var(--film)', fontWeight: 500 }}>{tk(Number(it.amount) || 0)}</div>
+                          {it.paid
+                            ? <span className="badge green">Paid</span>
+                            : <button className="btn ghost xs" disabled={settling === it.assignmentId} onClick={() => settlePayout(mem.userId, it.assignmentId)}>{settling === it.assignmentId ? '…' : 'Settle'}</button>}
+                        </div>
+                      ))}
+                      {mem.due > 0 && (
+                        <div className="row" style={{ justifyContent: 'flex-end', marginTop: 12 }}>
+                          <button className="btn sm" style={{ background: 'var(--orange)', color: '#000' }} disabled={settling === `all-${mem.userId}`} onClick={() => settlePayout(mem.userId)}>
+                            {settling === `all-${mem.userId}` ? 'Settling…' : `Settle All (${tk(mem.due)})`}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </>
         )}
       </div>
 
