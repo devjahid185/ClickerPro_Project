@@ -1,27 +1,41 @@
-# Clicker Pro — Play Store Listing Copy
+# Clicker Pro — Store Listing (Play Store + App Store)
 
-## App Details
+> Everything you need to publish. Copy-paste ready. App version **3.8.1 (build 39)**.
 
-- **Package ID:** `com.clickerpro.app`
-- **Version:** 1.0.0 (versionCode 1)
-- **Category:** Business / Photography
-- **Content Rating:** Everyone
+## App identity (verified in code)
+
+| Field | Value |
+|-------|-------|
+| App name (store) | Clicker Pro — Studio Manager |
+| Android applicationId | `com.clickerpro.app` |
+| iOS bundle ID | `com.clickerpro.app` (fixed from `com.example.*`) |
+| Version | 3.8.1 |
+| Build / versionCode | 39 |
+| Category | Business / Photography |
+| Content rating | Everyone / 4+ |
+| Support email | eventfile.nhh@gmail.com |
 
 ---
 
-## App Title (30 chars max)
+## App Title (Play 30 chars / App Store 30 chars)
 
 ```
 Clicker Pro - Studio Manager
 ```
 
-## Short Description (80 chars max)
+## Subtitle (App Store, 30 chars)
+
+```
+Bookings, invoices & team
+```
+
+## Short / Promo Description (Play 80 chars)
 
 ```
 Manage bookings, clients, invoices & team for your photography studio.
 ```
 
-## Full Description (4000 chars max)
+## Full Description (Play 4000 / App Store 4000 chars)
 
 ```
 Clicker Pro is the all-in-one studio management app for professional photographers and photography studio owners.
@@ -68,66 +82,68 @@ Clicker Pro is the all-in-one studio management app for professional photographe
 • Bookings, clients, and payments work offline
 • Smart sync with conflict detection when back online
 
----
-
 Built for professional photographers in Bangladesh and beyond.
 ```
 
----
+## Keywords (App Store, 100 chars, comma-separated)
 
-## Screenshots Required (Play Store)
-
-Upload at least 2 screenshots (max 8). Recommended sizes: **1080×1920** or **1080×2400**.
-
-Suggested screens to capture (run app on device, use `adb shell screencap`):
-
-1. **Dashboard** — booking count, sync status, quick actions
-2. **Booking List** — list of bookings with client name and status pills
-3. **Booking Detail** — full booking info with payment section
-4. **New Booking form** — date picker, event type, shift pills
-5. **Clients list** — client cards
-6. **Invoice PDF preview** — generated invoice
-7. **Reminders screen** — reminder list with type icons
-8. **Global Search** — search results grouped by type
-
-### Screenshot command
-
-```bash
-adb -s a5178cb4 shell screencap -p /sdcard/s.png && adb -s a5178cb4 pull /sdcard/s.png screenshot.png
+```
+photography,studio,booking,invoice,client,crm,photographer,schedule,team,payment,wedding,event
 ```
 
 ---
 
-## Feature Graphic (1024×500 px)
+## Screenshots
 
-Design a banner with:
-- Orange background (#FF6B00)
-- White "Clicker Pro" text (Poppins Bold)
-- Camera icon + tagline: "Studio Management, Simplified"
+**Play Store:** min 2, max 8. Phone: 1080×1920 or 1080×2400 (9:16).
+**App Store:** required 6.7" (1290×2796) and 6.5" (1242×2688); 5.5" optional.
+
+Capture these 8 screens (app is already installed on both phones):
+
+1. Dashboard — booking count, sync status, quick actions
+2. Booking List — client name + status pills
+3. Booking Detail — full info + payment section
+4. New Booking form — date picker, event type, shift pills
+5. Clients list — client cards
+6. Invoice PDF preview
+7. Reminders — list with type icons
+8. Global Search — results grouped by type
+
+### Screenshot command (device id from `flutter devices`)
+```bash
+# OnePlus IN2013 (Android 13):
+adb -s a5178cb4 shell screencap -p /sdcard/s.png && adb -s a5178cb4 pull /sdcard/s.png screenshot1.png
+# Infinix X6812 (Android 11):
+adb -s 07302251CL004103 shell screencap -p /sdcard/s.png && adb -s 07302251CL004103 pull /sdcard/s.png screenshot1.png
+```
+> `adb` ships with the Android SDK platform-tools (already installed via Flutter).
 
 ---
 
-## Privacy Policy
+## Graphics
 
-Play Store requires a Privacy Policy URL. Options:
+| Asset | Size | Notes |
+|-------|------|-------|
+| App icon (Play) | 512×512 PNG | from `clicker_pro/assets/icon/app_icon.png` |
+| App icon (iOS) | 1024×1024 PNG | from `clicker_pro/assets/icon/app_icon_ios.png` |
+| Feature graphic (Play) | 1024×500 | orange #FF6B00 bg, white "Clicker Pro" (Poppins Bold), camera icon + "Studio Management, Simplified" |
 
-### Option 1 — GitHub Pages (free, fast)
-1. Create a public GitHub repo named `clickerpro-privacy`
-2. Add `index.html` with the policy below
-3. Enable GitHub Pages → Settings → Pages → Deploy from main
-4. URL: `https://yourusername.github.io/clickerpro-privacy`
+Regenerate launcher icons: `cd clicker_pro && dart run flutter_launcher_icons`.
 
-### Option 2 — Notion (free)
-1. Create a Notion page with the policy text
-2. Share → Publish to web
-3. Copy the public URL
+---
 
-### Privacy Policy Text
+## Privacy Policy (REQUIRED by both stores — needs a public URL)
+
+Host the text below and use the URL in both consoles.
+
+- **Fastest:** GitHub Pages — new public repo `clickerpro-privacy`, add `index.html`, Settings → Pages → Deploy from main → URL `https://<user>.github.io/clickerpro-privacy`.
+- **Or:** Notion page → Share → Publish to web → copy URL.
+- **Or:** host on the live site, e.g. `https://deyalghori.com/privacy`.
 
 ```
 Privacy Policy for Clicker Pro
 
-Last updated: June 5, 2026
+Last updated: June 15, 2026
 
 Clicker Pro ("we", "our", "the app") is a studio management tool for photography professionals.
 
@@ -144,25 +160,37 @@ HOW WE USE YOUR DATA
 DATA STORAGE
 - Data is stored locally on your device using an encrypted database
 - When online, data syncs to our secure backend server
-- You can request deletion of your account and all associated data by contacting us
+- You can request deletion of your account and all associated data by contacting us, or in-app via Settings → Account → Delete Account
 
 CONTACT
 For privacy questions: eventfile.nhh@gmail.com
 ```
 
----
-
-## App Icon
-
-Already generated at: `clicker_pro/assets/icon/app_icon.png`
-Regenerate with: `dart run flutter_launcher_icons` (from `clicker_pro/`)
+> The app already has in-app account deletion (`/api/account/cancel-delete` + delete flow) — mention it in the Play "Data safety" form (account deletion supported).
 
 ---
 
-## Release APK
+## Build artifacts to upload
 
-Already signed. Location: `clicker_pro/build/app/outputs/flutter-apk/app-release.apk`
+| Store | File | Build command |
+|-------|------|---------------|
+| Play Store | `ClickerPro-v3.8.1-39-release.aab` (root) | `cd clicker_pro && flutter build appbundle --release` |
+| Direct / test | `ClickerPro-v3.8.1-39-release.apk` (root) | `cd clicker_pro && flutter build apk --release` |
+| App Store | (build on a Mac) | `flutter build ipa --release` then upload via Xcode/Transporter |
 
-Rebuild: `cd clicker_pro && flutter build apk --release`
+Both Android artifacts are signed with `keystores/clicker_pro.jks` (creds in `clicker_pro/android/key.properties`). **Keep this keystore safe — losing it means you can never update the app on Play Store.**
 
-Keystore: `keystores/clicker_pro.jks` (password in `clicker_pro/android/key.properties`)
+---
+
+## App Store extras (you'll be asked for these)
+
+- **Apple Developer account** ($99/yr) + a **Mac with Xcode** to build the `.ipa` (iOS cannot be built on Windows).
+- **App privacy details** (App Store "Nutrition Label"): collects Contact Info (email/name) and User Content (booking/client data), linked to identity, used for app functionality — not for tracking/ads.
+- **Demo account** for Apple review: provide a test login (see DEVELOPER_GUIDE "Local setup & seed data").
+- **Export compliance:** uses standard HTTPS only → answer "No" to custom encryption.
+
+## Play Store extras
+
+- **Google Play Console account** ($25 one-time).
+- **Data safety form:** Contact info + app activity collected, encrypted in transit, account deletion available.
+- **Target audience:** 18+ / business; not directed at children.
