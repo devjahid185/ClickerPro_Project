@@ -13,6 +13,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../core/booking_status/booking_status.dart';
 import '../../../core/role/capability.dart';
@@ -22,15 +23,17 @@ import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../shared/states/offline_banner.dart';
+import '../../../shared/widgets/motion.dart';
 import '../../../theme/app_colors.dart';
 import '../../auth/domain/user_role.dart';
+import '../../public_booking/application/public_booking_providers.dart';
 import '../../settings/application/language_controller.dart';
 import '../application/booking_providers.dart';
 import '../domain/booking.dart';
 import '../domain/booking_filter.dart';
 import '../domain/shift.dart';
 
-enum _StatusChip { all, pending, confirmed, successful, delivered, cancelled }
+enum _StatusChip { all, confirmed, successful, delivered, cancelled }
 
 enum _DateRangePreset { any, today, week, month, lastMonth }
 
@@ -73,7 +76,6 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
     final statuses = ref.read(bookingFilterProvider).statuses;
     if (statuses.isEmpty) return _StatusChip.all;
     if (statuses.length == 1) {
-      if (statuses.contains(BookingStatus.pending)) return _StatusChip.pending;
       if (statuses.contains(BookingStatus.confirmed)) {
         return _StatusChip.confirmed;
       }
@@ -87,14 +89,21 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
     return _StatusChip.successful;
   }
 
+  /// Date with the time stripped — so same-day events group together
+  /// regardless of their shift start time.
+  static DateTime _dayOnly(DateTime d) => DateTime(d.year, d.month, d.day);
+
+  /// Day shift sorts before Night within the same date; Both counts as Day.
+  static int _shiftRank(Shift s) => s == Shift.night ? 1 : 0;
+
   Set<BookingStatus> _statusesForChip(_StatusChip chip) {
     switch (chip) {
       case _StatusChip.all:
         return {};
-      case _StatusChip.pending:
-        return {BookingStatus.pending};
       case _StatusChip.confirmed:
-        return {BookingStatus.confirmed};
+        // "Confirmed" now also surfaces pending bookings so nothing is
+        // hidden after the dedicated Pending chip was removed.
+        return {BookingStatus.pending, BookingStatus.confirmed};
       case _StatusChip.successful:
         return {
           BookingStatus.inProgress,
@@ -125,6 +134,29 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
     );
   }
 
+  /// Shares the studio's public self-booking web link — the client
+  /// fills the form themselves and the booking lands as PENDING.
+  Future<void> _shareBookingLink(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final repo = ref.read(publicBookingRepositoryProvider);
+      final issued = await repo.issueToken(
+        policy: ref.read(bookingsPolicyProvider),
+      );
+      await SharePlus.instance.share(
+        ShareParams(
+          text:
+              'Fill in your details at this link to book our studio:\n${issued.url}',
+          subject: 'Booking link',
+        ),
+      );
+    } catch (_) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Could not fetch the link — please try again.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final filter = ref.watch(bookingFilterProvider);
@@ -140,12 +172,12 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
           loc.bookings_title,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.film,
             fontFamily: 'Poppins',
             fontSize: 22,
@@ -171,7 +203,12 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
             onPressed: () =>
                 Navigator.of(context).pushNamed(RouteNames.waitlist),
           ),
-          if (policy.can(Capability.approvePublicBooking))
+          if (policy.can(Capability.approvePublicBooking)) ...[
+            IconButton(
+              tooltip: 'Share booking link',
+              icon: const Icon(Icons.share_outlined, color: AppColors.teal),
+              onPressed: () => _shareBookingLink(context),
+            ),
             IconButton(
               tooltip: 'Pending requests',
               icon: const Icon(
@@ -182,6 +219,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                 context,
               ).pushNamed(RouteNames.pendingPublicBookings),
             ),
+          ],
           if (listAsync.hasValue)
             Center(
               child: Container(
@@ -194,7 +232,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                 ),
                 child: Text(
                   '$totalCount',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.filmDim,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -265,27 +303,6 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                     .copyWith(statuses: _statusesForChip(chip));
               },
             ),
-            if (!filter.isEmpty)
-              _ActiveFilterChips(
-                filter: filter,
-                onDismiss: (type) {
-                  final current = ref.read(bookingFilterProvider);
-                  switch (type) {
-                    case _FilterType.status:
-                      ref.read(bookingFilterProvider.notifier).state = current
-                          .copyWith(statuses: {});
-                      break;
-                    case _FilterType.dateRange:
-                      ref.read(bookingFilterProvider.notifier).state = current
-                          .copyWith(clearFrom: true, clearTo: true);
-                      break;
-                    case _FilterType.search:
-                      ref.read(bookingFilterProvider.notifier).state = current
-                          .copyWith(clearSearch: true);
-                      break;
-                  }
-                },
-              ),
             Expanded(
               child: RefreshIndicator(
                 color: AppColors.teal,
@@ -312,7 +329,37 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                     ),
                   ),
                   data: (bookings) {
-                    if (bookings.isEmpty) {
+                    // Shift filter is applied in-memory: a Day (or Night)
+                    // filter also keeps Both bookings, because a full-day
+                    // shoot covers that shift. `null` = no shift restriction.
+                    final shiftFilter = filter.shift;
+                    final filtered = shiftFilter == null
+                        ? bookings
+                        : bookings
+                              .where(
+                                (b) =>
+                                    b.shift == shiftFilter ||
+                                    b.shift == Shift.both,
+                              )
+                              .toList();
+
+                    // ONE chronological list — strictly by date+time ascending
+                    // so the 14th always appears before the 15th. The old
+                    // Day|Night two-column layout made a 14th-night event look
+                    // like it came "after" a 15th-day event. Each row now
+                    // carries its own Day/Night badge instead.
+                    final visible = filtered.toList()
+                      ..sort((a, b) {
+                        final byDate = _dayOnly(
+                          a.date,
+                        ).compareTo(_dayOnly(b.date));
+                        if (byDate != 0) return byDate;
+                        // Same day → Day shift before Night shift.
+                        return _shiftRank(a.shift).compareTo(
+                          _shiftRank(b.shift),
+                        );
+                      });
+                    if (visible.isEmpty) {
                       return Center(
                         child: Padding(
                           padding: const EdgeInsets.only(top: 120),
@@ -323,20 +370,8 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                         ),
                       );
                     }
-                    final dayBookings = bookings
-                        .where(
-                          (b) => b.shift == Shift.day || b.shift == Shift.both,
-                        )
-                        .toList();
-                    final nightBookings = bookings
-                        .where(
-                          (b) =>
-                              b.shift == Shift.night || b.shift == Shift.both,
-                        )
-                        .toList();
-                    return _DayNightColumns(
-                      dayBookings: dayBookings,
-                      nightBookings: nightBookings,
+                    return _BookingListColumn(
+                      bookings: visible,
                       scrollController: _scrollController,
                     );
                   },
@@ -364,11 +399,11 @@ class _SearchBar extends StatelessWidget {
         controller: controller,
         onChanged: onChanged,
         autofocus: true,
-        style: const TextStyle(color: AppColors.film, fontSize: 14),
+        style: TextStyle(color: AppColors.film, fontSize: 14),
         decoration: InputDecoration(
           hintText: 'Search bookings...',
-          hintStyle: const TextStyle(color: AppColors.filmMuted),
-          prefixIcon: const Icon(
+          hintStyle: TextStyle(color: AppColors.filmMuted),
+          prefixIcon: Icon(
             Icons.search,
             color: AppColors.filmMuted,
             size: 20,
@@ -378,11 +413,11 @@ class _SearchBar extends StatelessWidget {
           contentPadding: const EdgeInsets.symmetric(vertical: 10),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.glassBorder),
+            borderSide: BorderSide(color: AppColors.glassBorder),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.glassBorder),
+            borderSide: BorderSide(color: AppColors.glassBorder),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
@@ -402,7 +437,6 @@ class _StatusChips extends StatelessWidget {
 
   static const _chips = [
     (_StatusChip.all, 'All'),
-    (_StatusChip.pending, 'Pending'),
     (_StatusChip.confirmed, 'Confirmed'),
     (_StatusChip.successful, 'Successful'),
     (_StatusChip.delivered, 'Delivered'),
@@ -452,197 +486,147 @@ class _StatusChips extends StatelessWidget {
   }
 }
 
-enum _FilterType { status, dateRange, search }
+/// Single chronological booking list. Each row's left border + shift icon
+/// is gold for Day and purple for Night, so the Day/Night distinction is
+/// still obvious without breaking the date order.
+class _BookingListColumn extends StatelessWidget {
+  const _BookingListColumn({
+    required this.bookings,
+    required this.scrollController,
+  });
 
-class _ActiveFilterChips extends StatelessWidget {
-  const _ActiveFilterChips({required this.filter, required this.onDismiss});
+  final List<Booking> bookings;
+  final ScrollController scrollController;
 
-  final BookingFilter filter;
-  final ValueChanged<_FilterType> onDismiss;
+  /// Sort by start time ("HH:mm") then date so each column reads time-wise.
+  static int _byTime(Booking a, Booking b) {
+    final byTime = a.startTime.compareTo(b.startTime);
+    if (byTime != 0) return byTime;
+    return a.date.compareTo(b.date);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final chips = <Widget>[];
+    // Two columns: Day on the left, Night on the right. A Both (full-day)
+    // booking covers both shifts, so it appears in each column. Within a
+    // column the rows are ordered by start time.
+    final dayBookings =
+        bookings
+            .where((b) => b.shift == Shift.day || b.shift == Shift.both)
+            .toList()
+          ..sort(_byTime);
+    final nightBookings =
+        bookings
+            .where((b) => b.shift == Shift.night || b.shift == Shift.both)
+            .toList()
+          ..sort(_byTime);
 
-    if (filter.statuses.isNotEmpty) {
-      chips.add(_buildChip('Status', () => onDismiss(_FilterType.status)));
-    }
-    if (filter.from != null || filter.to != null) {
-      chips.add(
-        _buildChip('Date Range', () => onDismiss(_FilterType.dateRange)),
-      );
-    }
-    if (filter.search != null && filter.search!.isNotEmpty) {
-      chips.add(
-        _buildChip('"${filter.search}"', () => onDismiss(_FilterType.search)),
-      );
-    }
-
-    if (chips.isEmpty) return const SizedBox.shrink();
-
-    return SizedBox(
-      height: 36,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        children: chips,
-      ),
-    );
-  }
-
-  Widget _buildChip(String label, VoidCallback onDismiss) {
-    return Container(
-      margin: const EdgeInsets.only(right: 6),
-      child: Chip(
-        label: Text(
-          label,
-          style: const TextStyle(color: AppColors.teal, fontSize: 11),
-        ),
-        deleteIcon: const Icon(Icons.close, size: 14, color: AppColors.teal),
-        onDeleted: onDismiss,
-        backgroundColor: AppColors.teal.withValues(alpha: 0.08),
-        side: const BorderSide(color: AppColors.teal, width: 0.5),
-        padding: EdgeInsets.zero,
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        visualDensity: VisualDensity.compact,
+    return SingleChildScrollView(
+      controller: scrollController,
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 96),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: _ShiftColumn(
+              title: 'DAY',
+              icon: Icons.wb_sunny_outlined,
+              color: AppColors.gold,
+              bookings: dayBookings,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _ShiftColumn(
+              title: 'NIGHT',
+              icon: Icons.nightlight_outlined,
+              color: AppColors.purple,
+              bookings: nightBookings,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _DayNightColumns extends StatelessWidget {
-  const _DayNightColumns({
-    required this.dayBookings,
-    required this.nightBookings,
-    required this.scrollController,
+/// One side of the Day | Night split: a labelled header with the count and a
+/// vertical, time-ordered list of bookings for that shift.
+class _ShiftColumn extends StatelessWidget {
+  const _ShiftColumn({
+    required this.title,
+    required this.icon,
+    required this.color,
+    required this.bookings,
   });
 
-  final List<Booking> dayBookings;
-  final List<Booking> nightBookings;
-  final ScrollController scrollController;
+  final String title;
+  final IconData icon;
+  final Color color;
+  final List<Booking> bookings;
 
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          child: Row(
-            children: [
-              Expanded(
-                child: _ColumnHeader(
-                  label: 'DAY',
-                  count: dayBookings.length,
-                  color: AppColors.gold,
-                ),
-              ),
-              Container(width: 1, height: 24, color: AppColors.glassBorder),
-              Expanded(
-                child: _ColumnHeader(
-                  label: 'NIGHT',
-                  count: nightBookings.length,
-                  color: AppColors.purple,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          height: 1,
-          color: AppColors.glassBorder,
-        ),
-        Expanded(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  controller: scrollController,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(16, 8, 8, 96),
-                  itemCount: dayBookings.length,
-                  itemBuilder: (context, index) => _BookingColumnRow(
-                    booking: dayBookings[index],
-                    borderSide: const BorderSide(
-                      color: AppColors.gold,
-                      width: 2,
-                    ),
-                    iconColor: AppColors.gold,
-                  ),
-                ),
-              ),
-              Container(width: 1, color: AppColors.glassBorder),
-              Expanded(
-                child: ListView.builder(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(8, 8, 16, 96),
-                  itemCount: nightBookings.length,
-                  itemBuilder: (context, index) => _BookingColumnRow(
-                    booking: nightBookings[index],
-                    borderSide: const BorderSide(
-                      color: AppColors.purple,
-                      width: 2,
-                    ),
-                    iconColor: AppColors.purple,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ColumnHeader extends StatelessWidget {
-  const _ColumnHeader({
-    required this.label,
-    required this.count,
-    required this.color,
-  });
-
-  final String label;
-  final int count;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: TextStyle(
-            color: color,
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.2,
-          ),
-        ),
-        const SizedBox(width: 6),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(8),
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: color.withValues(alpha: 0.3)),
           ),
-          child: Text(
-            '$count',
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 15),
+              const SizedBox(width: 6),
+              Text(
+                title,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.0,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '${bookings.length}',
+                style: TextStyle(
+                  color: AppColors.film,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
         ),
+        const SizedBox(height: 8),
+        if (bookings.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Text(
+              'No $title bookings',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.filmDim.withValues(alpha: 0.6),
+                fontSize: 11.5,
+              ),
+            ),
+          )
+        else
+          for (var i = 0; i < bookings.length; i++)
+            FadeUpIn(
+              order: i.clamp(0, 8),
+              child: _BookingColumnRow(
+                booking: bookings[i],
+                borderSide: BorderSide(color: color, width: 2),
+                iconColor: color,
+              ),
+            ),
       ],
     );
   }
@@ -713,7 +697,7 @@ class _BookingColumnRow extends ConsumerWidget {
                     color: AppColors.voidElevated,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: Colors.black.withValues(alpha: 0.06),
+                      color: AppColors.line(0.06),
                     ),
                   ),
                   alignment: Alignment.center,
@@ -722,7 +706,7 @@ class _BookingColumnRow extends ConsumerWidget {
                     children: [
                       Text(
                         dayText,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.film,
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
@@ -751,7 +735,7 @@ class _BookingColumnRow extends ConsumerWidget {
                         displayName.trim().isEmpty ? 'Untitled' : displayName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.film,
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -759,23 +743,22 @@ class _BookingColumnRow extends ConsumerWidget {
                       ),
                       const SizedBox(height: 3),
                       Row(
-                        // Only take the width the icon + label need; without
-                        // this the label's letterSpacing pushed the row ~17px
-                        // past the narrow DAY/NIGHT column and overflowed.
+                        // The DAY/NIGHT column header already states the shift,
+                        // so each row shows its start–end time instead.
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(shiftIcon, color: iconColor, size: 12),
                           const SizedBox(width: 3),
                           Flexible(
                             child: Text(
-                              booking.shift.name.toUpperCase(),
+                              '${booking.startTime}–${booking.endTime}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: iconColor,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
-                                letterSpacing: 0.5,
+                                letterSpacing: 0.3,
                               ),
                             ),
                           ),
@@ -799,7 +782,7 @@ class _BookingColumnRow extends ConsumerWidget {
                   width: 28,
                   height: 32,
                   child: PopupMenuButton<String>(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.more_vert,
                     color: AppColors.filmMuted,
                     size: 18,
@@ -821,7 +804,7 @@ class _BookingColumnRow extends ConsumerWidget {
                     }
                   },
                   itemBuilder: (_) => [
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'duplicate',
                       child: Row(
                         children: [
@@ -859,6 +842,14 @@ class _FilterSheet extends StatefulWidget {
 class _FilterSheetState extends State<_FilterSheet> {
   Shift? _selectedShift;
   _DateRangePreset _dateRange = _DateRangePreset.any;
+
+  @override
+  void initState() {
+    super.initState();
+    // Reflect the already-applied filter so reopening the sheet keeps the
+    // current shift selection instead of silently resetting to "Any".
+    _selectedShift = widget.filter.shift;
+  }
 
   ({DateTime? from, DateTime? to}) _computeDateRange(_DateRangePreset preset) {
     final now = DateTime.now();
@@ -903,7 +894,7 @@ class _FilterSheetState extends State<_FilterSheet> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Filters',
             style: TextStyle(
               color: AppColors.film,
@@ -992,6 +983,8 @@ class _FilterSheetState extends State<_FilterSheet> {
                     to: range.to,
                     clearFrom: range.from == null,
                     clearTo: range.to == null,
+                    shift: _selectedShift,
+                    clearShift: _selectedShift == null,
                   ),
                 );
                 Navigator.of(context).pop();
@@ -1029,7 +1022,7 @@ class _FilterSection extends StatelessWidget {
       children: [
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.filmDim,
             fontSize: 12,
             fontWeight: FontWeight.w600,
@@ -1095,4 +1088,16 @@ bool shouldShowPayment({
   if (!canViewPayments) return false;
   if (role == UserRole.manager && hidePaymentFromTeam) return false;
   return true;
+}
+
+/// Whether payment figures appear on the *shared event details* the owner
+/// sends to the team and freelancers.
+///
+/// Default is OFF: shared details never expose money. Payment is included
+/// only when the owner has explicitly turned on [showPaymentInShare] for
+/// this booking — and then everyone who receives the share (team and
+/// freelancers alike) sees it. The client invoice ignores this flag and
+/// always shows payment.
+bool shouldShowPaymentInShare({required bool showPaymentInShare}) {
+  return showPaymentInShare;
 }

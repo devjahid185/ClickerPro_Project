@@ -6,6 +6,7 @@ import 'package:drift/drift.dart' show Value;
 
 import '../../../core/db/app_database.dart';
 import '../../../core/db/daos/users_dao.dart';
+import '../../../core/env/app_config.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/storage/secure_store.dart';
@@ -41,9 +42,34 @@ class AuthRepositoryImpl implements AuthRepository {
     Map<String, dynamic> userJson,
   ) async {
     await _secure.writeToken(token);
-    final user = UserModel.fromJson(userJson);
+    final user = await _mergeWithCachedProfile(UserModel.fromJson(userJson));
     await _users.upsertCurrent(_userCompanion(user));
     return Session(token: token, user: user, issuedAt: DateTime.now());
+  }
+
+  /// The server only persists a subset of the profile (name/phone/bio/
+  /// business_name/avatar). Blindly upserting its copy used to NULL out
+  /// every device-side field (whatsapp, bkash, address, specialization,
+  /// signature, logo…) on each login/refresh — the "profile save
+  /// disappears" bug. Server wins where it has data; the local cache
+  /// fills everything it doesn't know about.
+  Future<UserModel> _mergeWithCachedProfile(UserModel server) async {
+    final row = await _users.getCurrent();
+    if (row == null) return server;
+    return server.copyWith(
+      whatsapp: server.whatsapp ?? row.whatsapp,
+      specialization: server.specialization ?? row.specialization,
+      vatBin: server.vatBin ?? row.vatBin,
+      studioAddress: server.studioAddress ?? row.studioAddress,
+      bkash: server.bkash ?? row.bkash,
+      bankDetails: server.bankDetails ?? row.bankDetails,
+      signatureUrl: server.signatureUrl ?? row.signatureUrl,
+      logoUrl: server.logoUrl ?? row.logoUrl,
+      avatarUrl: server.avatarUrl ?? row.avatarUrl,
+      phone: server.phone ?? row.phone,
+      bio: server.bio ?? row.bio,
+      companyName: server.companyName ?? row.companyName,
+    );
   }
 
   UsersTableCompanion _userCompanion(UserModel u) {
@@ -69,6 +95,7 @@ class AuthRepositoryImpl implements AuthRepository {
       bankDetails: Value(u.bankDetails),
       signatureUrl: Value(u.signatureUrl),
       logoUrl: Value(u.logoUrl),
+      companyName: Value(u.companyName),
       deletedAt: Value(u.deletedAt),
       pending: const Value(false),
       updatedAt: Value(DateTime.now()),
@@ -82,6 +109,23 @@ class AuthRepositoryImpl implements AuthRepository {
     throw error;
   }
 
+  /// The offline "demo mode" (accept-any-credentials fallback + demo OTP)
+  /// is a development convenience ONLY. In production builds it would be
+  /// a login bypass — anyone with the device could enter the app with
+  /// made-up credentials in airplane mode — so it is hard-gated off.
+  bool get _allowOfflineDemo =>
+      AppConfig.environment.toLowerCase() != 'production';
+
+  /// Wraps a non-API failure (transport, parsing) into a clean
+  /// [ApiException] for the UI instead of leaking raw error text.
+  Never _raiseUnreachable(Object cause) {
+    throw ApiException(
+      statusCode: 0,
+      message: 'Cannot reach the server. Check your internet connection.',
+      cause: cause,
+    );
+  }
+
   @override
   Future<Session> login({
     required String email,
@@ -92,8 +136,10 @@ class AuthRepositoryImpl implements AuthRepository {
       return _persistSession(r.token, r.user);
     } on ApiException {
       rethrow;
-    } catch (_) {
-      // Network unreachable — accept any credentials for offline demo.
+    } catch (e) {
+      // Network unreachable. In production this is a hard failure; the
+      // offline demo session is a dev-only convenience (see _allowOfflineDemo).
+      if (!_allowOfflineDemo) _raiseUnreachable(e);
       final demoUser = UserModel(
         id: 'demo_${email.hashCode.abs()}',
         name: email.split('@').first,
@@ -138,8 +184,9 @@ class AuthRepositoryImpl implements AuthRepository {
       return _persistSession(r.token, r.user);
     } on ApiException {
       rethrow;
-    } catch (_) {
-      // Network unreachable — create a local demo account.
+    } catch (e) {
+      // Network unreachable — dev builds fall back to a local demo account.
+      if (!_allowOfflineDemo) _raiseUnreachable(e);
       return _persistSession(_demoToken, {
         'id': 'demo_${email.hashCode.abs()}',
         'name': name,
@@ -165,9 +212,10 @@ class AuthRepositoryImpl implements AuthRepository {
       await _api.requestOtp(identifier: identifier, purpose: purpose);
     } on ApiException {
       rethrow;
-    } catch (_) {
-      // Network unreachable — silently succeed so the OTP screen appears.
-      // User must enter $_demoOtp to proceed.
+    } catch (e) {
+      // Network unreachable — dev builds silently succeed so the OTP
+      // screen appears (user enters $_demoOtp); production surfaces it.
+      if (!_allowOfflineDemo) _raiseUnreachable(e);
     }
   }
 
@@ -183,11 +231,40 @@ class AuthRepositoryImpl implements AuthRepository {
         code: code,
         purpose: purpose,
       );
-      return _persistSession(r.token, r.user);
+      final token = r.token;
+      final user = r.user;
+      if (token != null && user != null) {
+        return _persistSession(token, user);
+      }
+      // The Laravel verify endpoint confirms the code but does not issue
+      // a token. If a session already exists (e.g. OTP after register),
+      // keep it; otherwise the caller must route the user to login.
+      final existingToken = await _secure.readToken();
+      final row = await _users.getCurrent();
+      if (existingToken != null && row != null) {
+        return Session(
+          token: existingToken,
+          user: UserModel(
+            id: row.id,
+            name: row.name,
+            email: row.email,
+            role: UserRole.fromString(row.role),
+            remoteId: row.remoteId,
+            phone: row.phone,
+            ownerId: row.ownerId,
+          ),
+          issuedAt: DateTime.now(),
+        );
+      }
+      throw ApiException(
+        statusCode: 401,
+        message: 'Code verified. Please log in with your password.',
+      );
     } on ApiException {
       rethrow;
-    } catch (_) {
-      // Network unreachable — accept the demo code for offline sessions.
+    } catch (e) {
+      // Network unreachable — dev builds accept the demo code.
+      if (!_allowOfflineDemo) _raiseUnreachable(e);
       if (code.trim() != _demoOtp) {
         throw ApiException(
           statusCode: 400,
@@ -221,8 +298,10 @@ class AuthRepositoryImpl implements AuthRepository {
       await _api.forgotPassword(email);
     } on ApiException {
       rethrow;
-    } catch (_) {
-      // Network unreachable — silently succeed; OTP screen handles demo code.
+    } catch (e) {
+      // Network unreachable — dev builds silently succeed (demo OTP path);
+      // production surfaces the failure.
+      if (!_allowOfflineDemo) _raiseUnreachable(e);
     }
   }
 
@@ -230,7 +309,12 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> resetPassword({
     required String token,
     required String newPassword,
-  }) => _api.resetPassword(token: token, newPassword: newPassword);
+    String? email,
+  }) => _api.resetPassword(
+    token: token,
+    newPassword: newPassword,
+    email: email,
+  );
 
   @override
   Future<Session> acceptInvite({
@@ -331,26 +415,19 @@ class AuthRepositoryImpl implements AuthRepository {
         bankDetails: row.bankDetails,
         signatureUrl: row.signatureUrl,
         logoUrl: row.logoUrl,
+        companyName: row.companyName,
         ownerId: row.ownerId,
       );
       return Session(token: token, user: user, issuedAt: DateTime.now());
     }
 
-    try {
-      final json = await _api.getProfile();
-      return _persistSession(token, json);
-    } on ApiException catch (e, st) {
-      AppLogger.w('auth', 'restoreSession failed: ${e.message}');
-      if (e.isUnauthorized || e.isNetwork) {
-        if (e.isUnauthorized) await _secure.clearToken();
-        return null;
-      }
-      AppLogger.e('auth', e, st);
-      return null;
-    } catch (_) {
-      // Network unreachable with a real token — restore from local DB.
-      final row = await _users.getCurrent();
-      if (row == null) return null;
+    // OFFLINE-FIRST RESTORE: a stored token + cached user = logged in,
+    // instantly. The old order (network first, behind the splash's short
+    // timeout) sent users back to the login screen on any slow connection
+    // — the "auto logout on reopen" bug. The server copy is refreshed in
+    // the background; a 401 there clears the token and signals logout.
+    final row = await _users.getCurrent();
+    if (row != null) {
       final user = UserModel(
         id: row.id,
         name: row.name,
@@ -366,10 +443,45 @@ class AuthRepositoryImpl implements AuthRepository {
         bankDetails: row.bankDetails,
         signatureUrl: row.signatureUrl,
         logoUrl: row.logoUrl,
+        companyName: row.companyName,
         ownerId: row.ownerId,
       );
+      _refreshProfileInBackground();
       return Session(token: token, user: user, issuedAt: DateTime.now());
     }
+
+    // Token but no cached user (e.g. cleared data) — must ask the server.
+    try {
+      final json = await _api.getProfile();
+      return _persistSession(token, json);
+    } on ApiException catch (e, st) {
+      AppLogger.w('auth', 'restoreSession failed: ${e.message}');
+      if (e.isUnauthorized) await _secure.clearToken();
+      AppLogger.e('auth', e, st);
+      return null;
+    } catch (e) {
+      AppLogger.w('auth', 'restoreSession unreachable: $e');
+      return null;
+    }
+  }
+
+  /// Refreshes the cached profile from the server without blocking app
+  /// start. A 401 means the token was revoked — clear it and force logout.
+  void _refreshProfileInBackground() {
+    Future<void>(() async {
+      try {
+        final json = await _api.getProfile();
+        final user = await _mergeWithCachedProfile(UserModel.fromJson(json));
+        await _users.upsertCurrent(_userCompanion(user));
+      } on ApiException catch (e) {
+        if (e.isUnauthorized) {
+          await _secure.clearToken();
+          _forceLogout.add(null);
+        }
+      } catch (_) {
+        // Offline — cached profile stays authoritative until next launch.
+      }
+    });
   }
 
   void dispose() => _forceLogout.close();

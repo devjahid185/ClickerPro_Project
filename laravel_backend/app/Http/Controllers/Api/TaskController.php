@@ -18,7 +18,7 @@ class TaskController extends Controller
         }
 
         $tasks = TaskProgress::where('event_id', $eventId)
-            ->with('user')
+            ->with('user:id,name,avatar,role')
             ->get();
 
         return response()->json(['data' => $tasks]);
@@ -42,6 +42,6 @@ class TaskController extends Controller
             ['percentage' => $data['percentage'], 'note' => $data['note'] ?? null]
         );
 
-        return response()->json(['data' => $task->load('user')]);
+        return response()->json(['data' => $task->load('user:id,name,avatar,role')]);
     }
 }

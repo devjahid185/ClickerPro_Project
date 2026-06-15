@@ -55,10 +55,10 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Data Export',
           style: TextStyle(
             color: AppColors.film,
@@ -111,7 +111,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'Request your data',
                         style: TextStyle(
@@ -182,7 +182,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
+            children: [
               Icon(Icons.check_circle_outline, color: AppColors.green),
               SizedBox(width: 10),
               Expanded(

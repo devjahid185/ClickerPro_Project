@@ -28,6 +28,7 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show SocketException;
 
 import 'package:drift/drift.dart' show Value;
 
@@ -167,9 +168,25 @@ class BookingsOutboxDispatcher {
         DispatchOutcome.manualRetry,
         error: 'HTTP ${e.statusCode}: ${e.message}',
       );
+    } on SocketException catch (e) {
+      // Raw transport failure (no response) — transient, safe to retry.
+      return DispatchResult(DispatchOutcome.retry, error: e.message);
+    } on TimeoutException catch (e) {
+      return DispatchResult(
+        DispatchOutcome.retry,
+        error: e.message ?? 'timeout',
+      );
     } catch (e, st) {
+      // Anything else = a programming/parse error, NOT a transient
+      // network failure. Blind-retrying these is dangerous: a create that
+      // succeeded server-side but failed to parse would be re-POSTed on
+      // every retry, creating duplicate rows on the server. Park the row
+      // for manual retry instead.
       AppLogger.e('outbox', e, st);
-      return DispatchResult(DispatchOutcome.retry, error: e.toString());
+      return DispatchResult(
+        DispatchOutcome.manualRetry,
+        error: 'Unexpected error: $e',
+      );
     }
   }
 
@@ -522,6 +539,7 @@ class BookingsOutboxDispatcher {
     chiefPhotographerUserId: r.chiefPhotographerUserId,
     chiefHours: r.chiefHours,
     hidePaymentFromTeam: r.hidePaymentFromTeam,
+    showPaymentInShare: r.showPaymentInShare,
     status: _statusFromString(r.status),
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,

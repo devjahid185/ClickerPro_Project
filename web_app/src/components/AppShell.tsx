@@ -52,7 +52,9 @@ const NAV: { group: string; items: NavItem[] }[] = [
       { href: '/app/announcements', label: 'Announcements', icon: '📣' },
       { href: '/app/support', label: 'Support', icon: '🎫' },
       { href: '/app/help', label: 'Help', icon: '❓' },
+      { href: '/app/performance', label: 'Performance', icon: '📈' },
       { href: '/app/activity', label: 'My Activity', icon: '🕑' },
+      { href: '/app/security', label: 'Security', icon: '🔐' },
       { href: '/app/notifications', label: 'Notifications', icon: '📢' },
       { href: '/app/settings', label: 'Settings', icon: '⚙️' },
     ],
@@ -95,7 +97,11 @@ export default function AppShell({ children }: { children: ReactNode }) {
         <button className="hamburger" aria-label="Open menu" onClick={() => setSidebarOpen(true)}>
           <span /><span /><span />
         </button>
-        <Link href="/app" className="brand-logo">Clicker<span>Pro</span></Link>
+        <Link href="/app" className="brand-logo" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo_flower.png" alt="" style={{ height: 24, width: 24, objectFit: 'contain' }} />
+          <span>Clicker<span>Pro</span></span>
+        </Link>
         <span style={{ flex: 1 }} />
         <Link href="/app/settings" className="avatar avatar-sm" aria-label="Settings">{initials}</Link>
       </header>
@@ -109,6 +115,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
       <aside className={`app-sidebar${sidebarOpen ? ' open' : ''}`}>
         <div className="app-sidebar-brand">
           <Link href="/app" style={{ display: 'flex', alignItems: 'center', gap: 8 }} onClick={() => setSidebarOpen(false)}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo_flower.png" alt="" style={{ height: 22, width: 22, objectFit: 'contain' }} />
             <span className="brand-logo">Clicker<span>Pro</span></span>
           </Link>
           <span className="spacer" />

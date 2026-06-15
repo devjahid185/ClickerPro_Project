@@ -79,7 +79,7 @@ class RentRow extends StatelessWidget {
                   children: [
                     Text(
                       record.counterpartyName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.film,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -91,7 +91,7 @@ class RentRow extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         record.gearName!,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.filmDim,
                           fontSize: 12,
                         ),
@@ -144,7 +144,7 @@ class RentRow extends StatelessWidget {
                 Expanded(
                   child: Text(
                     BookingFormat.dateTime(record.returnBy!, lang: lang),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.filmMuted,
                       fontSize: 11,
                     ),

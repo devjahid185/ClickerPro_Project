@@ -17,5 +17,15 @@ class FlEarningRepositoryImpl implements FlEarningRepository {
   Future<FlEarningsOverview> overview() => _api.overview();
 
   @override
-  Future<bool> requestPayment() => _api.requestPayment();
+  Future<bool> requestPayment({
+    double? amount,
+    String? bkash,
+    String? bankDetails,
+    String? note,
+  }) => _api.requestPayment(
+    amount: amount,
+    bkash: bkash,
+    bankDetails: bankDetails,
+    note: note,
+  );
 }

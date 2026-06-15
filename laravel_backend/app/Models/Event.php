@@ -15,6 +15,12 @@ class Event extends Model
         'date', 'venue', 'shift', 'status', 'price', 'advance_paid',
         'due_amount', 'notes', 'internal_notes', 'delivered_at',
         'completed_at', 'sync_status', 'remote_rev',
+        // Rich detail fields (mobile↔web parity).
+        'company_name', 'bride_name', 'groom_name', 'outdoor',
+        'outdoor_location', 'reporting_time', 'start_time', 'end_time',
+        'map_link', 'coverage_hours', 'extra_hour_rate', 'custom_price',
+        'drive_link', 'requirements_note', 'chief_photographer_name',
+        'hide_payment_from_team', 'show_payment_in_share',
     ];
 
     protected $casts = [
@@ -24,6 +30,12 @@ class Event extends Model
         'due_amount' => 'decimal:2',
         'delivered_at' => 'datetime',
         'completed_at' => 'datetime',
+        'outdoor' => 'boolean',
+        'hide_payment_from_team' => 'boolean',
+        'show_payment_in_share' => 'boolean',
+        'coverage_hours' => 'decimal:2',
+        'extra_hour_rate' => 'decimal:2',
+        'custom_price' => 'decimal:2',
     ];
 
     public function owner()

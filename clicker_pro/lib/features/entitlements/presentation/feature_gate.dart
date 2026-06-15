@@ -61,7 +61,7 @@ class FeatureGate extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.12),
+                      color: AppColors.line(0.12),
                       blurRadius: 4,
                     ),
                   ],

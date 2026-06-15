@@ -113,7 +113,7 @@ class _BookingTemplateSheetState extends ConsumerState<BookingTemplateSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Booking Templates',
                       style: TextStyle(
@@ -125,7 +125,7 @@ class _BookingTemplateSheetState extends ConsumerState<BookingTemplateSheet> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: AppColors.filmDim),
+                    icon: Icon(Icons.close, color: AppColors.filmDim),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
@@ -146,7 +146,7 @@ class _BookingTemplateSheetState extends ConsumerState<BookingTemplateSheet> {
                       child: ListTile(
                         title: Text(
                           t.name,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.film,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
@@ -159,7 +159,7 @@ class _BookingTemplateSheetState extends ConsumerState<BookingTemplateSheet> {
                             fontSize: 12,
                           ),
                         ),
-                        trailing: const Icon(
+                        trailing: Icon(
                           Icons.chevron_right,
                           color: AppColors.filmMuted,
                           size: 20,
@@ -171,7 +171,7 @@ class _BookingTemplateSheetState extends ConsumerState<BookingTemplateSheet> {
                 ),
               )
             else
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 24),
                 child: Center(
                   child: Text(
@@ -189,21 +189,21 @@ class _BookingTemplateSheetState extends ConsumerState<BookingTemplateSheet> {
                   Expanded(
                     child: TextField(
                       controller: _nameCtrl,
-                      style: const TextStyle(color: AppColors.film),
+                      style: TextStyle(color: AppColors.film),
                       decoration: InputDecoration(
                         hintText: 'Template name...',
-                        hintStyle: const TextStyle(color: AppColors.filmMuted),
+                        hintStyle: TextStyle(color: AppColors.filmMuted),
                         filled: true,
                         fillColor: AppColors.voidElevated,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
+                          borderSide: BorderSide(
                             color: AppColors.glassBorder,
                           ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
+                          borderSide: BorderSide(
                             color: AppColors.glassBorder,
                           ),
                         ),

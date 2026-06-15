@@ -37,7 +37,7 @@ class StatusConflictListener extends ConsumerWidget {
               content: Text(
                 'Status changed remotely — kept the server value '
                 '(${event.serverStatus.name}, you tried ${event.attemptedTo.name}).',
-                style: const TextStyle(color: AppColors.film),
+                style: TextStyle(color: AppColors.film),
               ),
               action: SnackBarAction(
                 textColor: AppColors.orange,

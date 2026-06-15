@@ -8,7 +8,6 @@ import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
-import '../../settings/application/language_controller.dart';
 import '../application/rent_providers.dart';
 import 'dialogs/add_rent_sheet.dart';
 import 'widgets/rent_row.dart';
@@ -19,9 +18,7 @@ class RentScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final loc = AppLocalizations.of(context);
-    final lang = ref.watch(activeLocaleProvider).languageCode == 'bn'
-        ? 'bn'
-        : 'en';
+    final lang = 'en';
     final async = ref.watch(rentHistoryControllerProvider);
     final activeCount = ref.watch(activeRentCountProvider);
 
@@ -31,14 +28,14 @@ class RentScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Row(
           children: [
             Text(
               loc.rent_title,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.film,
                 fontFamily: 'Poppins',
                 fontSize: 22,
@@ -55,7 +52,7 @@ class RentScreen extends ConsumerWidget {
                 ),
                 child: Text(
                   loc.rent_active_count(activeCount),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.voidBlack,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,

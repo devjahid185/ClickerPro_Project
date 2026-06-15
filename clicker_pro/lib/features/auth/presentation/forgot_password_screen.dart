@@ -2,20 +2,22 @@
 //
 // Clicker Pro — Forgot Password (Dark Luxury Lens)
 //
-// Single email field, "Send Reset Code" gradient button. Always shows a
-// generic acknowledgement on success per Requirement 1.10 (no account
-// enumeration). Below the ack: "Have the code? Enter it →" pushes the
-// OtpScreen with purpose = forgotPassword.
+// Single-page flow (no extra screens):
+//   1. Enter email → "Send Reset Code" (backend emails a 6-digit code)
+//   2. The code + new-password fields expand BELOW on the same page
+//   3. "Reset Password" → success snackbar → back to Login
+//
+// Password must be at least 8 characters (matches backend min:8).
+// Always shows a generic acknowledgement on send per Requirement 1.10
+// (no account enumeration).
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_exception.dart';
-import '../../../theme/app_colors.dart';
 import '../../../core/providers.dart';
-import '../domain/otp_purpose.dart';
-import 'login_screen.dart' show slideFromRightRoute;
-import 'otp_screen.dart';
+import '../../../theme/app_colors.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -28,8 +30,13 @@ class ForgotPasswordScreen extends ConsumerStatefulWidget {
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
-  bool _isLoading = false;
-  bool _ackVisible = false;
+  final _codeController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  bool _isSending = false;
+  bool _isResetting = false;
+  bool _codeSent = false;
+  bool _obscurePassword = true;
 
   static final RegExp _emailRegex = RegExp(
     r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
@@ -38,62 +45,117 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   @override
   void dispose() {
     _emailController.dispose();
+    _codeController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
   String? _validateEmail(String? v) {
     final t = (v ?? '').trim();
-    if (t.isEmpty) return 'ইমেইল লিখুন';
-    if (!_emailRegex.hasMatch(t)) return 'সঠিক ইমেইল লিখুন';
+    if (t.isEmpty) return 'Enter email';
+    if (!_emailRegex.hasMatch(t)) return 'Enter a valid email';
     return null;
   }
 
   Future<void> _handleSend() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() => _isLoading = true);
+    if (_validateEmail(_emailController.text) != null) {
+      _formKey.currentState!.validate();
+      return;
+    }
+    setState(() => _isSending = true);
     try {
       await ref
           .read(authRepositoryProvider)
           .forgotPassword(email: _emailController.text.trim());
       if (!mounted) return;
-      setState(() => _ackVisible = true);
+      setState(() => _codeSent = true);
+      _showInfo('Code sent — check your email (also check Spam).');
     } on ApiException catch (e) {
       if (!mounted) return;
       _showError(e.message);
     } catch (_) {
       if (!mounted) return;
-      _showError('সার্ভারের সাথে যোগাযোগ করা যাচ্ছে না।');
+      _showError('Cannot reach the server.');
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _isSending = false);
     }
   }
 
-  void _showError(String message) {
+  Future<void> _handleReset() async {
+    final code = _codeController.text.trim();
+    final password = _passwordController.text;
+    if (code.length != 6) {
+      _showError('Enter the 6-digit code sent to your email.');
+      return;
+    }
+    if (password.length < 8) {
+      _showError('Password must be at least 8 characters.');
+      return;
+    }
+    setState(() => _isResetting = true);
+    try {
+      await ref
+          .read(authRepositoryProvider)
+          .resetPassword(
+            token: code,
+            newPassword: password,
+            email: _emailController.text.trim(),
+          );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Password changed ✓ — log in with your new password.',
+            style: TextStyle(color: AppColors.film, fontSize: 13),
+          ),
+          backgroundColor: AppColors.voidElevated,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: BorderSide(color: AppColors.gold.withValues(alpha: 0.4)),
+          ),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      Navigator.of(context).pop();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      if (e.statusCode == 422) {
+        _showError('Code is wrong or expired — tap "Send Reset Code" again.');
+      } else {
+        _showError(e.message);
+      }
+    } catch (_) {
+      if (!mounted) return;
+      _showError('Cannot reach the server.');
+    } finally {
+      if (mounted) setState(() => _isResetting = false);
+    }
+  }
+
+  void _showError(String message) => _showSnack(message, error: true);
+  void _showInfo(String message) => _showSnack(message, error: false);
+
+  void _showSnack(String message, {required bool error}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           message,
-          style: const TextStyle(color: AppColors.film, fontSize: 13),
+          style: TextStyle(color: AppColors.film, fontSize: 13),
         ),
         backgroundColor: AppColors.voidElevated,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
-          side: BorderSide(color: Colors.redAccent.withValues(alpha: 0.4)),
+          side: BorderSide(
+            color: error
+                ? Colors.redAccent.withValues(alpha: 0.4)
+                : AppColors.gold.withValues(alpha: 0.4),
+          ),
         ),
         duration: const Duration(seconds: 3),
-      ),
-    );
-  }
-
-  void _goToOtp() {
-    Navigator.of(context).push(
-      slideFromRightRoute(
-        OtpScreen(
-          identifier: _emailController.text.trim(),
-          purpose: OtpPurpose.forgotPassword,
-        ),
       ),
     );
   }
@@ -130,21 +192,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             ),
           ),
 
-          // ─── BACK BUTTON ─────────────────────────────────────────
-          Positioned(
-            top: 12,
-            left: 8,
-            child: SafeArea(
-              child: IconButton(
-                icon: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  size: 18,
-                  color: AppColors.film,
-                ),
-                onPressed: () => Navigator.of(context).maybePop(),
-              ),
-            ),
-          ),
+
 
           SafeArea(
             child: Center(
@@ -161,7 +209,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                       const SizedBox(height: 36),
                       _smallBrandLogo(),
                       const SizedBox(height: 28),
-                      const Text(
+                      Text(
                         'Forgot your\npassword?',
                         textAlign: TextAlign.center,
                         style: TextStyle(
@@ -193,7 +241,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'Enter your registered email and we will send a reset code.',
+                        _codeSent
+                            ? 'Enter the 6-digit code from your email and a new password below.'
+                            : 'Enter your registered email — we will send a reset code.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 13,
@@ -208,103 +258,86 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                         label: 'Email Address',
                         icon: Icons.mail_outline_rounded,
                         validator: _validateEmail,
+                        keyboardType: TextInputType.emailAddress,
+                        enabled: !_codeSent,
                       ),
 
-                      const SizedBox(height: 22),
+                      const SizedBox(height: 16),
 
                       _gradientButton(
-                        label: 'Send Reset Code',
-                        loading: _isLoading,
-                        onTap: _isLoading ? null : _handleSend,
+                        label: _codeSent ? 'Send Code Again' : 'Send Reset Code',
+                        loading: _isSending,
+                        filled: !_codeSent,
+                        onTap: _isSending ? null : _handleSend,
                       ),
 
-                      // ── ACKNOWLEDGEMENT ────────────────────────
+                      // ── CODE + NEW PASSWORD (same page) ───────────
                       AnimatedSize(
                         duration: const Duration(milliseconds: 240),
                         curve: Curves.easeOutCubic,
-                        child: _ackVisible
-                            ? Padding(
-                                padding: const EdgeInsets.only(top: 20),
-                                child: Column(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 14,
+                        child: _codeSent
+                            ? Column(
+                                children: [
+                                  const SizedBox(height: 24),
+                                  _glassField(
+                                    controller: _codeController,
+                                    label: '6-digit Code',
+                                    icon: Icons.pin_outlined,
+                                    keyboardType: TextInputType.number,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                      LengthLimitingTextInputFormatter(6),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 14),
+                                  _glassField(
+                                    controller: _passwordController,
+                                    label: 'New Password (min 8)',
+                                    icon: Icons.lock_outline_rounded,
+                                    obscure: _obscurePassword,
+                                    suffix: IconButton(
+                                      icon: Icon(
+                                        _obscurePassword
+                                            ? Icons.visibility_outlined
+                                            : Icons.visibility_off_outlined,
+                                        size: 18,
+                                        color: AppColors.filmDim,
                                       ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.film.withValues(
-                                          alpha: 0.04,
-                                        ),
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: AppColors.gold.withValues(
-                                            alpha: 0.35,
-                                          ),
-                                        ),
-                                      ),
-                                      child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Icon(
-                                            Icons.mark_email_read_outlined,
-                                            color: AppColors.gold,
-                                            size: 18,
-                                          ),
-                                          const SizedBox(width: 10),
-                                          Expanded(
-                                            child: Text(
-                                              'If that email is registered, a reset code is on its way.',
-                                              style: TextStyle(
-                                                color: AppColors.film
-                                                    .withValues(alpha: 0.9),
-                                                fontSize: 12.5,
-                                                height: 1.45,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
+                                      onPressed: () => setState(
+                                        () => _obscurePassword =
+                                            !_obscurePassword,
                                       ),
                                     ),
-                                    const SizedBox(height: 16),
-                                    GestureDetector(
-                                      onTap: _goToOtp,
-                                      behavior: HitTestBehavior.opaque,
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 6,
-                                        ),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: const [
-                                            Text(
-                                              'Have the code? Enter it',
-                                              style: TextStyle(
-                                                color: AppColors.orange,
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                            SizedBox(width: 6),
-                                            Icon(
-                                              Icons.arrow_forward_rounded,
-                                              color: AppColors.orange,
-                                              size: 16,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  _gradientButton(
+                                    label: 'Reset Password',
+                                    loading: _isResetting,
+                                    filled: true,
+                                    onTap: _isResetting ? null : _handleReset,
+                                  ),
+                                ],
                               )
                             : const SizedBox.shrink(),
                       ),
                     ],
                   ),
                 ),
+              ),
+            ),
+          ),
+          // ─── BACK BUTTON ─────────────────────────────────────────
+          Positioned(
+            top: 12,
+            left: 8,
+            child: SafeArea(
+              child: IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  size: 18,
+                  color: AppColors.film,
+                ),
+                onPressed: () => Navigator.of(context).maybePop(),
               ),
             ),
           ),
@@ -353,6 +386,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     required String label,
     required IconData icon,
     String? Function(String?)? validator,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+    bool obscure = false,
+    bool enabled = true,
+    Widget? suffix,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -362,10 +400,13 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       ),
       child: TextFormField(
         controller: controller,
-        keyboardType: TextInputType.emailAddress,
+        keyboardType: keyboardType,
         validator: validator,
+        inputFormatters: inputFormatters,
+        obscureText: obscure,
+        enabled: enabled,
         autovalidateMode: AutovalidateMode.onUserInteraction,
-        style: const TextStyle(color: AppColors.film, fontSize: 14.5),
+        style: TextStyle(color: AppColors.film, fontSize: 14.5),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(
@@ -384,6 +425,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             minWidth: 0,
             minHeight: 0,
           ),
+          suffixIcon: suffix,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 14,
             vertical: 16,
@@ -411,19 +453,25 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     required String label,
     required bool loading,
     required VoidCallback? onTap,
+    bool filled = true,
   }) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: AppColors.orange,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.orange.withValues(alpha: 0.4),
-            blurRadius: 24,
-            spreadRadius: -4,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        color: filled ? AppColors.orange : Colors.transparent,
+        border: filled
+            ? null
+            : Border.all(color: AppColors.orange.withValues(alpha: 0.5)),
+        boxShadow: filled
+            ? [
+                BoxShadow(
+                  color: AppColors.orange.withValues(alpha: 0.4),
+                  blurRadius: 24,
+                  spreadRadius: -4,
+                  offset: const Offset(0, 8),
+                ),
+              ]
+            : null,
       ),
       child: Material(
         color: Colors.transparent,
@@ -435,11 +483,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             height: 54,
             alignment: Alignment.center,
             child: loading
-                ? const SizedBox(
+                ? SizedBox(
                     width: 22,
                     height: 22,
                     child: CircularProgressIndicator(
-                      color: AppColors.film,
+                      color: filled ? AppColors.film : AppColors.orange,
                       strokeWidth: 2.5,
                     ),
                   )
@@ -448,17 +496,17 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     children: [
                       Text(
                         label,
-                        style: const TextStyle(
-                          color: AppColors.film,
+                        style: TextStyle(
+                          color: filled ? AppColors.film : AppColors.orange,
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.3,
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Icon(
+                      Icon(
                         Icons.arrow_forward_rounded,
-                        color: AppColors.film,
+                        color: filled ? AppColors.film : AppColors.orange,
                         size: 18,
                       ),
                     ],

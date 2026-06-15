@@ -87,10 +87,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     // If valid token exists, skip login and go straight to dashboard.
     Session? session;
     try {
+      // Local-first restore returns in milliseconds when a session is
+      // cached; the generous timeout only guards the cold "token but no
+      // cache" network path.
       session = await ref
           .read(authRepositoryProvider)
           .restoreSession()
-          .timeout(const Duration(seconds: 5));
+          .timeout(const Duration(seconds: 12));
     } catch (_) {
       session = null;
     }
@@ -208,27 +211,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                           opacity: _logoFade.value.clamp(0.0, 1.0),
                           child: Transform.scale(
                             scale: _logoScale.value,
-                            child: Container(
-                              width: 76,
-                              height: 76,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: AppColors.orange,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.orange.withValues(
-                                      alpha: 0.45,
-                                    ),
-                                    blurRadius: 24,
-                                    spreadRadius: -2,
-                                  ),
-                                ],
-                              ),
-                              child: const Icon(
-                                Icons.camera_alt_rounded,
-                                color: Colors.white,
-                                size: 32,
-                              ),
+                            // The blade-fan brand mark — the first thing the
+                            // user sees, matching the launcher icon and the
+                            // landing page hero.
+                            child: Image.asset(
+                              'assets/brand/logo_flower.png',
+                              width: 104,
+                              height: 104,
                             ),
                           ),
                         ),
@@ -239,7 +228,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 const SizedBox(height: 22),
                 FadeTransition(
                   opacity: _brandFade,
-                  child: const Text.rich(
+                  child: Text.rich(
                     TextSpan(
                       style: TextStyle(
                         fontFamily: 'Poppins',

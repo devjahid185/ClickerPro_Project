@@ -40,10 +40,10 @@ class InvoiceScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Invoice',
           style: TextStyle(
             color: AppColors.film,
@@ -54,7 +54,7 @@ class InvoiceScreen extends ConsumerWidget {
         ),
       ),
       body: inv == null
-          ? const Center(
+          ? Center(
               child: Text(
                 'No invoice data',
                 style: TextStyle(color: AppColors.filmDim),
@@ -105,7 +105,7 @@ class InvoiceScreen extends ConsumerWidget {
           const SizedBox(height: 12),
           Text(
             inv.companyName.isNotEmpty ? inv.companyName : 'Clicker Pro',
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.film,
               fontFamily: 'Poppins',
               fontSize: 20,
@@ -116,7 +116,7 @@ class InvoiceScreen extends ConsumerWidget {
             const SizedBox(height: 4),
             Text(
               inv.companyPhone,
-              style: const TextStyle(color: AppColors.filmDim, fontSize: 13),
+              style: TextStyle(color: AppColors.filmDim, fontSize: 13),
             ),
           ],
         ],
@@ -157,7 +157,7 @@ class InvoiceScreen extends ConsumerWidget {
                   Expanded(
                     child: Text(
                       inv.teamNames[i],
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.film,
                         fontSize: 14,
                       ),
@@ -166,7 +166,7 @@ class InvoiceScreen extends ConsumerWidget {
                   if (i < inv.teamPhones.length)
                     Text(
                       inv.teamPhones[i],
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.filmDim,
                         fontSize: 13,
                       ),
@@ -188,7 +188,7 @@ class InvoiceScreen extends ConsumerWidget {
           const SizedBox(height: 6),
           _paymentRow('Advance', inv.advance, AppColors.green),
           const SizedBox(height: 6),
-          const Divider(color: AppColors.glassBorder, height: 1),
+          Divider(color: AppColors.glassBorder, height: 1),
           const SizedBox(height: 6),
           _paymentRow(
             'Due',
@@ -206,7 +206,7 @@ class InvoiceScreen extends ConsumerWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(color: AppColors.filmDim, fontSize: 14),
+          style: TextStyle(color: AppColors.filmDim, fontSize: 14),
         ),
         Text(
           '৳${amount.toStringAsFixed(0)}',
@@ -229,13 +229,13 @@ class InvoiceScreen extends ConsumerWidget {
           const SizedBox(width: 10),
           Text(
             label,
-            style: const TextStyle(color: AppColors.filmDim, fontSize: 13),
+            style: TextStyle(color: AppColors.filmDim, fontSize: 13),
           ),
           const Spacer(),
           Flexible(
             child: Text(
               value,
-              style: const TextStyle(color: AppColors.film, fontSize: 14),
+              style: TextStyle(color: AppColors.film, fontSize: 14),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -354,7 +354,7 @@ class InvoiceScreen extends ConsumerWidget {
       );
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('PDF তৈরি করা যায়নি: $e')),
+        SnackBar(content: Text('Could not create PDF: $e')),
       );
     }
   }
@@ -401,7 +401,7 @@ class _CardSection extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.filmDim,
               fontSize: 12,
               letterSpacing: 1.0,

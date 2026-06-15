@@ -5,13 +5,17 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/format/bd_holidays.dart';
 import '../../../core/booking_status/booking_status.dart';
 import '../../bookings/application/booking_providers.dart';
 import '../../bookings/domain/booking_filter.dart';
+import '../../bookings/domain/shift.dart';
 
 class DashboardMetrics {
   const DashboardMetrics({
     required this.todayEvents,
+    required this.todayDayEvents,
+    required this.todayNightEvents,
     required this.upcomingEvents,
     required this.successEvents,
     required this.totalEvents,
@@ -22,6 +26,8 @@ class DashboardMetrics {
   });
 
   final int todayEvents;
+  final int todayDayEvents; // today's events on the Day shift
+  final int todayNightEvents; // today's events on the Night shift
   final int upcomingEvents;
   final int successEvents;
   final int totalEvents;
@@ -32,6 +38,8 @@ class DashboardMetrics {
 
   static const placeholder = DashboardMetrics(
     todayEvents: 0,
+    todayDayEvents: 0,
+    todayNightEvents: 0,
     upcomingEvents: 0,
     successEvents: 0,
     totalEvents: 0,
@@ -51,8 +59,14 @@ final dashboardMetricsProvider = StreamProvider<DashboardMetrics>((ref) {
     data: (bookings) {
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
+      // Rolling 6-month window for "Upcoming" — every event from tomorrow
+      // up to 6 months ahead. As one day passes, the window naturally
+      // shifts forward by a day ("একদিন গেলে একদিন যোগ হবে").
+      final sixMonthsAhead = DateTime(now.year, now.month + 6, now.day);
 
       int todayEvents = 0;
+      int todayDayEvents = 0;
+      int todayNightEvents = 0;
       int upcomingEvents = 0;
       int successEvents = 0;
       int cancelledEvents = 0;
@@ -61,14 +75,28 @@ final dashboardMetricsProvider = StreamProvider<DashboardMetrics>((ref) {
 
       for (final b in bookings) {
         final bDate = DateTime(b.date.year, b.date.month, b.date.day);
-        if (bDate == today) {
+        // "Today" = events whose calendar date is today. A night shift
+        // (6pm–11pm) still belongs to the same calendar day, so a simple
+        // date match is correct — no time-of-day rollover.
+        if (bDate == today && b.status != BookingStatus.cancelled) {
           todayEvents++;
+          // Real day/night split (was a fake 60/40 placeholder before).
+          // A "both" shift counts toward both buckets.
+          if (b.shift == Shift.night) {
+            todayNightEvents++;
+          } else if (b.shift == Shift.day) {
+            todayDayEvents++;
+          } else {
+            todayDayEvents++;
+            todayNightEvents++;
+          }
           final price = b.customPrice ?? 0;
           todayRevenue += (price * 100).round();
         }
+        // "Upcoming" = ALL non-cancelled events within the next 6 months.
         if (bDate.isAfter(today) &&
-            b.status != BookingStatus.cancelled &&
-            b.status != BookingStatus.completed) {
+            !bDate.isAfter(sixMonthsAhead) &&
+            b.status != BookingStatus.cancelled) {
           upcomingEvents++;
         }
         if (b.status == BookingStatus.completed ||
@@ -93,12 +121,14 @@ final dashboardMetricsProvider = StreamProvider<DashboardMetrics>((ref) {
       return Stream.value(
         DashboardMetrics(
           todayEvents: todayEvents,
+          todayDayEvents: todayDayEvents,
+          todayNightEvents: todayNightEvents,
           upcomingEvents: upcomingEvents,
           successEvents: successEvents,
           totalEvents: bookings.length,
           todayCollection: todayRevenue,
           pendingDue: pendingDueCount * avgPrice,
-          holidaysThisMonth: 0,
+          holidaysThisMonth: bdHolidaysInMonth(DateTime.now()),
           cancelledEvents: cancelledEvents,
         ),
       );
@@ -111,4 +141,57 @@ final dashboardMetricsProvider = StreamProvider<DashboardMetrics>((ref) {
 final dashboardSelectedDayProvider = StateProvider<DateTime>((ref) {
   final now = DateTime.now();
   return DateTime(now.year, now.month, now.day);
+});
+
+/// One booking with money still owed — feeds the dashboard's Due
+/// drill-down sheet ("which events have dues").
+class DueEntry {
+  const DueEntry({
+    required this.bookingId,
+    required this.title,
+    required this.clientName,
+    required this.date,
+    required this.total,
+    required this.paid,
+  });
+
+  final String bookingId;
+  final String title;
+  final String? clientName;
+  final DateTime date;
+  final double total;
+  final double paid;
+
+  double get due => total - paid;
+}
+
+/// Per-event due breakdown: every non-cancelled booking with a price
+/// whose payments don't cover the total yet, newest event first.
+final dueBreakdownProvider = FutureProvider<List<DueEntry>>((ref) async {
+  final bookings = await ref.watch(
+    bookingListProvider(const BookingFilter()).future,
+  );
+  final payRepo = ref.read(paymentRepositoryProvider);
+
+  final entries = <DueEntry>[];
+  for (final b in bookings) {
+    if (b.status == BookingStatus.cancelled) continue;
+    final total = b.customPrice;
+    if (total == null || total <= 0) continue;
+    final agg = await payRepo.aggregateForBooking(b.id);
+    final due = total - agg.total;
+    if (due <= 0.5) continue;
+    entries.add(
+      DueEntry(
+        bookingId: b.id,
+        title: b.title,
+        clientName: b.clientName,
+        date: b.date,
+        total: total,
+        paid: agg.total,
+      ),
+    );
+  }
+  entries.sort((a, b) => b.date.compareTo(a.date));
+  return entries;
 });

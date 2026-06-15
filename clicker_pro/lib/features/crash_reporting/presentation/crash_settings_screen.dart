@@ -56,10 +56,10 @@ class _CrashSettingsScreenState extends ConsumerState<CrashSettingsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Crash Reporting',
           style: TextStyle(
             color: AppColors.film,
@@ -116,7 +116,7 @@ class _CrashSettingsScreenState extends ConsumerState<CrashSettingsScreen> {
                         const SizedBox(height: 2),
                         Text(
                           '$_lastCrashCount',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.film,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
@@ -188,7 +188,7 @@ class _CrashSettingsScreenState extends ConsumerState<CrashSettingsScreen> {
               const SizedBox(width: 12),
               Text(
                 label,
-                style: const TextStyle(color: AppColors.film, fontSize: 15),
+                style: TextStyle(color: AppColors.film, fontSize: 15),
               ),
             ],
           ),
@@ -215,7 +215,7 @@ class _CrashSettingsScreenState extends ConsumerState<CrashSettingsScreen> {
         leading: Icon(icon, color: color, size: 22),
         title: Text(
           label,
-          style: const TextStyle(color: AppColors.film, fontSize: 15),
+          style: TextStyle(color: AppColors.film, fontSize: 15),
         ),
         trailing: Icon(
           Icons.chevron_right,
@@ -234,14 +234,14 @@ class _CrashSettingsScreenState extends ConsumerState<CrashSettingsScreen> {
         SnackBar(
           content: Text(
             message,
-            style: const TextStyle(color: AppColors.film, fontSize: 13),
+            style: TextStyle(color: AppColors.film, fontSize: 13),
           ),
           backgroundColor: AppColors.voidElevated,
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
-            side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+            side: BorderSide(color: AppColors.line(0.08)),
           ),
           duration: const Duration(seconds: 2),
         ),

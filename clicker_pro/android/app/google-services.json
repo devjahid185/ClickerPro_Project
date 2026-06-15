@@ -12,7 +12,28 @@
           "package_name": "com.clickerpro.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "113528221350-ivsrtjcrc0rktg9afd843v57agrc0k9k.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.clickerpro.app",
+            "certificate_hash": "e4d1926abaf061f58a3a20f478aba7065616bf64"
+          }
+        },
+        {
+          "client_id": "113528221350-lc5e3k6t7mplui4p2p7qf2p15bsamc7s.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.clickerpro.app",
+            "certificate_hash": "0ecde1ef1ccf9eed7c6d92cd8ed8fe7432c69ef1"
+          }
+        },
+        {
+          "client_id": "113528221350-ulop3128toa364k8n4uo109mq7ag9cog.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAoQlUokjk8MsM82YUjQY9LRovmTc1x4C8"
@@ -20,7 +41,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "113528221350-ulop3128toa364k8n4uo109mq7ag9cog.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

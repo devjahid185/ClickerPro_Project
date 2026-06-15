@@ -39,4 +39,17 @@ enum Capability {
   updateTaskProgress,
   // Announcements
   createAnnouncement,
+  viewAnnouncements,
+  // Owner/Manager-only operational areas (hidden from Freelancer).
+  // A Freelancer works *for* studios; these are studio-management surfaces.
+  accessTeam,
+  accessInvoice,
+  accessTax,
+  accessPackages,
+  accessDelivery,
+  accessDailyTasks,
+  accessFollowup,
+  accessReminders,
+  accessWaitlist,
+  accessRentTracking,
 }

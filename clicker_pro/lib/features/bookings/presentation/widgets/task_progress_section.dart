@@ -160,7 +160,7 @@ class _TaskProgressSectionState extends ConsumerState<TaskProgressSection> {
                   child: LinearProgressIndicator(
                     value: pct / 100,
                     minHeight: 8,
-                    backgroundColor: Colors.black.withValues(alpha: 0.06),
+                    backgroundColor: AppColors.line(0.06),
                     valueColor: const AlwaysStoppedAnimation(AppColors.orange),
                   ),
                 ),
@@ -172,7 +172,7 @@ class _TaskProgressSectionState extends ConsumerState<TaskProgressSection> {
                   lang: lang,
                   bnNumerals: lang == 'bn',
                 ),
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.film,
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -213,7 +213,7 @@ class _TaskProgressSectionState extends ConsumerState<TaskProgressSection> {
                   max: 100,
                   divisions: 20, // step 5
                   activeColor: AppColors.orange,
-                  inactiveColor: Colors.black.withValues(alpha: 0.08),
+                  inactiveColor: AppColors.line(0.08),
                   label: '$_draftPercentage%',
                   onChanged: (v) =>
                       setState(() => _draftPercentage = v.round()),
@@ -228,7 +228,7 @@ class _TaskProgressSectionState extends ConsumerState<TaskProgressSection> {
                     bnNumerals: lang == 'bn',
                   ),
                   textAlign: TextAlign.right,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.film,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -243,7 +243,7 @@ class _TaskProgressSectionState extends ConsumerState<TaskProgressSection> {
             controller: _noteCtrl,
             maxLines: 3,
             maxLength: 500,
-            style: const TextStyle(color: AppColors.film, fontSize: 13.5),
+            style: TextStyle(color: AppColors.film, fontSize: 13.5),
             decoration: InputDecoration(
               hintText: 'Optional note',
               hintStyle: TextStyle(
@@ -251,17 +251,17 @@ class _TaskProgressSectionState extends ConsumerState<TaskProgressSection> {
               ),
               counterText: '',
               filled: true,
-              fillColor: Colors.black.withValues(alpha: 0.04),
+              fillColor: AppColors.line(0.04),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
-                  color: Colors.black.withValues(alpha: 0.08),
+                  color: AppColors.line(0.08),
                 ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
-                  color: Colors.black.withValues(alpha: 0.08),
+                  color: AppColors.line(0.08),
                 ),
               ),
               focusedBorder: OutlineInputBorder(
@@ -277,7 +277,7 @@ class _TaskProgressSectionState extends ConsumerState<TaskProgressSection> {
               Expanded(
                 child: TextButton(
                   onPressed: () => setState(() => _editing = false),
-                  child: const Text(
+                  child: Text(
                     'Cancel',
                     style: TextStyle(color: AppColors.filmDim),
                   ),
@@ -316,7 +316,7 @@ class _TaskProgressSectionState extends ConsumerState<TaskProgressSection> {
               Container(
                 height: 1,
                 margin: const EdgeInsets.symmetric(vertical: 4),
-                color: Colors.black.withValues(alpha: 0.04),
+                color: AppColors.line(0.04),
               ),
           ],
         ],
@@ -398,7 +398,7 @@ class _AllProgressRow extends StatelessWidget {
                   'User ${progress.userId}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.film,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -410,7 +410,7 @@ class _AllProgressRow extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: pct / 100,
                     minHeight: 5,
-                    backgroundColor: Colors.black.withValues(alpha: 0.06),
+                    backgroundColor: AppColors.line(0.06),
                     valueColor: const AlwaysStoppedAnimation(AppColors.orange),
                   ),
                 ),

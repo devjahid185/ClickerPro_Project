@@ -72,7 +72,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
       if (!mounted) return;
       setState(() => _submitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Could not submit deletion request. Try again.'),
           backgroundColor: AppColors.voidElevated,
           behavior: SnackBarBehavior.floating,
@@ -89,7 +89,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () {
             if (_step == 1) {
               setState(() => _step = 0);
@@ -98,7 +98,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
             }
           },
         ),
-        title: const Text(
+        title: Text(
           'Delete account?',
           style: TextStyle(
             color: AppColors.film,
@@ -123,7 +123,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Delete account?',
             style: TextStyle(
               color: AppColors.film,
@@ -154,7 +154,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
                   'What gets deleted',
                   style: TextStyle(
@@ -206,7 +206,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Confirm by typing DELETE',
             style: TextStyle(
               color: AppColors.film,
@@ -230,13 +230,13 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+              border: Border.all(color: AppColors.line(0.08)),
             ),
             child: TextField(
               controller: _confirmController,
               autofocus: true,
               textCapitalization: TextCapitalization.characters,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.film,
                 fontFamily: 'Montserrat',
                 fontSize: 16,
@@ -267,7 +267,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.filmDim,
                       side: BorderSide(
-                        color: Colors.black.withValues(alpha: 0.18),
+                        color: AppColors.line(0.18),
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -304,7 +304,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
                               strokeWidth: 2.4,
                             ),
                           )
-                        : const Text(
+                        : Text(
                             'Confirm Deletion',
                             style: TextStyle(
                               color: AppColors.film,
@@ -346,7 +346,7 @@ class _Bullet extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.filmDim,
                 fontSize: 13.5,
                 height: 1.45,

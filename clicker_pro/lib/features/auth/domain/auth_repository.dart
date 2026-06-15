@@ -33,6 +33,7 @@ abstract class AuthRepository {
   Future<void> resetPassword({
     required String token,
     required String newPassword,
+    String? email,
   });
 
   Future<Session> acceptInvite({

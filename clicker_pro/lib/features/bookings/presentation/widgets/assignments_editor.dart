@@ -28,12 +28,14 @@ import '../../../../core/format/booking_format.dart';
 import '../../../../core/role/capability.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../settings/application/language_controller.dart';
+import '../../../team/application/team_providers.dart';
 import '../../application/booking_edit_controller.dart';
 import '../../application/booking_providers.dart';
 import '../../domain/assignment.dart';
 import '../../domain/assignment_role.dart';
 import 'detail_section.dart';
 import 'lens_form_fields.dart';
+import 'team_member_picker_sheet.dart';
 
 class AssignmentsEditor extends ConsumerWidget {
   const AssignmentsEditor({
@@ -105,7 +107,7 @@ class AssignmentsEditor extends ConsumerWidget {
                     Container(
                       height: 1,
                       margin: const EdgeInsets.symmetric(vertical: 4),
-                      color: Colors.black.withValues(alpha: 0.04),
+                      color: AppColors.line(0.04),
                     ),
                 ],
               ],
@@ -117,7 +119,22 @@ class AssignmentsEditor extends ConsumerWidget {
     BuildContext context,
     BookingEditController controller,
   ) async {
-    final result = await _AssignmentEditDialog.show(context: context);
+    // Member is picked from the real team list — manual user-ID entry
+    // was removed (non-coders can't know internal ids).
+    final picked = await TeamMemberPickerSheet.show(
+      context,
+      title: 'Pick a team member',
+      excludedUserIds: draft.assignments.map((a) => a.userId).toSet(),
+      multiSelect: false,
+      accentColor: AppColors.orange,
+    );
+    if (picked == null || picked.isEmpty) return;
+    if (!context.mounted) return;
+    final result = await _AssignmentEditDialog.show(
+      context: context,
+      userId: picked.first.userId,
+      memberName: picked.first.fullName,
+    );
     if (result == null) return;
     controller.addAssignment(
       userId: result.userId,
@@ -135,6 +152,7 @@ class AssignmentsEditor extends ConsumerWidget {
     final result = await _AssignmentEditDialog.show(
       context: context,
       initial: current,
+      userId: current.userId,
     );
     if (result == null) return;
     controller.updateAssignment(
@@ -147,7 +165,7 @@ class AssignmentsEditor extends ConsumerWidget {
   }
 }
 
-class _AssignmentRow extends StatelessWidget {
+class _AssignmentRow extends ConsumerWidget {
   const _AssignmentRow({
     required this.assignment,
     required this.showPayout,
@@ -163,7 +181,14 @@ class _AssignmentRow extends StatelessWidget {
   final VoidCallback onRemove;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Resolve the team member's real name; fall back to the raw id only
+    // when the member list hasn't loaded or the user left the team.
+    final members = ref.watch(teamMembersProvider).valueOrNull;
+    final memberName = members
+        ?.where((m) => m.userId == assignment.userId)
+        .firstOrNull
+        ?.fullName;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -191,13 +216,10 @@ class _AssignmentRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  // Real name resolution requires a users provider —
-                  // wired in a later wave. The user id is unique and
-                  // human-recognisable in seeded fixtures.
-                  'User ${assignment.userId}',
+                  memberName ?? 'User ${assignment.userId}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.film,
                     fontSize: 13.5,
                     fontWeight: FontWeight.w600,
@@ -271,16 +293,28 @@ class _AssignmentEditResult {
 }
 
 class _AssignmentEditDialog extends StatefulWidget {
-  const _AssignmentEditDialog({this.initial});
+  const _AssignmentEditDialog({
+    this.initial,
+    required this.userId,
+    this.memberName,
+  });
   final Assignment? initial;
+  final String userId;
+  final String? memberName;
 
   static Future<_AssignmentEditResult?> show({
     required BuildContext context,
+    required String userId,
     Assignment? initial,
+    String? memberName,
   }) {
     return showDialog<_AssignmentEditResult>(
       context: context,
-      builder: (_) => _AssignmentEditDialog(initial: initial),
+      builder: (_) => _AssignmentEditDialog(
+        initial: initial,
+        userId: userId,
+        memberName: memberName,
+      ),
     );
   }
 
@@ -289,18 +323,15 @@ class _AssignmentEditDialog extends StatefulWidget {
 }
 
 class _AssignmentEditDialogState extends State<_AssignmentEditDialog> {
-  late final TextEditingController _userIdCtrl;
   late final TextEditingController _payoutCtrl;
   late final TextEditingController _notesCtrl;
   late AssignmentRole _role;
 
-  String? _userIdError;
   String? _payoutError;
 
   @override
   void initState() {
     super.initState();
-    _userIdCtrl = TextEditingController(text: widget.initial?.userId ?? '');
     _payoutCtrl = TextEditingController(
       text: widget.initial?.payout.toStringAsFixed(0) ?? '0',
     );
@@ -310,7 +341,6 @@ class _AssignmentEditDialogState extends State<_AssignmentEditDialog> {
 
   @override
   void dispose() {
-    _userIdCtrl.dispose();
     _payoutCtrl.dispose();
     _notesCtrl.dispose();
     super.dispose();
@@ -327,7 +357,7 @@ class _AssignmentEditDialogState extends State<_AssignmentEditDialog> {
         decoration: BoxDecoration(
           color: AppColors.voidElevated,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+          border: Border.all(color: AppColors.line(0.08)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -335,7 +365,7 @@ class _AssignmentEditDialogState extends State<_AssignmentEditDialog> {
           children: [
             Text(
               isEdit ? 'Edit assignment' : 'Add assignment',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.film,
                 fontFamily: 'Poppins',
                 fontSize: 22,
@@ -343,13 +373,32 @@ class _AssignmentEditDialogState extends State<_AssignmentEditDialog> {
               ),
             ),
             const SizedBox(height: 12),
-            LensTextField(
-              label: 'User id',
-              controller: _userIdCtrl,
-              hint: 'Paste a team member id',
-              errorText: _userIdError,
-              onChanged: (_) => _clearErrors(),
-            ),
+            if (widget.memberName != null && widget.memberName!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.person_outline_rounded,
+                      size: 16,
+                      color: AppColors.orange,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        widget.memberName!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: AppColors.film,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             LensSelector<AssignmentRole>(
               label: 'Role',
               value: _role,
@@ -380,7 +429,7 @@ class _AssignmentEditDialogState extends State<_AssignmentEditDialog> {
                 Expanded(
                   child: TextButton(
                     onPressed: () => Navigator.of(context).pop(null),
-                    child: const Text(
+                    child: Text(
                       'Cancel',
                       style: TextStyle(color: AppColors.filmDim),
                     ),
@@ -406,39 +455,28 @@ class _AssignmentEditDialogState extends State<_AssignmentEditDialog> {
   }
 
   void _clearErrors() {
-    if (_userIdError != null || _payoutError != null) {
-      setState(() {
-        _userIdError = null;
-        _payoutError = null;
-      });
+    if (_payoutError != null) {
+      setState(() => _payoutError = null);
     }
   }
 
   void _onSubmit() {
-    final userId = _userIdCtrl.text.trim();
     final payoutText = _payoutCtrl.text.trim();
     final notes = _notesCtrl.text.trim();
-    String? userIdErr;
-    String? payoutErr;
-    if (userId.isEmpty) {
-      userIdErr = 'User id is required.';
-    }
     final payout = double.tryParse(payoutText);
+    String? payoutErr;
     if (payout == null) {
       payoutErr = 'Payout must be a number.';
     } else if (payout < 0) {
       payoutErr = 'Payout must be ≥ 0.';
     }
-    if (userIdErr != null || payoutErr != null) {
-      setState(() {
-        _userIdError = userIdErr;
-        _payoutError = payoutErr;
-      });
+    if (payoutErr != null) {
+      setState(() => _payoutError = payoutErr);
       return;
     }
     Navigator.of(context).pop(
       _AssignmentEditResult(
-        userId: userId,
+        userId: widget.userId,
         role: _role,
         payout: payout!,
         notes: notes.isEmpty ? null : notes,

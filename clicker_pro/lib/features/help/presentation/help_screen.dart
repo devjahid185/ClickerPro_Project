@@ -39,12 +39,12 @@ class HelpScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
           loc.help_title,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.film,
             fontFamily: 'Poppins',
             fontSize: 22,
@@ -93,7 +93,7 @@ class HelpScreen extends ConsumerWidget {
                       Expanded(
                         child: Text(
                           loc.help_contact_section,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.film,
                             fontFamily: 'Poppins',
                             fontSize: 18,
@@ -106,7 +106,7 @@ class HelpScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
                   Text(
                     loc.help_contact_subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.filmDim,
                       fontSize: 13,
                       height: 1.4,
@@ -171,7 +171,7 @@ class HelpScreen extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     child: Text(
                       loc.help_faq_empty,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.filmDim,
                         fontSize: 13,
                       ),
@@ -205,7 +205,7 @@ class HelpScreen extends ConsumerWidget {
                           collapsedIconColor: AppColors.filmDim,
                           title: Text(
                             faq.question,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.film,
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -216,7 +216,7 @@ class HelpScreen extends ConsumerWidget {
                               alignment: Alignment.centerLeft,
                               child: Text(
                                 faq.answer,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: AppColors.filmDim,
                                   fontSize: 13,
                                   height: 1.5,

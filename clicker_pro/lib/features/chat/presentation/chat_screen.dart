@@ -11,6 +11,8 @@
 //      `ChatThreadController.send` shows the row immediately + reconciles
 //      when the server echoes back।
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -20,7 +22,6 @@ import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
 import '../../profile/application/profile_controllers.dart';
-import '../../settings/application/language_controller.dart';
 import '../application/chat_providers.dart';
 import 'widgets/message_bubble.dart';
 
@@ -38,12 +39,12 @@ class ChatScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
           loc.chat_title,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.film,
             fontFamily: 'Poppins',
             fontSize: 22,
@@ -110,9 +111,36 @@ class _ChatThreadViewState extends ConsumerState<_ChatThreadView> {
   final _composerCtl = TextEditingController();
   final _scrollCtl = ScrollController();
   bool _sending = false;
+  Timer? _pollTimer;
+
+  // Live chat: poll the thread every few seconds so new messages from other
+  // members appear without a manual refresh. `poll()` is a silent refresh
+  // (no loading flicker, skips while a send is in flight).
+  static const _pollInterval = Duration(seconds: 4);
+
+  @override
+  void initState() {
+    super.initState();
+    // Mark the thread seen on open (read receipts for other members).
+    WidgetsBinding.instance.addPostFrameCallback((_) => _markRead());
+    _pollTimer = Timer.periodic(_pollInterval, (_) {
+      if (!mounted) return;
+      ref.read(chatThreadControllerProvider(widget.groupId).notifier).poll();
+      // Keep marking newly-arrived messages as seen while the thread is open.
+      _markRead();
+    });
+  }
+
+  void _markRead() {
+    ref
+        .read(chatRepositoryProvider)
+        .markRead(widget.groupId)
+        .catchError((_) {});
+  }
 
   @override
   void dispose() {
+    _pollTimer?.cancel();
     _composerCtl.dispose();
     _scrollCtl.dispose();
     super.dispose();
@@ -151,9 +179,7 @@ class _ChatThreadViewState extends ConsumerState<_ChatThreadView> {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
-    final lang = ref.watch(activeLocaleProvider).languageCode == 'bn'
-        ? 'bn'
-        : 'en';
+    final lang = 'en';
     final selfId = ref.watch(currentUserProvider).value?.id;
     final selfRemoteId = ref.watch(currentUserProvider).value?.remoteId;
     final messages = ref.watch(chatThreadControllerProvider(widget.groupId));
@@ -177,7 +203,7 @@ class _ChatThreadViewState extends ConsumerState<_ChatThreadView> {
                     child: Text(
                       loc.chat_empty_thread,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.filmDim,
                         fontSize: 14,
                       ),
@@ -209,7 +235,7 @@ class _ChatThreadViewState extends ConsumerState<_ChatThreadView> {
             12,
             8 + MediaQuery.of(context).padding.bottom,
           ),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppColors.voidLight,
             border: Border(top: BorderSide(color: AppColors.glassBorder)),
           ),
@@ -224,10 +250,10 @@ class _ChatThreadViewState extends ConsumerState<_ChatThreadView> {
                     minLines: 1,
                     maxLines: 4,
                     enabled: !_sending,
-                    style: const TextStyle(color: AppColors.film),
+                    style: TextStyle(color: AppColors.film),
                     decoration: InputDecoration(
                       hintText: loc.chat_message_hint,
-                      hintStyle: const TextStyle(color: AppColors.filmMuted),
+                      hintStyle: TextStyle(color: AppColors.filmMuted),
                       filled: true,
                       fillColor: AppColors.voidElevated,
                       contentPadding: const EdgeInsets.symmetric(
@@ -236,13 +262,13 @@ class _ChatThreadViewState extends ConsumerState<_ChatThreadView> {
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(20),
-                        borderSide: const BorderSide(
+                        borderSide: BorderSide(
                           color: AppColors.glassBorder,
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(20),
-                        borderSide: const BorderSide(
+                        borderSide: BorderSide(
                           color: AppColors.glassBorder,
                         ),
                       ),

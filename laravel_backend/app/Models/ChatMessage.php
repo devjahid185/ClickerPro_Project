@@ -10,7 +10,11 @@ class ChatMessage extends Model
     use HasFactory;
 
     protected $fillable = [
-        'group_id', 'sender_id', 'body',
+        'group_id', 'sender_id', 'body', 'read_by',
+    ];
+
+    protected $casts = [
+        'read_by' => 'array',
     ];
 
     public function group()

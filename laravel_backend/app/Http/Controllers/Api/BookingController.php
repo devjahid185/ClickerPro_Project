@@ -149,6 +149,18 @@ class BookingController extends Controller
             'note' => 'nullable|string',
         ]);
 
+        // Chronology guard: a shoot can't be "done" before it happens.
+        // Post-event statuses unlock from the event DAY onward (the app
+        // additionally enforces the end-time on-device).
+        $postEvent = ['SHOT_COMPLETE', 'DELIVERED', 'COMPLETED'];
+        if (in_array(strtoupper($data['status']), $postEvent, true)
+            && $event->date->startOfDay()->gt(now()->startOfDay())) {
+            return response()->json([
+                'message' => 'Event date is in the future — cannot mark as '
+                    . $data['status'] . ' before ' . $event->date->format('d/m/Y'),
+            ], 422);
+        }
+
         $oldStatus = $event->status;
         $event->update(['status' => $data['status']]);
 

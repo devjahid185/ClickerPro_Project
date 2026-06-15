@@ -59,7 +59,7 @@ class _AddRentSheetState extends ConsumerState<AddRentSheet> {
       lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(
+          colorScheme: ColorScheme.light(
             primary: AppColors.orange,
             surface: AppColors.voidLight,
             onSurface: AppColors.film,
@@ -126,7 +126,7 @@ class _AddRentSheetState extends ConsumerState<AddRentSheet> {
               ),
               Text(
                 loc.rent_add,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.film,
                   fontFamily: 'Poppins',
                   fontSize: 22,
@@ -138,7 +138,7 @@ class _AddRentSheetState extends ConsumerState<AddRentSheet> {
               // Direction toggle
               Text(
                 loc.rent_direction,
-                style: const TextStyle(color: AppColors.filmDim, fontSize: 12),
+                style: TextStyle(color: AppColors.filmDim, fontSize: 12),
               ),
               const SizedBox(height: 6),
               SegmentedButton<RentDirection>(
@@ -167,7 +167,7 @@ class _AddRentSheetState extends ConsumerState<AddRentSheet> {
 
               TextFormField(
                 controller: _nameCtl,
-                style: const TextStyle(color: AppColors.film),
+                style: TextStyle(color: AppColors.film),
                 decoration: _decoration(loc.rent_counterparty_name),
                 validator: (v) => (v == null || v.trim().isEmpty)
                     ? loc.rent_validation_name_required
@@ -177,7 +177,7 @@ class _AddRentSheetState extends ConsumerState<AddRentSheet> {
               TextFormField(
                 controller: _phoneCtl,
                 keyboardType: TextInputType.phone,
-                style: const TextStyle(color: AppColors.film),
+                style: TextStyle(color: AppColors.film),
                 decoration: _decoration(loc.rent_counterparty_phone),
               ),
               const SizedBox(height: 12),
@@ -189,7 +189,7 @@ class _AddRentSheetState extends ConsumerState<AddRentSheet> {
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                 ],
-                style: const TextStyle(color: AppColors.film),
+                style: TextStyle(color: AppColors.film),
                 decoration: _decoration(loc.rent_amount),
               ),
               const SizedBox(height: 12),
@@ -224,10 +224,10 @@ class _AddRentSheetState extends ConsumerState<AddRentSheet> {
                                     '${_returnBy!.year}-'
                                     '${_returnBy!.month.toString().padLeft(2, '0')}-'
                                     '${_returnBy!.day.toString().padLeft(2, '0')}',
-                          style: const TextStyle(color: AppColors.film),
+                          style: TextStyle(color: AppColors.film),
                         ),
                       ),
-                      const Icon(
+                      Icon(
                         Icons.chevron_right,
                         color: AppColors.filmMuted,
                       ),
@@ -246,7 +246,7 @@ class _AddRentSheetState extends ConsumerState<AddRentSheet> {
                           : () => Navigator.of(context).pop(),
                       child: Text(
                         loc.rent_cancel,
-                        style: const TextStyle(color: AppColors.filmDim),
+                        style: TextStyle(color: AppColors.filmDim),
                       ),
                     ),
                   ),
@@ -278,16 +278,16 @@ class _AddRentSheetState extends ConsumerState<AddRentSheet> {
 
   InputDecoration _decoration(String label) => InputDecoration(
     labelText: label,
-    labelStyle: const TextStyle(color: AppColors.filmDim),
+    labelStyle: TextStyle(color: AppColors.filmDim),
     filled: true,
     fillColor: AppColors.voidElevated,
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.glassBorder),
+      borderSide: BorderSide(color: AppColors.glassBorder),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.glassBorder),
+      borderSide: BorderSide(color: AppColors.glassBorder),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),

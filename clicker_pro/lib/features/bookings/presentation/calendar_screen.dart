@@ -40,12 +40,12 @@ class CalendarScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
           loc.bookings_calendar,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.film,
             fontFamily: 'Poppins',
             fontSize: 22,
@@ -174,7 +174,7 @@ class _MonthHeader extends StatelessWidget {
             child: Center(
               child: Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.film,
                   fontFamily: 'Poppins',
                   fontSize: 20,
@@ -313,11 +313,11 @@ class _DayCell extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             color: isToday
                 ? AppColors.orange.withValues(alpha: 0.10)
-                : Colors.black.withValues(alpha: 0.02),
+                : AppColors.line(0.02),
             border: Border.all(
               color: isToday
                   ? AppColors.orange.withValues(alpha: 0.45)
-                  : Colors.black.withValues(alpha: 0.04),
+                  : AppColors.line(0.04),
             ),
           ),
           child: Column(
@@ -389,7 +389,7 @@ class _DayBottomSheet extends StatelessWidget {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.18),
+                color: AppColors.line(0.18),
                 borderRadius: BorderRadius.circular(999),
               ),
             ),
@@ -397,7 +397,7 @@ class _DayBottomSheet extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             DateFormat.yMMMMEEEEd().format(day),
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.film,
               fontFamily: 'Poppins',
               fontSize: 20,
@@ -432,7 +432,7 @@ class _DayBottomSheet extends StatelessWidget {
                               b.title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.film,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -454,7 +454,7 @@ class _DayBottomSheet extends StatelessWidget {
                       const SizedBox(width: 8),
                       BookingStatusBadge(b.status),
                       const SizedBox(width: 4),
-                      const Icon(
+                      Icon(
                         Icons.chevron_right_rounded,
                         color: AppColors.filmMuted,
                       ),

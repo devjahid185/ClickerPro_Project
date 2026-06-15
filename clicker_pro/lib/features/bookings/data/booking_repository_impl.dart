@@ -131,6 +131,12 @@ class BookingRepositoryImpl implements BookingRepository {
   }
 
   @override
+  Future<Booking?> getByRemoteId(String remoteId) async {
+    final row = await _bookings.getByRemoteId(remoteId);
+    return row == null ? null : _rowToBooking(row);
+  }
+
+  @override
   Future<BookingDetailEnvelope> getDetail(String localId) async {
     final bookingRow = await _bookings.watchById(localId).first;
     if (bookingRow == null) {
@@ -197,12 +203,67 @@ class BookingRepositoryImpl implements BookingRepository {
       }
       final result = await _api.list(filter ?? const BookingFilter());
       for (final booking in result.items) {
-        await _bookings.upsert(_bookingToCompanion(booking, pending: false));
+        await _bookings.upsert(
+          await _bookingToCompanion(await _mergeWithLocal(booking),
+              pending: false),
+        );
       }
     } on ApiException catch (e, st) {
       AppLogger.w('booking', 'refreshFromRemote failed: ${e.message}');
       AppLogger.e('booking', e, st);
     }
+  }
+
+  /// Same merge for the client carried by a detail envelope: match by
+  /// `remoteId`, keep the local id and local-only fields.
+  Future<Client?> _mergeEnvelopeClient(Client? incoming) async {
+    if (incoming == null) return null;
+    final remoteId = incoming.remoteId;
+    if (remoteId == null) return incoming;
+    final existingRow = await _clients.getByRemoteId(remoteId);
+    if (existingRow == null) return incoming;
+    if (existingRow.pending) return _rowToClient(existingRow);
+    final local = _rowToClient(existingRow);
+    return local.copyWith(
+      remoteId: remoteId,
+      name: incoming.name,
+      phone: incoming.phone.isNotEmpty ? incoming.phone : local.phone,
+      email: incoming.email ?? local.email,
+      updatedAt: incoming.updatedAt,
+      pending: false,
+    );
+  }
+
+  /// Reconciles a pulled server booking with its local counterpart (matched
+  /// by `remoteId`). The local row keeps its id and every field the Laravel
+  /// schema does not persist (times, bride/groom, package economics, …);
+  /// the server-authoritative fields are adopted. Rows with no local match
+  /// (created on another device / the web app) pass through unchanged.
+  Future<Booking> _mergeWithLocal(Booking incoming) async {
+    final remoteId = incoming.remoteId;
+    if (remoteId == null) return incoming;
+    final existingRow = await _bookings.getByRemoteId(remoteId);
+    if (existingRow == null) return incoming;
+    if (existingRow.pending) {
+      // Local unsynced edits win until the outbox drains them.
+      return _rowToBooking(existingRow);
+    }
+    final local = _rowToBooking(existingRow);
+    return local.copyWith(
+      remoteId: remoteId,
+      title: incoming.title,
+      eventType: incoming.eventType,
+      date: incoming.date,
+      shift: incoming.shift,
+      venue: incoming.venue ?? local.venue,
+      status: incoming.status,
+      customPrice: incoming.customPrice ?? local.customPrice,
+      notes: incoming.notes ?? local.notes,
+      clientName: incoming.clientName ?? local.clientName,
+      clientPhone: incoming.clientPhone ?? local.clientPhone,
+      updatedAt: incoming.updatedAt,
+      pending: false,
+    );
   }
 
   // ───────────────────────── Writes ─────────────────────────
@@ -217,7 +278,7 @@ class BookingRepositoryImpl implements BookingRepository {
     }
 
     final stamped = booking.copyWith(updatedAt: DateTime.now(), pending: true);
-    await _bookings.upsert(_bookingToCompanion(stamped, pending: true));
+    await _bookings.upsert(await _bookingToCompanion(stamped, pending: true));
 
     final isCreate = booking.remoteId == null;
     try {
@@ -225,7 +286,7 @@ class BookingRepositoryImpl implements BookingRepository {
           ? await _api.create(stamped)
           : await _api.patch(booking.remoteId!, stamped.toJson());
       final synced = remote.copyWith(pending: false);
-      await _bookings.upsert(_bookingToCompanion(synced, pending: false));
+      await _bookings.upsert(await _bookingToCompanion(synced, pending: false));
       return synced;
     } catch (e, st) {
       AppLogger.w('booking', 'save remote failed; queued in outbox: $e');
@@ -337,10 +398,12 @@ class BookingRepositoryImpl implements BookingRepository {
   /// (idempotent on `id`) since the table is append-only and rows are
   /// dedupe-keyed by their id.
   Future<void> _upsertEnvelope(BookingDetailEnvelope envelope) async {
-    await _bookings.upsert(
-      _bookingToCompanion(envelope.booking, pending: false),
-    );
-    final client = envelope.client;
+    // Merge against the local row (matched by remoteId) so a detail pull
+    // updates in place instead of duplicating under the server id, and so
+    // child rows below hang off the correct LOCAL booking id.
+    final booking = await _mergeWithLocal(envelope.booking);
+    await _bookings.upsert(await _bookingToCompanion(booking, pending: false));
+    final client = await _mergeEnvelopeClient(envelope.client);
     if (client != null) {
       await _clients.upsert(_clientToCompanion(client, pending: false));
     }
@@ -355,7 +418,14 @@ class BookingRepositoryImpl implements BookingRepository {
       await _payments.upsert(_paymentToCompanion(p, pending: false));
     }
     for (final h in envelope.statusHistory) {
-      await _history.append(_statusHistoryToCompanion(h, pending: false));
+      // Re-point at the merged LOCAL booking id (the wire entry carries
+      // the server-side id when the booking originated on this device).
+      await _history.append(
+        _statusHistoryToCompanion(
+          h.copyWith(bookingId: booking.id),
+          pending: false,
+        ),
+      );
     }
     for (final r in envelope.reEditRequests) {
       await _reEdits.upsert(_reEditToCompanion(r, pending: false));
@@ -401,6 +471,7 @@ class BookingRepositoryImpl implements BookingRepository {
     chiefPhotographerUserId: r.chiefPhotographerUserId,
     chiefHours: r.chiefHours,
     hidePaymentFromTeam: r.hidePaymentFromTeam,
+    showPaymentInShare: r.showPaymentInShare,
     status: BookingStatus.values.firstWhere(
       (s) => s.name == r.status,
       orElse: () => BookingStatus.pending,
@@ -521,10 +592,22 @@ class BookingRepositoryImpl implements BookingRepository {
 
   // ── Domain → Companion mapping ──────────────────────────────────────
 
-  BookingsTableCompanion _bookingToCompanion(
+  /// Returns [id] only if it refers to a real row in clients_table; otherwise
+  /// null. Guards against dangling/placeholder client ids (e.g. 'pending' or
+  /// ids dropped during sync) that would violate the bookings.clientId foreign
+  /// key and crash the booking editor. clientName/clientPhone still carry the
+  /// human-readable client info, so nulling the id loses nothing the form needs.
+  Future<String?> _validClientId(String? id) async {
+    if (id == null || id.isEmpty) return null;
+    final row = await _clients.watchById(id).first;
+    return row == null ? null : id;
+  }
+
+  Future<BookingsTableCompanion> _bookingToCompanion(
     Booking b, {
     required bool pending,
-  }) {
+  }) async {
+    final safeClientId = await _validClientId(b.clientId);
     return BookingsTableCompanion(
       id: Value(b.id),
       remoteId: Value(b.remoteId),
@@ -540,7 +623,7 @@ class BookingRepositoryImpl implements BookingRepository {
       outdoor: Value(b.outdoor),
       brideName: Value(b.brideName),
       groomName: Value(b.groomName),
-      clientId: Value(b.clientId),
+      clientId: Value(safeClientId),
       clientName: Value(b.clientName),
       clientPhone: Value(b.clientPhone),
       packageId: Value(b.packageId),
@@ -553,6 +636,7 @@ class BookingRepositoryImpl implements BookingRepository {
       chiefPhotographerUserId: Value(b.chiefPhotographerUserId),
       chiefHours: Value(b.chiefHours),
       hidePaymentFromTeam: Value(b.hidePaymentFromTeam),
+      showPaymentInShare: Value(b.showPaymentInShare),
       status: Value(b.status.name),
       createdAt: Value(b.createdAt),
       updatedAt: Value(b.updatedAt),

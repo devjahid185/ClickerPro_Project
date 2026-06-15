@@ -16,12 +16,16 @@
 //   • Page slide-in : Cubic(0.2, 0.8, 0.2, 1) over 280ms
 //   • Page slide-out: Curves.easeIn over 200ms
 
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
+import '../../../core/env/app_config.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../core/providers.dart';
 import '../../../core/storage/kv_store.dart';
 import '../../../screens/dashboard_screen.dart';
@@ -31,7 +35,6 @@ import '../../../theme/app_theme.dart';
 import '../../settings/application/language_controller.dart';
 import '../application/session_controller.dart';
 import 'forgot_password_screen.dart';
-import 'manager_invite_screen.dart';
 import 'register_screen.dart';
 
 /// Slide-from-right page route shared by every auth-screen transition.
@@ -62,6 +65,13 @@ PageRouteBuilder<T> slideFromRightRoute<T>(Widget page) {
     },
   );
 }
+
+/// Social sign-in is live: the backend verifies Google/Apple ID tokens
+/// at /api/auth/google and /api/auth/apple. NOTE: Google sign-in on a
+/// device additionally needs the app's SHA fingerprints registered in
+/// Firebase (Authentication → Google enabled) and a refreshed
+/// google-services.json — see the deploy notes.
+const bool kSocialLoginEnabled = true;
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -147,14 +157,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       return;
     }
 
-    // Otherwise surface why it failed.
+    // Otherwise surface why it failed — by status code, not by string
+    // matching, so 429 (rate limit) and 403 (disabled) get honest messages.
     final error = session.error;
-    final text = error?.toString() ?? '';
-    final msg = text.contains('401')
-        ? 'ইমেইল বা পাসওয়ার্ড ভুল।'
-        : text.contains('timeout') || text.contains('No network')
-        ? 'সার্ভারের সাথে যোগাযোগ করা যাচ্ছে না।'
-        : 'লগইন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।';
+    final String msg;
+    if (error is ApiException) {
+      if (error.isUnauthorized) {
+        msg = 'Wrong email or password.';
+      } else if (error.isRateLimited) {
+        msg = 'Too many attempts — wait 1 minute and try again.';
+      } else if (error.statusCode == 403) {
+        msg = 'This account is disabled. Please contact support.';
+      } else if (error.isNetwork) {
+        msg = 'Cannot reach the server. Check your internet.';
+      } else {
+        msg = 'Login failed (${error.statusCode}). Please try again.';
+      }
+    } else {
+      msg = 'Login failed. Please try again.';
+    }
     _showError(msg);
   }
 
@@ -168,23 +189,43 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     Navigator.of(context).push(slideFromRightRoute(const RegisterScreen()));
   }
 
-  void _handleInvite() {
-    Navigator.of(
-      context,
-    ).push(slideFromRightRoute(const ManagerInviteScreen()));
-  }
 
   Future<void> _handleGoogleSignIn() async {
     setState(() => _googleLoading = true);
     try {
-      final googleUser = await GoogleSignIn().signIn();
+      // serverClientId is passed explicitly — on some OEM ROMs the
+      // plugin fails to read the default_web_client_id resource from
+      // google-services.json and dies with DEVELOPER_ERROR (status 10).
+      // This is the project's PUBLIC web OAuth client id, not a secret.
+      final google = GoogleSignIn(
+        serverClientId:
+            '113528221350-ulop3128toa364k8n4uo109mq7ag9cog.apps.googleusercontent.com',
+      );
+      // Clear any cached Google session first — otherwise the plugin
+      // silently reuses the last account and the user never gets to
+      // pick which Gmail to sign in with.
+      try {
+        await google.signOut();
+      } catch (_) {
+        // Ignore — a failed signOut just means no cached session.
+      }
+      final googleUser = await google.signIn();
       if (googleUser == null) {
         setState(() => _googleLoading = false);
         return;
       }
       final auth = await googleUser.authentication;
       final idToken = auth.idToken;
-      if (idToken == null) throw Exception('No ID token');
+      if (idToken == null) {
+        // No ID token = the OAuth client is missing from
+        // google-services.json (SHA fingerprint not registered in
+        // Firebase). See GOOGLE_SIGNIN_SETUP.md at the repo root.
+        _showError(
+          'Google sign-in is not configured in this build yet — '
+          'please log in with email for now.',
+        );
+        return;
+      }
 
       await ref
           .read(sessionControllerProvider.notifier)
@@ -199,9 +240,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         );
         return;
       }
-      _showError('Google sign-in failed. Please try again.');
-    } catch (_) {
-      if (mounted) _showError('Google sign-in failed. Please try again.');
+      // Surface why the backend rejected the token — honest messages
+      // beat a generic "failed".
+      final error = session.error;
+      if (error is ApiException && error.isNetwork) {
+        _showError('Cannot reach the server. Check your internet.');
+      } else if (error is ApiException && error.statusCode == 403) {
+        _showError('This account is disabled. Please contact support.');
+      } else {
+        _showError('Google sign-in failed. Please try again.');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      // ApiException: 10 (DEVELOPER_ERROR) = SHA-1 fingerprint not
+      // registered in Firebase for this package — a config problem,
+      // not the user's fault. Say so instead of a generic failure.
+      final text = e.toString();
+      if (text.contains('ApiException: 10') ||
+          text.contains('DEVELOPER_ERROR')) {
+        _showError(
+          'Google sign-in is not configured in this build yet — '
+          'please log in with email for now.',
+        );
+      } else if (text.contains('network_error') ||
+          text.contains('ApiException: 7')) {
+        _showError('No internet connection. Check your network.');
+      } else {
+        _showError('Google sign-in failed. Please try again.');
+      }
     } finally {
       if (mounted) setState(() => _googleLoading = false);
     }
@@ -246,7 +312,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       SnackBar(
         content: Text(
           message,
-          style: const TextStyle(color: AppColors.film, fontSize: 13),
+          style: TextStyle(color: AppColors.film, fontSize: 13),
         ),
         backgroundColor: AppColors.voidElevated,
         behavior: SnackBarBehavior.floating,
@@ -272,6 +338,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       backgroundColor: AppColors.voidBlack,
       body: Stack(
         children: [
+          // ─── WATERMARK LOGO (subtle brand backdrop) ───────────────
+          // The blade-flower brand mark — same motif as the landing page
+          // hero, so the app and site read as one product. IgnorePointer +
+          // low opacity: never blocks touches or hurts readability.
+          Positioned(
+            right: -90,
+            bottom: -70,
+            child: IgnorePointer(
+              child: Opacity(
+                opacity: 0.07,
+                child: Image.asset(
+                  'assets/brand/logo_flower.png',
+                  width: 380,
+                  height: 380,
+                ),
+              ),
+            ),
+          ),
           // ─── BACKGROUND GLOW BLOBS ────────────────────────────────
           Positioned(
             top: -100,
@@ -348,9 +432,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          lang == 'bn'
-                              ? 'কোম্পানি ম্যানেজমেন্ট'
-                              : 'COMPANY MANAGEMENT',
+                          'COMPANY MANAGEMENT',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontFamily: 'Montserrat',
@@ -373,7 +455,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           icon: Icons.mail_outline_rounded,
                           keyboardType: TextInputType.emailAddress,
                           validator: (v) =>
-                              v == null || v.isEmpty ? "ইমেইল লিখুন" : null,
+                              v == null || v.isEmpty ? "Enter email" : null,
                         ),
                         const SizedBox(height: 14),
 
@@ -384,7 +466,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           icon: Icons.lock_outline_rounded,
                           isPassword: true,
                           validator: (v) => v == null || v.isEmpty
-                              ? "পাসওয়ার্ড লিখুন"
+                              ? "Enter password"
                               : null,
                         ),
 
@@ -421,59 +503,60 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
                         const SizedBox(height: 24),
 
-                        // ── DIVIDER ───────────────────────────────
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Container(
-                                height: 1,
-                                color: Colors.white.withValues(alpha: 0.06),
+                        // ── DIVIDER + SOCIAL LOGIN ────────────────
+                        // Hidden while kSocialLoginEnabled is false (no
+                        // backend routes yet — see the constant's doc).
+                        if (kSocialLoginEnabled) ...[
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  height: 1,
+                                  color: Colors.white.withValues(alpha: 0.06),
+                                ),
                               ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                              child: Text(
-                                lang == 'bn' ? 'অথবা' : 'OR',
-                                style: TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontSize: 9.5,
-                                  letterSpacing: 1.5,
-                                  color: AppColors.filmDim.withValues(
-                                    alpha: 0.5,
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                child: Text(
+                                  'OR',
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 9.5,
+                                    letterSpacing: 1.5,
+                                    color: AppColors.filmDim.withValues(
+                                      alpha: 0.5,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            Expanded(
-                              child: Container(
-                                height: 1,
-                                color: Colors.white.withValues(alpha: 0.06),
+                              Expanded(
+                                child: Container(
+                                  height: 1,
+                                  color: Colors.white.withValues(alpha: 0.06),
+                                ),
                               ),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          _SocialButton(
+                            label: 'Continue with Google',
+                            icon: _kGoogleIcon,
+                            loading: _googleLoading,
+                            onTap: _handleGoogleSignIn,
+                          ),
+                          // Apple sign-in only exists on iOS devices.
+                          if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+                            const SizedBox(height: 10),
+                            _SocialButton(
+                              label: 'Continue with Apple',
+                              icon: _kAppleIcon,
+                              loading: _appleLoading,
+                              onTap: _handleAppleSignIn,
                             ),
                           ],
-                        ),
-                        const SizedBox(height: 18),
-
-                        // ── SOCIAL LOGIN BUTTONS ──────────────────
-                        _SocialButton(
-                          label: lang == 'bn'
-                              ? 'Google দিয়ে লগইন'
-                              : 'Continue with Google',
-                          icon: _kGoogleIcon,
-                          loading: _googleLoading,
-                          onTap: _handleGoogleSignIn,
-                        ),
-                        const SizedBox(height: 10),
-                        _SocialButton(
-                          label: lang == 'bn'
-                              ? 'Apple দিয়ে লগইন'
-                              : 'Continue with Apple',
-                          icon: _kAppleIcon,
-                          loading: _appleLoading,
-                          onTap: _handleAppleSignIn,
-                        ),
+                        ],
 
                         const SizedBox(height: 20),
 
@@ -502,81 +585,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           ],
                         ),
 
-                        const SizedBox(height: 12),
+                        // Invite-code entry and the language switch moved
+                        // out of login per design feedback — managers join
+                        // from Register, language lives in Settings.
 
-                        // ── INVITE-CODE LINK (Manager onboarding) ─
-                        Center(
-                          child: GestureDetector(
-                            onTap: _handleInvite,
-                            behavior: HitTestBehavior.opaque,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 6,
-                              ),
-                              child: Text(
-                                lang == 'bn'
-                                    ? 'আমার একটি ইনভাইট কোড আছে'
-                                    : 'I have an invite code',
-                                style: TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontSize: 11,
-                                  letterSpacing: 1.2,
-                                  color: AppColors.gold.withValues(alpha: 0.85),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // ── LANGUAGE SWITCH ───────────────────────
-                        Center(
-                          child: GestureDetector(
-                            onTap: () async {
-                              final newLang = lang == 'en' ? 'bn' : 'en';
-                              await ref
-                                  .read(languageControllerProvider.notifier)
-                                  .setLanguage(newLang);
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.04),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: AppColors.gold.withValues(alpha: 0.25),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.language_rounded,
-                                    size: 14,
-                                    color: AppColors.gold,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    lang == 'en'
-                                        ? "বাংলায় দেখুন"
-                                        : "Switch to English",
-                                    style: const TextStyle(
-                                      color: AppColors.gold,
-                                      fontSize: 11.5,
-                                      fontWeight: FontWeight.w500,
-                                      letterSpacing: 0.3,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                        // ── COMPANY BRANDING ──────────────────────
+                        const SizedBox(height: 18),
+                        Text(
+                          '${AppConfig.appName} ${AppConfig.appVersionLabel} · by ${AppConfig.companyName}',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppColors.filmMuted.withValues(alpha: 0.7),
+                            fontSize: 10,
+                            letterSpacing: 0.6,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
@@ -591,37 +613,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     );
   }
 
-  // ─── BRAND LOGO (camera in luxury circle) ──────────────────────
+  // ─── BRAND LOGO (blade-fan hero mark) ──────────────────────────
   Widget _buildBrandLogo() {
     return Center(
       child: Stack(
         alignment: Alignment.center,
         children: [
+          // Soft halo so the fan floats over the page like the landing hero.
           Container(
-            width: 88,
-            height: 88,
+            width: 132,
+            height: 132,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.accent.withValues(alpha: 0.1),
+              color: AppColors.accent.withValues(alpha: 0.08),
             ),
           ),
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.accent.withValues(alpha: 0.18),
-              border: Border.all(
-                color: AppColors.accent.withValues(alpha: 0.4),
-                width: 1.5,
-              ),
-            ),
-            child: const Icon(
-              Icons.camera_alt_outlined,
-              size: 28,
-              color: AppColors.accent,
-            ),
-          ),
+          Image.asset('assets/brand/logo_flower.png', width: 104, height: 104),
         ],
       ),
     );
@@ -693,7 +700,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         controller: controller,
         obscureText: isPassword && _obscurePassword,
         keyboardType: keyboardType,
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.film,
           fontSize: 14.5,
           fontWeight: FontWeight.w500,
@@ -900,7 +907,7 @@ class _AppleIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Icon(Icons.apple, size: 22, color: AppColors.film);
+    return Icon(Icons.apple, size: 22, color: AppColors.film);
   }
 }
 
@@ -947,7 +954,7 @@ class _SocialButton extends StatelessWidget {
                   const SizedBox(width: 10),
                   Text(
                     label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.film,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,

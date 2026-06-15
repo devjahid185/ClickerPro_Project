@@ -1,13 +1,17 @@
 // lib/features/bookings/data/package_api.dart
 //
-// Wire-level methods for the studio-scoped Package endpoints. Wraps
-// `ApiClient` calls and returns plain `Package` domain instances.
+// Wire-level methods for the studio-scoped Package endpoints against the
+// Laravel backend. Shape translation lives in `server_wire.dart`.
 //
-// Source of truth: `.kiro/specs/bookings-module/design.md` →
-// "Remote API Contract" section. Validates Requirement 13.11.
+// Laravel contract (routes/api.php + PackageController):
+//   GET    /api/packages       → { data: [package…] }
+//   POST   /api/packages       → { data: package } (201)
+//   PATCH  /api/packages/:id   → { data: package }
+//   DELETE /api/packages/:id   → { message: ok }
 
 import '../../../core/network/api_client.dart';
 import '../domain/package.dart';
+import 'server_wire.dart';
 
 class PackageApi {
   PackageApi(this._client);
@@ -16,26 +20,32 @@ class PackageApi {
 
   /// `GET /api/packages`.
   Future<List<Package>> list() async {
-    final r = await _client.get('/api/packages') as Map<String, dynamic>;
-    return (r['items'] as List? ?? const [])
-        .map((e) => Package.fromJson((e as Map).cast<String, dynamic>()))
+    final r = await _client.get('/api/packages');
+    return unwrapServerList(r)
+        .map((e) => packageFromServer(e))
         .toList(growable: false);
   }
 
-  /// `POST /api/packages`.
+  /// `POST /api/packages` — response mapped with the submitted package as
+  /// fallback so the LOCAL id (and the rich device-only fields the server
+  /// does not persist) survive the round-trip.
   Future<Package> create(Package package) async {
-    final r =
-        await _client.post('/api/packages', body: package.toJson())
-            as Map<String, dynamic>;
-    return Package.fromJson((r['package'] as Map).cast<String, dynamic>());
+    final r = await _client.post(
+      '/api/packages',
+      body: packageToServer(package),
+    );
+    return packageFromServer(unwrapServerMap(r), fallback: package);
   }
 
-  /// `PATCH /api/packages/:id`.
+  /// `PATCH /api/packages/:id`. [partial] is the full local
+  /// `Package.toJson()` map (both call sites pass exactly that).
   Future<Package> patch(String remoteId, Map<String, dynamic> partial) async {
-    final r =
-        await _client.patch('/api/packages/$remoteId', body: partial)
-            as Map<String, dynamic>;
-    return Package.fromJson((r['package'] as Map).cast<String, dynamic>());
+    final local = Package.fromJson(partial);
+    final r = await _client.patch(
+      '/api/packages/$remoteId',
+      body: packageToServer(local),
+    );
+    return packageFromServer(unwrapServerMap(r), fallback: local);
   }
 
   /// `DELETE /api/packages/:id`.

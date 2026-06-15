@@ -119,7 +119,7 @@ class _WhatsAppShareSheetState extends State<WhatsAppShareSheet> {
               constraints: BoxConstraints(
                 maxHeight: MediaQuery.of(context).size.height * 0.85,
               ),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: AppColors.voidLight,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
@@ -161,7 +161,7 @@ class _WhatsAppShareSheetState extends State<WhatsAppShareSheet> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        const Text(
+                        Text(
                           'WhatsApp Message',
                           style: TextStyle(
                             color: AppColors.film,
@@ -251,10 +251,10 @@ class _WhatsAppShareSheetState extends State<WhatsAppShareSheet> {
         TextField(
           controller: _phoneController,
           keyboardType: TextInputType.phone,
-          style: const TextStyle(color: AppColors.film, fontSize: 14),
+          style: TextStyle(color: AppColors.film, fontSize: 14),
           decoration: InputDecoration(
             hintText: '+8801XXXXXXXXX',
-            hintStyle: const TextStyle(color: AppColors.filmMuted),
+            hintStyle: TextStyle(color: AppColors.filmMuted),
             prefixIcon: const Icon(
               Icons.phone_outlined,
               color: AppColors.teal,
@@ -264,11 +264,11 @@ class _WhatsAppShareSheetState extends State<WhatsAppShareSheet> {
             fillColor: AppColors.glass,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.glassBorder),
+              borderSide: BorderSide(color: AppColors.glassBorder),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.glassBorder),
+              borderSide: BorderSide(color: AppColors.glassBorder),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -301,7 +301,7 @@ class _WhatsAppShareSheetState extends State<WhatsAppShareSheet> {
               ),
             ),
             IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.copy_outlined,
                 color: AppColors.filmDim,
                 size: 16,
@@ -321,17 +321,17 @@ class _WhatsAppShareSheetState extends State<WhatsAppShareSheet> {
         TextField(
           controller: _messageController,
           maxLines: 6,
-          style: const TextStyle(color: AppColors.film, fontSize: 14),
+          style: TextStyle(color: AppColors.film, fontSize: 14),
           decoration: InputDecoration(
             filled: true,
             fillColor: AppColors.glass,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.glassBorder),
+              borderSide: BorderSide(color: AppColors.glassBorder),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.glassBorder),
+              borderSide: BorderSide(color: AppColors.glassBorder),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),

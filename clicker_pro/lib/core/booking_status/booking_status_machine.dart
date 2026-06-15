@@ -74,4 +74,38 @@ class BookingStatusMachine {
   /// state (`completed` or `cancelled`). Used by the UI to decide whether to
   /// render the "Advance status" affordance and what label to put on it.
   static BookingStatus? nextForward(BookingStatus from) => _forward[from];
+
+  /// Statuses that assert the shoot already happened. Reaching them
+  /// before the event's end time would mean "tomorrow's event completed
+  /// today" — structurally valid but physically impossible.
+  static const Set<BookingStatus> _postEventStatuses = {
+    BookingStatus.shotComplete,
+    BookingStatus.delivered,
+    BookingStatus.completed,
+  };
+
+  /// True when transitioning to [to] is chronologically possible: the
+  /// post-event statuses unlock only once the event's end time has
+  /// passed. [endTime] is the booking's "HH:mm" string; unparseable
+  /// values fall back to end-of-day so the guard never blocks a real
+  /// past event on bad data.
+  static bool isTimeAllowed(
+    BookingStatus to,
+    DateTime eventDate,
+    String endTime, {
+    DateTime? now,
+  }) {
+    if (!_postEventStatuses.contains(to)) return true;
+    final parts = endTime.split(':');
+    final h = parts.isNotEmpty ? (int.tryParse(parts[0]) ?? 23) : 23;
+    final m = parts.length > 1 ? (int.tryParse(parts[1]) ?? 59) : 59;
+    final eventEnd = DateTime(
+      eventDate.year,
+      eventDate.month,
+      eventDate.day,
+      h.clamp(0, 23),
+      m.clamp(0, 59),
+    );
+    return !(now ?? DateTime.now()).isBefore(eventEnd);
+  }
 }

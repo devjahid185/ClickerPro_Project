@@ -12,7 +12,6 @@ import '../../../../core/format/booking_format.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/states/lens_loader.dart';
 import '../../../../theme/app_colors.dart';
-import '../../../settings/application/language_controller.dart';
 import '../../application/reports_providers.dart';
 import '../../domain/team_performance_entry.dart';
 
@@ -22,9 +21,7 @@ class TeamPerformanceSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final loc = AppLocalizations.of(context);
-    final lang = ref.watch(activeLocaleProvider).languageCode == 'bn'
-        ? 'bn'
-        : 'en';
+    final lang = 'en';
     final year = ref.watch(selectedYearProvider);
     final async = ref.watch(teamPerformanceProvider(year));
 
@@ -65,7 +62,7 @@ class TeamPerformanceSection extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Text(
                     loc.reports_team_empty,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.filmDim,
                       fontSize: 13,
                     ),
@@ -76,7 +73,7 @@ class TeamPerformanceSection extends ConsumerWidget {
                 children: [
                   for (var i = 0; i < entries.length; i++) ...[
                     if (i > 0)
-                      const Divider(color: AppColors.hairline, height: 1),
+                      Divider(color: AppColors.hairline, height: 1),
                     _Row(entry: entries[i], rank: i + 1, lang: lang, loc: loc),
                   ],
                 ],
@@ -137,7 +134,7 @@ class _Row extends StatelessWidget {
               children: [
                 Text(
                   entry.name.isEmpty ? '—' : entry.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.film,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,

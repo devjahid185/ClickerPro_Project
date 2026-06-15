@@ -97,20 +97,22 @@ class AuthController extends Controller
         $user = User::where('email', $data['email'])->first();
 
         if ($user) {
-            $token = Str::random(60);
+            // 6-digit numeric code — the app shows six OTP-style boxes, so a
+            // long random string here reads as a garbage code to the user.
+            $token = (string) random_int(100000, 999999);
             DB::table('password_reset_tokens')->updateOrInsert(
                 ['email' => $data['email']],
                 ['token' => Hash::make($token), 'created_at' => now()]
             );
 
-            // Email the reset token out-of-band (log mailer in dev). The token
+            // Email the reset code out-of-band (log mailer in dev). The code
             // is valid for 60 minutes (enforced in resetPassword).
             try {
                 Mail::raw(
-                    "Use this token to reset your ClickerPro password:\n\n{$token}\n\n"
+                    "Your ClickerPro password reset code is:\n\n{$token}\n\n"
                     . "It expires in 60 minutes. If you didn't request this, ignore this email.",
                     function ($message) use ($data) {
-                        $message->to($data['email'])->subject('Reset your ClickerPro password');
+                        $message->to($data['email'])->subject('Your ClickerPro reset code');
                     }
                 );
             } catch (\Throwable $e) {
@@ -126,7 +128,7 @@ class AuthController extends Controller
         $data = $request->validate([
             'email' => 'required|email',
             'token' => 'required|string',
-            'password' => 'required|string|min:6',
+            'password' => 'required|string|min:8',
         ]);
 
         $record = DB::table('password_reset_tokens')->where('email', $data['email'])->first();

@@ -11,5 +11,10 @@ abstract class FlEarningRepository {
   Future<FlEarningsOverview> overview();
 
   /// Request payment from all owners with pending balances.
-  Future<bool> requestPayment();
+  Future<bool> requestPayment({
+    double? amount,
+    String? bkash,
+    String? bankDetails,
+    String? note,
+  });
 }

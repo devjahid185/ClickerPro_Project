@@ -205,7 +205,6 @@ export default function InvoicesPage() {
                 <label>Language</label>
                 <select className="field" value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value })}>
                   <option value="EN">English</option>
-                  <option value="BN">বাংলা</option>
                 </select>
               </div>
               <div className="field" style={{ marginBottom: 16 }}>

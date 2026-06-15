@@ -3,6 +3,32 @@ import Link from 'next/link';
 import Head from 'next/head';
 import styles from './landing.module.css';
 
+// Landing-only static deploy (NEXT_PUBLIC_LANDING_ONLY=1): the web-app routes
+// are not hosted, so "Open Web App" CTAs point at the download section and the
+// contact form posts straight to the backend (NEXT_PUBLIC_API_BASE) instead of
+// the dev proxy. Both are baked in at build time.
+const LANDING_ONLY = process.env.NEXT_PUBLIC_LANDING_ONLY === '1';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
+// When the web app is hosted elsewhere (e.g. landing on the main domain,
+// app on app.deyalghori.com), NEXT_PUBLIC_APP_URL makes every sign-in /
+// register CTA point at the live web app — even in static-export mode.
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? '';
+const HAS_WEB_APP = !LANDING_ONLY || APP_URL !== '';
+const WEB_LOGIN = APP_URL
+  ? `${APP_URL}/login`
+  : LANDING_ONLY
+    ? '#download'
+    : '/login';
+const WEB_REGISTER = APP_URL
+  ? `${APP_URL}/register`
+  : LANDING_ONLY
+    ? '#download'
+    : '/register';
+const ANDROID_APK_URL = '/ClickerPro.apk';
+// Pricing is hidden for now (pre-launch) — flip to true to bring the
+// section and its nav link back.
+const SHOW_PRICING = false;
+
 const FEATURES = [
   { icon: '📅', name: 'Smart Booking Management', desc: 'Handle every event from inquiry to delivery. Track status, assign team, manage timelines effortlessly.' },
   { icon: '💳', name: 'Invoicing & Payments', desc: 'Generate professional invoices, track payments via bKash, Nagad, bank transfer, and cash.' },
@@ -74,7 +100,7 @@ export default function LandingPage() {
     if (!contact.name || !contact.email || !contact.message) return;
     setContactState('sending');
     try {
-      const res = await fetch('/api/contact', {
+      const res = await fetch(`${API_BASE}/api/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(contact),
@@ -115,6 +141,7 @@ export default function LandingPage() {
 
   useEffect(() => {
     let destroyed = false;
+    let onResize: (() => void) | null = null;
 
     const initGsap = async () => {
       try {
@@ -127,8 +154,13 @@ export default function LandingPage() {
         const container = document.querySelector<HTMLElement>(`.${styles.bladeContainer}`);
         if (container) {
           container.innerHTML = '';
-          const numBlades = 42;
           const isWide = window.innerWidth > 768;
+          const reducedMotion = window.matchMedia(
+            '(prefers-reduced-motion: reduce)'
+          ).matches;
+          // Mobile GPUs choke on 42 blades × infinite tweens (visible
+          // jitter) — fewer blades + a single gentle tween there.
+          const numBlades = isWide ? 42 : 26;
           for (let i = 0; i < numBlades; i++) {
             const blade = document.createElement('div');
             blade.className = 'cp-blade';
@@ -164,39 +196,52 @@ export default function LandingPage() {
             delay: 0.2,
           });
 
-          // 2. Ambient breathing of the whole hub
-          gsap.to(container, {
-            rotation: -4,
-            duration: 16,
-            repeat: -1,
-            yoyo: true,
-            ease: 'sine.inOut',
-          });
-
-          // 3. Organic per-blade flex
-          blades.forEach((blade, index) => {
-            gsap.to(blade, {
-              rotation: `+=${2 + (index % 2.5)}`,
-              scaleX: 1.015 + (index % 3) * 0.005,
-              duration: 5 + (index % 3),
+          if (isWide && !reducedMotion) {
+            // 2. Ambient breathing of the whole hub
+            gsap.to(container, {
+              rotation: -4,
+              duration: 16,
               repeat: -1,
               yoyo: true,
               ease: 'sine.inOut',
-              delay: index * 0.06,
             });
-          });
 
-          // 4. Subtle scroll parallax
-          ScrollTrigger.create({
-            trigger: '.js-hero',
-            start: 'top top',
-            end: 'bottom top',
-            onUpdate: (self) => {
-              gsap.to(container, { x: self.progress * 60, duration: 0.3, overwrite: 'auto' });
-            },
-          });
+            // 3. Organic per-blade flex — desktop only; this is the tween
+            // storm that made the fan shake on phones.
+            blades.forEach((blade, index) => {
+              gsap.to(blade, {
+                rotation: `+=${2 + (index % 2.5)}`,
+                scaleX: 1.015 + (index % 3) * 0.005,
+                duration: 5 + (index % 3),
+                repeat: -1,
+                yoyo: true,
+                ease: 'sine.inOut',
+                delay: index * 0.06,
+              });
+            });
 
-          const onResize = () => {
+            // 4. Subtle scroll parallax
+            ScrollTrigger.create({
+              trigger: '.js-hero',
+              start: 'top top',
+              end: 'bottom top',
+              onUpdate: (self) => {
+                gsap.to(container, { x: self.progress * 60, duration: 0.3, overwrite: 'auto' });
+              },
+            });
+          } else if (!reducedMotion) {
+            // Mobile: one slow, cheap breath for the whole fan — calm,
+            // no per-blade churn.
+            gsap.to(container, {
+              rotation: -2,
+              duration: 20,
+              repeat: -1,
+              yoyo: true,
+              ease: 'sine.inOut',
+            });
+          }
+
+          onResize = () => {
             const w = window.innerWidth > 768 ? '65vw' : '90vw';
             blades.forEach((b) => { b.style.width = w; });
           };
@@ -219,7 +264,10 @@ export default function LandingPage() {
     };
 
     initGsap();
-    return () => { destroyed = true; };
+    return () => {
+      destroyed = true;
+      if (onResize) window.removeEventListener('resize', onResize);
+    };
   }, []);
 
   return (
@@ -235,19 +283,41 @@ export default function LandingPage() {
       <canvas className={styles.grain} />
 
       <nav ref={navRef} className={styles.nav}>
-        <div className={styles.navLogo}>Clicker<span>Pro</span></div>
+        <Link
+          href="/"
+          className={styles.navLogo}
+          style={{ textDecoration: 'none', cursor: 'pointer' }}
+          aria-label="ClickerPro home"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo_flower.png"
+            alt=""
+            style={{
+              height: 28,
+              width: 28,
+              objectFit: 'contain',
+              marginRight: 9,
+              verticalAlign: 'middle',
+            }}
+          />
+          Clicker<span>Pro</span>
+        </Link>
         <div className={styles.navLinks}>
+          <a href="#top">Home</a>
           <a href="#features">Features</a>
           <a href="#how">How It Works</a>
-          <a href="#pricing">Pricing</a>
+          {SHOW_PRICING && <a href="#pricing">Pricing</a>}
           <a href="#faq">FAQ</a>
           <a href="#contact">Contact</a>
-          <Link href="/login" className={styles.navCta}>Launch Web App →</Link>
+          <Link href={WEB_LOGIN} className={styles.navCta}>
+            {HAS_WEB_APP ? 'Launch Web App →' : 'Get the App →'}
+          </Link>
         </div>
       </nav>
 
       {/* Hero */}
-      <section className={`${styles.hero} js-hero`}>
+      <section id="top" className={`${styles.hero} js-hero`}>
         <div className={styles.heroBg} />
         <div className={styles.heroBgGlow} />
         <div className={styles.bladeContainer} />
@@ -266,25 +336,15 @@ export default function LandingPage() {
             Bookings, invoices, clients, and team — all in one place.
           </p>
           <div className={styles.heroActions}>
-            <Link href="/login" className={styles.btnPrimary}>Open Web App →</Link>
+            <Link href={WEB_LOGIN} className={styles.btnPrimary}>
+              {HAS_WEB_APP ? 'Open Web App →' : 'Download the App →'}
+            </Link>
             <a href="#features" className={styles.btnSecondary}>Explore Features</a>
           </div>
         </div>
 
-        <div className={styles.heroStats}>
-          <div>
-            <div className={styles.statNum}>2,400+</div>
-            <div className={styles.statLabel}>Active Users</div>
-          </div>
-          <div>
-            <div className={styles.statNum}>48K+</div>
-            <div className={styles.statLabel}>Bookings Managed</div>
-          </div>
-          <div>
-            <div className={styles.statNum}>৳ 12Cr</div>
-            <div className={styles.statLabel}>Revenue Tracked</div>
-          </div>
-        </div>
+        {/* Hero stats removed pre-launch — bring back with REAL numbers
+            once the platform has live usage to show. */}
 
         <div className={styles.scrollLine}>
           <div className={styles.scrollBar} />
@@ -394,11 +454,19 @@ export default function LandingPage() {
                   <div className={styles.badgeName}>App Store</div>
                 </div>
               </a>
-              <a href="#" className={styles.storeBadge}>
+              <a
+                href={LANDING_ONLY ? ANDROID_APK_URL : '#'}
+                {...(LANDING_ONLY ? { download: true } : {})}
+                className={styles.storeBadge}
+              >
                 <span>▶</span>
                 <div>
-                  <div className={styles.badgeSub}>Get it on</div>
-                  <div className={styles.badgeName}>Google Play</div>
+                  <div className={styles.badgeSub}>
+                    {LANDING_ONLY ? 'Android' : 'Get it on'}
+                  </div>
+                  <div className={styles.badgeName}>
+                    {LANDING_ONLY ? 'Download APK' : 'Google Play'}
+                  </div>
                 </div>
               </a>
             </div>
@@ -420,7 +488,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing */}
+      {/* Pricing — hidden pre-launch via SHOW_PRICING */}
+      {SHOW_PRICING && (
       <section id="pricing" className={`${styles.pricingSection} ${styles.sectionPad}`}>
         <div style={{ textAlign: 'center' }}>
           <div className={styles.sectionEyebrow}>Pricing</div>
@@ -436,13 +505,14 @@ export default function LandingPage() {
               <ul className={styles.priceFeatures}>
                 {plan.features.map((f) => <li key={f}>{f}</li>)}
               </ul>
-              <Link href="/login" className={styles.btnPrimary} style={{ width: '100%', justifyContent: 'center' }}>
+              <Link href={WEB_REGISTER} className={styles.btnPrimary} style={{ width: '100%', justifyContent: 'center' }}>
                 {plan.name === 'Starter' ? 'Start Free' : 'Start Free Trial'}
               </Link>
             </div>
           ))}
         </div>
       </section>
+      )}
 
       {/* How It Works */}
       <section id="how" className={`${styles.howSection} ${styles.sectionPad}`}>
@@ -554,8 +624,10 @@ export default function LandingPage() {
           <h2 className={styles.ctaTitle}>Ready to run your<br />photography business?</h2>
           <p className={styles.ctaDesc}>Join thousands of photographers managing bookings, clients, and money — all in one place. Start free today.</p>
           <div className={styles.ctaActions}>
-            <Link href="/register" className={styles.btnPrimary}>Get Started Free →</Link>
-            <Link href="/login" className={styles.btnSecondary}>Open Web App</Link>
+            <Link href={WEB_REGISTER} className={styles.btnPrimary}>Get Started Free →</Link>
+            <Link href={WEB_LOGIN} className={styles.btnSecondary}>
+              {HAS_WEB_APP ? 'Open Web App' : 'Download the App'}
+            </Link>
           </div>
         </div>
       </section>

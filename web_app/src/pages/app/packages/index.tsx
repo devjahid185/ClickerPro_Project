@@ -10,6 +10,7 @@ const DELIVERY_OPTS = ['Pendrive', 'Google Drive', 'Both'];
 const blank = () => ({
   name: '', price: '', discount: '', printsQty: '', printSize: '10×12',
   albumDesc: '', delivery: 'Both', trailers: '', fullVideos: '',
+  photographers: '', cinematographers: '', includesChief: false,
   additionalItems: [''], notes: '',
 });
 
@@ -45,6 +46,9 @@ export default function PackagesPage() {
       delivery: p.delivery || 'Both',
       trailers: p.trailers || '',
       fullVideos: p.fullVideos || p.full_videos || '',
+      photographers: p.photographers || p.photographer_count || p.photographerCount || '',
+      cinematographers: p.cinematographers || p.cinematographer_count || p.cinematographerCount || '',
+      includesChief: p.includesChief ?? p.includes_chief ?? false,
       additionalItems: (p.additionalItems || p.additional_items || []).length > 0 ? (p.additionalItems || p.additional_items) : [''],
       notes: p.notes || '',
     });
@@ -63,6 +67,9 @@ export default function PackagesPage() {
         printsQty: form.printsQty ? Number(form.printsQty) : undefined,
         trailers: form.trailers ? Number(form.trailers) : undefined,
         fullVideos: form.fullVideos ? Number(form.fullVideos) : undefined,
+        photographers: form.photographers ? Number(form.photographers) : undefined,
+        cinematographers: form.cinematographers ? Number(form.cinematographers) : undefined,
+        includesChief: !!form.includesChief,
         additionalItems: form.additionalItems.filter((i: string) => i.trim()),
       };
       if (editId) {
@@ -159,6 +166,24 @@ export default function PackagesPage() {
                       <span>{p.fullVideos || p.full_videos}</span>
                     </div>
                   )}
+                  {(p.photographers || p.photographer_count || p.photographerCount) > 0 && (
+                    <div className="row" style={{ gap: 6 }}>
+                      <span className="muted" style={{ minWidth: 80 }}>Photographers</span>
+                      <span>{p.photographers || p.photographer_count || p.photographerCount}</span>
+                    </div>
+                  )}
+                  {(p.cinematographers || p.cinematographer_count || p.cinematographerCount) > 0 && (
+                    <div className="row" style={{ gap: 6 }}>
+                      <span className="muted" style={{ minWidth: 80 }}>Cinematographers</span>
+                      <span>{p.cinematographers || p.cinematographer_count || p.cinematographerCount}</span>
+                    </div>
+                  )}
+                  {(p.includesChief ?? p.includes_chief) && (
+                    <div className="row" style={{ gap: 6 }}>
+                      <span className="muted" style={{ minWidth: 80 }}>Chief</span>
+                      <span className="badge gold" style={{ fontSize: 10 }}>Included</span>
+                    </div>
+                  )}
                   {p.delivery && (
                     <div className="row" style={{ gap: 6 }}>
                       <span className="muted" style={{ minWidth: 80 }}>Delivery</span>
@@ -250,6 +275,20 @@ export default function PackagesPage() {
                 <div className="field">
                   <label>Full Videos Count</label>
                   <input type="number" className="field" value={form.fullVideos} onChange={(e) => setForm({ ...form, fullVideos: e.target.value })} placeholder="0" />
+                </div>
+                <div className="field">
+                  <label>Photographers</label>
+                  <input type="number" className="field" value={form.photographers} onChange={(e) => setForm({ ...form, photographers: e.target.value })} placeholder="e.g. 2" />
+                </div>
+                <div className="field">
+                  <label>Cinematographers</label>
+                  <input type="number" className="field" value={form.cinematographers} onChange={(e) => setForm({ ...form, cinematographers: e.target.value })} placeholder="e.g. 1" />
+                </div>
+                <div className="field" style={{ gridColumn: '1/-1' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                    <input type="checkbox" checked={form.includesChief} onChange={(e) => setForm({ ...form, includesChief: e.target.checked })} />
+                    Includes Chief Photographer
+                  </label>
                 </div>
                 <div className="field" style={{ gridColumn: '1/-1' }}>
                   <label>Album Description</label>

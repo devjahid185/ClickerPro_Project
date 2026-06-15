@@ -135,13 +135,13 @@ class _SecuritySettingsScreenState
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.voidElevated,
-        title: const Text('Enable 2FA',
+        title: Text('Enable 2FA',
             style: TextStyle(color: AppColors.film, fontSize: 18)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Add this secret to your authenticator app (Google Authenticator, Authy), then enter the 6-digit code.',
               style: TextStyle(color: AppColors.filmMuted, fontSize: 13),
             ),
@@ -160,8 +160,8 @@ class _SecuritySettingsScreenState
               controller: codeCtrl,
               keyboardType: TextInputType.number,
               maxLength: 6,
-              style: const TextStyle(color: AppColors.film, fontSize: 18, letterSpacing: 4),
-              decoration: const InputDecoration(
+              style: TextStyle(color: AppColors.film, fontSize: 18, letterSpacing: 4),
+              decoration: InputDecoration(
                 hintText: '000000',
                 hintStyle: TextStyle(color: AppColors.filmMuted),
                 counterText: '',
@@ -172,7 +172,7 @@ class _SecuritySettingsScreenState
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel', style: TextStyle(color: AppColors.filmMuted)),
+            child: Text('Cancel', style: TextStyle(color: AppColors.filmMuted)),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(codeCtrl.text.trim()),
@@ -204,7 +204,7 @@ class _SecuritySettingsScreenState
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
@@ -221,7 +221,7 @@ class _SecuritySettingsScreenState
           preferredSize: const Size.fromHeight(1),
           child: Container(
             height: 1,
-            color: Colors.black.withValues(alpha: 0.06),
+            color: AppColors.line(0.06),
           ),
         ),
       ),
@@ -393,7 +393,7 @@ class _SecuritySettingsScreenState
       child: TextField(
         controller: controller,
         obscureText: obscure,
-        style: const TextStyle(color: AppColors.film, fontSize: 14),
+        style: TextStyle(color: AppColors.film, fontSize: 14),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(
@@ -401,18 +401,18 @@ class _SecuritySettingsScreenState
             fontSize: 13,
           ),
           filled: true,
-          fillColor: Colors.black.withValues(alpha: 0.04),
+          fillColor: AppColors.line(0.04),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 14,
             vertical: 12,
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+            borderSide: BorderSide(color: AppColors.line(0.08)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+            borderSide: BorderSide(color: AppColors.line(0.08)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
@@ -483,7 +483,7 @@ class _SecuritySettingsScreenState
               children: [
                 Text(
                   label,
-                  style: const TextStyle(color: AppColors.film, fontSize: 15),
+                  style: TextStyle(color: AppColors.film, fontSize: 15),
                 ),
                 if (subtitle != null)
                   Text(
@@ -515,13 +515,13 @@ class _SecuritySettingsScreenState
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.voidLight,
-        title: const Text(
+        title: Text(
           'Revoke session?',
           style: TextStyle(color: AppColors.film),
         ),
         content: Text(
           'Sign out "$device" from your account?',
-          style: const TextStyle(color: AppColors.filmDim),
+          style: TextStyle(color: AppColors.filmDim),
         ),
         actions: [
           TextButton(
@@ -562,7 +562,7 @@ class _SecuritySettingsScreenState
             decoration: BoxDecoration(
               color: isCurrent
                   ? AppColors.accent.withValues(alpha: 0.12)
-                  : Colors.black.withValues(alpha: 0.05),
+                  : AppColors.line(0.05),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -580,7 +580,7 @@ class _SecuritySettingsScreenState
                   children: [
                     Text(
                       device,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.film,
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -650,12 +650,12 @@ class _SecuritySettingsScreenState
           const SizedBox(width: 12),
           Text(
             label,
-            style: const TextStyle(color: AppColors.filmDim, fontSize: 14),
+            style: TextStyle(color: AppColors.filmDim, fontSize: 14),
           ),
           const Spacer(),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.film,
               fontSize: 13,
               fontWeight: FontWeight.w500,
@@ -705,14 +705,14 @@ class _SecuritySettingsScreenState
         SnackBar(
           content: Text(
             message,
-            style: const TextStyle(color: AppColors.film, fontSize: 13),
+            style: TextStyle(color: AppColors.film, fontSize: 13),
           ),
           backgroundColor: AppColors.voidElevated,
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
-            side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+            side: BorderSide(color: AppColors.line(0.08)),
           ),
           duration: const Duration(seconds: 2),
         ),

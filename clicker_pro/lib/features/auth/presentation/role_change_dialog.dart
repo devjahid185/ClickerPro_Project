@@ -131,6 +131,29 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
         return 'Update task progress';
       case Capability.createAnnouncement:
         return 'Create announcements';
+      case Capability.viewAnnouncements:
+        return 'View announcements';
+      // ── Studio-management surfaces ───────────────────────
+      case Capability.accessTeam:
+        return 'Access team & staff';
+      case Capability.accessInvoice:
+        return 'Access invoices';
+      case Capability.accessTax:
+        return 'Access tax / VAT';
+      case Capability.accessPackages:
+        return 'Manage packages';
+      case Capability.accessDelivery:
+        return 'Access delivery system';
+      case Capability.accessDailyTasks:
+        return 'Access daily tasks';
+      case Capability.accessFollowup:
+        return 'Access client follow-up';
+      case Capability.accessReminders:
+        return 'Access reminders';
+      case Capability.accessWaitlist:
+        return 'Access waitlist';
+      case Capability.accessRentTracking:
+        return 'Access rent tracking';
     }
   }
 
@@ -146,7 +169,7 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
         decoration: BoxDecoration(
           color: AppColors.voidElevated,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+          border: Border.all(color: AppColors.line(0.08)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.5),
@@ -161,8 +184,8 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── Header ────────────────────────────────────────
-              const Text(
+              // ── Header (fixed) ────────────────────────────────
+              Text(
                 'Change role',
                 style: TextStyle(
                   fontFamily: 'Poppins',
@@ -183,6 +206,16 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
               ),
               const SizedBox(height: 16),
 
+              // ── Scrollable middle: roles + lost-capabilities ──
+              // Without this, a long "you will lose access to" list pushed
+              // the Cancel/Confirm buttons off-screen so role change was
+              // impossible. The buttons below now stay fixed and visible.
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
               // ── Target list ───────────────────────────────────
               for (final r in _targets) ...[
                 _RoleOption(
@@ -204,7 +237,7 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.03),
+                            color: AppColors.line(0.03),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: AppColors.gold.withValues(alpha: 0.25),
@@ -275,10 +308,14 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
                         ),
                       ),
               ),
+                    ],
+                  ),
+                ),
+              ),
 
               const SizedBox(height: 20),
 
-              // ── Buttons ───────────────────────────────────────
+              // ── Buttons (fixed, always visible) ───────────────
               Row(
                 children: [
                   Expanded(
@@ -289,7 +326,7 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                           side: BorderSide(
-                            color: Colors.black.withValues(alpha: 0.12),
+                            color: AppColors.line(0.12),
                           ),
                         ),
                       ),
@@ -355,12 +392,12 @@ class _RoleOption extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected
               ? AppColors.orange.withValues(alpha: 0.12)
-              : Colors.black.withValues(alpha: 0.03),
+              : AppColors.line(0.03),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected
                 ? AppColors.orange.withValues(alpha: 0.6)
-                : Colors.black.withValues(alpha: 0.08),
+                : AppColors.line(0.08),
             width: 1.4,
           ),
         ),
@@ -381,7 +418,7 @@ class _RoleOption extends StatelessWidget {
                 ),
               ),
               child: selected
-                  ? const Icon(
+                  ? Icon(
                       Icons.check_rounded,
                       color: AppColors.film,
                       size: 12,
@@ -395,7 +432,7 @@ class _RoleOption extends StatelessWidget {
                 children: [
                   Text(
                     role.displayLabel,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.film,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -456,7 +493,7 @@ class _ConfirmButton extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 14),
               alignment: Alignment.center,
-              child: const Text(
+              child: Text(
                 'Confirm',
                 style: TextStyle(
                   color: AppColors.film,

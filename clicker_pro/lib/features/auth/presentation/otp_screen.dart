@@ -171,7 +171,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
       _startResendTimer();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text(
+          content: Text(
             'New code sent.',
             style: TextStyle(color: AppColors.film, fontSize: 13),
           ),
@@ -190,7 +190,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
       _shakeCtrl.forward(from: 0);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _error = 'কোড পাঠানো যাচ্ছে না।');
+      setState(() => _error = 'Could not send the code.');
       _shakeCtrl.forward(from: 0);
     } finally {
       if (mounted) setState(() => _isResending = false);
@@ -254,7 +254,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
       _onApiError(e);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _error = 'কিছু একটা ভুল হয়েছে।');
+      setState(() => _error = 'Something went wrong.');
       _shakeCtrl.forward(from: 0);
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -269,7 +269,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
     } else if (err is ApiException) {
       message = err.message;
     } else {
-      message = 'কিছু একটা ভুল হয়েছে।';
+      message = 'Something went wrong.';
     }
     setState(() => _error = message);
     _shakeCtrl.forward(from: 0);
@@ -320,20 +320,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
             ),
           ),
 
-          Positioned(
-            top: 12,
-            left: 8,
-            child: SafeArea(
-              child: IconButton(
-                icon: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  size: 18,
-                  color: AppColors.film,
-                ),
-                onPressed: () => Navigator.of(context).maybePop(),
-              ),
-            ),
-          ),
+
 
           SafeArea(
             child: Center(
@@ -348,7 +335,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                     const SizedBox(height: 36),
                     _smallBrandLogo(),
                     const SizedBox(height: 28),
-                    const Text(
+                    Text(
                       'Verify your\ncode',
                       textAlign: TextAlign.center,
                       style: TextStyle(
@@ -503,6 +490,20 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
               ),
             ),
           ),
+          Positioned(
+            top: 12,
+            left: 8,
+            child: SafeArea(
+              child: IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  size: 18,
+                  color: AppColors.film,
+                ),
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -571,7 +572,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
             height: 54,
             alignment: Alignment.center,
             child: loading
-                ? const SizedBox(
+                ? SizedBox(
                     width: 22,
                     height: 22,
                     child: CircularProgressIndicator(
@@ -581,7 +582,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                   )
                 : Text(
                     label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.film,
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -684,7 +685,7 @@ class _DigitCellState extends State<_DigitCell> {
           maxLength: null,
           showCursor: true,
           cursorColor: AppColors.orange,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Montserrat',
             color: AppColors.film,
             fontSize: 22,

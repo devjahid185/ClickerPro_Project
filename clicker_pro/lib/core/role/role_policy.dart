@@ -24,7 +24,10 @@ class RolePolicy {
       UserRole.both,
       UserRole.manager,
     },
-    Capability.toggleDistribution: {UserRole.owner, UserRole.both},
+    // Distribution lifts the freelancer 1-event-per-shift cap, so it is only
+    // relevant to users who take freelance work. Owners are never limited and
+    // therefore never see the option.
+    Capability.toggleDistribution: {UserRole.freelancer, UserRole.both},
     Capability.toggleVat: {UserRole.owner, UserRole.both},
     Capability.changeRole: {UserRole.owner, UserRole.freelancer, UserRole.both},
     Capability.generateTeamInvite: {UserRole.owner, UserRole.both},
@@ -75,13 +78,11 @@ class RolePolicy {
     Capability.toggleHidePayment: {UserRole.owner, UserRole.both},
     Capability.generatePublicBookingToken: {UserRole.owner, UserRole.both},
     Capability.approvePublicBooking: {UserRole.owner, UserRole.both},
-    Capability.requestReEdit: {
-      UserRole.owner,
-      UserRole.both,
-      UserRole.manager,
-      UserRole.freelancer,
-    },
+    // Re-edit requests are an Owner/Manager workflow. A Freelancer neither
+    // raises nor assigns them.
+    Capability.requestReEdit: {UserRole.owner, UserRole.both, UserRole.manager},
     Capability.assignReEdit: {UserRole.owner, UserRole.both, UserRole.manager},
+    // A Freelancer still updates progress on the events they are assigned to.
     Capability.updateTaskProgress: {
       UserRole.owner,
       UserRole.both,
@@ -89,6 +90,36 @@ class RolePolicy {
       UserRole.freelancer,
     },
     Capability.createAnnouncement: {UserRole.owner, UserRole.both},
+    // Owner posts announcements; Manager + Freelancer read them.
+    Capability.viewAnnouncements: {
+      UserRole.owner,
+      UserRole.both,
+      UserRole.manager,
+      UserRole.freelancer,
+    },
+    // Studio-management surfaces — never shown to a pure Freelancer.
+    Capability.accessTeam: {UserRole.owner, UserRole.both, UserRole.manager},
+    Capability.accessInvoice: {UserRole.owner, UserRole.both, UserRole.manager},
+    Capability.accessTax: {UserRole.owner, UserRole.both},
+    Capability.accessPackages: {UserRole.owner, UserRole.both, UserRole.manager},
+    Capability.accessDelivery: {UserRole.owner, UserRole.both, UserRole.manager},
+    Capability.accessDailyTasks: {
+      UserRole.owner,
+      UserRole.both,
+      UserRole.manager,
+    },
+    Capability.accessFollowup: {UserRole.owner, UserRole.both, UserRole.manager},
+    Capability.accessReminders: {
+      UserRole.owner,
+      UserRole.both,
+      UserRole.manager,
+    },
+    Capability.accessWaitlist: {UserRole.owner, UserRole.both, UserRole.manager},
+    Capability.accessRentTracking: {
+      UserRole.owner,
+      UserRole.both,
+      UserRole.manager,
+    },
   };
 
   bool can(Capability c) =>

@@ -29,11 +29,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/format/booking_format.dart';
-import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
-import '../../settings/application/language_controller.dart';
+import '../../profile/application/profile_controllers.dart';
 import '../application/fl_earning_providers.dart';
 import '../domain/fl_earning.dart';
 
@@ -49,9 +48,7 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final lang = ref.watch(activeLocaleProvider).languageCode == 'bn'
-        ? 'bn'
-        : 'en';
+    final lang = 'en';
     final async = ref.watch(flEarningOverviewControllerProvider);
 
     return Scaffold(
@@ -60,10 +57,10 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Earnings',
           style: TextStyle(
             color: AppColors.film,
@@ -88,16 +85,10 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
                   .refresh(),
             ),
           ),
-          data: (overview) {
-            if (overview.totalEarnings == 0 && overview.owners.isEmpty) {
-              return EmptyState(
-                message:
-                    'No earnings data yet\nPayments from owners will appear here',
-                icon: Icons.account_balance_wallet_outlined,
-              );
-            }
-            return _buildContent(context, overview, lang);
-          },
+          // Always render the full dashboard — when there are no earnings yet
+          // the summary cards simply read ৳0 (a clean premium "00" template)
+          // instead of a bare empty page.
+          data: (overview) => _buildContent(context, overview, lang),
         ),
       ),
     );
@@ -120,12 +111,18 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
         const SizedBox(height: 20),
         _buildSectionHeader('Per-Owner Breakdown'),
         const SizedBox(height: 10),
-        ...overview.owners.map(
-          (o) => Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: _OwnerCard(owner: o, lang: lang),
+        if (overview.owners.isEmpty)
+          _buildEmptyHint(
+            'No payouts yet',
+            'Earnings from the studios you work with will show up here.',
+          )
+        else
+          ...overview.owners.map(
+            (o) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _OwnerCard(owner: o, lang: lang),
+            ),
           ),
-        ),
         if (overview.pendingPayments.isNotEmpty) ...[
           const SizedBox(height: 10),
           _buildSectionHeader('Pending Payments'),
@@ -375,18 +372,19 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
             context: context,
             builder: (ctx) => AlertDialog(
               backgroundColor: AppColors.voidLight,
-              title: const Text(
+              title: Text(
                 'Request Payment',
                 style: TextStyle(color: AppColors.film),
               ),
-              content: const Text(
-                'Send a payment reminder to all owners with pending balances?',
+              content: Text(
+                'A due-payment request will be sent to the Owner in-app — '
+                'including your profile bKash & bank details.',
                 style: TextStyle(color: AppColors.filmDim),
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(false),
-                  child: const Text(
+                  child: Text(
                     'Cancel',
                     style: TextStyle(color: AppColors.filmDim),
                   ),
@@ -405,27 +403,37 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
           if (confirmed != true || !context.mounted) return;
 
           try {
+            // Attach the freelancer's payout details from their profile
+            // so the owner can pay without asking for numbers.
+            final me = ref.read(currentUserProvider).valueOrNull;
+            final overview = ref
+                .read(flEarningOverviewControllerProvider)
+                .valueOrNull;
             final sent = await ref
                 .read(flEarningRepositoryProvider)
-                .requestPayment();
+                .requestPayment(
+                  amount: overview?.pendingAmount,
+                  bkash: me?.bkash,
+                  bankDetails: me?.bankDetails,
+                );
             if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
                   sent
-                      ? 'Payment reminders sent successfully'
-                      : 'Failed to send reminders',
+                      ? 'Due-payment request sent to the Owner ✓'
+                      : 'Failed to send the request',
                 ),
                 backgroundColor: sent ? AppColors.green : AppColors.red,
               ),
             );
-          } catch (_) {
+          } catch (e) {
             if (!context.mounted) return;
+            final msg = e.toString().contains('not in any owner')
+                ? 'You are not in any Owner team yet — join a team first.'
+                : 'Network error — try again';
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Network error — try again'),
-                backgroundColor: AppColors.red,
-              ),
+              SnackBar(content: Text(msg), backgroundColor: AppColors.red),
             );
           }
         },
@@ -454,6 +462,49 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
         letterSpacing: 1.2,
         fontWeight: FontWeight.w600,
         color: AppColors.filmMuted,
+      ),
+    );
+  }
+
+  /// Soft inline placeholder shown inside the dashboard when a section has no
+  /// data yet — keeps the premium "00" layout instead of a blank gap.
+  Widget _buildEmptyHint(String title, String subtitle) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.glass,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.glassBorder),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.account_balance_wallet_outlined,
+            color: AppColors.teal.withValues(alpha: 0.7),
+            size: 26,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.film,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              color: AppColors.filmDim.withValues(alpha: 0.75),
+              height: 1.4,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -566,7 +617,7 @@ class _OwnerCard extends StatelessWidget {
                   children: [
                     Text(
                       owner.ownerName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -588,7 +639,7 @@ class _OwnerCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Container(height: 1, color: Colors.black.withValues(alpha: 0.06)),
+          Container(height: 1, color: AppColors.line(0.06)),
           const SizedBox(height: 10),
           Row(
             children: [
@@ -716,7 +767,7 @@ class _PendingPaymentRow extends StatelessWidget {
               children: [
                 Text(
                   payment.ownerName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 15,
                     fontWeight: FontWeight.w600,

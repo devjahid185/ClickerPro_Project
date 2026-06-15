@@ -109,7 +109,7 @@ class _TimelineRow extends StatelessWidget {
                     child: Container(
                       width: 1.5,
                       margin: const EdgeInsets.symmetric(vertical: 2),
-                      color: Colors.black.withValues(alpha: 0.08),
+                      color: AppColors.line(0.08),
                     ),
                   ),
               ],
@@ -162,10 +162,10 @@ class _TimelineRow extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.fromLTRB(10, 7, 10, 7),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.025),
+                        color: AppColors.line(0.025),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: Colors.black.withValues(alpha: 0.05),
+                          color: AppColors.line(0.05),
                         ),
                       ),
                       child: Text(

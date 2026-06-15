@@ -1,82 +1,31 @@
+// lib/features/team/presentation/salary_sheet_screen.dart
+//
+// Owner-side staff / freelancer payout sheet. Lists every team member with
+// their assignment earnings across the owner's events: events count, earned,
+// paid, due. Tapping a member opens a per-event breakdown (one row per event
+// they worked) where each event — or all at once — can be marked paid.
+//
+// Data: `staffPayoutsProvider` (GET /api/team/payouts). Settling a payout
+// goes through `teamControllerProvider.markPayoutPaid`.
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/format/booking_format.dart';
 import '../../../core/pdf/pdf_export.dart';
 import '../../../shared/states/empty_state.dart';
+import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
 import '../application/team_providers.dart';
-import '../domain/salary_entry.dart';
-import '../domain/team_member.dart';
+import '../domain/staff_payout.dart';
 
-class SalarySheetScreen extends ConsumerStatefulWidget {
+class SalarySheetScreen extends ConsumerWidget {
   const SalarySheetScreen({super.key});
 
   @override
-  ConsumerState<SalarySheetScreen> createState() => _SalarySheetScreenState();
-}
-
-class _SalarySheetScreenState extends ConsumerState<SalarySheetScreen> {
-  SalarySheet? _sheet;
-  String _selectedMonth = _currentMonthLabel();
-
-  static String _currentMonthLabel() {
-    final now = DateTime.now();
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    return '${months[now.month - 1]} ${now.year}';
-  }
-
-  List<String> get _months {
-    final now = DateTime.now();
-    const mNames = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    return List.generate(6, (i) {
-      final d = DateTime(now.year, now.month - 5 + i, 1);
-      return '${mNames[d.month - 1]} ${d.year}';
-    });
-  }
-
-  SalarySheet _buildSheet(List<TeamMember> members, String month) {
-    if (members.isEmpty) {
-      return SalarySheet(
-        month: month,
-        totalEvents: 0,
-        totalEarned: 0,
-        totalPaid: 0,
-        totalDue: 0,
-        entries: const [],
-      );
-    }
-    // Placeholder per-member data until payout API is wired.
-    final entries = members.map((m) {
-      return SalaryEntry(
-        memberId: m.userId,
-        memberName: m.fullName.isNotEmpty ? m.fullName : m.email,
-        eventsCount: 0,
-        ratePerEvent: 0,
-        totalEarned: 0,
-        totalPaid: 0,
-        totalDue: 0,
-      );
-    }).toList();
-    return SalarySheet(
-      month: month,
-      totalEvents: 0,
-      totalEarned: 0,
-      totalPaid: 0,
-      totalDue: 0,
-      entries: entries,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final membersAsync = ref.watch(teamMembersProvider);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(staffPayoutsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.voidBlack,
@@ -84,11 +33,11 @@ class _SalarySheetScreenState extends ConsumerState<SalarySheetScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
-          'Salary Sheet',
+        title: Text(
+          'Staff Payments',
           style: TextStyle(
             color: AppColors.film,
             fontFamily: 'Poppins',
@@ -102,105 +51,127 @@ class _SalarySheetScreenState extends ConsumerState<SalarySheetScreen> {
               Icons.picture_as_pdf_outlined,
               color: AppColors.gold,
             ),
-            onPressed: _sheet != null ? _exportPdf : null,
+            onPressed: () {
+              final sheet = async.valueOrNull;
+              if (sheet != null && sheet.members.isNotEmpty) {
+                _exportPdf(context, sheet);
+              }
+            },
           ),
         ],
       ),
-      body: membersAsync.when(
-        loading: () => const Center(child: LensLoader()),
-        error: (_, _) => const Center(
-          child: EmptyState(
-            icon: Icons.people_outline,
-            message: 'Could not load team members.',
-          ),
-        ),
-        data: (members) {
-          final sheet = _sheet ?? _buildSheet(members, _selectedMonth);
-          if (_sheet == null) {
-            WidgetsBinding.instance.addPostFrameCallback(
-              (_) => setState(() => _sheet = sheet),
-            );
-          }
-          return Column(
-            children: [
-              _buildMonthFilter(),
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-                  children: [
-                    _buildSummaryHeader(sheet),
-                    const SizedBox(height: 20),
-                    _buildSectionHeader('TEAM MEMBERS'),
-                    const SizedBox(height: 10),
-                    if (sheet.entries.isEmpty)
-                      const EmptyState(
-                        icon: Icons.people_outline,
-                        message: 'No team members yet.',
-                      )
-                    else
-                      ...sheet.entries.map(
-                        (entry) => Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: _SalaryMemberCard(entry: entry),
-                        ),
-                      ),
-                    const SizedBox(height: 20),
-                    if (sheet.entries.isNotEmpty) _buildMarkAllPaidButton(sheet),
-                  ],
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildMonthFilter() {
-    return Container(
-      height: 48,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: _months.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          final month = _months[index];
-          final selected = month == _selectedMonth;
-          return GestureDetector(
-            onTap: () => setState(() => _selectedMonth = month),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: selected
-                    ? AppColors.teal.withValues(alpha: 0.15)
-                    : AppColors.glass,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: selected
-                      ? AppColors.teal.withValues(alpha: 0.30)
-                      : AppColors.glassBorder,
-                ),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                month,
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: selected ? AppColors.teal : AppColors.filmDim,
-                ),
-              ),
+      body: RefreshIndicator(
+        color: AppColors.teal,
+        backgroundColor: AppColors.voidLight,
+        onRefresh: () async => ref.invalidate(staffPayoutsProvider),
+        child: async.when(
+          loading: () => const Center(child: LensLoader()),
+          error: (_, _) => Center(
+            child: ErrorState(
+              message: 'Could not load staff payments.',
+              onRetry: () => ref.invalidate(staffPayoutsProvider),
             ),
-          );
-        },
+          ),
+          data: (sheet) {
+            if (sheet.members.isEmpty) {
+              return ListView(
+                children: const [
+                  SizedBox(height: 120),
+                  EmptyState(
+                    icon: Icons.payments_outlined,
+                    message:
+                        'No staff payouts yet\nAssign team members to events with a payout',
+                  ),
+                ],
+              );
+            }
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+              children: [
+                _SummaryHeader(sheet: sheet),
+                const SizedBox(height: 20),
+                _sectionHeader('TEAM MEMBERS'),
+                const SizedBox(height: 10),
+                ...sheet.members.map(
+                  (m) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _StaffPayoutCard(payout: m),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
 
-  Widget _buildSummaryHeader(SalarySheet sheet) {
+  static String _money(double v) =>
+      BookingFormat.money(v, lang: 'en', bnNumerals: false);
+
+  Future<void> _exportPdf(BuildContext context, StaffPayoutSheet sheet) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await PdfExporter.share(
+        PdfDocumentData(
+          documentTitle: 'Staff Payments',
+          fileName: 'staff_payments',
+          subtitle: '${sheet.members.length} members',
+          summary: [
+            PdfRow('Total earned', _money(sheet.totalEarned)),
+            PdfRow('Total paid', _money(sheet.totalPaid)),
+            PdfRow('Total due', _money(sheet.totalDue), emphasize: true),
+          ],
+          table: PdfTable(
+            headers: const ['Member', 'Events', 'Earned', 'Paid', 'Due'],
+            rows: [
+              for (final m in sheet.members)
+                [
+                  m.name,
+                  m.events.toString(),
+                  _money(m.earned),
+                  _money(m.paid),
+                  _money(m.due),
+                ],
+            ],
+          ),
+          footnote: 'Generated by Clicker Pro',
+        ),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Could not create PDF: $e',
+            style: TextStyle(color: AppColors.film),
+          ),
+          backgroundColor: AppColors.voidElevated,
+        ),
+      );
+    }
+  }
+
+  Widget _sectionHeader(String title) {
+    return Text(
+      title,
+      style: TextStyle(
+        fontFamily: 'Poppins',
+        fontSize: 12,
+        letterSpacing: 1.2,
+        fontWeight: FontWeight.w600,
+        color: AppColors.filmMuted,
+      ),
+    );
+  }
+}
+
+class _SummaryHeader extends StatelessWidget {
+  const _SummaryHeader({required this.sheet});
+  final StaffPayoutSheet sheet;
+
+  @override
+  Widget build(BuildContext context) {
+    String m(double v) => BookingFormat.money(v, lang: 'en', bnNumerals: false);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -208,49 +179,19 @@ class _SalarySheetScreenState extends ConsumerState<SalarySheetScreen> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.teal.withValues(alpha: 0.20)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            sheet.month.toUpperCase(),
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 10,
-              letterSpacing: 1.2,
-              fontWeight: FontWeight.w600,
-              color: AppColors.filmMuted,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _summaryStat('EVENTS', '${sheet.totalEvents}', AppColors.teal),
-              const SizedBox(width: 16),
-              _summaryStat(
-                'EARNED',
-                _formatMoney(sheet.totalEarned),
-                AppColors.gold,
-              ),
-              const SizedBox(width: 16),
-              _summaryStat(
-                'PAID',
-                _formatMoney(sheet.totalPaid),
-                AppColors.green,
-              ),
-              const SizedBox(width: 16),
-              _summaryStat(
-                'DUE',
-                _formatMoney(sheet.totalDue),
-                AppColors.coral,
-              ),
-            ],
-          ),
+          _stat('EARNED', m(sheet.totalEarned), AppColors.gold),
+          const SizedBox(width: 16),
+          _stat('PAID', m(sheet.totalPaid), AppColors.green),
+          const SizedBox(width: 16),
+          _stat('DUE', m(sheet.totalDue), AppColors.coral),
         ],
       ),
     );
   }
 
-  Widget _summaryStat(String label, String value, Color color) {
+  Widget _stat(String label, String value, Color color) {
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -268,6 +209,8 @@ class _SalarySheetScreenState extends ConsumerState<SalarySheetScreen> {
           const SizedBox(height: 3),
           Text(
             value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontFamily: 'Poppins',
               fontSize: 14,
@@ -279,257 +222,116 @@ class _SalarySheetScreenState extends ConsumerState<SalarySheetScreen> {
       ),
     );
   }
-
-  Widget _buildMarkAllPaidButton(SalarySheet sheet) {
-    final hasOutstanding = sheet.hasOutstanding;
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        onPressed: hasOutstanding ? _markAllPaid : null,
-        icon: const Icon(Icons.check_circle_outline, size: 18),
-        label: const Text('Mark All Paid'),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.teal,
-          disabledForegroundColor: AppColors.filmMuted,
-          side: BorderSide(
-            color: hasOutstanding
-                ? AppColors.teal.withValues(alpha: 0.30)
-                : AppColors.glassBorder,
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _markAllPaid() {
-    final sheet = _sheet;
-    if (sheet == null) return;
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.voidLight,
-        title: const Text(
-          'Mark All Paid',
-          style: TextStyle(color: AppColors.film),
-        ),
-        content: Text(
-          'Mark all ${sheet.entries.length} members as paid for ${sheet.month}?',
-          style: const TextStyle(color: AppColors.filmDim),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: AppColors.filmDim),
-            ),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.teal,
-              foregroundColor: Colors.black,
-            ),
-            onPressed: () {
-              setState(() {
-                _sheet = SalarySheet(
-                  month: sheet.month,
-                  totalEvents: sheet.totalEvents,
-                  totalEarned: sheet.totalEarned,
-                  totalPaid: sheet.totalEarned,
-                  totalDue: 0,
-                  entries: sheet.entries
-                      .map(
-                        (e) =>
-                            e.copyWith(totalPaid: e.totalEarned, totalDue: 0),
-                      )
-                      .toList(),
-                );
-              });
-              Navigator.of(ctx).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('All members marked as paid'),
-                  backgroundColor: AppColors.green,
-                ),
-              );
-            },
-            child: const Text('Confirm'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _exportPdf() async {
-    final sheet = _sheet;
-    if (sheet == null) return;
-    final messenger = ScaffoldMessenger.of(context);
-    String f(double v) => '৳ ${v.toStringAsFixed(0)}';
-    try {
-      await PdfExporter.share(
-        PdfDocumentData(
-          documentTitle: 'Salary Sheet',
-          fileName: 'salary_${sheet.month.replaceAll(' ', '_')}',
-          subtitle: '${sheet.month} · ${sheet.totalEvents} events',
-          summary: [
-            PdfRow('Total earned', f(sheet.totalEarned)),
-            PdfRow('Total paid', f(sheet.totalPaid)),
-            PdfRow('Total due', f(sheet.totalDue), emphasize: true),
-          ],
-          table: sheet.entries.isEmpty
-              ? null
-              : PdfTable(
-                  headers: const [
-                    'Member',
-                    'Events',
-                    'Earned',
-                    'Paid',
-                    'Due',
-                  ],
-                  rows: [
-                    for (final e in sheet.entries)
-                      [
-                        e.memberName,
-                        e.eventsCount.toString(),
-                        f(e.totalEarned),
-                        f(e.totalPaid),
-                        f(e.totalDue),
-                      ],
-                  ],
-                ),
-          footnote: 'Generated by Clicker Pro',
-        ),
-      );
-    } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text('PDF তৈরি করা যায়নি: $e')),
-      );
-    }
-  }
-
-  String _formatMoney(double amount) {
-    if (amount >= 1000) {
-      return '${(amount / 1000).toStringAsFixed(amount % 1000 == 0 ? 0 : 1)}K';
-    }
-    return amount.toStringAsFixed(0);
-  }
-
-  Widget _buildSectionHeader(String title) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontFamily: 'Poppins',
-        fontSize: 12,
-        letterSpacing: 1.2,
-        fontWeight: FontWeight.w600,
-        color: AppColors.filmMuted,
-      ),
-    );
-  }
 }
 
-class _SalaryMemberCard extends StatelessWidget {
-  const _SalaryMemberCard({required this.entry});
-  final SalaryEntry entry;
+/// One member's payout summary. Tapping opens the per-event breakdown sheet.
+class _StaffPayoutCard extends ConsumerWidget {
+  const _StaffPayoutCard({required this.payout});
+  final StaffPayout payout;
 
   @override
-  Widget build(BuildContext context) {
-    final isPaid = entry.isFullyPaid;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isPaid = payout.isFullyPaid;
     final statusColor = isPaid ? AppColors.green : AppColors.coral;
+    String m(double v) => BookingFormat.money(v, lang: 'en', bnNumerals: false);
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.glass,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.glassBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: AppColors.teal.withValues(alpha: 0.15),
-                child: Text(
-                  entry.memberName.isNotEmpty
-                      ? entry.memberName[0].toUpperCase()
-                      : '?',
-                  style: const TextStyle(
-                    color: AppColors.teal,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () => _showBreakdown(context, ref),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.glass,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.glassBorder),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: AppColors.teal.withValues(alpha: 0.15),
+                  backgroundImage:
+                      (payout.avatar != null && payout.avatar!.isNotEmpty)
+                      ? NetworkImage(payout.avatar!)
+                      : null,
+                  child: (payout.avatar == null || payout.avatar!.isEmpty)
+                      ? Text(
+                          payout.name.isNotEmpty
+                              ? payout.name[0].toUpperCase()
+                              : '?',
+                          style: const TextStyle(
+                            color: AppColors.teal,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                          ),
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        payout.name,
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.film,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${payout.events} ${payout.events == 1 ? 'event' : 'events'} · tap for breakdown',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 11,
+                          color: AppColors.filmDim.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      entry.memberName,
-                      style: const TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.film,
-                      ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    isPaid ? 'PAID' : 'DUE',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: statusColor,
+                      letterSpacing: 1.0,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${entry.eventsCount} events · ${_formatRate(entry.ratePerEvent)}/event',
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 11,
-                        color: AppColors.filmDim.withValues(alpha: 0.7),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  isPaid ? 'PAID' : 'DUE',
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: statusColor,
-                    letterSpacing: 1.0,
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(height: 1, color: Colors.black.withValues(alpha: 0.06)),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              _metric(
-                'Earned',
-                _formatMoney(entry.totalEarned),
-                AppColors.gold,
-              ),
-              const SizedBox(width: 16),
-              _metric('Paid', _formatMoney(entry.totalPaid), AppColors.green),
-              const Spacer(),
-              if (!isPaid)
-                _metric('Due', _formatMoney(entry.totalDue), AppColors.coral),
-            ],
-          ),
-        ],
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(height: 1, color: AppColors.line(0.06)),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                _metric('Earned', m(payout.earned), AppColors.gold),
+                const SizedBox(width: 16),
+                _metric('Paid', m(payout.paid), AppColors.green),
+                const Spacer(),
+                if (!isPaid) _metric('Due', m(payout.due), AppColors.coral),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -562,17 +364,272 @@ class _SalaryMemberCard extends StatelessWidget {
     );
   }
 
-  String _formatRate(double rate) {
-    if (rate >= 1000) {
-      return '${(rate / 1000).toStringAsFixed(rate % 1000 == 0 ? 0 : 1)}K';
-    }
-    return rate.toStringAsFixed(0);
+  void _showBreakdown(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.voidLight,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _PayoutBreakdownSheet(userId: payout.userId),
+    );
+  }
+}
+
+/// Per-event payout breakdown for one member, with per-event and "pay all"
+/// settle actions. Reads live data so it reflects mark-paid immediately.
+class _PayoutBreakdownSheet extends ConsumerWidget {
+  const _PayoutBreakdownSheet({required this.userId});
+  final String userId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(staffPayoutsProvider);
+    final payout = async.valueOrNull?.members
+        .where((m) => m.userId == userId)
+        .firstOrNull;
+
+    String m(double v) => BookingFormat.money(v, lang: 'en', bnNumerals: false);
+
+    return SafeArea(
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.8,
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+        child: payout == null
+            ? const Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
+                child: Center(child: LensLoader()),
+              )
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.filmDim.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    payout.name,
+                    style: TextStyle(
+                      color: AppColors.film,
+                      fontFamily: 'Poppins',
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Due ${m(payout.due)} of ${m(payout.earned)}',
+                    style: TextStyle(
+                      color: AppColors.filmDim.withValues(alpha: 0.8),
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Flexible(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: payout.items.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 8),
+                      itemBuilder: (_, i) => _PayoutItemRow(
+                        userId: userId,
+                        item: payout.items[i],
+                      ),
+                    ),
+                  ),
+                  if (!payout.isFullyPaid) ...[
+                    const SizedBox(height: 14),
+                    FilledButton.icon(
+                      icon: const Icon(Icons.done_all_rounded, size: 18),
+                      label: Text('Pay all due · ${m(payout.due)}'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.teal,
+                        foregroundColor: AppColors.voidBlack,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () => _pay(context, ref),
+                    ),
+                  ],
+                ],
+              ),
+      ),
+    );
   }
 
-  String _formatMoney(double amount) {
-    if (amount >= 1000) {
-      return '${(amount / 1000).toStringAsFixed(amount % 1000 == 0 ? 0 : 1)}K';
+  Future<void> _pay(
+    BuildContext context,
+    WidgetRef ref, {
+    String? assignmentId,
+  }) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref
+          .read(teamControllerProvider.notifier)
+          .markPayoutPaid(userId, assignmentId: assignmentId);
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Payment recorded ✓'),
+          backgroundColor: AppColors.green,
+        ),
+      );
+    } catch (_) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Could not record payment — try again.',
+            style: TextStyle(color: AppColors.film),
+          ),
+          backgroundColor: AppColors.voidElevated,
+        ),
+      );
     }
-    return amount.toStringAsFixed(0);
+  }
+}
+
+class _PayoutItemRow extends ConsumerWidget {
+  const _PayoutItemRow({required this.userId, required this.item});
+  final String userId;
+  final PayoutItem item;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dateStr = item.date == null
+        ? ''
+        : BookingFormat.dateTime(item.date!, lang: 'en');
+    String m(double v) => BookingFormat.money(v, lang: 'en', bnNumerals: false);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.voidBlack,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.line(0.06)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.eventTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.film,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  [
+                    if (item.role.isNotEmpty) _titleCase(item.role),
+                    if (dateStr.isNotEmpty) dateStr,
+                  ].join(' · '),
+                  style: TextStyle(
+                    color: AppColors.filmDim.withValues(alpha: 0.7),
+                    fontSize: 11.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            m(item.amount),
+            style: TextStyle(
+              color: AppColors.gold,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(width: 10),
+          if (item.paid)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.green.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Text(
+                'PAID',
+                style: TextStyle(
+                  color: AppColors.green,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            )
+          else
+            _PayButton(
+              onTap: () => ref
+                  .read(teamControllerProvider.notifier)
+                  .markPayoutPaid(userId, assignmentId: item.assignmentId),
+            ),
+        ],
+      ),
+    );
+  }
+
+  static String _titleCase(String s) =>
+      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1).toLowerCase();
+}
+
+class _PayButton extends StatelessWidget {
+  const _PayButton({required this.onTap});
+  final Future<void> Function() onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: () async {
+        final messenger = ScaffoldMessenger.of(context);
+        try {
+          await onTap();
+        } catch (_) {
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(
+                'Could not record payment — try again.',
+                style: TextStyle(color: AppColors.film),
+              ),
+              backgroundColor: AppColors.voidElevated,
+            ),
+          );
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.teal.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
+        ),
+        child: const Text(
+          'Pay',
+          style: TextStyle(
+            color: AppColors.teal,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
   }
 }

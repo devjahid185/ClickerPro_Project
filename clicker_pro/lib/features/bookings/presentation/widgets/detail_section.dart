@@ -77,6 +77,7 @@ class DetailRow extends StatelessWidget {
     this.icon,
     this.valueColor,
     this.onTap,
+    this.trailing,
   });
 
   final String label;
@@ -84,6 +85,10 @@ class DetailRow extends StatelessWidget {
   final IconData? icon;
   final Color? valueColor;
   final VoidCallback? onTap;
+
+  /// Optional action widget at the end of the row (e.g. the call button
+  /// on the client phone row).
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -117,13 +122,16 @@ class DetailRow extends StatelessWidget {
             child: Text(
               resolvedValue,
               style: TextStyle(
-                color: valueColor ?? Colors.white,
+                // film (ink) — `Colors.white` disappeared on the light
+                // theme's white card surface.
+                color: valueColor ?? AppColors.film,
                 fontSize: 13.5,
                 fontWeight: FontWeight.w500,
                 height: 1.35,
               ),
             ),
           ),
+          if (trailing != null) ...[const SizedBox(width: 8), trailing!],
         ],
       ),
     );
@@ -132,6 +140,30 @@ class DetailRow extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: row,
+    );
+  }
+}
+
+/// Small round call-action button used next to phone rows. Launches the
+/// dialer immediately via the provided callback.
+class CallIconButton extends StatelessWidget {
+  const CallIconButton({super.key, required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.green.withValues(alpha: 0.14),
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: const Padding(
+          padding: EdgeInsets.all(7),
+          child: Icon(Icons.call_rounded, size: 16, color: AppColors.green),
+        ),
+      ),
     );
   }
 }

@@ -12,7 +12,6 @@ import '../../../../core/format/booking_format.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/states/lens_loader.dart';
 import '../../../../theme/app_colors.dart';
-import '../../../settings/application/language_controller.dart';
 import '../../application/expense_providers.dart';
 
 class ProfitLossCard extends ConsumerWidget {
@@ -21,9 +20,7 @@ class ProfitLossCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final loc = AppLocalizations.of(context);
-    final lang = ref.watch(activeLocaleProvider).languageCode == 'bn'
-        ? 'bn'
-        : 'en';
+    final lang = 'en';
     final async = ref.watch(profitLossProvider);
 
     return Container(
@@ -126,7 +123,7 @@ class _Metric extends StatelessWidget {
       children: [
         Text(
           label.toUpperCase(),
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.filmMuted,
             fontSize: 10,
             letterSpacing: 1.2,

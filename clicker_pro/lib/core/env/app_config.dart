@@ -33,6 +33,11 @@ class AppConfig {
 
   static String get baseUrl => _read('API_BASE_URL', 'http://127.0.0.1:5000');
 
+  /// Public web app origin — used for client-facing share links
+  /// (e.g. the self-booking page at `<webBaseUrl>/book/<token>`).
+  static String get webBaseUrl =>
+      _read('WEB_BASE_URL', 'http://127.0.0.1:3000');
+
   static String get jwtSecret => _read('JWT_SECRET', '');
 
   static String get environment => _read('ENVIRONMENT', 'development');
@@ -40,5 +45,12 @@ class AppConfig {
   static const Duration networkTimeout = Duration(seconds: 15);
   static const Duration sessionRestoreTimeout = Duration(seconds: 10);
 
-  static const String appName = 'Clicker Pro';
+  static const String appName = 'CLICKER PRO';
+  static const String companyName = 'waLidu Tech';
+  static const String appVersionLabel = 'v3.8';
+
+  /// Numeric build number — MUST match the `+NN` in pubspec.yaml `version:`.
+  /// The OTA update check compares this against the server's versionCode.
+  /// Bump it on every release you publish to the landing-site APK.
+  static const int appVersionCode = 39;
 }

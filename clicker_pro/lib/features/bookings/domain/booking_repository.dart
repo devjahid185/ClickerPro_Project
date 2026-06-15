@@ -41,6 +41,10 @@ abstract class BookingRepository {
   /// Fetch single booking by local id.
   Future<Booking> getById(String localId);
 
+  /// Resolves a booking by its server-side id (e.g. from global search
+  /// results). Returns null when the row hasn't synced locally yet.
+  Future<Booking?> getByRemoteId(String remoteId);
+
   /// Fetch full booking detail envelope (booking + client + assignments
   /// + payments + package + statusHistory + reEditRequests + taskProgress).
   Future<BookingDetailEnvelope> getDetail(String localId);

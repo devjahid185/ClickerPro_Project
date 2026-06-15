@@ -23,6 +23,17 @@ export default function TeamPage() {
   const [perms, setPerms] = useState<any>({});
   const [copied, setCopied] = useState(false);
   const [generatingCode, setGeneratingCode] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailMsg, setEmailMsg] = useState('');
+  const [joinCode, setJoinCode] = useState('');
+  const [joining, setJoining] = useState(false);
+  const [pendingInvites, setPendingInvites] = useState<any[]>([]);
+  const [tab, setTab] = useState<'members' | 'payouts'>('members');
+  const [payouts, setPayouts] = useState<any>({ totalEarned: 0, totalPaid: 0, members: [] });
+  const [payoutsLoading, setPayoutsLoading] = useState(false);
+  const [expandedPayout, setExpandedPayout] = useState<string | null>(null);
+  const [settling, setSettling] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -36,17 +47,85 @@ export default function TeamPage() {
   const loadInvite = async () => {
     try {
       const res = await api<any>('/api/team/invite');
-      setInviteCode(res?.code || res?.inviteCode || '');
+      setInviteCode(res?.data?.code || res?.code || res?.inviteCode || '');
     } catch { /* invite may not exist yet */ }
   };
 
-  useEffect(() => { load(); loadInvite(); }, []);
+  const loadPending = async () => {
+    try {
+      const res = await api<any>('/api/team/invites/pending');
+      setPendingInvites(Array.isArray(res) ? res : res?.data ?? []);
+    } catch { /* none */ }
+  };
+
+  const loadPayouts = async () => {
+    setPayoutsLoading(true);
+    try {
+      const res = await api<any>('/api/team/payouts');
+      const d = res?.data ?? res ?? {};
+      setPayouts({
+        totalEarned: Number(d.totalEarned) || 0,
+        totalPaid: Number(d.totalPaid) || 0,
+        members: Array.isArray(d.members) ? d.members : [],
+      });
+    } catch (e: any) { setError(e.message); }
+    finally { setPayoutsLoading(false); }
+  };
+
+  // Settle a single assignment (assignmentId set) or every unpaid payout
+  // for the member (assignmentId omitted).
+  const settlePayout = async (userId: string, assignmentId?: string) => {
+    const key = assignmentId || `all-${userId}`;
+    setSettling(key);
+    try {
+      await api(`/api/team/members/${userId}/payouts/pay`, {
+        method: 'POST',
+        body: assignmentId ? { assignmentId } : {},
+      });
+      await loadPayouts();
+    } catch (e: any) { alert(e.message); }
+    finally { setSettling(null); }
+  };
+
+  useEffect(() => { load(); loadInvite(); loadPending(); }, []);
+  useEffect(() => { if (tab === 'payouts') loadPayouts(); }, [tab]);
+
+  const sendEmailInvite = async () => {
+    if (!inviteEmail.includes('@')) { setEmailMsg('Valid email din.'); return; }
+    setSendingEmail(true); setEmailMsg('');
+    try {
+      await api('/api/team/invite-email', { method: 'POST', body: { email: inviteEmail.trim() } });
+      setEmailMsg(`Invite pathano hoyeche: ${inviteEmail.trim()}`);
+      setInviteEmail('');
+    } catch (e: any) {
+      setEmailMsg(e.message?.includes('No registered') ? 'Ei email-e kono registered account nei.' : e.message);
+    } finally { setSendingEmail(false); }
+  };
+
+  const joinTeam = async () => {
+    if (joinCode.trim().length !== 6) { alert('6 digit code din.'); return; }
+    setJoining(true);
+    try {
+      await api('/api/team/join', { method: 'POST', body: { code: joinCode.trim() } });
+      setJoinCode('');
+      alert('Team-e jog hoye gechen!');
+      load();
+    } catch (e: any) { alert(e.message || 'Code bhul ba meyad shesh.'); }
+    finally { setJoining(false); }
+  };
+
+  const respondInvite = async (id: string, accept: boolean) => {
+    try {
+      await api(`/api/team/invites/${id}/respond`, { method: 'POST', body: { accept } });
+      loadPending(); load();
+    } catch (e: any) { alert(e.message); }
+  };
 
   const generateInvite = async () => {
     setGeneratingCode(true);
     try {
       const res = await api<any>('/api/team/invite', { method: 'POST' });
-      setInviteCode(res?.code || res?.inviteCode || '');
+      setInviteCode(res?.data?.code || res?.code || res?.inviteCode || '');
     } catch (e: any) { alert(e.message); }
     finally { setGeneratingCode(false); }
   };
@@ -92,6 +171,26 @@ export default function TeamPage() {
 
         {error && <div className="error" style={{ marginBottom: 12 }}>{error}</div>}
 
+        {/* Members / Payouts tabs */}
+        <div className="tabs" style={{ marginBottom: 20 }}>
+          <button className={`tab${tab === 'members' ? ' active' : ''}`} onClick={() => setTab('members')}>Members</button>
+          <button className={`tab${tab === 'payouts' ? ' active' : ''}`} onClick={() => setTab('payouts')}>Payouts</button>
+        </div>
+
+        {tab === 'members' && (<>
+        {/* Pending email invites addressed to me */}
+        {pendingInvites.map((inv) => (
+          <div key={inv.id} className="card" style={{ marginBottom: 12, borderLeft: '3px solid var(--orange)' }}>
+            <div className="row" style={{ gap: 12, alignItems: 'center' }}>
+              <span style={{ flex: 1 }}>
+                <strong>{inv.ownerName || 'Studio owner'}</strong> apnake team-e invite koreche
+              </span>
+              <button className="btn sm" style={{ background: 'var(--orange)', color: '#000' }} onClick={() => respondInvite(inv.id, true)}>Accept</button>
+              <button className="btn ghost sm" onClick={() => respondInvite(inv.id, false)}>Decline</button>
+            </div>
+          </div>
+        ))}
+
         {/* Stats */}
         <div className="cards cards-4" style={{ marginBottom: 20 }}>
           {[
@@ -125,6 +224,44 @@ export default function TeamPage() {
           )}
         </div>
 
+        {/* Invite by registered email — invitee confirms in-app */}
+        <div className="card" style={{ marginBottom: 20 }}>
+          <div className="muted text-sm" style={{ marginBottom: 10, textTransform: 'uppercase', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em' }}>Invite by Email</div>
+          <div className="row" style={{ gap: 10 }}>
+            <input
+              className="input"
+              style={{ flex: 1 }}
+              type="email"
+              placeholder="Registered email (Gmail)"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+            />
+            <button className="btn ghost sm" onClick={sendEmailInvite} disabled={sendingEmail}>
+              {sendingEmail ? 'Sending…' : 'Send Invite'}
+            </button>
+          </div>
+          {emailMsg && <div className="muted text-sm" style={{ marginTop: 8 }}>{emailMsg}</div>}
+        </div>
+
+        {/* Join someone else's team with their 6-digit passcode */}
+        <div className="card" style={{ marginBottom: 20 }}>
+          <div className="muted text-sm" style={{ marginBottom: 10, textTransform: 'uppercase', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em' }}>Join a Team (6-digit code)</div>
+          <div className="row" style={{ gap: 10 }}>
+            <input
+              className="input"
+              style={{ flex: 1, fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.2em' }}
+              inputMode="numeric"
+              maxLength={6}
+              placeholder="123456"
+              value={joinCode}
+              onChange={(e) => setJoinCode(e.target.value.replace(/\D/g, ''))}
+            />
+            <button className="btn ghost sm" onClick={joinTeam} disabled={joining}>
+              {joining ? 'Joining…' : 'Join Team'}
+            </button>
+          </div>
+        </div>
+
         {/* Member Cards */}
         {loading && (
           <div className="cards cards-3">
@@ -152,6 +289,78 @@ export default function TeamPage() {
               </div>
             ))}
           </div>
+        )}
+        </>)}
+
+        {tab === 'payouts' && (
+          <>
+            {/* Payout summary */}
+            <div className="cards cards-3" style={{ marginBottom: 20 }}>
+              <div className="card" style={{ textAlign: 'center' }}>
+                <div className="muted text-sm" style={{ marginBottom: 6 }}>Total Earned</div>
+                <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 30, color: 'var(--film)' }}>{tk(payouts.totalEarned)}</div>
+              </div>
+              <div className="card" style={{ textAlign: 'center' }}>
+                <div className="muted text-sm" style={{ marginBottom: 6 }}>Total Paid</div>
+                <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 30, color: 'var(--green)' }}>{tk(payouts.totalPaid)}</div>
+              </div>
+              <div className="card" style={{ textAlign: 'center' }}>
+                <div className="muted text-sm" style={{ marginBottom: 6 }}>Total Due</div>
+                <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 30, color: 'var(--orange)' }}>{tk(Math.max(0, payouts.totalEarned - payouts.totalPaid))}</div>
+              </div>
+            </div>
+
+            {payoutsLoading && (
+              <div className="cards cards-1">
+                {[...Array(4)].map((_, i) => <div key={i} className="shimmer" style={{ height: 80, borderRadius: 8, marginBottom: 10 }} />)}
+              </div>
+            )}
+            {!payoutsLoading && payouts.members.length === 0 && <div className="empty">No payouts yet.</div>}
+
+            {!payoutsLoading && payouts.members.map((mem: any) => {
+              const open = expandedPayout === mem.userId;
+              return (
+                <div key={mem.userId} className="card" style={{ marginBottom: 12 }}>
+                  <div className="row" style={{ gap: 12, alignItems: 'center', cursor: 'pointer' }} onClick={() => setExpandedPayout(open ? null : mem.userId)}>
+                    <div className="avatar avatar-sm">{initials(mem.name || '?')}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600 }} className="truncate">{mem.name || 'Unnamed'}</div>
+                      <div className="muted text-sm">{mem.events} event{mem.events === 1 ? '' : 's'}</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ color: 'var(--orange)', fontFamily: 'Bebas Neue, sans-serif', fontSize: 20 }}>{tk(mem.due)}</div>
+                      <div className="muted text-sm">due of {tk(mem.earned)}</div>
+                    </div>
+                    <span className="muted" style={{ fontSize: 18 }}>{open ? '▾' : '▸'}</span>
+                  </div>
+
+                  {open && (
+                    <div style={{ marginTop: 14, borderTop: '1px solid var(--border-2)', paddingTop: 12 }}>
+                      {mem.items.map((it: any) => (
+                        <div key={it.assignmentId} className="row" style={{ gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border-2)' }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div className="truncate" style={{ fontSize: 14 }}>{it.eventTitle}</div>
+                            <div className="muted text-sm">{it.role}{it.date ? ' · ' + new Date(it.date).toLocaleDateString() : ''}</div>
+                          </div>
+                          <div style={{ color: 'var(--film)', fontWeight: 500 }}>{tk(Number(it.amount) || 0)}</div>
+                          {it.paid
+                            ? <span className="badge green">Paid</span>
+                            : <button className="btn ghost xs" disabled={settling === it.assignmentId} onClick={() => settlePayout(mem.userId, it.assignmentId)}>{settling === it.assignmentId ? '…' : 'Settle'}</button>}
+                        </div>
+                      ))}
+                      {mem.due > 0 && (
+                        <div className="row" style={{ justifyContent: 'flex-end', marginTop: 12 }}>
+                          <button className="btn sm" style={{ background: 'var(--orange)', color: '#000' }} disabled={settling === `all-${mem.userId}`} onClick={() => settlePayout(mem.userId)}>
+                            {settling === `all-${mem.userId}` ? 'Settling…' : `Settle All (${tk(mem.due)})`}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </>
         )}
       </div>
 

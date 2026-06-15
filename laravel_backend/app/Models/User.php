@@ -22,6 +22,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name', 'email', 'phone', 'password',
         'business_name', 'bio', 'avatar',
+        'bkash_number', 'bank_details',
         'public_booking_token',
         'totp_secret', 'totp_enabled',
     ];

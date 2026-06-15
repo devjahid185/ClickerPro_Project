@@ -27,6 +27,7 @@ import '../../../shared/states/offline_banner.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_strings.dart';
 import '../../../theme/app_theme_mode.dart';
+import '../../../theme/reduce_motion.dart';
 import '../../auth/application/session_controller.dart';
 import '../../auth/presentation/login_screen.dart';
 import '../../profile/application/profile_controllers.dart';
@@ -78,10 +79,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Settings',
           style: TextStyle(
             color: AppColors.film,
@@ -102,7 +103,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   _sectionHeader('Preferences · System'),
                   _buildSettingsGroup([
                     _buildThemeToggle(lang, t),
-                    _buildLanguageRow(lang, t),
+                    // Language toggle removed — the app ships English only for
+                    // now, so a Bengali switch that does nothing was misleading.
                     _buildListItem(
                       label: t('pref_customize_dashboard'),
                       icon: Icons.tune_outlined,
@@ -111,7 +113,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         RouteNames.dashboardCustomize,
                       ),
                     ),
-                    if (user != null) _buildNotificationsGroup(user.id, t),
+                    if (user != null)
+                      _buildNotificationsGroup(
+                        user.id,
+                        t,
+                        // A pure Freelancer manages no team and runs no
+                        // marketing, so those notification toggles are hidden.
+                        showTeamAndMarketing: policy.can(
+                          Capability.viewTeamSection,
+                        ),
+                      ),
                   ]),
 
                   if (policy.can(Capability.toggleDistribution) ||
@@ -153,6 +164,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   const SizedBox(height: 30),
                   _sectionHeader('App'),
                   _buildSettingsGroup([
+                    // Reduce motion — drops entrance/press animations for a
+                    // smoother feel on low-RAM phones.
+                    _buildBoolRow(
+                      label: 'Reduce motion',
+                      icon: Icons.animation_rounded,
+                      value: ref
+                          .watch(reduceMotionControllerProvider)
+                          .maybeWhen(data: (v) => v, orElse: () => null),
+                      onChanged: (v) => ref
+                          .read(reduceMotionControllerProvider.notifier)
+                          .setReduceMotion(v),
+                    ),
                     if (user != null)
                       _buildBoolRow(
                         label: 'Bengali Numerals',
@@ -325,7 +348,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   // ── Notification preferences (Drift stream) ───────────────────
-  Widget _buildNotificationsGroup(String userId, String Function(String) t) {
+  Widget _buildNotificationsGroup(
+    String userId,
+    String Function(String) t, {
+    required bool showTeamAndMarketing,
+  }) {
     final prefsAsync = ref.watch(notificationPrefsProvider(userId));
     return prefsAsync.when(
       loading: () => const Padding(
@@ -366,13 +393,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onChanged: (v) =>
                 _saveNotifPrefs(userId, prefs.copyWith(paymentDue: v)),
           ),
-          _buildBoolRow(
-            label: t('notif_team_messages'),
-            icon: Icons.chat_bubble_outline_rounded,
-            value: prefs.teamMessages,
-            onChanged: (v) =>
-                _saveNotifPrefs(userId, prefs.copyWith(teamMessages: v)),
-          ),
+          if (showTeamAndMarketing)
+            _buildBoolRow(
+              label: t('notif_team_messages'),
+              icon: Icons.chat_bubble_outline_rounded,
+              value: prefs.teamMessages,
+              onChanged: (v) =>
+                  _saveNotifPrefs(userId, prefs.copyWith(teamMessages: v)),
+            ),
           _buildBoolRow(
             label: t('notif_announcements'),
             icon: Icons.campaign_outlined,
@@ -380,13 +408,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onChanged: (v) =>
                 _saveNotifPrefs(userId, prefs.copyWith(announcements: v)),
           ),
-          _buildBoolRow(
-            label: t('notif_marketing'),
-            icon: Icons.local_offer_outlined,
-            value: prefs.marketing,
-            onChanged: (v) =>
-                _saveNotifPrefs(userId, prefs.copyWith(marketing: v)),
-          ),
+          if (showTeamAndMarketing)
+            _buildBoolRow(
+              label: t('notif_marketing'),
+              icon: Icons.local_offer_outlined,
+              value: prefs.marketing,
+              onChanged: (v) =>
+                  _saveNotifPrefs(userId, prefs.copyWith(marketing: v)),
+            ),
         ],
       ),
     );
@@ -412,9 +441,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         backgroundColor: AppColors.voidElevated,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+          side: BorderSide(color: AppColors.line(0.08)),
         ),
-        title: const Text(
+        title: Text(
           'Sign out of Clicker Pro?',
           style: TextStyle(
             color: AppColors.film,
@@ -431,7 +460,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(
+            child: Text(
               'Cancel',
               style: TextStyle(color: AppColors.filmDim),
             ),
@@ -439,7 +468,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.red),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(
+            child: Text(
               'Sign Out',
               style: TextStyle(color: AppColors.film),
             ),
@@ -456,17 +485,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  // ── Visual primitives (preserved) ─────────────────────────────
+  // ── Visual primitives ─────────────────────────────────────────
   Widget _sectionHeader(String title) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 15, top: 4),
+      padding: const EdgeInsets.only(bottom: 10, top: 6, left: 4),
       child: Text(
         title.toUpperCase(),
-        style: const TextStyle(
-          color: AppColors.accent,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 1.2,
+        style: TextStyle(
+          color: AppColors.filmDim.withValues(alpha: 0.75),
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.6,
         ),
       ),
     );
@@ -474,11 +503,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Widget _buildSettingsGroup(List<Widget> children) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         color: AppColors.glass,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.glassBorder),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.line(0.05),
+            blurRadius: 16,
+            spreadRadius: -4,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       // ListTile children paint their ink/splash on the nearest Material.
       // Without this transparent Material they'd paint on the colored
@@ -490,48 +527,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _buildLanguageRow(String currentLang, String Function(String) t) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.language, color: AppColors.filmDim, size: 20),
-              const SizedBox(width: 12),
-              Text(
-                t('pref_lang'),
-                style: const TextStyle(color: AppColors.film, fontSize: 15),
-              ),
-            ],
-          ),
-          SizedBox(
-            width: 140,
-            child: SegmentedButton<String>(
-              showSelectedIcon: false,
-              style: ButtonStyle(
-                padding: WidgetStateProperty.all(
-                  const EdgeInsets.symmetric(horizontal: 6),
-                ),
-                visualDensity: VisualDensity.compact,
-              ),
-              segments: const [
-                ButtonSegment(value: 'en', label: Text('EN')),
-                ButtonSegment(value: 'bn', label: Text('BN')),
-              ],
-              selected: {currentLang},
-              onSelectionChanged: (val) async {
-                final newLang = val.first;
-                await ref
-                    .read(languageControllerProvider.notifier)
-                    .setLanguage(newLang);
-              },
-            ),
-          ),
-        ],
-      ),
-    );
+  /// Per-row accent colour — modern settings screens colour-code their
+  /// icons instead of a flat monochrome list.
+  Color _settingsTint(IconData icon) {
+    if (icon == Icons.notifications_outlined ||
+        icon == Icons.notifications_active_outlined) {
+      return AppColors.red;
+    }
+    if (icon == Icons.lock_outline ||
+        icon == Icons.security ||
+        icon == Icons.shield_outlined) {
+      return AppColors.indigo;
+    }
+    if (icon == Icons.backup_outlined ||
+        icon == Icons.download_outlined ||
+        icon == Icons.file_download_outlined) {
+      return AppColors.green;
+    }
+    if (icon == Icons.description_outlined ||
+        icon == Icons.privacy_tip_outlined ||
+        icon == Icons.info_outline) {
+      return AppColors.gold;
+    }
+    return AppColors.orange;
   }
 
   Widget _buildThemeToggle(String lang, String Function(String) t) {
@@ -547,13 +565,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.palette_outlined,
                 color: AppColors.filmDim,
                 size: 20,
               ),
               const SizedBox(width: 12),
-              const Text(
+              Text(
                 'Theme',
                 style: TextStyle(color: AppColors.film, fontSize: 15),
               ),
@@ -607,7 +625,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const SizedBox(width: 12),
               Text(
                 label,
-                style: const TextStyle(color: AppColors.film, fontSize: 15),
+                style: TextStyle(color: AppColors.film, fontSize: 15),
               ),
             ],
           ),
@@ -637,11 +655,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     required VoidCallback onTap,
     bool danger = false,
   }) {
-    final color = danger ? AppColors.red : AppColors.film;
+    final tint = danger ? AppColors.red : _settingsTint(icon);
     return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: danger ? AppColors.red : AppColors.filmDim),
-      title: Text(label, style: TextStyle(color: color)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+      leading: Container(
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(
+          color: tint.withValues(alpha: 0.13),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, color: tint, size: 18),
+      ),
+      title: Text(
+        label,
+        style: TextStyle(
+          color: danger ? AppColors.red : AppColors.film,
+          fontSize: 14.5,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
       trailing: Icon(Icons.chevron_right, color: AppColors.filmMuted, size: 20),
       onTap: onTap,
     );
@@ -654,17 +687,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         backgroundColor: AppColors.voidElevated,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+          side: BorderSide(color: AppColors.line(0.08)),
         ),
-        title: const Text(
-          'Clicker Pro',
-          style: TextStyle(
-            color: AppColors.film,
-            fontFamily: 'Poppins',
-          ),
+        title: Row(
+          children: [
+            Image.asset('assets/brand/logo_flower.png', width: 28, height: 28),
+            const SizedBox(width: 10),
+            Text(
+              'CLICKER PRO',
+              style: TextStyle(color: AppColors.film, fontFamily: 'Poppins'),
+            ),
+          ],
         ),
         content: Text(
-          'Company management for photographers in Bangladesh.\nFoundation MVP build.',
+          'Company management for photographers in Bangladesh.\n'
+          'Version 3.8 · by waLidu Tech',
           style: TextStyle(
             color: AppColors.filmDim.withValues(alpha: 0.85),
             fontSize: 13,
@@ -688,14 +725,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         SnackBar(
           content: Text(
             message,
-            style: const TextStyle(color: AppColors.film, fontSize: 13),
+            style: TextStyle(color: AppColors.film, fontSize: 13),
           ),
           backgroundColor: AppColors.voidElevated,
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
-            side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+            side: BorderSide(color: AppColors.line(0.08)),
           ),
           duration: const Duration(seconds: 2),
         ),

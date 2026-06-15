@@ -58,6 +58,7 @@ class _StubAuthRepo implements AuthRepository {
   Future<void> resetPassword({
     required String token,
     required String newPassword,
+    String? email,
   }) => throw UnimplementedError();
   @override
   Future<Session> acceptInvite({

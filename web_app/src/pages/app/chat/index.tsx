@@ -6,7 +6,7 @@ const initials = (name: string) =>
   (name || '?').split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
 
 const fmtTime = (d: string) =>
-  d ? new Date(d).toLocaleTimeString('en-BD', { hour: '2-digit', minute: '2-digit' }) : '';
+  d ? new Date(d).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
 
 export default function ChatPage() {
   const user = getUser();

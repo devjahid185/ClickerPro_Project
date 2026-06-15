@@ -5,6 +5,7 @@
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
@@ -199,12 +200,18 @@ class AppDecorations {
     return BoxDecoration(
       color: tint ?? AppColors.glass,
       borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: AppColors.glassBorder, width: 1.5),
+      border: Border.all(color: AppColors.glassBorder, width: 1),
       boxShadow: const [
         BoxShadow(
-          color: Color(0x0D000000), // 5% black — soft elevation
-          blurRadius: 12,
-          offset: Offset(0, 4),
+          color: Color(0x0A1C1917), // 4% warm ink — crisp key
+          blurRadius: 4,
+          offset: Offset(0, 1),
+        ),
+        BoxShadow(
+          color: Color(0x14803500), // 8% warm umber — soft ambient
+          blurRadius: 24,
+          spreadRadius: -6,
+          offset: Offset(0, 12),
         ),
       ],
     );
@@ -217,12 +224,18 @@ class AppDecorations {
     return BoxDecoration(
       color: tint,
       borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: AppColors.glassBorder, width: 1.5),
+      border: Border.all(color: AppColors.glassBorder, width: 1),
       boxShadow: const [
         BoxShadow(
-          color: Color(0x0D000000), // 5% black — soft elevation
-          blurRadius: 12,
-          offset: Offset(0, 4),
+          color: Color(0x0A1C1917), // 4% warm ink — crisp key
+          blurRadius: 4,
+          offset: Offset(0, 1),
+        ),
+        BoxShadow(
+          color: Color(0x14803500), // 8% warm umber — soft ambient
+          blurRadius: 24,
+          spreadRadius: -6,
+          offset: Offset(0, 12),
         ),
       ],
     );
@@ -239,22 +252,20 @@ class AppDecorations {
     return BoxDecoration(
       color: tint ?? AppColors.glass,
       borderRadius: BorderRadius.circular(AppRadius.pill),
-      border: Border.all(color: AppColors.glassBorder, width: 1.5),
+      border: Border.all(color: AppColors.glassBorder, width: 1),
     );
   }
 
-  static BoxDecoration topbar = const BoxDecoration(
+  static BoxDecoration get topbar => BoxDecoration(
     color: AppColors.topbarBg,
     border: Border(
-      bottom: BorderSide(color: AppColors.topbarBorder, width: 1.5),
+      bottom: BorderSide(color: AppColors.topbarBorder, width: 1),
     ),
   );
 
-  static BoxDecoration bottomNav = const BoxDecoration(
+  static BoxDecoration get bottomNav => BoxDecoration(
     color: AppColors.bottomNavBg,
-    border: Border(
-      top: BorderSide(color: AppColors.bottomNavBorder, width: 1.5),
-    ),
+    border: Border(top: BorderSide(color: AppColors.bottomNavBorder, width: 1)),
   );
 }
 
@@ -267,10 +278,113 @@ class AppFilters {
 class AppTheme {
   AppTheme._();
 
+  // ── Deep Ocean dark palette ──────────────────────────────────────
+  // Navy-to-abyss surfaces with the brand orange kept as the accent so
+  // the two themes feel like the same product after dark.
+  static const Color oceanBg = Color(0xFF0A1222); // abyss background
+  static const Color oceanSurface = Color(0xFF111B2E); // card / sheet
+  static const Color oceanSurfaceAlt = Color(0xFF18253C); // elevated
+  static const Color oceanInk = Color(0xFFEAF1FB); // primary text
+  static const Color oceanInkDim = Color(0xFF9DB0CC); // secondary text
+  static const Color oceanBorder = Color(0x1FFFFFFF); // hairline (white 12%)
+
   /// Orange Horizon Pro theme. Named `dark()` only for backward
   /// compatibility with `app.dart` wiring — it now returns the light
-  /// SaaS ThemeData (the app is single-theme).
+  /// SaaS ThemeData.
   static ThemeData dark() => orangeHorizon();
+
+  /// Deep Ocean dark theme (MOD-64). Darkens every Material surface —
+  /// scaffold, app bars, bottom sheets, dialogs, inputs, nav, dividers —
+  /// while keeping the orange brand accent.
+  static ThemeData oceanDeep() {
+    final base = ThemeData.dark();
+    final interTextTheme = GoogleFonts.interTextTheme(base.textTheme);
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: oceanBg,
+      canvasColor: oceanBg,
+      primaryColor: AppColors.primary500,
+      colorScheme: const ColorScheme.dark(
+        primary: AppColors.primary500,
+        secondary: AppColors.gold,
+        tertiary: AppColors.info,
+        surface: oceanSurface,
+        surfaceContainerHighest: oceanSurfaceAlt,
+        error: AppColors.red,
+        onPrimary: Colors.white,
+        onSecondary: Colors.black,
+        onSurface: oceanInk,
+      ),
+      textTheme: interTextTheme
+          .apply(bodyColor: oceanInk, displayColor: oceanInk)
+          .copyWith(
+            bodyMedium: interTextTheme.bodyMedium?.copyWith(
+              color: oceanInk,
+              fontSize: 16,
+              height: 1.5,
+              fontWeight: FontWeight.w500,
+            ),
+            bodySmall: interTextTheme.bodySmall?.copyWith(
+              color: oceanInkDim,
+              fontSize: 14,
+              height: 1.5,
+              fontWeight: FontWeight.w500,
+            ),
+            titleMedium: interTextTheme.titleMedium?.copyWith(
+              color: oceanInk,
+              fontWeight: FontWeight.w700,
+            ),
+            titleLarge: interTextTheme.titleLarge?.copyWith(
+              color: oceanInk,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+      splashColor: AppColors.orangeSoft,
+      highlightColor: AppColors.orangeSoft,
+      dividerColor: oceanBorder,
+      cardColor: oceanSurface,
+      dialogTheme: const DialogThemeData(backgroundColor: oceanSurface),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: oceanSurface,
+        modalBackgroundColor: oceanSurface,
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: oceanBg,
+        foregroundColor: oceanInk,
+        elevation: 0,
+        scrolledUnderElevation: 1,
+        // Dark background → LIGHT status-bar icons.
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: oceanSurface,
+        selectedItemColor: AppColors.primary500,
+        unselectedItemColor: oceanInkDim,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: oceanSurfaceAlt,
+        hintStyle: const TextStyle(color: oceanInkDim),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: oceanBorder),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: oceanBorder),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.primary500),
+        ),
+      ),
+    );
+  }
 
   static ThemeData orangeHorizon() {
     final base = ThemeData.light();
@@ -280,7 +394,7 @@ class AppTheme {
       brightness: Brightness.light,
       scaffoldBackgroundColor: AppColors.appBg,
       primaryColor: AppColors.primary500,
-      colorScheme: const ColorScheme.light(
+      colorScheme: ColorScheme.light(
         primary: AppColors.primary500,
         secondary: AppColors.gold,
         tertiary: AppColors.info,
@@ -323,11 +437,22 @@ class AppTheme {
       splashColor: AppColors.orangeSoft,
       highlightColor: AppColors.orangeSoft,
       dividerColor: AppColors.hairline,
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.film,
         elevation: 0,
         scrolledUnderElevation: 1,
+        // Match the status-bar icons to the active surface so time/network/
+        // battery stay legible: dark icons on a light surface, light on dark.
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: AppColors.isDark
+              ? Brightness.light
+              : Brightness.dark,
+          statusBarBrightness: AppColors.isDark
+              ? Brightness.dark
+              : Brightness.light,
+        ),
       ),
     );
   }

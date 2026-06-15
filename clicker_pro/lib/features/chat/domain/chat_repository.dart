@@ -18,4 +18,7 @@ abstract class ChatRepository {
   /// `POST /api/chat/send` — `senderId` is taken from JWT, so we only
   /// pass `groupId` and `text`।
   Future<ChatMessage> send({required String groupId, required String text});
+
+  /// Marks the group's messages as seen by the current user (read receipts)।
+  Future<void> markRead(String groupId);
 }

@@ -14,7 +14,9 @@ class CalendarSyncSettings extends StatefulWidget {
 
 class _CalendarSyncSettingsState extends State<CalendarSyncSettings> {
   static const _keyAutoSync = 'calendar_auto_sync';
-  bool _autoSync = false;
+  // Auto-sync defaults ON so a freshly created booking lands in the device
+  // calendar silently, with no manual "Save" step.
+  bool _autoSync = true;
   String? _lastSyncTime;
 
   @override
@@ -26,7 +28,7 @@ class _CalendarSyncSettingsState extends State<CalendarSyncSettings> {
   Future<void> _loadPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _autoSync = prefs.getBool(_keyAutoSync) ?? false;
+      _autoSync = prefs.getBool(_keyAutoSync) ?? true;
       _lastSyncTime = prefs.getString('calendar_last_sync');
     });
   }
@@ -64,10 +66,10 @@ class _CalendarSyncSettingsState extends State<CalendarSyncSettings> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Calendar Sync',
           style: TextStyle(
             color: AppColors.film,
@@ -120,7 +122,7 @@ class _CalendarSyncSettingsState extends State<CalendarSyncSettings> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Auto-sync',
                   style: TextStyle(
                     color: AppColors.film,
@@ -133,7 +135,7 @@ class _CalendarSyncSettingsState extends State<CalendarSyncSettings> {
                   _autoSync
                       ? 'Confirmed bookings sync automatically'
                       : 'Disabled',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.filmDim,
                     fontSize: 12,
                   ),
@@ -182,7 +184,7 @@ class _CalendarSyncSettingsState extends State<CalendarSyncSettings> {
       decoration: AppColors.glassCardDecoration(),
       child: Row(
         children: [
-          const Icon(Icons.access_time, color: AppColors.filmDim, size: 18),
+          Icon(Icons.access_time, color: AppColors.filmDim, size: 18),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,

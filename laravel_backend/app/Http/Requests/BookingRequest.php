@@ -44,6 +44,24 @@ class BookingRequest extends FormRequest
             // Free-text client fields the controller resolves to a client_id.
             'client_name' => 'nullable|string|max:255',
             'client_phone' => 'nullable|string|max:30',
+            // Rich detail fields (mobile↔web parity).
+            'company_name' => 'nullable|string|max:255',
+            'bride_name' => 'nullable|string|max:255',
+            'groom_name' => 'nullable|string|max:255',
+            'outdoor' => 'nullable|boolean',
+            'outdoor_location' => 'nullable|string|max:255',
+            'reporting_time' => 'nullable|string|max:50',
+            'start_time' => 'nullable|string|max:50',
+            'end_time' => 'nullable|string|max:50',
+            'map_link' => 'nullable|string|max:1000',
+            'coverage_hours' => 'nullable|numeric',
+            'extra_hour_rate' => 'nullable|numeric',
+            'custom_price' => 'nullable|numeric',
+            'drive_link' => 'nullable|string|max:1000',
+            'requirements_note' => 'nullable|string',
+            'chief_photographer_name' => 'nullable|string|max:255',
+            'hide_payment_from_team' => 'nullable|boolean',
+            'show_payment_in_share' => 'nullable|boolean',
         ];
     }
 }

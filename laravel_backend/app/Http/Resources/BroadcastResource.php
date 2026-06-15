@@ -38,7 +38,9 @@ class BroadcastResource extends JsonResource
             'target_role' => $this->target_role,
             'targetRole' => $this->target_role,
             'is_active' => (bool) $this->is_active,
-            'status' => $this->is_active ? 'active' : 'inactive',
+            // Admin panel reads ACTIVE / ARCHIVED (uppercase) for its badge
+            // and Archive/Activate toggle.
+            'status' => $this->is_active ? 'ACTIVE' : 'ARCHIVED',
 
             'scheduled_at' => $this->scheduled_at,
             'view_count' => $this->view_count,

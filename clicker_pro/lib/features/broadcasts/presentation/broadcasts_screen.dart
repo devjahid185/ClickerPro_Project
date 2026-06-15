@@ -23,10 +23,10 @@ class BroadcastsScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Platform Updates',
           style: TextStyle(
             color: AppColors.film,
@@ -222,7 +222,7 @@ class _BroadcastCard extends StatelessWidget {
                             children: [
                               Text(
                                 broadcast.title,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: AppColors.film,
                                   fontFamily: 'Poppins',
                                   fontSize: 16,
@@ -250,7 +250,7 @@ class _BroadcastCard extends StatelessWidget {
                       const SizedBox(height: 12),
                       Container(
                         height: 1,
-                        color: Colors.black.withValues(alpha: 0.06),
+                        color: AppColors.line(0.06),
                       ),
                       const SizedBox(height: 10),
                       Row(

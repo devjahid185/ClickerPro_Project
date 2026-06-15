@@ -22,4 +22,7 @@ class ChatRepositoryImpl implements ChatRepository {
   @override
   Future<ChatMessage> send({required String groupId, required String text}) =>
       _api.send(groupId: groupId, text: text);
+
+  @override
+  Future<void> markRead(String groupId) => _api.markRead(groupId);
 }

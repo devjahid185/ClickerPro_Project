@@ -181,6 +181,17 @@ class $UsersTableTable extends UsersTable
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _companyNameMeta = const VerificationMeta(
+    'companyName',
+  );
+  @override
+  late final GeneratedColumn<String> companyName = GeneratedColumn<String>(
+    'company_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _totalEventsMeta = const VerificationMeta(
     'totalEvents',
   );
@@ -313,6 +324,7 @@ class $UsersTableTable extends UsersTable
     bankDetails,
     signatureUrl,
     logoUrl,
+    companyName,
     totalEvents,
     totalRevenueMinor,
     totalClients,
@@ -452,6 +464,15 @@ class $UsersTableTable extends UsersTable
       context.handle(
         _logoUrlMeta,
         logoUrl.isAcceptableOrUnknown(data['logo_url']!, _logoUrlMeta),
+      );
+    }
+    if (data.containsKey('company_name')) {
+      context.handle(
+        _companyNameMeta,
+        companyName.isAcceptableOrUnknown(
+          data['company_name']!,
+          _companyNameMeta,
+        ),
       );
     }
     if (data.containsKey('total_events')) {
@@ -597,6 +618,10 @@ class $UsersTableTable extends UsersTable
         DriftSqlType.string,
         data['${effectivePrefix}logo_url'],
       ),
+      companyName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}company_name'],
+      ),
       totalEvents: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}total_events'],
@@ -660,6 +685,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
   final String? bankDetails;
   final String? signatureUrl;
   final String? logoUrl;
+  final String? companyName;
   final int totalEvents;
   final int totalRevenueMinor;
   final int totalClients;
@@ -687,6 +713,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
     this.bankDetails,
     this.signatureUrl,
     this.logoUrl,
+    this.companyName,
     required this.totalEvents,
     required this.totalRevenueMinor,
     required this.totalClients,
@@ -742,6 +769,9 @@ class UserRow extends DataClass implements Insertable<UserRow> {
     }
     if (!nullToAbsent || logoUrl != null) {
       map['logo_url'] = Variable<String>(logoUrl);
+    }
+    if (!nullToAbsent || companyName != null) {
+      map['company_name'] = Variable<String>(companyName);
     }
     map['total_events'] = Variable<int>(totalEvents);
     map['total_revenue_minor'] = Variable<int>(totalRevenueMinor);
@@ -802,6 +832,9 @@ class UserRow extends DataClass implements Insertable<UserRow> {
       logoUrl: logoUrl == null && nullToAbsent
           ? const Value.absent()
           : Value(logoUrl),
+      companyName: companyName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(companyName),
       totalEvents: Value(totalEvents),
       totalRevenueMinor: Value(totalRevenueMinor),
       totalClients: Value(totalClients),
@@ -841,6 +874,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
       bankDetails: serializer.fromJson<String?>(json['bankDetails']),
       signatureUrl: serializer.fromJson<String?>(json['signatureUrl']),
       logoUrl: serializer.fromJson<String?>(json['logoUrl']),
+      companyName: serializer.fromJson<String?>(json['companyName']),
       totalEvents: serializer.fromJson<int>(json['totalEvents']),
       totalRevenueMinor: serializer.fromJson<int>(json['totalRevenueMinor']),
       totalClients: serializer.fromJson<int>(json['totalClients']),
@@ -875,6 +909,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
       'bankDetails': serializer.toJson<String?>(bankDetails),
       'signatureUrl': serializer.toJson<String?>(signatureUrl),
       'logoUrl': serializer.toJson<String?>(logoUrl),
+      'companyName': serializer.toJson<String?>(companyName),
       'totalEvents': serializer.toJson<int>(totalEvents),
       'totalRevenueMinor': serializer.toJson<int>(totalRevenueMinor),
       'totalClients': serializer.toJson<int>(totalClients),
@@ -905,6 +940,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
     Value<String?> bankDetails = const Value.absent(),
     Value<String?> signatureUrl = const Value.absent(),
     Value<String?> logoUrl = const Value.absent(),
+    Value<String?> companyName = const Value.absent(),
     int? totalEvents,
     int? totalRevenueMinor,
     int? totalClients,
@@ -936,6 +972,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
     bankDetails: bankDetails.present ? bankDetails.value : this.bankDetails,
     signatureUrl: signatureUrl.present ? signatureUrl.value : this.signatureUrl,
     logoUrl: logoUrl.present ? logoUrl.value : this.logoUrl,
+    companyName: companyName.present ? companyName.value : this.companyName,
     totalEvents: totalEvents ?? this.totalEvents,
     totalRevenueMinor: totalRevenueMinor ?? this.totalRevenueMinor,
     totalClients: totalClients ?? this.totalClients,
@@ -975,6 +1012,9 @@ class UserRow extends DataClass implements Insertable<UserRow> {
           ? data.signatureUrl.value
           : this.signatureUrl,
       logoUrl: data.logoUrl.present ? data.logoUrl.value : this.logoUrl,
+      companyName: data.companyName.present
+          ? data.companyName.value
+          : this.companyName,
       totalEvents: data.totalEvents.present
           ? data.totalEvents.value
           : this.totalEvents,
@@ -1015,6 +1055,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
           ..write('bankDetails: $bankDetails, ')
           ..write('signatureUrl: $signatureUrl, ')
           ..write('logoUrl: $logoUrl, ')
+          ..write('companyName: $companyName, ')
           ..write('totalEvents: $totalEvents, ')
           ..write('totalRevenueMinor: $totalRevenueMinor, ')
           ..write('totalClients: $totalClients, ')
@@ -1047,6 +1088,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
     bankDetails,
     signatureUrl,
     logoUrl,
+    companyName,
     totalEvents,
     totalRevenueMinor,
     totalClients,
@@ -1078,6 +1120,7 @@ class UserRow extends DataClass implements Insertable<UserRow> {
           other.bankDetails == this.bankDetails &&
           other.signatureUrl == this.signatureUrl &&
           other.logoUrl == this.logoUrl &&
+          other.companyName == this.companyName &&
           other.totalEvents == this.totalEvents &&
           other.totalRevenueMinor == this.totalRevenueMinor &&
           other.totalClients == this.totalClients &&
@@ -1107,6 +1150,7 @@ class UsersTableCompanion extends UpdateCompanion<UserRow> {
   final Value<String?> bankDetails;
   final Value<String?> signatureUrl;
   final Value<String?> logoUrl;
+  final Value<String?> companyName;
   final Value<int> totalEvents;
   final Value<int> totalRevenueMinor;
   final Value<int> totalClients;
@@ -1135,6 +1179,7 @@ class UsersTableCompanion extends UpdateCompanion<UserRow> {
     this.bankDetails = const Value.absent(),
     this.signatureUrl = const Value.absent(),
     this.logoUrl = const Value.absent(),
+    this.companyName = const Value.absent(),
     this.totalEvents = const Value.absent(),
     this.totalRevenueMinor = const Value.absent(),
     this.totalClients = const Value.absent(),
@@ -1164,6 +1209,7 @@ class UsersTableCompanion extends UpdateCompanion<UserRow> {
     this.bankDetails = const Value.absent(),
     this.signatureUrl = const Value.absent(),
     this.logoUrl = const Value.absent(),
+    this.companyName = const Value.absent(),
     this.totalEvents = const Value.absent(),
     this.totalRevenueMinor = const Value.absent(),
     this.totalClients = const Value.absent(),
@@ -1196,6 +1242,7 @@ class UsersTableCompanion extends UpdateCompanion<UserRow> {
     Expression<String>? bankDetails,
     Expression<String>? signatureUrl,
     Expression<String>? logoUrl,
+    Expression<String>? companyName,
     Expression<int>? totalEvents,
     Expression<int>? totalRevenueMinor,
     Expression<int>? totalClients,
@@ -1225,6 +1272,7 @@ class UsersTableCompanion extends UpdateCompanion<UserRow> {
       if (bankDetails != null) 'bank_details': bankDetails,
       if (signatureUrl != null) 'signature_url': signatureUrl,
       if (logoUrl != null) 'logo_url': logoUrl,
+      if (companyName != null) 'company_name': companyName,
       if (totalEvents != null) 'total_events': totalEvents,
       if (totalRevenueMinor != null) 'total_revenue_minor': totalRevenueMinor,
       if (totalClients != null) 'total_clients': totalClients,
@@ -1256,6 +1304,7 @@ class UsersTableCompanion extends UpdateCompanion<UserRow> {
     Value<String?>? bankDetails,
     Value<String?>? signatureUrl,
     Value<String?>? logoUrl,
+    Value<String?>? companyName,
     Value<int>? totalEvents,
     Value<int>? totalRevenueMinor,
     Value<int>? totalClients,
@@ -1285,6 +1334,7 @@ class UsersTableCompanion extends UpdateCompanion<UserRow> {
       bankDetails: bankDetails ?? this.bankDetails,
       signatureUrl: signatureUrl ?? this.signatureUrl,
       logoUrl: logoUrl ?? this.logoUrl,
+      companyName: companyName ?? this.companyName,
       totalEvents: totalEvents ?? this.totalEvents,
       totalRevenueMinor: totalRevenueMinor ?? this.totalRevenueMinor,
       totalClients: totalClients ?? this.totalClients,
@@ -1352,6 +1402,9 @@ class UsersTableCompanion extends UpdateCompanion<UserRow> {
     if (logoUrl.present) {
       map['logo_url'] = Variable<String>(logoUrl.value);
     }
+    if (companyName.present) {
+      map['company_name'] = Variable<String>(companyName.value);
+    }
     if (totalEvents.present) {
       map['total_events'] = Variable<int>(totalEvents.value);
     }
@@ -1405,6 +1458,7 @@ class UsersTableCompanion extends UpdateCompanion<UserRow> {
           ..write('bankDetails: $bankDetails, ')
           ..write('signatureUrl: $signatureUrl, ')
           ..write('logoUrl: $logoUrl, ')
+          ..write('companyName: $companyName, ')
           ..write('totalEvents: $totalEvents, ')
           ..write('totalRevenueMinor: $totalRevenueMinor, ')
           ..write('totalClients: $totalClients, ')
@@ -4831,6 +4885,20 @@ class $BookingsTableTable extends BookingsTable
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _showPaymentInShareMeta =
+      const VerificationMeta('showPaymentInShare');
+  @override
+  late final GeneratedColumn<bool> showPaymentInShare = GeneratedColumn<bool>(
+    'show_payment_in_share',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_payment_in_share" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _statusMeta = const VerificationMeta('status');
   @override
   late final GeneratedColumn<String> status = GeneratedColumn<String>(
@@ -4909,6 +4977,7 @@ class $BookingsTableTable extends BookingsTable
     chiefPhotographerUserId,
     chiefHours,
     hidePaymentFromTeam,
+    showPaymentInShare,
     status,
     createdAt,
     updatedAt,
@@ -5127,6 +5196,15 @@ class $BookingsTableTable extends BookingsTable
         ),
       );
     }
+    if (data.containsKey('show_payment_in_share')) {
+      context.handle(
+        _showPaymentInShareMeta,
+        showPaymentInShare.isAcceptableOrUnknown(
+          data['show_payment_in_share']!,
+          _showPaymentInShareMeta,
+        ),
+      );
+    }
     if (data.containsKey('status')) {
       context.handle(
         _statusMeta,
@@ -5268,6 +5346,10 @@ class $BookingsTableTable extends BookingsTable
         DriftSqlType.bool,
         data['${effectivePrefix}hide_payment_from_team'],
       )!,
+      showPaymentInShare: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_payment_in_share'],
+      )!,
       status: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}status'],
@@ -5321,6 +5403,7 @@ class BookingRow extends DataClass implements Insertable<BookingRow> {
   final String? chiefPhotographerUserId;
   final double? chiefHours;
   final bool hidePaymentFromTeam;
+  final bool showPaymentInShare;
   final String status;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -5353,6 +5436,7 @@ class BookingRow extends DataClass implements Insertable<BookingRow> {
     this.chiefPhotographerUserId,
     this.chiefHours,
     required this.hidePaymentFromTeam,
+    required this.showPaymentInShare,
     required this.status,
     required this.createdAt,
     required this.updatedAt,
@@ -5424,6 +5508,7 @@ class BookingRow extends DataClass implements Insertable<BookingRow> {
       map['chief_hours'] = Variable<double>(chiefHours);
     }
     map['hide_payment_from_team'] = Variable<bool>(hidePaymentFromTeam);
+    map['show_payment_in_share'] = Variable<bool>(showPaymentInShare);
     map['status'] = Variable<String>(status);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -5492,6 +5577,7 @@ class BookingRow extends DataClass implements Insertable<BookingRow> {
           ? const Value.absent()
           : Value(chiefHours),
       hidePaymentFromTeam: Value(hidePaymentFromTeam),
+      showPaymentInShare: Value(showPaymentInShare),
       status: Value(status),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -5538,6 +5624,7 @@ class BookingRow extends DataClass implements Insertable<BookingRow> {
       hidePaymentFromTeam: serializer.fromJson<bool>(
         json['hidePaymentFromTeam'],
       ),
+      showPaymentInShare: serializer.fromJson<bool>(json['showPaymentInShare']),
       status: serializer.fromJson<String>(json['status']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -5579,6 +5666,7 @@ class BookingRow extends DataClass implements Insertable<BookingRow> {
       ),
       'chiefHours': serializer.toJson<double?>(chiefHours),
       'hidePaymentFromTeam': serializer.toJson<bool>(hidePaymentFromTeam),
+      'showPaymentInShare': serializer.toJson<bool>(showPaymentInShare),
       'status': serializer.toJson<String>(status),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -5614,6 +5702,7 @@ class BookingRow extends DataClass implements Insertable<BookingRow> {
     Value<String?> chiefPhotographerUserId = const Value.absent(),
     Value<double?> chiefHours = const Value.absent(),
     bool? hidePaymentFromTeam,
+    bool? showPaymentInShare,
     String? status,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -5654,6 +5743,7 @@ class BookingRow extends DataClass implements Insertable<BookingRow> {
         : this.chiefPhotographerUserId,
     chiefHours: chiefHours.present ? chiefHours.value : this.chiefHours,
     hidePaymentFromTeam: hidePaymentFromTeam ?? this.hidePaymentFromTeam,
+    showPaymentInShare: showPaymentInShare ?? this.showPaymentInShare,
     status: status ?? this.status,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -5708,6 +5798,9 @@ class BookingRow extends DataClass implements Insertable<BookingRow> {
       hidePaymentFromTeam: data.hidePaymentFromTeam.present
           ? data.hidePaymentFromTeam.value
           : this.hidePaymentFromTeam,
+      showPaymentInShare: data.showPaymentInShare.present
+          ? data.showPaymentInShare.value
+          : this.showPaymentInShare,
       status: data.status.present ? data.status.value : this.status,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -5745,6 +5838,7 @@ class BookingRow extends DataClass implements Insertable<BookingRow> {
           ..write('chiefPhotographerUserId: $chiefPhotographerUserId, ')
           ..write('chiefHours: $chiefHours, ')
           ..write('hidePaymentFromTeam: $hidePaymentFromTeam, ')
+          ..write('showPaymentInShare: $showPaymentInShare, ')
           ..write('status: $status, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -5782,6 +5876,7 @@ class BookingRow extends DataClass implements Insertable<BookingRow> {
     chiefPhotographerUserId,
     chiefHours,
     hidePaymentFromTeam,
+    showPaymentInShare,
     status,
     createdAt,
     updatedAt,
@@ -5818,6 +5913,7 @@ class BookingRow extends DataClass implements Insertable<BookingRow> {
           other.chiefPhotographerUserId == this.chiefPhotographerUserId &&
           other.chiefHours == this.chiefHours &&
           other.hidePaymentFromTeam == this.hidePaymentFromTeam &&
+          other.showPaymentInShare == this.showPaymentInShare &&
           other.status == this.status &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
@@ -5852,6 +5948,7 @@ class BookingsTableCompanion extends UpdateCompanion<BookingRow> {
   final Value<String?> chiefPhotographerUserId;
   final Value<double?> chiefHours;
   final Value<bool> hidePaymentFromTeam;
+  final Value<bool> showPaymentInShare;
   final Value<String> status;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -5885,6 +5982,7 @@ class BookingsTableCompanion extends UpdateCompanion<BookingRow> {
     this.chiefPhotographerUserId = const Value.absent(),
     this.chiefHours = const Value.absent(),
     this.hidePaymentFromTeam = const Value.absent(),
+    this.showPaymentInShare = const Value.absent(),
     this.status = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -5919,6 +6017,7 @@ class BookingsTableCompanion extends UpdateCompanion<BookingRow> {
     this.chiefPhotographerUserId = const Value.absent(),
     this.chiefHours = const Value.absent(),
     this.hidePaymentFromTeam = const Value.absent(),
+    this.showPaymentInShare = const Value.absent(),
     this.status = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -5961,6 +6060,7 @@ class BookingsTableCompanion extends UpdateCompanion<BookingRow> {
     Expression<String>? chiefPhotographerUserId,
     Expression<double>? chiefHours,
     Expression<bool>? hidePaymentFromTeam,
+    Expression<bool>? showPaymentInShare,
     Expression<String>? status,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -5998,6 +6098,8 @@ class BookingsTableCompanion extends UpdateCompanion<BookingRow> {
       if (chiefHours != null) 'chief_hours': chiefHours,
       if (hidePaymentFromTeam != null)
         'hide_payment_from_team': hidePaymentFromTeam,
+      if (showPaymentInShare != null)
+        'show_payment_in_share': showPaymentInShare,
       if (status != null) 'status': status,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -6034,6 +6136,7 @@ class BookingsTableCompanion extends UpdateCompanion<BookingRow> {
     Value<String?>? chiefPhotographerUserId,
     Value<double?>? chiefHours,
     Value<bool>? hidePaymentFromTeam,
+    Value<bool>? showPaymentInShare,
     Value<String>? status,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
@@ -6070,6 +6173,7 @@ class BookingsTableCompanion extends UpdateCompanion<BookingRow> {
           chiefPhotographerUserId ?? this.chiefPhotographerUserId,
       chiefHours: chiefHours ?? this.chiefHours,
       hidePaymentFromTeam: hidePaymentFromTeam ?? this.hidePaymentFromTeam,
+      showPaymentInShare: showPaymentInShare ?? this.showPaymentInShare,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -6166,6 +6270,9 @@ class BookingsTableCompanion extends UpdateCompanion<BookingRow> {
     if (hidePaymentFromTeam.present) {
       map['hide_payment_from_team'] = Variable<bool>(hidePaymentFromTeam.value);
     }
+    if (showPaymentInShare.present) {
+      map['show_payment_in_share'] = Variable<bool>(showPaymentInShare.value);
+    }
     if (status.present) {
       map['status'] = Variable<String>(status.value);
     }
@@ -6214,6 +6321,7 @@ class BookingsTableCompanion extends UpdateCompanion<BookingRow> {
           ..write('chiefPhotographerUserId: $chiefPhotographerUserId, ')
           ..write('chiefHours: $chiefHours, ')
           ..write('hidePaymentFromTeam: $hidePaymentFromTeam, ')
+          ..write('showPaymentInShare: $showPaymentInShare, ')
           ..write('status: $status, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -8335,6 +8443,42 @@ class $PackagesTableTable extends PackagesTable
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _photographerCountMeta = const VerificationMeta(
+    'photographerCount',
+  );
+  @override
+  late final GeneratedColumn<int> photographerCount = GeneratedColumn<int>(
+    'photographer_count',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _cinematographerCountMeta =
+      const VerificationMeta('cinematographerCount');
+  @override
+  late final GeneratedColumn<int> cinematographerCount = GeneratedColumn<int>(
+    'cinematographer_count',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _includesChiefMeta = const VerificationMeta(
+    'includesChief',
+  );
+  @override
+  late final GeneratedColumn<bool> includesChief = GeneratedColumn<bool>(
+    'includes_chief',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("includes_chief" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _itemsJsonMeta = const VerificationMeta(
     'itemsJson',
   );
@@ -8412,6 +8556,9 @@ class $PackagesTableTable extends PackagesTable
     deliveryMethod,
     trailersPerEvent,
     fullVideosPerEvent,
+    photographerCount,
+    cinematographerCount,
+    includesChief,
     itemsJson,
     inclusionsJson,
     createdAt,
@@ -8537,6 +8684,33 @@ class $PackagesTableTable extends PackagesTable
         ),
       );
     }
+    if (data.containsKey('photographer_count')) {
+      context.handle(
+        _photographerCountMeta,
+        photographerCount.isAcceptableOrUnknown(
+          data['photographer_count']!,
+          _photographerCountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cinematographer_count')) {
+      context.handle(
+        _cinematographerCountMeta,
+        cinematographerCount.isAcceptableOrUnknown(
+          data['cinematographer_count']!,
+          _cinematographerCountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('includes_chief')) {
+      context.handle(
+        _includesChiefMeta,
+        includesChief.isAcceptableOrUnknown(
+          data['includes_chief']!,
+          _includesChiefMeta,
+        ),
+      );
+    }
     if (data.containsKey('items_json')) {
       context.handle(
         _itemsJsonMeta,
@@ -8635,6 +8809,18 @@ class $PackagesTableTable extends PackagesTable
         DriftSqlType.int,
         data['${effectivePrefix}full_videos_per_event'],
       ),
+      photographerCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}photographer_count'],
+      ),
+      cinematographerCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}cinematographer_count'],
+      ),
+      includesChief: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}includes_chief'],
+      )!,
       itemsJson: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}items_json'],
@@ -8679,6 +8865,9 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
   final String? deliveryMethod;
   final int? trailersPerEvent;
   final int? fullVideosPerEvent;
+  final int? photographerCount;
+  final int? cinematographerCount;
+  final bool includesChief;
   final String? itemsJson;
   final String? inclusionsJson;
   final DateTime createdAt;
@@ -8699,6 +8888,9 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
     this.deliveryMethod,
     this.trailersPerEvent,
     this.fullVideosPerEvent,
+    this.photographerCount,
+    this.cinematographerCount,
+    required this.includesChief,
     this.itemsJson,
     this.inclusionsJson,
     required this.createdAt,
@@ -8740,6 +8932,13 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
     if (!nullToAbsent || fullVideosPerEvent != null) {
       map['full_videos_per_event'] = Variable<int>(fullVideosPerEvent);
     }
+    if (!nullToAbsent || photographerCount != null) {
+      map['photographer_count'] = Variable<int>(photographerCount);
+    }
+    if (!nullToAbsent || cinematographerCount != null) {
+      map['cinematographer_count'] = Variable<int>(cinematographerCount);
+    }
+    map['includes_chief'] = Variable<bool>(includesChief);
     if (!nullToAbsent || itemsJson != null) {
       map['items_json'] = Variable<String>(itemsJson);
     }
@@ -8786,6 +8985,13 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
       fullVideosPerEvent: fullVideosPerEvent == null && nullToAbsent
           ? const Value.absent()
           : Value(fullVideosPerEvent),
+      photographerCount: photographerCount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(photographerCount),
+      cinematographerCount: cinematographerCount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cinematographerCount),
+      includesChief: Value(includesChief),
       itemsJson: itemsJson == null && nullToAbsent
           ? const Value.absent()
           : Value(itemsJson),
@@ -8818,6 +9024,11 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
       deliveryMethod: serializer.fromJson<String?>(json['deliveryMethod']),
       trailersPerEvent: serializer.fromJson<int?>(json['trailersPerEvent']),
       fullVideosPerEvent: serializer.fromJson<int?>(json['fullVideosPerEvent']),
+      photographerCount: serializer.fromJson<int?>(json['photographerCount']),
+      cinematographerCount: serializer.fromJson<int?>(
+        json['cinematographerCount'],
+      ),
+      includesChief: serializer.fromJson<bool>(json['includesChief']),
       itemsJson: serializer.fromJson<String?>(json['itemsJson']),
       inclusionsJson: serializer.fromJson<String?>(json['inclusionsJson']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
@@ -8843,6 +9054,9 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
       'deliveryMethod': serializer.toJson<String?>(deliveryMethod),
       'trailersPerEvent': serializer.toJson<int?>(trailersPerEvent),
       'fullVideosPerEvent': serializer.toJson<int?>(fullVideosPerEvent),
+      'photographerCount': serializer.toJson<int?>(photographerCount),
+      'cinematographerCount': serializer.toJson<int?>(cinematographerCount),
+      'includesChief': serializer.toJson<bool>(includesChief),
       'itemsJson': serializer.toJson<String?>(itemsJson),
       'inclusionsJson': serializer.toJson<String?>(inclusionsJson),
       'createdAt': serializer.toJson<DateTime>(createdAt),
@@ -8866,6 +9080,9 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
     Value<String?> deliveryMethod = const Value.absent(),
     Value<int?> trailersPerEvent = const Value.absent(),
     Value<int?> fullVideosPerEvent = const Value.absent(),
+    Value<int?> photographerCount = const Value.absent(),
+    Value<int?> cinematographerCount = const Value.absent(),
+    bool? includesChief,
     Value<String?> itemsJson = const Value.absent(),
     Value<String?> inclusionsJson = const Value.absent(),
     DateTime? createdAt,
@@ -8898,6 +9115,13 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
     fullVideosPerEvent: fullVideosPerEvent.present
         ? fullVideosPerEvent.value
         : this.fullVideosPerEvent,
+    photographerCount: photographerCount.present
+        ? photographerCount.value
+        : this.photographerCount,
+    cinematographerCount: cinematographerCount.present
+        ? cinematographerCount.value
+        : this.cinematographerCount,
+    includesChief: includesChief ?? this.includesChief,
     itemsJson: itemsJson.present ? itemsJson.value : this.itemsJson,
     inclusionsJson: inclusionsJson.present
         ? inclusionsJson.value
@@ -8934,6 +9158,15 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
       fullVideosPerEvent: data.fullVideosPerEvent.present
           ? data.fullVideosPerEvent.value
           : this.fullVideosPerEvent,
+      photographerCount: data.photographerCount.present
+          ? data.photographerCount.value
+          : this.photographerCount,
+      cinematographerCount: data.cinematographerCount.present
+          ? data.cinematographerCount.value
+          : this.cinematographerCount,
+      includesChief: data.includesChief.present
+          ? data.includesChief.value
+          : this.includesChief,
       itemsJson: data.itemsJson.present ? data.itemsJson.value : this.itemsJson,
       inclusionsJson: data.inclusionsJson.present
           ? data.inclusionsJson.value
@@ -8961,6 +9194,9 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
           ..write('deliveryMethod: $deliveryMethod, ')
           ..write('trailersPerEvent: $trailersPerEvent, ')
           ..write('fullVideosPerEvent: $fullVideosPerEvent, ')
+          ..write('photographerCount: $photographerCount, ')
+          ..write('cinematographerCount: $cinematographerCount, ')
+          ..write('includesChief: $includesChief, ')
           ..write('itemsJson: $itemsJson, ')
           ..write('inclusionsJson: $inclusionsJson, ')
           ..write('createdAt: $createdAt, ')
@@ -8971,7 +9207,7 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
     remoteId,
     studioId,
@@ -8986,12 +9222,15 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
     deliveryMethod,
     trailersPerEvent,
     fullVideosPerEvent,
+    photographerCount,
+    cinematographerCount,
+    includesChief,
     itemsJson,
     inclusionsJson,
     createdAt,
     updatedAt,
     pending,
-  );
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -9010,6 +9249,9 @@ class PackageRow extends DataClass implements Insertable<PackageRow> {
           other.deliveryMethod == this.deliveryMethod &&
           other.trailersPerEvent == this.trailersPerEvent &&
           other.fullVideosPerEvent == this.fullVideosPerEvent &&
+          other.photographerCount == this.photographerCount &&
+          other.cinematographerCount == this.cinematographerCount &&
+          other.includesChief == this.includesChief &&
           other.itemsJson == this.itemsJson &&
           other.inclusionsJson == this.inclusionsJson &&
           other.createdAt == this.createdAt &&
@@ -9032,6 +9274,9 @@ class PackagesTableCompanion extends UpdateCompanion<PackageRow> {
   final Value<String?> deliveryMethod;
   final Value<int?> trailersPerEvent;
   final Value<int?> fullVideosPerEvent;
+  final Value<int?> photographerCount;
+  final Value<int?> cinematographerCount;
+  final Value<bool> includesChief;
   final Value<String?> itemsJson;
   final Value<String?> inclusionsJson;
   final Value<DateTime> createdAt;
@@ -9053,6 +9298,9 @@ class PackagesTableCompanion extends UpdateCompanion<PackageRow> {
     this.deliveryMethod = const Value.absent(),
     this.trailersPerEvent = const Value.absent(),
     this.fullVideosPerEvent = const Value.absent(),
+    this.photographerCount = const Value.absent(),
+    this.cinematographerCount = const Value.absent(),
+    this.includesChief = const Value.absent(),
     this.itemsJson = const Value.absent(),
     this.inclusionsJson = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -9075,6 +9323,9 @@ class PackagesTableCompanion extends UpdateCompanion<PackageRow> {
     this.deliveryMethod = const Value.absent(),
     this.trailersPerEvent = const Value.absent(),
     this.fullVideosPerEvent = const Value.absent(),
+    this.photographerCount = const Value.absent(),
+    this.cinematographerCount = const Value.absent(),
+    this.includesChief = const Value.absent(),
     this.itemsJson = const Value.absent(),
     this.inclusionsJson = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -9100,6 +9351,9 @@ class PackagesTableCompanion extends UpdateCompanion<PackageRow> {
     Expression<String>? deliveryMethod,
     Expression<int>? trailersPerEvent,
     Expression<int>? fullVideosPerEvent,
+    Expression<int>? photographerCount,
+    Expression<int>? cinematographerCount,
+    Expression<bool>? includesChief,
     Expression<String>? itemsJson,
     Expression<String>? inclusionsJson,
     Expression<DateTime>? createdAt,
@@ -9123,6 +9377,10 @@ class PackagesTableCompanion extends UpdateCompanion<PackageRow> {
       if (trailersPerEvent != null) 'trailers_per_event': trailersPerEvent,
       if (fullVideosPerEvent != null)
         'full_videos_per_event': fullVideosPerEvent,
+      if (photographerCount != null) 'photographer_count': photographerCount,
+      if (cinematographerCount != null)
+        'cinematographer_count': cinematographerCount,
+      if (includesChief != null) 'includes_chief': includesChief,
       if (itemsJson != null) 'items_json': itemsJson,
       if (inclusionsJson != null) 'inclusions_json': inclusionsJson,
       if (createdAt != null) 'created_at': createdAt,
@@ -9147,6 +9405,9 @@ class PackagesTableCompanion extends UpdateCompanion<PackageRow> {
     Value<String?>? deliveryMethod,
     Value<int?>? trailersPerEvent,
     Value<int?>? fullVideosPerEvent,
+    Value<int?>? photographerCount,
+    Value<int?>? cinematographerCount,
+    Value<bool>? includesChief,
     Value<String?>? itemsJson,
     Value<String?>? inclusionsJson,
     Value<DateTime>? createdAt,
@@ -9169,6 +9430,9 @@ class PackagesTableCompanion extends UpdateCompanion<PackageRow> {
       deliveryMethod: deliveryMethod ?? this.deliveryMethod,
       trailersPerEvent: trailersPerEvent ?? this.trailersPerEvent,
       fullVideosPerEvent: fullVideosPerEvent ?? this.fullVideosPerEvent,
+      photographerCount: photographerCount ?? this.photographerCount,
+      cinematographerCount: cinematographerCount ?? this.cinematographerCount,
+      includesChief: includesChief ?? this.includesChief,
       itemsJson: itemsJson ?? this.itemsJson,
       inclusionsJson: inclusionsJson ?? this.inclusionsJson,
       createdAt: createdAt ?? this.createdAt,
@@ -9223,6 +9487,15 @@ class PackagesTableCompanion extends UpdateCompanion<PackageRow> {
     if (fullVideosPerEvent.present) {
       map['full_videos_per_event'] = Variable<int>(fullVideosPerEvent.value);
     }
+    if (photographerCount.present) {
+      map['photographer_count'] = Variable<int>(photographerCount.value);
+    }
+    if (cinematographerCount.present) {
+      map['cinematographer_count'] = Variable<int>(cinematographerCount.value);
+    }
+    if (includesChief.present) {
+      map['includes_chief'] = Variable<bool>(includesChief.value);
+    }
     if (itemsJson.present) {
       map['items_json'] = Variable<String>(itemsJson.value);
     }
@@ -9261,6 +9534,9 @@ class PackagesTableCompanion extends UpdateCompanion<PackageRow> {
           ..write('deliveryMethod: $deliveryMethod, ')
           ..write('trailersPerEvent: $trailersPerEvent, ')
           ..write('fullVideosPerEvent: $fullVideosPerEvent, ')
+          ..write('photographerCount: $photographerCount, ')
+          ..write('cinematographerCount: $cinematographerCount, ')
+          ..write('includesChief: $includesChief, ')
           ..write('itemsJson: $itemsJson, ')
           ..write('inclusionsJson: $inclusionsJson, ')
           ..write('createdAt: $createdAt, ')
@@ -12131,6 +12407,7 @@ typedef $$UsersTableTableCreateCompanionBuilder =
       Value<String?> bankDetails,
       Value<String?> signatureUrl,
       Value<String?> logoUrl,
+      Value<String?> companyName,
       Value<int> totalEvents,
       Value<int> totalRevenueMinor,
       Value<int> totalClients,
@@ -12161,6 +12438,7 @@ typedef $$UsersTableTableUpdateCompanionBuilder =
       Value<String?> bankDetails,
       Value<String?> signatureUrl,
       Value<String?> logoUrl,
+      Value<String?> companyName,
       Value<int> totalEvents,
       Value<int> totalRevenueMinor,
       Value<int> totalClients,
@@ -12264,6 +12542,11 @@ class $$UsersTableTableFilterComposer
 
   ColumnFilters<String> get logoUrl => $composableBuilder(
     column: $table.logoUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get companyName => $composableBuilder(
+    column: $table.companyName,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -12407,6 +12690,11 @@ class $$UsersTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get companyName => $composableBuilder(
+    column: $table.companyName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get totalEvents => $composableBuilder(
     column: $table.totalEvents,
     builder: (column) => ColumnOrderings(column),
@@ -12521,6 +12809,11 @@ class $$UsersTableTableAnnotationComposer
   GeneratedColumn<String> get logoUrl =>
       $composableBuilder(column: $table.logoUrl, builder: (column) => column);
 
+  GeneratedColumn<String> get companyName => $composableBuilder(
+    column: $table.companyName,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<int> get totalEvents => $composableBuilder(
     column: $table.totalEvents,
     builder: (column) => column,
@@ -12602,6 +12895,7 @@ class $$UsersTableTableTableManager
                 Value<String?> bankDetails = const Value.absent(),
                 Value<String?> signatureUrl = const Value.absent(),
                 Value<String?> logoUrl = const Value.absent(),
+                Value<String?> companyName = const Value.absent(),
                 Value<int> totalEvents = const Value.absent(),
                 Value<int> totalRevenueMinor = const Value.absent(),
                 Value<int> totalClients = const Value.absent(),
@@ -12630,6 +12924,7 @@ class $$UsersTableTableTableManager
                 bankDetails: bankDetails,
                 signatureUrl: signatureUrl,
                 logoUrl: logoUrl,
+                companyName: companyName,
                 totalEvents: totalEvents,
                 totalRevenueMinor: totalRevenueMinor,
                 totalClients: totalClients,
@@ -12660,6 +12955,7 @@ class $$UsersTableTableTableManager
                 Value<String?> bankDetails = const Value.absent(),
                 Value<String?> signatureUrl = const Value.absent(),
                 Value<String?> logoUrl = const Value.absent(),
+                Value<String?> companyName = const Value.absent(),
                 Value<int> totalEvents = const Value.absent(),
                 Value<int> totalRevenueMinor = const Value.absent(),
                 Value<int> totalClients = const Value.absent(),
@@ -12688,6 +12984,7 @@ class $$UsersTableTableTableManager
                 bankDetails: bankDetails,
                 signatureUrl: signatureUrl,
                 logoUrl: logoUrl,
+                companyName: companyName,
                 totalEvents: totalEvents,
                 totalRevenueMinor: totalRevenueMinor,
                 totalClients: totalClients,
@@ -14352,6 +14649,7 @@ typedef $$BookingsTableTableCreateCompanionBuilder =
       Value<String?> chiefPhotographerUserId,
       Value<double?> chiefHours,
       Value<bool> hidePaymentFromTeam,
+      Value<bool> showPaymentInShare,
       Value<String> status,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -14387,6 +14685,7 @@ typedef $$BookingsTableTableUpdateCompanionBuilder =
       Value<String?> chiefPhotographerUserId,
       Value<double?> chiefHours,
       Value<bool> hidePaymentFromTeam,
+      Value<bool> showPaymentInShare,
       Value<String> status,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -14535,6 +14834,11 @@ class $$BookingsTableTableFilterComposer
 
   ColumnFilters<bool> get hidePaymentFromTeam => $composableBuilder(
     column: $table.hidePaymentFromTeam,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showPaymentInShare => $composableBuilder(
+    column: $table.showPaymentInShare,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -14703,6 +15007,11 @@ class $$BookingsTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get showPaymentInShare => $composableBuilder(
+    column: $table.showPaymentInShare,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get status => $composableBuilder(
     column: $table.status,
     builder: (column) => ColumnOrderings(column),
@@ -14834,6 +15143,11 @@ class $$BookingsTableTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<bool> get showPaymentInShare => $composableBuilder(
+    column: $table.showPaymentInShare,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
 
@@ -14905,6 +15219,7 @@ class $$BookingsTableTableTableManager
                 Value<String?> chiefPhotographerUserId = const Value.absent(),
                 Value<double?> chiefHours = const Value.absent(),
                 Value<bool> hidePaymentFromTeam = const Value.absent(),
+                Value<bool> showPaymentInShare = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -14938,6 +15253,7 @@ class $$BookingsTableTableTableManager
                 chiefPhotographerUserId: chiefPhotographerUserId,
                 chiefHours: chiefHours,
                 hidePaymentFromTeam: hidePaymentFromTeam,
+                showPaymentInShare: showPaymentInShare,
                 status: status,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -14973,6 +15289,7 @@ class $$BookingsTableTableTableManager
                 Value<String?> chiefPhotographerUserId = const Value.absent(),
                 Value<double?> chiefHours = const Value.absent(),
                 Value<bool> hidePaymentFromTeam = const Value.absent(),
+                Value<bool> showPaymentInShare = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -15006,6 +15323,7 @@ class $$BookingsTableTableTableManager
                 chiefPhotographerUserId: chiefPhotographerUserId,
                 chiefHours: chiefHours,
                 hidePaymentFromTeam: hidePaymentFromTeam,
+                showPaymentInShare: showPaymentInShare,
                 status: status,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -16000,6 +16318,9 @@ typedef $$PackagesTableTableCreateCompanionBuilder =
       Value<String?> deliveryMethod,
       Value<int?> trailersPerEvent,
       Value<int?> fullVideosPerEvent,
+      Value<int?> photographerCount,
+      Value<int?> cinematographerCount,
+      Value<bool> includesChief,
       Value<String?> itemsJson,
       Value<String?> inclusionsJson,
       Value<DateTime> createdAt,
@@ -16023,6 +16344,9 @@ typedef $$PackagesTableTableUpdateCompanionBuilder =
       Value<String?> deliveryMethod,
       Value<int?> trailersPerEvent,
       Value<int?> fullVideosPerEvent,
+      Value<int?> photographerCount,
+      Value<int?> cinematographerCount,
+      Value<bool> includesChief,
       Value<String?> itemsJson,
       Value<String?> inclusionsJson,
       Value<DateTime> createdAt,
@@ -16107,6 +16431,21 @@ class $$PackagesTableTableFilterComposer
 
   ColumnFilters<int> get fullVideosPerEvent => $composableBuilder(
     column: $table.fullVideosPerEvent,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get photographerCount => $composableBuilder(
+    column: $table.photographerCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get cinematographerCount => $composableBuilder(
+    column: $table.cinematographerCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get includesChief => $composableBuilder(
+    column: $table.includesChief,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -16215,6 +16554,21 @@ class $$PackagesTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get photographerCount => $composableBuilder(
+    column: $table.photographerCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get cinematographerCount => $composableBuilder(
+    column: $table.cinematographerCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get includesChief => $composableBuilder(
+    column: $table.includesChief,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get itemsJson => $composableBuilder(
     column: $table.itemsJson,
     builder: (column) => ColumnOrderings(column),
@@ -16304,6 +16658,21 @@ class $$PackagesTableTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get photographerCount => $composableBuilder(
+    column: $table.photographerCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get cinematographerCount => $composableBuilder(
+    column: $table.cinematographerCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get includesChief => $composableBuilder(
+    column: $table.includesChief,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get itemsJson =>
       $composableBuilder(column: $table.itemsJson, builder: (column) => column);
 
@@ -16367,6 +16736,9 @@ class $$PackagesTableTableTableManager
                 Value<String?> deliveryMethod = const Value.absent(),
                 Value<int?> trailersPerEvent = const Value.absent(),
                 Value<int?> fullVideosPerEvent = const Value.absent(),
+                Value<int?> photographerCount = const Value.absent(),
+                Value<int?> cinematographerCount = const Value.absent(),
+                Value<bool> includesChief = const Value.absent(),
                 Value<String?> itemsJson = const Value.absent(),
                 Value<String?> inclusionsJson = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -16388,6 +16760,9 @@ class $$PackagesTableTableTableManager
                 deliveryMethod: deliveryMethod,
                 trailersPerEvent: trailersPerEvent,
                 fullVideosPerEvent: fullVideosPerEvent,
+                photographerCount: photographerCount,
+                cinematographerCount: cinematographerCount,
+                includesChief: includesChief,
                 itemsJson: itemsJson,
                 inclusionsJson: inclusionsJson,
                 createdAt: createdAt,
@@ -16411,6 +16786,9 @@ class $$PackagesTableTableTableManager
                 Value<String?> deliveryMethod = const Value.absent(),
                 Value<int?> trailersPerEvent = const Value.absent(),
                 Value<int?> fullVideosPerEvent = const Value.absent(),
+                Value<int?> photographerCount = const Value.absent(),
+                Value<int?> cinematographerCount = const Value.absent(),
+                Value<bool> includesChief = const Value.absent(),
                 Value<String?> itemsJson = const Value.absent(),
                 Value<String?> inclusionsJson = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -16432,6 +16810,9 @@ class $$PackagesTableTableTableManager
                 deliveryMethod: deliveryMethod,
                 trailersPerEvent: trailersPerEvent,
                 fullVideosPerEvent: fullVideosPerEvent,
+                photographerCount: photographerCount,
+                cinematographerCount: cinematographerCount,
+                includesChief: includesChief,
                 itemsJson: itemsJson,
                 inclusionsJson: inclusionsJson,
                 createdAt: createdAt,

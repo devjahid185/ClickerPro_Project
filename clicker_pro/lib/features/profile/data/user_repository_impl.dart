@@ -46,6 +46,7 @@ class UserRepositoryImpl implements UserRepository {
     bankDetails: row.bankDetails,
     signatureUrl: row.signatureUrl,
     logoUrl: row.logoUrl,
+    companyName: row.companyName,
     deletedAt: row.deletedAt,
   );
 
@@ -76,6 +77,7 @@ class UserRepositoryImpl implements UserRepository {
     bankDetails: Value(u.bankDetails),
     signatureUrl: Value(u.signatureUrl),
     logoUrl: Value(u.logoUrl),
+    companyName: Value(u.companyName),
     deletedAt: Value(u.deletedAt),
     updatedAt: Value(DateTime.now()),
   );
@@ -94,8 +96,29 @@ class UserRepositoryImpl implements UserRepository {
   Future<void> refreshFromRemote() async {
     try {
       final json = await _api.getProfile();
-      final user = UserModel.fromJson(json);
-      await _users.upsertCurrent(_modelToCompanion(user));
+      final server = UserModel.fromJson(json);
+      // Merge: the server doesn't persist whatsapp/bkash/address/
+      // specialization/signature/logo — overwriting with its copy used
+      // to NULL those out after every refresh (the "save disappears"
+      // bug). Keep the local value wherever the server has none.
+      final row = await _users.getCurrent();
+      final merged = row == null
+          ? server
+          : server.copyWith(
+              whatsapp: server.whatsapp ?? row.whatsapp,
+              specialization: server.specialization ?? row.specialization,
+              vatBin: server.vatBin ?? row.vatBin,
+              studioAddress: server.studioAddress ?? row.studioAddress,
+              bkash: server.bkash ?? row.bkash,
+              bankDetails: server.bankDetails ?? row.bankDetails,
+              signatureUrl: server.signatureUrl ?? row.signatureUrl,
+              logoUrl: server.logoUrl ?? row.logoUrl,
+              avatarUrl: server.avatarUrl ?? row.avatarUrl,
+              phone: server.phone ?? row.phone,
+              bio: server.bio ?? row.bio,
+              companyName: server.companyName ?? row.companyName,
+            );
+      await _users.upsertCurrent(_modelToCompanion(merged));
     } on ApiException catch (e, st) {
       AppLogger.w('user', 'refreshFromRemote failed: ${e.message}');
       AppLogger.e('user', e, st);
@@ -112,10 +135,28 @@ class UserRepositoryImpl implements UserRepository {
     try {
       final json = await _api.patchProfile(updated.toJson());
       final remoteCopy = UserModel.fromJson(json);
-      await _users.upsertCurrent(
-        _modelToCompanion(remoteCopy).copyWith(pending: const Value(false)),
+      // The server only persists name/phone/bio/business_name/avatar —
+      // merge its authoritative values into the FULL local model so the
+      // device-only fields (whatsapp, bkash, signature, logo, …) survive.
+      final merged = updated.copyWith(
+        name: remoteCopy.name.isNotEmpty ? remoteCopy.name : null,
+        phone: remoteCopy.phone,
+        bio: remoteCopy.bio,
+        companyName: remoteCopy.companyName,
+        // Keep the locally-picked avatar whenever the server doesn't echo
+        // one back (it returns a relative path or omits it entirely on
+        // some builds). Overwriting with an empty server value was the
+        // "profile picture doesn't save" bug.
+        avatarUrl:
+            (remoteCopy.avatarUrl != null && remoteCopy.avatarUrl!.isNotEmpty)
+            ? remoteCopy.avatarUrl
+            : updated.avatarUrl,
+        remoteId: remoteCopy.remoteId,
       );
-      return remoteCopy;
+      await _users.upsertCurrent(
+        _modelToCompanion(merged).copyWith(pending: const Value(false)),
+      );
+      return merged;
     } catch (e, st) {
       AppLogger.w('user', 'updateProfile remote failed; queued in outbox: $e');
       AppLogger.e('user', e, st);

@@ -66,14 +66,44 @@ class MessageBubble extends StatelessWidget {
                 style: TextStyle(color: textColour, fontSize: 14, height: 1.4),
               ),
               const SizedBox(height: 2),
-              Text(
-                BookingFormat.relative(message.sentAt, lang: lang),
-                style: TextStyle(
-                  color: isSelf
-                      ? Colors.white.withValues(alpha: 0.7)
-                      : AppColors.filmMuted,
-                  fontSize: 10,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    BookingFormat.relative(message.sentAt, lang: lang),
+                    style: TextStyle(
+                      color: isSelf
+                          ? Colors.white.withValues(alpha: 0.7)
+                          : AppColors.filmMuted,
+                      fontSize: 10,
+                    ),
+                  ),
+                  // Read receipt on own bubbles: a double-check that turns
+                  // solid + "Seen N" once other members have read it.
+                  if (isSelf && !message.id.startsWith('_local-')) ...[
+                    const SizedBox(width: 6),
+                    Icon(
+                      message.seenCount > 0
+                          ? Icons.done_all_rounded
+                          : Icons.check_rounded,
+                      size: 13,
+                      color: message.seenCount > 0
+                          ? Colors.white
+                          : Colors.white.withValues(alpha: 0.6),
+                    ),
+                    if (message.seenCount > 0) ...[
+                      const SizedBox(width: 3),
+                      Text(
+                        'Seen ${message.seenCount}',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ],
+                ],
               ),
             ],
           ),

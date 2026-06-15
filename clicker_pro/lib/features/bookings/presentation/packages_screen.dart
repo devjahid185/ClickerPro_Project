@@ -59,10 +59,10 @@ class _PackagesScreenState extends ConsumerState<PackagesScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Packages',
           style: TextStyle(
             color: AppColors.film,
@@ -209,7 +209,7 @@ class _PackageCard extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     package.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.film,
                       fontFamily: 'Poppins',
                       fontSize: 18,
@@ -262,18 +262,18 @@ class _PackageCard extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.voidElevated,
-        title: const Text(
+        title: Text(
           'Delete Package',
           style: TextStyle(color: AppColors.film),
         ),
         content: Text(
           'Delete "${package.name}"? This cannot be undone.',
-          style: const TextStyle(color: AppColors.filmDim),
+          style: TextStyle(color: AppColors.filmDim),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(
+            child: Text(
               'Cancel',
               style: TextStyle(color: AppColors.filmDim),
             ),
@@ -300,7 +300,7 @@ class _PackageCard extends ConsumerWidget {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
           ..showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text('Package deleted.'),
               backgroundColor: AppColors.voidElevated,
               behavior: SnackBarBehavior.floating,
@@ -456,7 +456,7 @@ class _SpecGrid extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 s.value,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.film,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
@@ -584,9 +584,12 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
   late final TextEditingController _trailersCtrl;
   late final TextEditingController _videosCtrl;
   late final TextEditingController _customSizeCtrl;
+  late final TextEditingController _photographersCtrl;
+  late final TextEditingController _cinematographersCtrl;
 
   String? _printSize;
   String? _delivery;
+  bool _includesChief = false;
   late List<String> _items;
   bool _saving = false;
 
@@ -614,8 +617,15 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
       text: p?.fullVideosPerEvent?.toString() ?? '',
     );
     _customSizeCtrl = TextEditingController(text: p?.printSize ?? '');
+    _photographersCtrl = TextEditingController(
+      text: p?.photographerCount?.toString() ?? '',
+    );
+    _cinematographersCtrl = TextEditingController(
+      text: p?.cinematographerCount?.toString() ?? '',
+    );
     _printSize = p?.printSize;
     _delivery = p?.deliveryMethod;
+    _includesChief = p?.includesChief ?? false;
     _items = List<String>.from(p?.items ?? const []);
   }
 
@@ -629,6 +639,8 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
     _trailersCtrl.dispose();
     _videosCtrl.dispose();
     _customSizeCtrl.dispose();
+    _photographersCtrl.dispose();
+    _cinematographersCtrl.dispose();
     super.dispose();
   }
 
@@ -671,7 +683,7 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
                       Expanded(
                         child: Text(
                           _isEditing ? 'Edit Package' : 'New Package',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.film,
                             fontFamily: 'Poppins',
                             fontSize: 20,
@@ -813,6 +825,46 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
                           ),
                         ],
                       ),
+                      // Team composition — auto-fills the booking form's
+                      // photographer / cinematographer slots on select.
+                      Row(
+                        children: [
+                          Expanded(
+                            child: LensTextField(
+                              label: 'Photographers',
+                              controller: _photographersCtrl,
+                              keyboardType: TextInputType.number,
+                              hint: 'e.g. 2',
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: LensTextField(
+                              label: 'Cinematographers',
+                              controller: _cinematographersCtrl,
+                              keyboardType: TextInputType.number,
+                              hint: 'e.g. 1',
+                            ),
+                          ),
+                        ],
+                      ),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          'Includes Chief Photographer',
+                          style: TextStyle(
+                            color: AppColors.film,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        value: _includesChief,
+                        activeThumbColor: AppColors.gold,
+                        onChanged: (v) {
+                          setState(() => _includesChief = v);
+                          refresh();
+                        },
+                      ),
                       const SizedBox(height: 6),
                       _buildItemsEditor(refresh),
                       const SizedBox(height: 16),
@@ -829,7 +881,7 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
                           ),
                           onPressed: _saving ? null : () => _onSave(refresh),
                           child: _saving
-                              ? const SizedBox(
+                              ? SizedBox(
                                   width: 20,
                                   height: 20,
                                   child: CircularProgressIndicator(
@@ -882,9 +934,9 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: AppColors.line(0.04),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+              border: Border.all(color: AppColors.line(0.08)),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
@@ -893,7 +945,7 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
                 isDense: true,
                 dropdownColor: AppColors.voidElevated,
                 iconEnabledColor: AppColors.filmDim,
-                style: const TextStyle(color: AppColors.film, fontSize: 13.5),
+                style: TextStyle(color: AppColors.film, fontSize: 13.5),
                 hint: Text(
                   'Select size',
                   style: TextStyle(
@@ -936,9 +988,9 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: AppColors.line(0.04),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+              border: Border.all(color: AppColors.line(0.08)),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
@@ -947,7 +999,7 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
                 isDense: true,
                 dropdownColor: AppColors.voidElevated,
                 iconEnabledColor: AppColors.filmDim,
-                style: const TextStyle(color: AppColors.film, fontSize: 13.5),
+                style: TextStyle(color: AppColors.film, fontSize: 13.5),
                 hint: Text(
                   'Select delivery method',
                   style: TextStyle(
@@ -1037,11 +1089,11 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
                   Expanded(
                     child: TextField(
                       controller: TextEditingController(text: _items[i]),
-                      style: const TextStyle(color: AppColors.film, fontSize: 13),
+                      style: TextStyle(color: AppColors.film, fontSize: 13),
                       decoration: InputDecoration(
                         isDense: true,
                         filled: true,
-                        fillColor: Colors.black.withValues(alpha: 0.04),
+                        fillColor: AppColors.line(0.04),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 10,
                           vertical: 8,
@@ -1049,13 +1101,13 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide(
-                            color: Colors.black.withValues(alpha: 0.08),
+                            color: AppColors.line(0.08),
                           ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide(
-                            color: Colors.black.withValues(alpha: 0.08),
+                            color: AppColors.line(0.08),
                           ),
                         ),
                         focusedBorder: OutlineInputBorder(
@@ -1105,7 +1157,7 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Package name is required.'),
             backgroundColor: AppColors.voidElevated,
             behavior: SnackBarBehavior.floating,
@@ -1119,6 +1171,8 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
     final printQty = int.tryParse(_printQtyCtrl.text.trim());
     final trailers = int.tryParse(_trailersCtrl.text.trim());
     final videos = int.tryParse(_videosCtrl.text.trim());
+    final photographers = int.tryParse(_photographersCtrl.text.trim());
+    final cinematographers = int.tryParse(_cinematographersCtrl.text.trim());
 
     String? resolvedPrintSize = _printSize;
     if (resolvedPrintSize == 'Custom') {
@@ -1149,6 +1203,9 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
       deliveryMethod: _delivery,
       trailersPerEvent: trailers,
       fullVideosPerEvent: videos,
+      photographerCount: photographers,
+      cinematographerCount: cinematographers,
+      includesChief: _includesChief,
       items: cleanedItems.isEmpty ? null : cleanedItems,
       inclusions: existing?.inclusions,
       createdAt: existing?.createdAt ?? now,
@@ -1199,18 +1256,18 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.voidElevated,
-        title: const Text(
+        title: Text(
           'Delete Package',
           style: TextStyle(color: AppColors.film),
         ),
         content: Text(
           'Delete "${pkg.name}"? This cannot be undone.',
-          style: const TextStyle(color: AppColors.filmDim),
+          style: TextStyle(color: AppColors.filmDim),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(
+            child: Text(
               'Cancel',
               style: TextStyle(color: AppColors.filmDim),
             ),
@@ -1236,7 +1293,7 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
           ..showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text('Package deleted.'),
               backgroundColor: AppColors.voidElevated,
               behavior: SnackBarBehavior.floating,

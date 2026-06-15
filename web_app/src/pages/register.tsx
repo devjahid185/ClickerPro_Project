@@ -28,12 +28,16 @@ export default function RegisterPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await api<{ token: string; user: any }>('/api/auth/register', {
+      const res = await api<any>('/api/auth/register', {
         method: 'POST',
         body: form,
       });
-      if (res.token) setToken(res.token);
-      if (res.user) localStorage.setItem('cp_web_user', JSON.stringify(res.user));
+      // Laravel wraps the payload in `{data: {...}}`; accept both shapes.
+      const payload = res?.data ?? res;
+      const token = payload?.token;
+      const user = payload?.user;
+      if (token) setToken(token);
+      if (user) localStorage.setItem('cp_web_user', JSON.stringify(user));
       router.replace('/app');
     } catch (err: any) {
       setError(err.message || 'Registration failed. Please try again.');
@@ -150,8 +154,9 @@ export default function RegisterPage() {
               <div className="field">
                 <label htmlFor="role">Your Role</label>
                 <select id="role" value={form.role} onChange={set('role')} disabled={loading}>
-                  <option value="OWNER">Studio Owner</option>
+                  <option value="OWNER">Owner</option>
                   <option value="FREELANCER">Freelancer</option>
+                  <option value="BOTH">Both</option>
                 </select>
               </div>
 

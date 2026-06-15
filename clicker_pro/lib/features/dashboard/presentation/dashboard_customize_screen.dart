@@ -26,7 +26,7 @@ class DashboardCustomizeScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
@@ -43,7 +43,7 @@ class DashboardCustomizeScreen extends ConsumerWidget {
           preferredSize: const Size.fromHeight(1),
           child: Container(
             height: 1,
-            color: Colors.black.withValues(alpha: 0.06),
+            color: AppColors.line(0.06),
           ),
         ),
       ),
@@ -112,13 +112,13 @@ class _SectionTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: section.enabled
-            ? Colors.black.withValues(alpha: 0.04)
-            : Colors.black.withValues(alpha: 0.02),
+            ? AppColors.line(0.04)
+            : AppColors.line(0.02),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: section.enabled
-              ? Colors.black.withValues(alpha: 0.08)
-              : Colors.black.withValues(alpha: 0.04),
+              ? AppColors.line(0.08)
+              : AppColors.line(0.04),
         ),
       ),
       child: ListTile(
@@ -129,7 +129,7 @@ class _SectionTile extends StatelessWidget {
           decoration: BoxDecoration(
             color: section.enabled
                 ? AppColors.accent.withValues(alpha: 0.12)
-                : Colors.black.withValues(alpha: 0.05),
+                : AppColors.line(0.05),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
@@ -196,9 +196,9 @@ class _ResetButton extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 14),
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.04),
+                color: AppColors.line(0.04),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+                border: Border.all(color: AppColors.line(0.08)),
               ),
               child: Text(
                 'Reset to Default',

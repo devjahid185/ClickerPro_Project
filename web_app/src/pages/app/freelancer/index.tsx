@@ -7,7 +7,7 @@ import { tk } from '@/lib/format';
 const fmtDate = (d: string) =>
   d ? new Date(d).toLocaleDateString('en-BD', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
 
-const TABS = ['Earnings', 'Availability', 'Leave', 'Work History', 'Badges'];
+const TABS = ['Earnings', 'Availability', 'Leave', 'Work History', 'Badges', 'Dashboard'];
 
 // Achievement badges derived from completed-job count + earnings.
 const BADGE_TIERS = [
@@ -88,6 +88,14 @@ export default function FreelancerPage() {
   const [histLoading, setHistLoading] = useState(true);
   const [histError, setHistError] = useState('');
 
+  // ── Multi-owner Dashboard + Check-in ──────────────────────────
+  const [dashEvents, setDashEvents] = useState<any[]>([]);
+  const [conflicts, setConflicts] = useState<any[]>([]);
+  const [dashLoading, setDashLoading] = useState(true);
+  const [dashError, setDashError] = useState('');
+  const [checkins, setCheckins] = useState<Record<string, any>>({});
+  const [checkingIn, setCheckingIn] = useState<string | null>(null);
+
   // ── Loaders ───────────────────────────────────────────────────
   const loadEarnings = async () => {
     setEarnLoading(true); setEarnError('');
@@ -138,11 +146,46 @@ export default function FreelancerPage() {
     finally { setHistLoading(false); }
   };
 
+  const loadDashboard = async () => {
+    setDashLoading(true); setDashError('');
+    try {
+      const [resE, resC] = await Promise.all([
+        api<any>('/api/freelancer/dashboard/events'),
+        api<any>('/api/freelancer/dashboard/conflicts'),
+      ]);
+      const events = Array.isArray(resE) ? resE : resE?.data ?? [];
+      setDashEvents(events);
+      setConflicts(Array.isArray(resC) ? resC : resC?.data ?? []);
+      // Pull current check-in status for each event in parallel.
+      const statuses = await Promise.all(
+        events.map((ev: any) =>
+          api<any>(`/api/freelancer/checkin/${ev.eventId}`).then((r) => r?.data ?? r).catch(() => null)),
+      );
+      const map: Record<string, any> = {};
+      events.forEach((ev: any, i: number) => { if (statuses[i]) map[ev.eventId] = statuses[i]; });
+      setCheckins(map);
+    } catch (e: any) { setDashError(e.message); }
+    finally { setDashLoading(false); }
+  };
+
+  const doCheckin = async (eventId: string) => {
+    setCheckingIn(eventId);
+    try {
+      const r = await api<any>('/api/freelancer/checkin', {
+        method: 'POST',
+        body: { eventId, checkinTime: new Date().toISOString(), status: 'checkedIn' },
+      });
+      setCheckins((prev) => ({ ...prev, [eventId]: r?.data ?? r }));
+    } catch (e: any) { alert(e.message); }
+    finally { setCheckingIn(null); }
+  };
+
   useEffect(() => {
     if (tab === 0) loadEarnings();
     else if (tab === 1) loadBlackouts();
     else if (tab === 2) loadLeaves();
     else if (tab === 3 || tab === 4) loadHistory();
+    else if (tab === 5) loadDashboard();
   }, [tab]);
 
   // ── Payment request ───────────────────────────────────────────
@@ -443,6 +486,59 @@ export default function FreelancerPage() {
                 );
               })}
             </div>
+          </>
+        )}
+
+        {/* ── Tab 5: Multi-owner Dashboard + Check-in ───────────── */}
+        {tab === 5 && (
+          <>
+            {dashError && <div className="error" style={{ marginBottom: 12 }}>{dashError}</div>}
+
+            {/* Conflict warnings */}
+            {conflicts.length > 0 && (
+              <div className="card" style={{ marginBottom: 16, borderLeft: '3px solid var(--red)' }}>
+                <div style={{ fontWeight: 700, color: 'var(--red)', marginBottom: 8 }}>⚠ Schedule Conflicts ({conflicts.length})</div>
+                {conflicts.map((c, i) => (
+                  <div key={i} className="muted text-sm" style={{ padding: '4px 0' }}>
+                    {new Date(c.date).toLocaleDateString()} — “{c.first?.title}” ({c.first?.shift}) ↔ “{c.second?.title}” ({c.second?.shift})
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {dashLoading && (
+              <div>{[...Array(4)].map((_, i) => <div key={i} className="shimmer" style={{ height: 76, borderRadius: 8, marginBottom: 10 }} />)}</div>
+            )}
+            {!dashLoading && dashEvents.length === 0 && <div className="empty">No assigned events across your studios yet.</div>}
+
+            {!dashLoading && dashEvents.map((ev) => {
+              const ci = checkins[ev.eventId];
+              const isToday = ev.date && new Date(ev.date).toDateString() === new Date().toDateString();
+              return (
+                <div key={ev.assignmentId} className="card" style={{ marginBottom: 10 }}>
+                  <div className="row" style={{ gap: 12, alignItems: 'center' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="truncate" style={{ fontWeight: 600 }}>{ev.title}</div>
+                      <div className="muted text-sm">
+                        {ev.date ? new Date(ev.date).toLocaleDateString() : '—'} · {ev.shift || '—'} · {ev.role}
+                        {ev.ownerName ? ` · ${ev.ownerName}` : ''}
+                      </div>
+                      {ev.venue && <div className="muted text-sm truncate">📍 {ev.venue}</div>}
+                    </div>
+                    {ci
+                      ? <span className={`badge ${ci.status === 'late' ? 'gold' : 'green'}`}>{ci.status === 'late' ? 'Late' : 'Checked in'}</span>
+                      : (
+                        <button
+                          className="btn sm"
+                          style={{ background: isToday ? 'var(--orange)' : 'var(--surface-2)', color: isToday ? '#000' : 'var(--film-muted)' }}
+                          disabled={checkingIn === ev.eventId}
+                          onClick={() => doCheckin(ev.eventId)}
+                        >{checkingIn === ev.eventId ? '…' : "I'm Here"}</button>
+                      )}
+                  </div>
+                </div>
+              );
+            })}
           </>
         )}
       </div>

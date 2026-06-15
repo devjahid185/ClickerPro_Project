@@ -57,10 +57,10 @@ class _PendingPublicBookingsScreenState
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Pending requests',
           style: TextStyle(
             color: AppColors.film,
@@ -158,18 +158,18 @@ class _PendingPublicBookingsScreenState
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.voidElevated,
-        title: const Text(
+        title: Text(
           'Reject request?',
           style: TextStyle(color: AppColors.film),
         ),
-        content: const Text(
+        content: Text(
           'The request will be removed from the pending list.',
           style: TextStyle(color: AppColors.filmDim),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(
+            child: Text(
               'Cancel',
               style: TextStyle(color: AppColors.filmDim),
             ),
@@ -229,7 +229,7 @@ class _RequestRow extends StatelessWidget {
                   request.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.film,
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -269,7 +269,7 @@ class _RequestRow extends StatelessWidget {
           const SizedBox(height: 6),
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.person_outline_rounded,
                 size: 14,
                 color: AppColors.filmMuted,
@@ -280,7 +280,7 @@ class _RequestRow extends StatelessWidget {
                   '${request.clientName} · ${request.clientPhone}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: AppColors.film, fontSize: 12.5),
+                  style: TextStyle(color: AppColors.film, fontSize: 12.5),
                 ),
               ),
             ],

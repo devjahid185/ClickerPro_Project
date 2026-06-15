@@ -120,6 +120,13 @@ class Booking {
   /// per Requirement 5.3 (Owner / Both / Freelancer always see them).
   final bool hidePaymentFromTeam;
 
+  /// Owner opt-in: when `true`, payment figures (total/advance/due) are
+  /// included on the *shared event details* sent to the team and
+  /// freelancers. Default `false` — shared details never expose money
+  /// unless the owner explicitly turns this on. (The client invoice always
+  /// shows payment regardless of this flag.)
+  final bool showPaymentInShare;
+
   /// Lifecycle status. Transitions through [BookingStatusMachine]; cannot
   /// be set arbitrarily — `StatusRepository.transition` is the only legal
   /// mutation path.
@@ -165,6 +172,7 @@ class Booking {
     this.chiefPhotographerUserId,
     this.chiefHours,
     this.hidePaymentFromTeam = false,
+    this.showPaymentInShare = false,
     required this.status,
     required this.createdAt,
     required this.updatedAt,
@@ -202,6 +210,7 @@ class Booking {
     String? chiefPhotographerUserId,
     double? chiefHours,
     bool? hidePaymentFromTeam,
+    bool? showPaymentInShare,
     BookingStatus? status,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -236,6 +245,7 @@ class Booking {
           chiefPhotographerUserId ?? this.chiefPhotographerUserId,
       chiefHours: chiefHours ?? this.chiefHours,
       hidePaymentFromTeam: hidePaymentFromTeam ?? this.hidePaymentFromTeam,
+      showPaymentInShare: showPaymentInShare ?? this.showPaymentInShare,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

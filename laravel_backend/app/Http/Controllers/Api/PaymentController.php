@@ -69,6 +69,54 @@ class PaymentController extends Controller
         return response()->json(['data' => $payments]);
     }
 
+    public function update(Request $request, $id)
+    {
+        $payment = Payment::find($id);
+        if (!$payment) {
+            return response()->json(['message' => 'Not found'], 404);
+        }
+
+        // Ownership: the payment's event must belong to the caller.
+        $owns = Event::where('owner_id', $request->user()->id)
+            ->where('id', $payment->event_id)->exists();
+        if (!$owns) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $data = $request->validate([
+            'amount' => 'nullable|numeric|min:0',
+            'kind' => 'nullable|string|in:ADVANCE,DUE,EXTRA,PAYOUT',
+            'method' => 'nullable|string|in:CASH,BKASH,NAGAD,BANK,CARD,OTHER',
+            'note' => 'nullable|string',
+            'paid_at' => 'nullable|date',
+        ]);
+
+        $payment = $this->payments->update(
+            $payment,
+            array_filter($data, fn($v) => $v !== null)
+        );
+
+        return response()->json(['data' => $payment]);
+    }
+
+    public function destroy(Request $request, $id)
+    {
+        $payment = Payment::find($id);
+        if (!$payment) {
+            return response()->json(['message' => 'Not found'], 404);
+        }
+
+        $owns = Event::where('owner_id', $request->user()->id)
+            ->where('id', $payment->event_id)->exists();
+        if (!$owns) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $this->payments->delete($payment);
+
+        return response()->json(['message' => 'ok']);
+    }
+
     public function earnings(Request $request)
     {
         $userId = $request->user()->id;

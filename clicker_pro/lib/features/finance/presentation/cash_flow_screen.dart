@@ -79,10 +79,10 @@ class CashFlowScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Cash Flow Timeline',
           style: TextStyle(
             color: AppColors.film,
@@ -166,7 +166,7 @@ class CashFlowScreen extends ConsumerWidget {
       );
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('PDF তৈরি করা যায়নি: $e')),
+        SnackBar(content: Text('Could not create PDF: $e')),
       );
     }
   }
@@ -198,7 +198,7 @@ class CashFlowScreen extends ConsumerWidget {
               const SizedBox(height: 4),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.filmMuted,
                   fontSize: 11,
                 ),
@@ -232,7 +232,7 @@ class CashFlowScreen extends ConsumerWidget {
         children: [
           Text(
             m.month,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.film,
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -263,7 +263,7 @@ class CashFlowScreen extends ConsumerWidget {
           color: AppColors.glass,
           borderRadius: BorderRadius.circular(4),
         ),
-        child: const Center(
+        child: Center(
           child: Text(
             'No bookings this month',
             style: TextStyle(color: AppColors.filmMuted, fontSize: 9),
@@ -338,7 +338,7 @@ class CashFlowScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Legend',
             style: TextStyle(
               color: AppColors.film,

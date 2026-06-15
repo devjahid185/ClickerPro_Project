@@ -17,21 +17,53 @@ class PackageController extends Controller
         return response()->json(['data' => $packages]);
     }
 
+    /**
+     * Keys that live in dedicated columns. Everything else the client sends
+     * (price, discount, prints, album, delivery, trailers, full videos,
+     * photographer / cinematographer counts, chief flag, items…) is stored
+     * verbatim in the JSON `meta` bag so nothing is silently dropped.
+     */
+    private const COLUMN_KEYS = [
+        'name', 'base_price', 'coverage_hours',
+        'has_video', 'has_drone', 'has_album', 'notes',
+    ];
+
+    private function splitPayload(Request $request): array
+    {
+        $all = $request->all();
+        // The web editor sends `price` (not `base_price`) — bridge it.
+        $basePrice = $request->input('base_price', $request->input('price'));
+
+        $columns = array_filter([
+            'name' => $request->input('name'),
+            'base_price' => $basePrice !== null ? (float) $basePrice : null,
+            'coverage_hours' => $request->input('coverage_hours'),
+            'has_video' => $request->input('has_video'),
+            'has_drone' => $request->input('has_drone'),
+            'has_album' => $request->input('has_album'),
+            'notes' => $request->input('notes'),
+        ], fn ($v) => $v !== null);
+
+        // meta = everything that isn't a real column or a control field.
+        $meta = collect($all)
+            ->except(array_merge(self::COLUMN_KEYS, ['owner_id', 'id', '_method']))
+            ->toArray();
+
+        return [$columns, $meta];
+    }
+
     public function store(Request $request)
     {
-        $data = $request->validate([
+        $request->validate([
             'name' => 'required|string|max:255',
-            'base_price' => 'required|numeric|min:0',
-            'coverage_hours' => 'nullable|integer|min:0',
-            'has_video' => 'nullable|boolean',
-            'has_drone' => 'nullable|boolean',
-            'has_album' => 'nullable|boolean',
-            'notes' => 'nullable|string',
         ]);
 
-        $data['owner_id'] = $request->user()->id;
+        [$columns, $meta] = $this->splitPayload($request);
+        $columns['owner_id'] = $request->user()->id;
+        $columns['base_price'] = $columns['base_price'] ?? 0;
+        $columns['meta'] = $meta;
 
-        $package = Package::create($data);
+        $package = Package::create($columns);
 
         return response()->json(['data' => $package], 201);
     }
@@ -44,17 +76,13 @@ class PackageController extends Controller
             return response()->json(['message' => 'Not found'], 404);
         }
 
-        $data = $request->validate([
-            'name' => 'nullable|string|max:255',
-            'base_price' => 'nullable|numeric|min:0',
-            'coverage_hours' => 'nullable|integer|min:0',
-            'has_video' => 'nullable|boolean',
-            'has_drone' => 'nullable|boolean',
-            'has_album' => 'nullable|boolean',
-            'notes' => 'nullable|string',
-        ]);
+        [$columns, $meta] = $this->splitPayload($request);
+        // Merge new meta over the existing bag so partial PATCHes keep
+        // previously-saved extended fields.
+        $existingMeta = is_array($package->meta) ? $package->meta : [];
+        $columns['meta'] = array_merge($existingMeta, $meta);
 
-        $package->update(array_filter($data, fn($v) => $v !== null));
+        $package->update($columns);
 
         return response()->json(['data' => $package->fresh()]);
     }

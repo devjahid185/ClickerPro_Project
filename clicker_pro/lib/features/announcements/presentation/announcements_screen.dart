@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/role/capability.dart';
+import '../../../core/role/role_policy.dart';
 import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_strings.dart';
 import '../../../theme/app_theme.dart';
+import '../../profile/application/profile_controllers.dart';
 import '../../settings/application/language_controller.dart';
+import '../../team/application/team_providers.dart';
 import '../application/announcement_providers.dart';
 import '../domain/announcement.dart';
 import 'create_announcement_sheet.dart';
@@ -36,18 +40,18 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.voidLight,
-        title: const Text(
+        title: Text(
           'Delete announcement',
           style: TextStyle(color: AppColors.film),
         ),
-        content: const Text(
+        content: Text(
           'This action cannot be undone.',
           style: TextStyle(color: AppColors.filmDim),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(
+            child: Text(
               'Cancel',
               style: TextStyle(color: AppColors.filmDim),
             ),
@@ -74,6 +78,13 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(sortedAnnouncementsProvider);
+    final role = ref.watch(currentUserProvider).valueOrNull?.role;
+    final canManage =
+        role != null && RolePolicy(role).can(Capability.createAnnouncement);
+    // Real team size for the "N of M read" line: every member plus the owner.
+    // Falls back to 1 (owner only) while the team list is still loading.
+    final teamSize =
+        (ref.watch(teamMembersProvider).valueOrNull?.length ?? 0) + 1;
 
     return Scaffold(
       backgroundColor: AppColors.voidBlack,
@@ -81,10 +92,10 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Announcements',
           style: TextStyle(
             color: AppColors.film,
@@ -123,8 +134,10 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
                     child: EmptyState(
                       message: 'No announcements yet',
                       icon: Icons.campaign_outlined,
-                      actionLabel: 'Create announcement',
-                      onAction: () => CreateAnnouncementSheet.show(context),
+                      actionLabel: canManage ? 'Create announcement' : null,
+                      onAction: canManage
+                          ? () => CreateAnnouncementSheet.show(context)
+                          : null,
                     ),
                   );
                 }
@@ -132,6 +145,7 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
                   itemCount: items.length,
                   itemBuilder: (_, i) => _AnnouncementCard(
                     announcement: items[i],
+                    canManage: canManage,
                     onTogglePin: () => ref
                         .read(announcementListControllerProvider.notifier)
                         .togglePin(items[i].id, items[i].pinned),
@@ -140,7 +154,7 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
                     onMarkRead: () => ref
                         .read(announcementListControllerProvider.notifier)
                         .markRead(items[i].id),
-                    teamSize: 8,
+                    teamSize: teamSize,
                   ),
                 );
               },
@@ -149,16 +163,18 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
           ],
         ),
       ),
-      floatingActionButton: async.maybeWhen(
-        data: (items) => FloatingActionButton.extended(
-          backgroundColor: AppColors.orange,
-          foregroundColor: Colors.white,
-          onPressed: () => CreateAnnouncementSheet.show(context),
-          icon: const Icon(Icons.add),
-          label: const Text('New'),
-        ),
-        orElse: () => null,
-      ),
+      floatingActionButton: canManage
+          ? async.maybeWhen(
+              data: (items) => FloatingActionButton.extended(
+                backgroundColor: AppColors.orange,
+                foregroundColor: Colors.white,
+                onPressed: () => CreateAnnouncementSheet.show(context),
+                icon: const Icon(Icons.add),
+                label: const Text('New'),
+              ),
+              orElse: () => null,
+            )
+          : null,
     );
   }
 }
@@ -166,6 +182,7 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
 class _AnnouncementCard extends StatelessWidget {
   const _AnnouncementCard({
     required this.announcement,
+    required this.canManage,
     required this.onTogglePin,
     required this.onDelete,
     required this.onMarkRead,
@@ -173,6 +190,7 @@ class _AnnouncementCard extends StatelessWidget {
   });
 
   final Announcement announcement;
+  final bool canManage;
   final VoidCallback onTogglePin;
   final VoidCallback onDelete;
   final VoidCallback onMarkRead;
@@ -247,40 +265,41 @@ class _AnnouncementCard extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    PopupMenuButton<String>(
-                      onSelected: (v) {
-                        if (v == 'pin') onTogglePin();
-                        if (v == 'delete') onDelete();
-                      },
-                      color: AppColors.voidLight,
-                      icon: Icon(
-                        Icons.more_vert,
-                        color: AppColors.filmDim.withValues(alpha: 0.6),
-                        size: 18,
+                    if (canManage)
+                      PopupMenuButton<String>(
+                        onSelected: (v) {
+                          if (v == 'pin') onTogglePin();
+                          if (v == 'delete') onDelete();
+                        },
+                        color: AppColors.voidLight,
+                        icon: Icon(
+                          Icons.more_vert,
+                          color: AppColors.filmDim.withValues(alpha: 0.6),
+                          size: 18,
+                        ),
+                        itemBuilder: (_) => [
+                          PopupMenuItem(
+                            value: 'pin',
+                            child: Text(
+                              announcement.pinned ? 'Unpin' : 'Pin',
+                              style: TextStyle(color: AppColors.film),
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Text(
+                              'Delete',
+                              style: TextStyle(color: AppColors.red),
+                            ),
+                          ),
+                        ],
                       ),
-                      itemBuilder: (_) => [
-                        PopupMenuItem(
-                          value: 'pin',
-                          child: Text(
-                            announcement.pinned ? 'Unpin' : 'Pin',
-                            style: const TextStyle(color: AppColors.film),
-                          ),
-                        ),
-                        const PopupMenuItem(
-                          value: 'delete',
-                          child: Text(
-                            'Delete',
-                            style: TextStyle(color: AppColors.red),
-                          ),
-                        ),
-                      ],
-                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Text(
                   announcement.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -291,7 +310,7 @@ class _AnnouncementCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   preview,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12.5,
                     color: AppColors.filmDim,
                     height: 1.5,
@@ -326,7 +345,7 @@ class _AnnouncementCard extends StatelessWidget {
                 const SizedBox(height: 10),
                 Container(
                   height: 1,
-                  color: Colors.black.withValues(alpha: 0.06),
+                  color: AppColors.line(0.06),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -373,7 +392,7 @@ class _AnnouncementCard extends StatelessWidget {
               width: 5,
               height: 5,
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.2),
+                color: AppColors.line(0.2),
                 shape: BoxShape.circle,
               ),
             ),

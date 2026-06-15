@@ -6,6 +6,7 @@
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors_light.dart';
 
@@ -289,6 +290,13 @@ class AppThemeLight {
         foregroundColor: AppColorsLight.textPrimary,
         elevation: 0,
         scrolledUnderElevation: 1,
+        // Light background → DARK status-bar icons (time/network/battery),
+        // otherwise the default light icons vanish against the cream bar.
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
       ),
       cardTheme: CardThemeData(
         color: AppColorsLight.glass,

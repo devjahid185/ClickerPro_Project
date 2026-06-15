@@ -92,7 +92,7 @@ class _LanguagePickerScreenState extends ConsumerState<LanguagePickerScreen> {
               ),
               const SizedBox(height: 14),
               _LangCard(
-                primary: 'বাংলা',
+                primary: 'English',
                 secondary: 'Bengali',
                 primaryStyle: GoogleFonts.notoSansBengali(
                   fontSize: 26,

@@ -17,8 +17,10 @@ class AssignmentController extends Controller
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
+        // Public columns only — the full User row would leak
+        // manager_permissions, tokens and email to teammates.
         $assignments = Assignment::where('event_id', $eventId)
-            ->with('user')
+            ->with('user:id,name,avatar,role,phone')
             ->get();
 
         return response()->json(['data' => $assignments]);
@@ -42,7 +44,10 @@ class AssignmentController extends Controller
 
         $assignment = Assignment::create($data);
 
-        return response()->json(['data' => $assignment->load('user')], 201);
+        return response()->json(
+            ['data' => $assignment->load('user:id,name,avatar,role,phone')],
+            201
+        );
     }
 
     public function update($eventId, $id, Request $request)
@@ -66,7 +71,9 @@ class AssignmentController extends Controller
 
         $assignment->update(array_filter($data, fn($v) => $v !== null));
 
-        return response()->json(['data' => $assignment->fresh()->load('user')]);
+        return response()->json(
+            ['data' => $assignment->fresh()->load('user:id,name,avatar,role,phone')]
+        );
     }
 
     public function destroy($eventId, $id, Request $request)

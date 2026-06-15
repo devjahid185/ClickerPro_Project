@@ -19,6 +19,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
+import '../../bookings/application/booking_providers.dart';
+import '../../bookings/domain/booking.dart';
+import '../../bookings/domain/booking_filter.dart';
 import '../application/payment_providers.dart';
 import '../domain/payment_record.dart';
 
@@ -58,6 +61,14 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
   String _type = 'due';
   bool _hidden = false;
   bool _saving = false;
+  // When the sheet is opened without a fixed event (the standalone Payments
+  // screen passes ''), the owner picks which booking the payment applies to.
+  String? _selectedEventId;
+
+  /// The event this payment is recorded against — the fixed one passed in, or
+  /// the booking the user picked.
+  String get _effectiveEventId =>
+      widget.eventId.isNotEmpty ? widget.eventId : (_selectedEventId ?? '');
 
   @override
   void dispose() {
@@ -67,11 +78,17 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
 
   Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (_effectiveEventId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pick a booking for this payment first')),
+      );
+      return;
+    }
     setState(() => _saving = true);
 
     final draft = PaymentRecord(
       id: '',
-      eventId: widget.eventId,
+      eventId: _effectiveEventId,
       amount: double.parse(_amountCtl.text.trim()),
       method: _method,
       type: _type,
@@ -116,7 +133,7 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
                   ),
                 ),
               ),
-              const Text(
+              Text(
                 'Record Payment',
                 style: TextStyle(
                   color: AppColors.film,
@@ -127,6 +144,12 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
               ),
               const SizedBox(height: 16),
 
+              // Booking picker — only when no fixed event was supplied.
+              if (widget.eventId.isEmpty) ...[
+                _buildBookingPicker(),
+                const SizedBox(height: 16),
+              ],
+
               // Amount
               TextFormField(
                 controller: _amountCtl,
@@ -136,7 +159,7 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                 ],
-                style: const TextStyle(color: AppColors.film),
+                style: TextStyle(color: AppColors.film),
                 decoration: _decoration('Amount'),
                 validator: (raw) {
                   final v = double.tryParse((raw ?? '').trim());
@@ -149,7 +172,7 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
               const SizedBox(height: 16),
 
               // Method selector
-              const Text(
+              Text(
                 'METHOD',
                 style: TextStyle(
                   color: AppColors.filmDim,
@@ -185,7 +208,7 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
               const SizedBox(height: 16),
 
               // Type selector
-              const Text(
+              Text(
                 'TYPE',
                 style: TextStyle(
                   color: AppColors.filmDim,
@@ -218,13 +241,13 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.visibility_off_outlined,
                       color: AppColors.filmDim,
                       size: 20,
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'Hide from team',
                         style: TextStyle(color: AppColors.film, fontSize: 14),
@@ -248,7 +271,7 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
                       onPressed: _saving
                           ? null
                           : () => Navigator.of(context).pop(),
-                      child: const Text(
+                      child: Text(
                         'Cancel',
                         style: TextStyle(color: AppColors.filmDim),
                       ),
@@ -278,6 +301,81 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
         ),
       ),
     );
+  }
+
+  /// Dropdown of the studio's bookings so a standalone payment can be
+  /// attached to the right event. Uses the booking's server id (remoteId)
+  /// because the payments API keys on the backend event id.
+  Widget _buildBookingPicker() {
+    final async = ref.watch(bookingListProvider(const BookingFilter()));
+    return async.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: LensLoader(size: 20),
+      ),
+      error: (_, _) => Text(
+        'Could not load bookings',
+        style: TextStyle(color: AppColors.filmDim, fontSize: 13),
+      ),
+      data: (bookings) {
+        // Only bookings already synced to the server can take a payment
+        // (the API needs their backend id).
+        final selectable = bookings
+            .where((b) => (b.remoteId ?? '').isNotEmpty)
+            .toList();
+        if (selectable.isEmpty) {
+          return Text(
+            'No synced bookings to attach a payment to yet.',
+            style: TextStyle(color: AppColors.filmDim, fontSize: 13),
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'BOOKING',
+              style: TextStyle(
+                color: AppColors.filmDim,
+                fontSize: 12,
+                letterSpacing: 1.0,
+              ),
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              initialValue: _selectedEventId,
+              isExpanded: true,
+              dropdownColor: AppColors.voidElevated,
+              style: TextStyle(color: AppColors.film, fontSize: 14),
+              decoration: _decoration('Select booking'),
+              items: [
+                for (final b in selectable)
+                  DropdownMenuItem(
+                    value: b.remoteId,
+                    child: Text(
+                      _bookingLabel(b),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+              ],
+              validator: (v) =>
+                  (v == null || v.isEmpty) ? 'Pick a booking' : null,
+              onChanged: (v) => setState(() => _selectedEventId = v),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  String _bookingLabel(Booking b) {
+    final who = (b.clientName?.trim().isNotEmpty ?? false)
+        ? b.clientName!.trim()
+        : b.title;
+    final d = b.date;
+    final date =
+        '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}';
+    return '$who · $date';
   }
 
   Widget _methodChip(String value, IconData icon, String label, Color color) {
@@ -335,16 +433,16 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
   InputDecoration _decoration(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: AppColors.filmDim),
+      labelStyle: TextStyle(color: AppColors.filmDim),
       filled: true,
       fillColor: AppColors.voidElevated,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.glassBorder),
+        borderSide: BorderSide(color: AppColors.glassBorder),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.glassBorder),
+        borderSide: BorderSide(color: AppColors.glassBorder),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

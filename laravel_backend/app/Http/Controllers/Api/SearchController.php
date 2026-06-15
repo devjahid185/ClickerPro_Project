@@ -19,19 +19,43 @@ class SearchController extends Controller
             return response()->json(['data' => ['events' => [], 'clients' => [], 'payments' => []]]);
         }
 
-        $events = Event::where('owner_id', $userId)
+        // Clients match by name, email AND phone number.
+        $clients = Client::where('owner_id', $userId)
             ->where(function ($query) use ($q) {
-                $query->where('title', 'like', "%{$q}%")
-                      ->orWhere('venue', 'like', "%{$q}%");
+                $query->where('name', 'like', "%{$q}%")
+                      ->orWhere('email', 'like', "%{$q}%")
+                      ->orWhere('phone', 'like', "%{$q}%");
             })
             ->limit(10)
             ->get();
 
-        $clients = Client::where('owner_id', $userId)
-            ->where(function ($query) use ($q) {
-                $query->where('name', 'like', "%{$q}%")
-                      ->orWhere('email', 'like', "%{$q}%");
+        // The query may be a date ("2026-06-15", "15/06/2026", "june 15").
+        $parsedDate = null;
+        try {
+            $normalized = preg_match('#^\d{1,2}/\d{1,2}/\d{4}$#', $q)
+                ? str_replace('/', '-', $q) // d/m/Y → d-m-Y so Carbon reads day-first
+                : $q;
+            $parsedDate = \Illuminate\Support\Carbon::parse($normalized)->toDateString();
+        } catch (\Throwable $e) {
+            // Not a date — fine.
+        }
+
+        // Events match by title, venue, date, or the matched clients
+        // (so searching a phone number / client / company name finds
+        // their events too).
+        $clientIds = $clients->pluck('id');
+        $events = Event::where('owner_id', $userId)
+            ->where(function ($query) use ($q, $parsedDate, $clientIds) {
+                $query->where('title', 'like', "%{$q}%")
+                      ->orWhere('venue', 'like', "%{$q}%");
+                if ($parsedDate) {
+                    $query->orWhereDate('date', $parsedDate);
+                }
+                if ($clientIds->isNotEmpty()) {
+                    $query->orWhereIn('client_id', $clientIds);
+                }
             })
+            ->orderBy('date', 'desc')
             ->limit(10)
             ->get();
 

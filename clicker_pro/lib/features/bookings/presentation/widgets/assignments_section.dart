@@ -85,7 +85,7 @@ class AssignmentsSection extends ConsumerWidget {
                     Container(
                       height: 1,
                       margin: const EdgeInsets.symmetric(vertical: 4),
-                      color: Colors.black.withValues(alpha: 0.04),
+                      color: AppColors.line(0.04),
                     ),
                 ],
               ],

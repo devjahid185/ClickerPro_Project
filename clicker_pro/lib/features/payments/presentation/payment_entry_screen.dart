@@ -27,10 +27,10 @@ class PaymentEntryScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Payment Records',
           style: TextStyle(
             color: AppColors.film,
@@ -127,7 +127,7 @@ class _SummaryCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Total Recorded',
                 style: TextStyle(color: AppColors.filmDim, fontSize: 12),
               ),
@@ -212,7 +212,7 @@ class _PaymentRow extends StatelessWidget {
         ),
         title: Text(
           '৳ ${record.amount.toStringAsFixed(2)}',
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.film,
             fontSize: 15,
             fontWeight: FontWeight.w700,

@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import Shell from '@/components/Shell';
-import { api } from '@/lib/api';
+import { api, getToken } from '@/lib/api';
 
 type Broadcast = {
   id: string;
@@ -126,6 +126,34 @@ function NewBroadcastModal({ onClose, onDone }: { onClose: () => void; onDone: (
   const [imageUrl, setImageUrl] = useState('');
   const [err, setErr] = useState('');
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const uploadBanner = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setErr('');
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/files/upload', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getToken()}` },
+        body: fd,
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.message || 'Upload failed');
+      const url = json?.data?.url || json?.url;
+      if (!url) throw new Error('No URL returned');
+      setImageUrl(url);
+    } catch (e: any) {
+      setErr(e.message);
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
 
   const save = async () => {
     const url = link.trim();
@@ -140,6 +168,9 @@ function NewBroadcastModal({ onClose, onDone }: { onClose: () => void; onDone: (
         method: 'POST',
         body: {
           title: title.trim(),
+          // Send both keys so the broadcast saves regardless of whether the
+          // backend expects `body` or the `content` alias.
+          body: content.trim(),
           content: content.trim(),
           priority,
           type,
@@ -196,12 +227,32 @@ function NewBroadcastModal({ onClose, onDone }: { onClose: () => void; onDone: (
           </div>
         </div>
         <div className="field">
-          <label>Image URL (optional)</label>
-          <input
-            placeholder="https://example.com/banner.jpg"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-          />
+          <label>Banner image (optional)</label>
+          <div className="row" style={{ gap: 8 }}>
+            <input
+              style={{ flex: 1 }}
+              placeholder="https://example.com/banner.jpg — or upload →"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+            />
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              style={{ display: 'none' }}
+              onChange={uploadBanner}
+            />
+            <button type="button" className="btn secondary" onClick={() => fileRef.current?.click()} disabled={uploading}>
+              {uploading ? 'Uploading…' : '⬆ Upload'}
+            </button>
+          </div>
+          {imageUrl && (
+            <div style={{ marginTop: 8 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={imageUrl} alt="Banner preview" style={{ maxHeight: 120, borderRadius: 8, border: '1px solid var(--border, #333)' }} />
+              <button type="button" className="btn sm danger" style={{ marginLeft: 8 }} onClick={() => setImageUrl('')}>Remove</button>
+            </div>
+          )}
         </div>
         <div className="field">
           <label>Link (optional) — tapping the broadcast opens this</label>

@@ -132,7 +132,7 @@ class NotificationRow extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       BookingFormat.relative(notification.sentAt, lang: lang),
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.filmMuted,
                         fontSize: 11,
                       ),

@@ -12,6 +12,10 @@ class ChatMessage {
   final String? senderName;
   final String? senderRole;
 
+  /// User ids (as strings) that have seen this message — drives the read
+  /// receipt on the sender's own bubbles.
+  final List<String> readBy;
+
   const ChatMessage({
     required this.id,
     required this.groupId,
@@ -20,20 +24,31 @@ class ChatMessage {
     required this.sentAt,
     this.senderName,
     this.senderRole,
+    this.readBy = const <String>[],
   });
+
+  /// How many OTHER members have seen this message.
+  int get seenCount => readBy.length;
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
     final sender = (json['sender'] as Map?)?.cast<String, dynamic>();
+    final sentRaw = json['sentAt'] ?? json['created_at'] ?? json['createdAt'];
+    final readRaw = (json['read_by'] ?? json['readBy']) as List?;
     return ChatMessage(
       id: (json['id'] ?? '').toString(),
-      groupId: (json['groupId'] ?? '').toString(),
-      senderId: (json['senderId'] ?? '').toString(),
-      text: (json['text'] ?? '').toString(),
-      sentAt: json['sentAt'] == null
+      groupId: (json['groupId'] ?? json['group_id'] ?? '').toString(),
+      senderId: (json['senderId'] ?? json['sender_id'] ?? '').toString(),
+      // Laravel column is `body`; legacy backend used `text`.
+      text: (json['text'] ?? json['body'] ?? '').toString(),
+      sentAt: sentRaw == null
           ? DateTime.now()
-          : DateTime.parse(json['sentAt'].toString()),
-      senderName: sender?['fullName'] as String?,
+          : (DateTime.tryParse(sentRaw.toString()) ?? DateTime.now()),
+      senderName:
+          (sender?['fullName'] ?? sender?['name']) as String?,
       senderRole: sender?['role'] as String?,
+      readBy:
+          readRaw?.map((e) => e.toString()).toList(growable: false) ??
+          const <String>[],
     );
   }
 

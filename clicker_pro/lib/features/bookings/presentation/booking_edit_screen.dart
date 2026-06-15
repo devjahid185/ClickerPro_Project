@@ -26,24 +26,32 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/notifications/event_reminder_service.dart';
 import '../../../core/role/capability.dart';
 import '../../../core/role/role_policy.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
+import '../../../shared/widgets/celebration.dart';
 import '../../../theme/app_colors.dart';
 import '../../auth/domain/user_role.dart';
+import '../../calendar_sync/data/calendar_sync_service.dart';
+import '../../profile/application/profile_controllers.dart';
+import '../../../core/providers.dart';
+import '../application/booking_conflict.dart';
 import '../application/booking_edit_controller.dart';
 import '../application/booking_providers.dart';
 import '../domain/assignment_role.dart';
 import '../domain/booking.dart';
-import '../domain/client.dart';
+import '../domain/booking_filter.dart';
 import '../domain/event_type.dart';
 import '../domain/package.dart';
 import '../domain/shift.dart';
 import 'widgets/assignments_editor.dart';
 import 'widgets/lens_form_fields.dart';
+import 'widgets/team_member_picker_sheet.dart';
 
 class BookingEditScreen extends ConsumerStatefulWidget {
   const BookingEditScreen({super.key, this.bookingId});
@@ -74,10 +82,18 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
   final _locationCtrl = TextEditingController();
   final _reportingTimeCtrl = TextEditingController();
   final _chiefNameCtrl = TextEditingController();
+  final _mapLinkCtrl = TextEditingController();
+  final _requirementsCtrl = TextEditingController();
 
   BookingValidation _validation = const BookingValidation({});
   bool _seeded = false;
   bool _dirty = false;
+
+  /// Whether the Chief Photographer section is toggled on. Kept as
+  /// local UI state — deriving it from `chiefPhotographerUserId` made
+  /// the toggle a no-op (turning it ON set nothing, so the name field
+  /// never appeared and a chief could never be added).
+  bool _chiefEnabled = false;
 
   /// When `true`, the Freelancer short-form (FL-12) is shown instead
   /// of the full Owner form. Only relevant when role is `UserRole.both`.
@@ -136,6 +152,8 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     _locationCtrl.dispose();
     _reportingTimeCtrl.dispose();
     _chiefNameCtrl.dispose();
+    _mapLinkCtrl.dispose();
+    _requirementsCtrl.dispose();
     _flashCtrl.dispose();
     _shakeCtrl.dispose();
     super.dispose();
@@ -163,6 +181,9 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     if (draft.chiefPhotographerUserId != null) {
       _chiefNameCtrl.text = draft.chiefPhotographerUserId!;
     }
+    _chiefEnabled = draft.chiefPhotographerUserId != null;
+    _mapLinkCtrl.text = draft.mapLink ?? '';
+    _requirementsCtrl.text = draft.requirementsNote ?? '';
     _seeded = true;
   }
 
@@ -199,7 +220,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.close_rounded, color: AppColors.film),
+            icon: Icon(Icons.close_rounded, color: AppColors.film),
             tooltip: loc.bookings_cancel,
             onPressed: () async {
               final shouldDiscard = !_dirty || await _confirmDiscard();
@@ -211,45 +232,15 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
             isCreate
                 ? loc.bookings_new_booking_screen
                 : loc.bookings_edit_booking_screen,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.film,
               fontFamily: 'Poppins',
               fontSize: 22,
               fontWeight: FontWeight.w600,
             ),
           ),
-          actions: [
-            AnimatedBuilder(
-              animation: _flashAnim,
-              builder: (context, child) {
-                final flash = _flashAnim.value;
-                return TextButton(
-                  onPressed: draftAsync.hasValue ? _onSave : null,
-                  style: TextButton.styleFrom(
-                    backgroundColor: flash > 0
-                        ? AppColors.teal.withValues(alpha: flash * 0.15)
-                        : Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: Text(
-                    loc.bookings_save,
-                    style: TextStyle(
-                      color: flash > 0
-                          ? Color.lerp(Colors.white, AppColors.teal, flash)
-                          : AppColors.orange,
-                      fontFamily: 'Montserrat',
-                      fontSize: 12,
-                      letterSpacing: 1.4,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(width: 8),
-          ],
+          // Saving happens only through the sticky "Create Booking" /
+          // "Save Changes" bar below — the duplicate appbar SAVE was removed.
         ),
         body: SafeArea(
           child: draftAsync.when(
@@ -290,7 +281,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
         color: AppColors.voidElevated,
         border: Border(
           bottom: BorderSide(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: AppColors.line(0.06),
             width: 0.5,
           ),
         ),
@@ -342,7 +333,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
                 color: _hidePaymentVisible
-                    ? Colors.black.withValues(alpha: 0.06)
+                    ? AppColors.line(0.06)
                     : AppColors.gold.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -388,9 +379,9 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.04),
+        color: AppColors.line(0.04),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+        border: Border.all(color: AppColors.line(0.08)),
       ),
       child: Row(
         children: [
@@ -399,7 +390,14 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
               label: 'Freelancer',
               icon: Icons.camera_alt_outlined,
               selected: _showFreelancerForm,
-              onTap: () => setState(() => _showFreelancerForm = true),
+              onTap: () {
+                setState(() => _showFreelancerForm = true);
+                ref
+                    .read(
+                      bookingEditControllerProvider(widget.bookingId).notifier,
+                    )
+                    .setFreelancerMode(true);
+              },
             ),
           ),
           Expanded(
@@ -407,7 +405,14 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
               label: 'Owner',
               icon: Icons.business_center_outlined,
               selected: !_showFreelancerForm,
-              onTap: () => setState(() => _showFreelancerForm = false),
+              onTap: () {
+                setState(() => _showFreelancerForm = false);
+                ref
+                    .read(
+                      bookingEditControllerProvider(widget.bookingId).notifier,
+                    )
+                    .setFreelancerMode(false);
+              },
             ),
           ),
         ],
@@ -473,6 +478,8 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
             controller.setVenue(v.isEmpty ? null : v);
           },
         ),
+        // 5b. Optional venue map link — tap the pin to open the maps app.
+        _buildMapLinkField(controller),
         // 6. Package
         _buildPackageSection(draft, controller),
         // 7. Outdoor toggle → conditional Location + Time fields
@@ -528,14 +535,17 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
         ],
         // 12. Payment (Total / Advance / Due)
         _buildPaymentSection(draft, controller, policy),
-        // 13. Client picker (moved after Payment per v12 spec)
-        LensPickerRow(
-          label: 'Client',
-          icon: Icons.person_outline_rounded,
-          valueText: _clientLabel(draft.clientId),
-          placeholder: 'Pick or create a client',
-          errorText: _validation.errorFor(BookingField.client),
-          onTap: () => _pickClient(draft, controller),
+        // 13. Client Requirements — optional free text (prints, album,
+        // pendrive, delivery system, …).
+        LensTextField(
+          label: 'Client Requirements (optional)',
+          controller: _requirementsCtrl,
+          hint: 'Print, album, pendrive, delivery system…',
+          maxLines: 3,
+          onChanged: (v) {
+            _markDirty();
+            controller.setRequirementsNote(v.isEmpty ? null : v);
+          },
         ),
         // 14. Notes
         LensTextField(
@@ -557,6 +567,19 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
             onChanged: (v) {
               _markDirty();
               controller.setHidePaymentFromTeam(v);
+            },
+          ),
+        // 15b. Show payment on shared event details (owner opt-in).
+        if (policy.can(Capability.toggleHidePayment))
+          LensSwitchTile(
+            label: 'Show payment in shared details',
+            subtitle:
+                'Off by default. When on, Total / Advance / Due appear on the '
+                'event details you share with the team and freelancers.',
+            value: draft.showPaymentInShare,
+            onChanged: (v) {
+              _markDirty();
+              controller.setShowPaymentInShare(v);
             },
           ),
         // 16. Assignments editor
@@ -630,6 +653,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
             onChanged: (_) => _markDirty(),
           ),
         ],
+        _buildMapLinkField(controller),
         _buildEventTypeSection(draft, controller),
         LensTextField(
           label: 'Notes',
@@ -655,10 +679,12 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
         children: Shift.values.map((shift) {
           final isSelected = draft.shift == shift;
           final label = switch (shift) {
-            Shift.day => 'Day\n12 – 5',
-            Shift.night => 'Night\n6 – 11',
+            Shift.day => 'Day 12–5',
+            Shift.night => 'Night 6–11',
             Shift.both => 'Full Day',
           };
+          // Compact single-row pills — the old stacked icon+label cards
+          // took ~3x the vertical space they needed.
           return Expanded(
             child: GestureDetector(
               onTap: () {
@@ -668,22 +694,23 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 margin: EdgeInsets.only(right: shift != Shift.both ? 8 : 0),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 6),
                 decoration: BoxDecoration(
                   // Selected = solid teal so the white label/icon is readable
                   // and it's obvious which shift is picked.
                   color: isSelected
                       ? AppColors.teal
-                      : Colors.black.withValues(alpha: 0.04),
-                  borderRadius: BorderRadius.circular(10),
+                      : AppColors.line(0.04),
+                  borderRadius: BorderRadius.circular(9),
                   border: Border.all(
                     color: isSelected
                         ? AppColors.teal
-                        : Colors.black.withValues(alpha: 0.08),
+                        : AppColors.line(0.08),
                     width: isSelected ? 1.2 : 1,
                   ),
                 ),
-                child: Column(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
                       shift == Shift.night
@@ -691,24 +718,26 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                           : shift == Shift.day
                           ? Icons.wb_sunny_outlined
                           : Icons.brightness_6_outlined,
-                      size: 18,
+                      size: 14,
                       color: isSelected
                           ? Colors.white
                           : AppColors.filmDim.withValues(alpha: 0.7),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      label,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: isSelected
-                            ? Colors.white
-                            : AppColors.filmDim.withValues(alpha: 0.85),
-                        fontSize: 11,
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.w500,
-                        height: 1.3,
+                    const SizedBox(width: 5),
+                    Flexible(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: isSelected
+                              ? Colors.white
+                              : AppColors.filmDim.withValues(alpha: 0.85),
+                          fontSize: 11,
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.w500,
+                        ),
                       ),
                     ),
                   ],
@@ -734,13 +763,13 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: AppColors.line(0.04),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+              border: Border.all(color: AppColors.line(0.08)),
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.inventory_2_outlined,
                   size: 18,
                   color: AppColors.filmDim,
@@ -756,7 +785,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                           fontFamily: 'Montserrat',
                           fontSize: 10,
                           letterSpacing: 1.4,
-                          color: AppColors.gold.withValues(alpha: 0.85),
+                          color: AppColors.film,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -765,7 +794,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                         _packageLabel(draft) ?? 'Pick a package',
                         style: TextStyle(
                           color: _packageLabel(draft) != null
-                              ? Colors.white
+                              ? AppColors.film
                               : AppColors.filmMuted.withValues(alpha: 0.7),
                           fontSize: 13.5,
                           fontWeight: FontWeight.w500,
@@ -777,7 +806,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                 AnimatedRotation(
                   turns: _packageSectionExpanded ? 0.5 : 0,
                   duration: const Duration(milliseconds: 200),
-                  child: const Icon(
+                  child: Icon(
                     Icons.expand_more_rounded,
                     size: 20,
                     color: AppColors.filmMuted,
@@ -831,13 +860,13 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: AppColors.line(0.04),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+              border: Border.all(color: AppColors.line(0.08)),
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.celebration_outlined,
                   size: 18,
                   color: AppColors.filmDim,
@@ -853,14 +882,14 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                           fontFamily: 'Montserrat',
                           fontSize: 10,
                           letterSpacing: 1.4,
-                          color: AppColors.gold.withValues(alpha: 0.85),
+                          color: AppColors.film,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         _titleCase(draft.eventType.name),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.film,
                           fontSize: 13.5,
                           fontWeight: FontWeight.w500,
@@ -872,7 +901,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                 AnimatedRotation(
                   turns: _eventTypesExpanded ? 0.5 : 0,
                   duration: const Duration(milliseconds: 200),
-                  child: const Icon(
+                  child: Icon(
                     Icons.expand_more_rounded,
                     size: 20,
                     color: AppColors.filmMuted,
@@ -905,12 +934,12 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                     decoration: BoxDecoration(
                       color: isSelected
                           ? AppColors.teal.withValues(alpha: 0.15)
-                          : Colors.black.withValues(alpha: 0.04),
+                          : AppColors.line(0.04),
                       borderRadius: BorderRadius.circular(999),
                       border: Border.all(
                         color: isSelected
                             ? AppColors.teal.withValues(alpha: 0.5)
-                            : Colors.black.withValues(alpha: 0.08),
+                            : AppColors.line(0.08),
                       ),
                     ),
                     child: Text(
@@ -943,7 +972,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     BookingDraft draft,
     BookingEditController controller,
   ) {
-    final isEnabled = draft.chiefPhotographerUserId != null;
+    final isEnabled = _chiefEnabled;
     return Column(
       children: [
         Padding(
@@ -953,12 +982,12 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
             decoration: BoxDecoration(
               color: isEnabled
                   ? AppColors.gold.withValues(alpha: 0.06)
-                  : Colors.black.withValues(alpha: 0.04),
+                  : AppColors.line(0.04),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: isEnabled
                     ? AppColors.gold.withValues(alpha: 0.35)
-                    : Colors.black.withValues(alpha: 0.08),
+                    : AppColors.line(0.08),
               ),
             ),
             child: Row(
@@ -974,18 +1003,18 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                           fontSize: 10,
                           letterSpacing: 1.4,
                           color: isEnabled
-                              ? AppColors.gold
+                              ? AppColors.film
                               : AppColors.filmMuted.withValues(alpha: 0.85),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        isEnabled
+                        draft.chiefPhotographerUserId != null
                             ? 'Assigned'
                             : 'Designate a lead photographer',
                         style: TextStyle(
-                          color: isEnabled
+                          color: draft.chiefPhotographerUserId != null
                               ? AppColors.gold
                               : AppColors.filmDim.withValues(alpha: 0.7),
                           fontSize: 11.5,
@@ -998,17 +1027,16 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                   value: isEnabled,
                   onChanged: (v) {
                     _markDirty();
+                    setState(() => _chiefEnabled = v);
                     if (!v) {
                       controller.setChiefPhotographerUserId(null);
                       _chiefNameCtrl.clear();
                     }
-                    // When toggled on, the text field appears below
-                    setState(() {});
                   },
                   activeThumbColor: Colors.white,
                   activeTrackColor: AppColors.gold,
                   inactiveThumbColor: AppColors.filmMuted,
-                  inactiveTrackColor: Colors.black.withValues(alpha: 0.08),
+                  inactiveTrackColor: AppColors.line(0.08),
                 ),
               ],
             ),
@@ -1016,16 +1044,81 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
         ),
         if (isEnabled)
           LensTextField(
-            label: 'Chief ID',
+            label: 'Chief Photographer Name',
             controller: _chiefNameCtrl,
-            hint: 'Paste chief photographer user ID',
+            hint: 'Type a name or pick from team',
+            suffix: IconButton(
+              tooltip: 'Pick from team',
+              icon: const Icon(
+                Icons.group_add_outlined,
+                color: AppColors.gold,
+                size: 20,
+              ),
+              onPressed: () => _pickChiefFromTeam(controller),
+            ),
             onChanged: (v) {
               _markDirty();
-              controller.setChiefPhotographerUserId(v.isEmpty ? null : v);
+              controller.setChiefPhotographerUserId(
+                v.trim().isEmpty ? null : v.trim(),
+              );
             },
           ),
       ],
     );
+  }
+
+  Future<void> _pickChiefFromTeam(BookingEditController controller) async {
+    final picked = await TeamMemberPickerSheet.show(
+      context,
+      title: 'Pick chief photographer',
+      multiSelect: false,
+      accentColor: AppColors.gold,
+    );
+    if (picked == null || picked.isEmpty) return;
+    final member = picked.first;
+    _chiefNameCtrl.text = member.fullName;
+    _markDirty();
+    controller.setChiefPhotographerUserId(member.fullName);
+  }
+
+  /// Optional map link field with a trailing pin that launches the
+  /// device's maps app. Accepts a Google-Maps share link or a plain
+  /// place name (which is opened as a maps search).
+  Widget _buildMapLinkField(BookingEditController controller) {
+    return LensTextField(
+      label: 'Location Map (optional)',
+      controller: _mapLinkCtrl,
+      hint: 'Paste a Google Maps link or place name',
+      keyboardType: TextInputType.url,
+      suffix: IconButton(
+        tooltip: 'Open in maps',
+        icon: const Icon(
+          Icons.location_on_outlined,
+          color: AppColors.teal,
+          size: 20,
+        ),
+        onPressed: () => _openMapLink(_mapLinkCtrl.text),
+      ),
+      onChanged: (v) {
+        _markDirty();
+        controller.setMapLink(v.isEmpty ? null : v);
+      },
+    );
+  }
+
+  Future<void> _openMapLink(String raw) async {
+    final value = raw.trim();
+    if (value.isEmpty) {
+      _showSnack('Add a map link or place name first.');
+      return;
+    }
+    final uri = value.startsWith('http://') || value.startsWith('https://')
+        ? Uri.parse(value)
+        : Uri.parse(
+            'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(value)}',
+          );
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && mounted) _showSnack('Could not open the maps app.');
   }
 
   Widget _buildQuickTeamSection(
@@ -1050,7 +1143,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
               fontFamily: 'Montserrat',
               fontSize: 10,
               letterSpacing: 1.4,
-              color: AppColors.gold.withValues(alpha: 0.85),
+              color: AppColors.film,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -1091,13 +1184,28 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     AssignmentRole role,
   ) async {
     final roleLabel = switch (role) {
-      AssignmentRole.photographer => 'Photographer',
-      AssignmentRole.cinematographer => 'Cinematographer',
+      AssignmentRole.photographer => 'Photographers',
+      AssignmentRole.cinematographer => 'Cinematographers',
       _ => role.name,
     };
-    final userId = await _QuickMemberDialog.show(context, roleLabel: roleLabel);
-    if (userId == null || userId.isEmpty) return;
-    controller.addAssignment(userId: userId, role: role, payout: 0.0);
+    final draft = ref
+        .read(bookingEditControllerProvider(widget.bookingId))
+        .valueOrNull;
+    final alreadyAssigned =
+        draft?.assignments.map((a) => a.userId).toSet() ?? const <String>{};
+    final picked = await TeamMemberPickerSheet.show(
+      context,
+      title: 'Add $roleLabel',
+      excludedUserIds: alreadyAssigned,
+      accentColor: role == AssignmentRole.cinematographer
+          ? AppColors.purple
+          : AppColors.teal,
+    );
+    if (picked == null || picked.isEmpty) return;
+    _markDirty();
+    for (final member in picked) {
+      controller.addAssignment(userId: member.userId, role: role, payout: 0.0);
+    }
   }
 
   Widget _buildPaymentSection(
@@ -1120,7 +1228,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
             fontFamily: 'Montserrat',
             fontSize: 10,
             letterSpacing: 1.4,
-            color: AppColors.gold.withValues(alpha: 0.85),
+            color: AppColors.film,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -1134,12 +1242,12 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
               decoration: BoxDecoration(
                 color: flashValue > 0
                     ? AppColors.teal.withValues(alpha: flashValue * 0.08)
-                    : Colors.black.withValues(alpha: 0.04),
+                    : AppColors.line(0.04),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: flashValue > 0
                       ? AppColors.teal.withValues(alpha: flashValue * 0.4)
-                      : Colors.black.withValues(alpha: 0.08),
+                      : AppColors.line(0.08),
                 ),
               ),
               child: Column(
@@ -1227,7 +1335,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
             surface: AppColors.surface,
             onSurface: AppColors.film,
           ),
-          dialogTheme: const DialogThemeData(
+          dialogTheme: DialogThemeData(
             backgroundColor: AppColors.voidElevated,
           ),
         ),
@@ -1237,20 +1345,6 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     if (picked == null) return;
     _markDirty();
     controller.setDate(picked);
-  }
-
-  Future<void> _pickClient(
-    BookingDraft draft,
-    BookingEditController controller,
-  ) async {
-    final picked = await _ClientPickerSheet.show(
-      context,
-      ref: ref,
-      currentStudioId: draft.studioId,
-    );
-    if (picked == null) return;
-    _markDirty();
-    controller.setClientId(picked);
   }
 
   Future<void> _pickPackage(
@@ -1267,14 +1361,32 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     if (result.useCustomPrice) {
       controller.setCustomPrice(0);
     } else if (result.package != null) {
+      final pkg = result.package!;
       controller.setPackage(
-        packageId: result.package!.id,
-        coverageHours: result.package!.coverageHours,
-        extraHourRate: result.package!.extraHourRate,
+        packageId: pkg.id,
+        coverageHours: pkg.coverageHours,
+        extraHourRate: pkg.extraHourRate,
       );
-      _coverageCtrl.text = result.package!.coverageHours?.toString() ?? '';
-      _extraRateCtrl.text = result.package!.extraHourRate?.toString() ?? '';
+      _coverageCtrl.text = pkg.coverageHours?.toString() ?? '';
+      _extraRateCtrl.text = pkg.extraHourRate?.toString() ?? '';
+      // MOD-25 auto-fill: a package that designates a chief turns the
+      // Chief Photographer section on automatically.
+      if (pkg.includesChief) {
+        setState(() => _chiefEnabled = true);
+      }
       _triggerPackageFlash();
+      // Surface the package's team composition so the user knows how many
+      // photographers / cinematographers to add.
+      final parts = <String>[
+        if ((pkg.photographerCount ?? 0) > 0)
+          '${pkg.photographerCount} photographer${pkg.photographerCount! > 1 ? 's' : ''}',
+        if ((pkg.cinematographerCount ?? 0) > 0)
+          '${pkg.cinematographerCount} cinematographer${pkg.cinematographerCount! > 1 ? 's' : ''}',
+        if (pkg.includesChief) 'chief',
+      ];
+      if (parts.isNotEmpty && mounted) {
+        _showSnack('${pkg.name}: ${parts.join(' · ')} — add the team');
+      }
     }
   }
 
@@ -1288,14 +1400,6 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
         if (mounted) setState(() => _isFlashingTotal = false);
       });
     });
-  }
-
-  String? _clientLabel(String? clientId) {
-    if (clientId == null) return null;
-    final clientAsync = ref.watch(clientByIdProvider(clientId));
-    final c = clientAsync.value;
-    if (c == null) return clientId;
-    return '${c.name} · ${c.phone}';
   }
 
   String? _packageLabel(BookingDraft draft) {
@@ -1320,18 +1424,18 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
         backgroundColor: AppColors.voidElevated,
         title: Text(
           loc.bookings_discard_changes,
-          style: const TextStyle(color: AppColors.film),
+          style: TextStyle(color: AppColors.film),
         ),
         content: Text(
           loc.bookings_discard_body,
-          style: const TextStyle(color: AppColors.filmDim),
+          style: TextStyle(color: AppColors.filmDim),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
             child: Text(
               loc.bookings_discard_keep,
-              style: const TextStyle(color: AppColors.filmDim),
+              style: TextStyle(color: AppColors.filmDim),
             ),
           ),
           FilledButton(
@@ -1365,10 +1469,83 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     if (_validation.errors.isNotEmpty) {
       setState(() => _validation = const BookingValidation({}));
     }
+
+    // ── Scheduling conflict guard (v12 Key Decisions) ──
+    // Freelancer = strict 1 event/shift (hard block). Owner/Both = warning
+    // unless Distribution mode is on.
+    final draft = ref.read(bookingEditControllerProvider(widget.bookingId)).valueOrNull;
+    if (draft != null) {
+      final policy = ref.read(bookingsPolicyProvider);
+      final existing =
+          ref.read(bookingListProvider(const BookingFilter())).valueOrNull ??
+          const [];
+      // Distribution mode lives in the per-user preferences (Settings).
+      final userId = ref.read(currentUserProvider).valueOrNull?.id;
+      final distributionOn = userId == null
+          ? false
+          : await ref
+                .read(preferencesRepositoryProvider)
+                .getDistributionEnabled(userId);
+      if (!mounted) return;
+      final conflict = BookingConflict.evaluate(
+        role: policy.role,
+        freelancerMode: draft.freelancerMode,
+        date: draft.date,
+        shift: draft.shift,
+        candidateId: draft.localId,
+        existing: existing,
+        distributionOn: distributionOn,
+      );
+      if (conflict.isBlock) {
+        _shakeCtrl.forward(from: 0);
+        _showConflictBlocked(conflict.clashingTitle);
+        return;
+      }
+      if (conflict.isWarning) {
+        final proceed = await _showConflictWarning(conflict.clashingTitle);
+        if (!mounted || !proceed) return;
+      }
+    }
+
     try {
       final saved = await controller.save();
       if (!mounted) return;
-      _showSnack('Saved ✓');
+      final isNewBooking = widget.bookingId == null;
+      // 🎉 celebrate a freshly created booking.
+      if (isNewBooking) Celebration.confetti(context);
+      _showSnack('Saved ✓ — adding to calendar');
+      // Schedule (or reschedule) the on-device "1 hour before" reminder.
+      // Fire-and-forget — never blocks the save flow.
+      EventReminderService.instance.scheduleForBooking(
+        bookingId: saved.id,
+        title: saved.clientName?.trim().isNotEmpty == true
+            ? saved.clientName!.trim()
+            : saved.title,
+        eventDate: saved.date,
+        startTime: saved.startTime,
+        venue: saved.venue,
+      );
+      // MOD-61: a new booking is auto-added to the device calendar. When the
+      // user has Auto-sync ON we ONLY do the silent device-calendar write —
+      // no Google web page, no manual "Save" tap. With Auto-sync OFF we keep
+      // the old behaviour (open the pre-filled page) as a manual fallback.
+      if (isNewBooking) {
+        final autoSync = await CalendarSyncService.isAutoSyncEnabled();
+        await CalendarSyncService.openGoogleCalendar(
+          title: saved.title,
+          date: saved.date,
+          startTime: saved.startTime,
+          endTime: saved.endTime,
+          venue: saved.venue,
+          description: [
+            if (saved.clientName != null) 'Client: ${saved.clientName}',
+            if (saved.clientPhone != null) 'Phone: ${saved.clientPhone}',
+            'Booked via CLICKER PRO',
+          ].join('\n'),
+          allowWebFallback: !autoSync,
+        );
+      }
+      if (!mounted) return;
       Navigator.of(context).pop<Booking>(saved);
     } on BookingValidationException catch (e) {
       if (!mounted) return;
@@ -1379,6 +1556,76 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
       if (!mounted) return;
       _showSnack('Could not save: $e');
     }
+  }
+
+  /// Freelancer hard block — same date+shift already booked. No override.
+  void _showConflictBlocked(String? clashTitle) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.voidElevated,
+        title: Text(
+          'This shift is already booked',
+          style: TextStyle(color: AppColors.film, fontSize: 18),
+        ),
+        content: Text(
+          'A freelancer can take only one event per shift.'
+          '${clashTitle != null ? '\n\nAlready booked this day/shift: "$clashTitle".' : ''}\n\n'
+          'To take multiple events in a shift, turn on Settings → Distribution. '
+          'Otherwise change the existing booking or pick another shift/date.',
+          style: TextStyle(color: AppColors.filmDim, fontSize: 13.5),
+        ),
+        actions: [
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.orange,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Got it'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Owner/Both warning — same date+shift already booked, override allowed.
+  /// Returns true if the user chooses to save anyway.
+  Future<bool> _showConflictWarning(String? clashTitle) async {
+    final proceed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.voidElevated,
+        title: Text(
+          'This shift is already booked',
+          style: TextStyle(color: AppColors.film, fontSize: 18),
+        ),
+        content: Text(
+          '${clashTitle != null ? '"$clashTitle" — ' : ''}there is already an event on this day/shift.\n\n'
+          'To take multiple events at once, turn on Profile → Distribution mode.\n\n'
+          'Save this booking anyway?',
+          style: TextStyle(color: AppColors.filmDim, fontSize: 13.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.filmDim),
+            ),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.orange,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Yes, save'),
+          ),
+        ],
+      ),
+    );
+    return proceed ?? false;
   }
 
   void _markDirty() {
@@ -1402,334 +1649,6 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
 // ─────────────────────────────────────────────────────────────────────
 // Pickers (bottom sheets)
 // ─────────────────────────────────────────────────────────────────────
-
-class _ClientPickerSheet extends ConsumerStatefulWidget {
-  const _ClientPickerSheet({required this.studioId});
-  final String studioId;
-
-  static Future<String?> show(
-    BuildContext context, {
-    required WidgetRef ref,
-    required String currentStudioId,
-  }) {
-    return showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: AppColors.voidElevated,
-      isScrollControlled: true,
-      builder: (_) => _ClientPickerSheet(studioId: currentStudioId),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
-    );
-  }
-
-  @override
-  ConsumerState<_ClientPickerSheet> createState() => _ClientPickerSheetState();
-}
-
-class _ClientPickerSheetState extends ConsumerState<_ClientPickerSheet> {
-  final _searchCtrl = TextEditingController();
-  List<Client> _results = const [];
-
-  @override
-  void initState() {
-    super.initState();
-    _runSearch('');
-  }
-
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _runSearch(String q) async {
-    final repo = ref.read(clientRepositoryProvider);
-    final list = await repo.searchByPhone(q);
-    if (!mounted) return;
-    setState(() => _results = list);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.75,
-        ),
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const _SheetHandle(),
-            const SizedBox(height: 8),
-            const Text(
-              'Pick a client',
-              style: TextStyle(
-                color: AppColors.film,
-                fontFamily: 'Poppins',
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 12),
-            LensTextField(
-              label: 'Search by phone',
-              controller: _searchCtrl,
-              keyboardType: TextInputType.phone,
-              hint: 'Type a phone number',
-              prefixIcon: Icons.search,
-              onChanged: _runSearch,
-            ),
-            const SizedBox(height: 8),
-            Flexible(
-              child: _results.isEmpty
-                  ? _NoResults(
-                      onCreate: () => _onCreateInline(_searchCtrl.text.trim()),
-                    )
-                  : ListView.separated(
-                      shrinkWrap: true,
-                      itemCount: _results.length,
-                      separatorBuilder: (_, _) => Container(
-                        height: 1,
-                        color: Colors.black.withValues(alpha: 0.04),
-                      ),
-                      itemBuilder: (_, i) {
-                        final c = _results[i];
-                        return ListTile(
-                          dense: true,
-                          contentPadding: EdgeInsets.zero,
-                          title: Text(
-                            c.name,
-                            style: const TextStyle(
-                              color: AppColors.film,
-                              fontSize: 14,
-                            ),
-                          ),
-                          subtitle: Text(
-                            c.phone,
-                            style: TextStyle(
-                              color: AppColors.filmDim.withValues(alpha: 0.85),
-                              fontSize: 12,
-                            ),
-                          ),
-                          trailing: const Icon(
-                            Icons.chevron_right_rounded,
-                            color: AppColors.filmMuted,
-                          ),
-                          onTap: () => Navigator.of(context).pop(c.id),
-                        );
-                      },
-                    ),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.add, color: AppColors.orange),
-              label: const Text(
-                'Create new client',
-                style: TextStyle(color: AppColors.orange),
-              ),
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(
-                  color: AppColors.orange.withValues(alpha: 0.4),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              onPressed: () => _onCreateInline(_searchCtrl.text.trim()),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _onCreateInline(String prefilledPhone) async {
-    final created = await _CreateClientDialog.show(
-      context,
-      studioId: widget.studioId,
-      prefillPhone: prefilledPhone,
-    );
-    if (created == null) return;
-    final saved = await ref.read(clientRepositoryProvider).save(created);
-    if (!mounted) return;
-    Navigator.of(context).pop(saved.id);
-  }
-}
-
-class _CreateClientDialog extends StatefulWidget {
-  const _CreateClientDialog({
-    required this.studioId,
-    required this.prefillPhone,
-  });
-
-  final String studioId;
-  final String prefillPhone;
-
-  static Future<Client?> show(
-    BuildContext context, {
-    required String studioId,
-    required String prefillPhone,
-  }) {
-    return showDialog<Client>(
-      context: context,
-      builder: (_) =>
-          _CreateClientDialog(studioId: studioId, prefillPhone: prefillPhone),
-    );
-  }
-
-  @override
-  State<_CreateClientDialog> createState() => _CreateClientDialogState();
-}
-
-class _CreateClientDialogState extends State<_CreateClientDialog> {
-  late final TextEditingController _name;
-  late final TextEditingController _phone;
-  late final TextEditingController _email;
-  String? _nameError;
-  String? _phoneError;
-
-  @override
-  void initState() {
-    super.initState();
-    _name = TextEditingController();
-    _phone = TextEditingController(text: widget.prefillPhone);
-    _email = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _name.dispose();
-    _phone.dispose();
-    _email.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 420),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppColors.voidElevated,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'New client',
-              style: TextStyle(
-                color: AppColors.film,
-                fontFamily: 'Poppins',
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 12),
-            LensTextField(
-              label: 'Name',
-              controller: _name,
-              maxLength: 80,
-              errorText: _nameError,
-              onChanged: (_) => _clearErrors(),
-            ),
-            LensTextField(
-              label: 'Phone',
-              controller: _phone,
-              keyboardType: TextInputType.phone,
-              errorText: _phoneError,
-              onChanged: (_) => _clearErrors(),
-            ),
-            LensTextField(
-              label: 'Email (optional)',
-              controller: _email,
-              keyboardType: TextInputType.emailAddress,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => Navigator.of(context).pop(null),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(color: AppColors.filmDim),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.orange,
-                      foregroundColor: Colors.white,
-                    ),
-                    onPressed: _onCreate,
-                    child: const Text('Create'),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _clearErrors() {
-    if (_nameError != null || _phoneError != null) {
-      setState(() {
-        _nameError = null;
-        _phoneError = null;
-      });
-    }
-  }
-
-  void _onCreate() {
-    final name = _name.text.trim();
-    final phone = _phone.text.trim();
-    final email = _email.text.trim();
-    String? nameErr;
-    String? phoneErr;
-    if (name.isEmpty) nameErr = 'Name is required.';
-    if (name.length > 80) nameErr = 'Name must be 80 characters or fewer.';
-    if (phone.isEmpty) {
-      phoneErr = 'Phone is required.';
-    } else if (!RegExp(r'^\+?\d+$').hasMatch(phone)) {
-      phoneErr = 'Phone must be digits.';
-    }
-    if (nameErr != null || phoneErr != null) {
-      setState(() {
-        _nameError = nameErr;
-        _phoneError = phoneErr;
-      });
-      return;
-    }
-    final now = DateTime.now();
-    Navigator.of(context).pop(
-      Client(
-        id: 'c-${now.microsecondsSinceEpoch}',
-        studioId: widget.studioId,
-        name: name,
-        phone: phone,
-        email: email.isEmpty ? null : email,
-        createdAt: now,
-        updatedAt: now,
-      ),
-    );
-  }
-}
 
 class _PackagePickerResult {
   const _PackagePickerResult({this.package, this.useCustomPrice = false});
@@ -1768,7 +1687,7 @@ class _PackagePickerSheet extends ConsumerWidget {
         children: [
           const _SheetHandle(),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Pick a package',
             style: TextStyle(
               color: AppColors.film,
@@ -1796,7 +1715,7 @@ class _PackagePickerSheet extends ConsumerWidget {
                 itemCount: packages.length,
                 separatorBuilder: (_, _) => Container(
                   height: 1,
-                  color: Colors.black.withValues(alpha: 0.04),
+                  color: AppColors.line(0.04),
                 ),
                 itemBuilder: (_, i) {
                   final p = packages[i];
@@ -1805,7 +1724,7 @@ class _PackagePickerSheet extends ConsumerWidget {
                     contentPadding: EdgeInsets.zero,
                     title: Text(
                       p.name,
-                      style: const TextStyle(color: AppColors.film, fontSize: 14),
+                      style: TextStyle(color: AppColors.film, fontSize: 14),
                     ),
                     subtitle: Text(
                       'Base ${p.basePrice.toStringAsFixed(0)}'
@@ -1820,7 +1739,7 @@ class _PackagePickerSheet extends ConsumerWidget {
                             Icons.check_circle_rounded,
                             color: AppColors.orange,
                           )
-                        : const Icon(
+                        : Icon(
                             Icons.chevron_right_rounded,
                             color: AppColors.filmMuted,
                           ),
@@ -1856,36 +1775,6 @@ class _PackagePickerSheet extends ConsumerWidget {
   }
 }
 
-class _NoResults extends StatelessWidget {
-  const _NoResults({required this.onCreate});
-  final VoidCallback onCreate;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.person_search_outlined,
-            color: AppColors.filmMuted.withValues(alpha: 0.85),
-            size: 28,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'No matching clients yet.',
-            style: TextStyle(
-              color: AppColors.filmDim.withValues(alpha: 0.85),
-              fontSize: 13,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _SheetHandle extends StatelessWidget {
   const _SheetHandle();
 
@@ -1896,7 +1785,7 @@ class _SheetHandle extends StatelessWidget {
         width: 36,
         height: 4,
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.18),
+          color: AppColors.line(0.18),
           borderRadius: BorderRadius.circular(999),
         ),
       ),
@@ -1951,120 +1840,11 @@ class _ModePill extends StatelessWidget {
               label,
               style: TextStyle(
                 color: selected
-                    ? Colors.white
+                    ? AppColors.teal
                     : AppColors.filmDim.withValues(alpha: 0.85),
                 fontSize: 13,
                 fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Quick-add team member dialog — asks only for a user ID.
-class _QuickMemberDialog extends StatefulWidget {
-  const _QuickMemberDialog({required this.roleLabel});
-  final String roleLabel;
-
-  static Future<String?> show(
-    BuildContext context, {
-    required String roleLabel,
-  }) {
-    return showDialog<String>(
-      context: context,
-      builder: (_) => _QuickMemberDialog(roleLabel: roleLabel),
-    );
-  }
-
-  @override
-  State<_QuickMemberDialog> createState() => _QuickMemberDialogState();
-}
-
-class _QuickMemberDialogState extends State<_QuickMemberDialog> {
-  late final TextEditingController _ctrl;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 400),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppColors.voidElevated,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Add ${widget.roleLabel}',
-              style: const TextStyle(
-                color: AppColors.film,
-                fontFamily: 'Poppins',
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 12),
-            LensTextField(
-              label: 'User ID',
-              controller: _ctrl,
-              hint: 'Paste team member user ID',
-              errorText: _error,
-              onChanged: (_) {
-                if (_error != null) setState(() => _error = null);
-              },
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => Navigator.of(context).pop(null),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(color: AppColors.filmDim),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.teal,
-                      foregroundColor: AppColors.voidBlack,
-                    ),
-                    onPressed: () {
-                      final val = _ctrl.text.trim();
-                      if (val.isEmpty) {
-                        setState(() => _error = 'User ID is required.');
-                        return;
-                      }
-                      Navigator.of(context).pop(val);
-                    },
-                    child: const Text('Add'),
-                  ),
-                ),
-              ],
             ),
           ],
         ),
@@ -2149,7 +1929,9 @@ String _eventTypeChipLabel(EventType type) {
     EventType.holud => 'Holud',
     EventType.birthday => 'Birthday',
     EventType.corporate => 'Corporate',
-    EventType.preWedding => 'Portrait',
+    EventType.preWedding => 'Pre-Wedding',
+    EventType.anniversary => 'Anniversary',
+    EventType.outdoor => 'Outdoor',
     EventType.other => 'Other',
   };
 }

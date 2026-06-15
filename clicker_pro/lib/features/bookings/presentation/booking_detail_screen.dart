@@ -32,6 +32,7 @@ import '../../../core/booking_status/booking_status.dart';
 import '../../../core/booking_status/booking_status_machine.dart';
 import '../../../core/format/booking_format.dart';
 import '../../../core/navigation/route_names.dart';
+import '../../../core/notifications/event_reminder_service.dart';
 import '../../../core/pdf/pdf_export.dart';
 import '../../../core/role/capability.dart';
 import '../../../shared/states/error_state.dart';
@@ -40,13 +41,17 @@ import '../../../shared/states/offline_banner.dart';
 import '../../../shared/widgets/status_conflict_listener.dart';
 import '../../../theme/app_colors.dart';
 import '../../auth/domain/user_role.dart';
+import '../../profile/application/profile_controllers.dart';
 import '../../settings/application/language_controller.dart';
+import '../../team/application/team_providers.dart';
+import '../../team/domain/team_member.dart';
 import '../application/booking_detail_controller.dart';
 import '../application/booking_providers.dart';
 import 'widgets/delivery_checklist_sheet.dart';
 import '../domain/booking.dart';
 import '../domain/booking_detail_envelope.dart';
-import 'booking_list_screen.dart' show shouldShowPayment;
+import 'booking_list_screen.dart'
+    show shouldShowPayment, shouldShowPaymentInShare;
 import 'widgets/assignments_section.dart';
 import 'widgets/booking_status_badge.dart';
 import 'widgets/detail_section.dart';
@@ -76,10 +81,10 @@ class BookingDetailScreen extends ConsumerWidget {
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.film),
+            icon: Icon(Icons.arrow_back, color: AppColors.film),
             onPressed: () => Navigator.of(context).maybePop(),
           ),
-          title: const Text(
+          title: Text(
             'Booking',
             style: TextStyle(
               color: AppColors.film,
@@ -110,7 +115,7 @@ class BookingDetailScreen extends ConsumerWidget {
               color: AppColors.voidElevated,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
-                side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+                side: BorderSide(color: AppColors.line(0.08)),
               ),
               itemBuilder: (_) {
                 final canCancel = policy.can(Capability.cancelBooking);
@@ -123,11 +128,18 @@ class BookingDetailScreen extends ConsumerWidget {
                         style: TextStyle(color: AppColors.red),
                       ),
                     ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
+                    value: _DetailMenuAction.calendar,
+                    child: Text(
+                      'Add to Google Calendar',
+                      style: TextStyle(color: AppColors.film),
+                    ),
+                  ),
+                  PopupMenuItem(
                     value: _DetailMenuAction.refresh,
                     child: Text(
                       'Refresh from server',
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: AppColors.film),
                     ),
                   ),
                 ];
@@ -136,6 +148,12 @@ class BookingDetailScreen extends ConsumerWidget {
                 switch (action) {
                   case _DetailMenuAction.cancel:
                     await _handleCancel(context, ref);
+                    break;
+                  case _DetailMenuAction.calendar:
+                    final env = ref
+                        .read(bookingDetailControllerProvider(bookingId))
+                        .value;
+                    if (env != null) _addToGoogleCalendar(env.booking);
                     break;
                   case _DetailMenuAction.refresh:
                     await ref
@@ -215,6 +233,26 @@ class BookingDetailScreen extends ConsumerWidget {
     WidgetRef ref,
     BookingStatus to,
   ) async {
+    // Chronology guard: Shot Complete / Delivered / Completed can only
+    // be marked AFTER the event's end time — a future event can't
+    // already be done.
+    final booking = ref
+        .read(bookingDetailControllerProvider(bookingId))
+        .valueOrNull
+        ?.booking;
+    if (booking != null &&
+        !BookingStatusMachine.isTimeAllowed(
+          to,
+          booking.date,
+          booking.endTime,
+        )) {
+      _showSnack(
+        context,
+        'Event time (${booking.date.day}/${booking.date.month} ${booking.endTime}) '
+        'cannot mark "${_titleCase(to.name)}" before it has ended.',
+      );
+      return;
+    }
     try {
       await ref
           .read(bookingDetailControllerProvider(bookingId).notifier)
@@ -229,11 +267,15 @@ class BookingDetailScreen extends ConsumerWidget {
 
   Future<void> _handleCancel(BuildContext context, WidgetRef ref) async {
     final reason = await _CancelReasonDialog.show(context);
-    if (reason == null || reason.isEmpty) return;
+    // `null` = the user backed out. An empty string = confirmed cancel
+    // with no reason given (reason is optional now).
+    if (reason == null) return;
     try {
       await ref
           .read(bookingDetailControllerProvider(bookingId).notifier)
-          .cancel(reason);
+          .cancel(reason.isEmpty ? 'No reason provided' : reason);
+      // A cancelled event shouldn't still ping its 1-hour reminder.
+      EventReminderService.instance.cancelForBooking(bookingId);
       if (!context.mounted) return;
       _showSnack(context, 'Booking cancelled.');
     } catch (e) {
@@ -247,7 +289,13 @@ class BookingDetailScreen extends ConsumerWidget {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(message),
+          // Force a light label: the dark `voidElevated` background + the
+          // theme's default (dark) snackbar text rendered error messages
+          // invisible (dark-on-dark) in light mode.
+          content: Text(
+            message,
+            style: TextStyle(color: AppColors.film),
+          ),
           backgroundColor: AppColors.voidElevated,
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
@@ -305,6 +353,13 @@ class _DetailBody extends StatelessWidget {
                   valueColor: AppColors.teal,
                   onTap: () =>
                       launchUrl(Uri.parse('tel:${envelope.client!.phone}')),
+                  trailing: envelope.client!.phone.isEmpty
+                      ? null
+                      : CallIconButton(
+                          onTap: () => launchUrl(
+                            Uri.parse('tel:${envelope.client!.phone}'),
+                          ),
+                        ),
                 ),
                 if (envelope.client!.email != null)
                   DetailRow(
@@ -332,6 +387,36 @@ class _DetailBody extends StatelessWidget {
                       value: booking.groomName,
                     ),
                 ],
+              ],
+            ),
+          ),
+        // The booking itself carries client name/phone even when the
+        // linked Client row hasn't synced — never hide the contact info.
+        if (envelope.client == null &&
+            (booking.clientName != null || booking.clientPhone != null))
+          DetailSection(
+            title: 'Client',
+            child: Column(
+              children: [
+                if (booking.clientName != null)
+                  DetailRow(
+                    icon: Icons.person_outline_rounded,
+                    label: 'Name',
+                    value: booking.clientName,
+                  ),
+                if (booking.clientPhone != null)
+                  DetailRow(
+                    icon: Icons.phone_outlined,
+                    label: 'Phone',
+                    value: booking.clientPhone,
+                    valueColor: AppColors.teal,
+                    onTap: () =>
+                        launchUrl(Uri.parse('tel:${booking.clientPhone}')),
+                    trailing: CallIconButton(
+                      onTap: () =>
+                          launchUrl(Uri.parse('tel:${booking.clientPhone}')),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -405,7 +490,12 @@ class _DetailBody extends StatelessWidget {
               ],
             ),
           ),
-        if (showPayment) PaymentSummaryCard(bookingId: booking.id),
+        if (showPayment)
+          PaymentSummaryCard(
+            bookingId: booking.id,
+            bookingTotal:
+                booking.customPrice ?? envelope.package?.basePrice,
+          ),
         AssignmentsSection(
           assignments: envelope.assignments,
           currentUserId: currentUserId,
@@ -516,7 +606,6 @@ class _CancelReasonDialog extends StatefulWidget {
 
 class _CancelReasonDialogState extends State<_CancelReasonDialog> {
   final _controller = TextEditingController();
-  String? _error;
 
   @override
   void dispose() {
@@ -534,7 +623,7 @@ class _CancelReasonDialogState extends State<_CancelReasonDialog> {
         decoration: BoxDecoration(
           color: AppColors.voidElevated,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+          border: Border.all(color: AppColors.line(0.08)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -551,7 +640,7 @@ class _CancelReasonDialogState extends State<_CancelReasonDialog> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Please share why this booking is being cancelled. This will be added to the status history.',
+              'Reason is optional — leave it blank and tap Cancel booking to cancel anyway.',
               style: TextStyle(
                 color: AppColors.filmDim.withValues(alpha: 0.85),
                 fontSize: 12.5,
@@ -566,23 +655,22 @@ class _CancelReasonDialogState extends State<_CancelReasonDialog> {
               autofocus: true,
               style: const TextStyle(color: Colors.white, fontSize: 13.5),
               decoration: InputDecoration(
-                hintText: 'Reason for cancellation',
+                hintText: 'Reason for cancellation (optional)',
                 hintStyle: TextStyle(
                   color: AppColors.filmMuted.withValues(alpha: 0.7),
                 ),
-                errorText: _error,
                 filled: true,
-                fillColor: Colors.black.withValues(alpha: 0.04),
+                fillColor: AppColors.line(0.04),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide(
-                    color: Colors.black.withValues(alpha: 0.08),
+                    color: AppColors.line(0.08),
                   ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide(
-                    color: Colors.black.withValues(alpha: 0.08),
+                    color: AppColors.line(0.08),
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
@@ -597,7 +685,7 @@ class _CancelReasonDialogState extends State<_CancelReasonDialog> {
                 Expanded(
                   child: TextButton(
                     onPressed: () => Navigator.of(context).pop(null),
-                    child: const Text(
+                    child: Text(
                       'Back',
                       style: TextStyle(color: AppColors.filmDim),
                     ),
@@ -623,12 +711,8 @@ class _CancelReasonDialogState extends State<_CancelReasonDialog> {
   }
 
   void _onConfirm() {
-    final value = _controller.text.trim();
-    if (value.isEmpty) {
-      setState(() => _error = 'Reason cannot be empty.');
-      return;
-    }
-    Navigator.of(context).pop(value);
+    // Reason is optional: an empty string still confirms the cancel.
+    Navigator.of(context).pop(_controller.text.trim());
   }
 }
 
@@ -651,13 +735,54 @@ class _ScrollableSlot extends StatelessWidget {
   }
 }
 
-enum _DetailMenuAction { cancel, refresh }
+enum _DetailMenuAction { cancel, calendar, refresh }
+
+/// Opens Google Calendar's event-template page pre-filled with the
+/// booking — works on every device with no API key or OAuth setup; the
+/// user just taps Save inside Google Calendar.
+void _addToGoogleCalendar(Booking booking) {
+  String two(int v) => v.toString().padLeft(2, '0');
+  DateTime at(String hhmm, {required String fallback}) {
+    final parts = (hhmm.contains(':') ? hhmm : fallback).split(':');
+    return DateTime(
+      booking.date.year,
+      booking.date.month,
+      booking.date.day,
+      int.tryParse(parts[0]) ?? 10,
+      int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0,
+    );
+  }
+
+  final start = at(booking.startTime, fallback: '10:00');
+  var end = at(booking.endTime, fallback: '18:00');
+  if (!end.isAfter(start)) end = start.add(const Duration(hours: 2));
+  String fmt(DateTime d) =>
+      '${d.year}${two(d.month)}${two(d.day)}T${two(d.hour)}${two(d.minute)}00';
+
+  final details = [
+    if (booking.clientName != null) 'Client: ${booking.clientName}',
+    if (booking.clientPhone != null) 'Phone: ${booking.clientPhone}',
+    if (booking.notes != null) booking.notes!,
+    'Booked via CLICKER PRO',
+  ].join('\n');
+
+  final uri = Uri.parse('https://calendar.google.com/calendar/render').replace(
+    queryParameters: {
+      'action': 'TEMPLATE',
+      'text': booking.title,
+      'dates': '${fmt(start)}/${fmt(end)}',
+      'details': details,
+      if (booking.venue != null) 'location': booking.venue!,
+    },
+  );
+  launchUrl(uri, mode: LaunchMode.externalApplication);
+}
 
 // ─────────────────────────────────────────────────────────────────────
 // Invoice Action — opens auto-generated invoice bottom sheet
 // ─────────────────────────────────────────────────────────────────────
 
-class _InvoiceAction extends StatelessWidget {
+class _InvoiceAction extends ConsumerWidget {
   const _InvoiceAction({
     required this.booking,
     required this.envelope,
@@ -669,202 +794,718 @@ class _InvoiceAction extends StatelessWidget {
   final String lang;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return DetailSection(
-      title: 'Invoice',
-      child: SizedBox(
-        width: double.infinity,
-        child: FilledButton.icon(
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.teal,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+      title: 'Invoice & Share',
+      child: Column(
+        children: [
+          // Client invoice — professional, always carries payment/due.
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.teal,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              icon: const Icon(Icons.receipt_long_rounded, size: 18),
+              label: const Text('Client Invoice'),
+              onPressed: () => _showInvoiceSheet(context, ref, forClient: true),
             ),
           ),
-          icon: const Icon(Icons.receipt_long_rounded, size: 18),
-          label: const Text('View Invoice'),
-          onPressed: () => _showInvoiceSheet(context),
-        ),
+          const SizedBox(height: 10),
+          // Share event details — for the team / freelancers; payment is
+          // hidden unless the owner opted in on the booking.
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.film,
+                side: BorderSide(color: AppColors.gold.withValues(alpha: 0.5)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              icon: const Icon(Icons.ios_share_rounded, size: 18),
+              label: const Text('Share Event Details'),
+              onPressed: () => _showInvoiceSheet(context, ref, forClient: false),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  void _showInvoiceSheet(BuildContext context) {
-    final chiefName = _resolveChiefName();
-    final teamNames = envelope.assignments
-        .map((a) => '${_titleCase(a.role.name)} (${a.userId})')
-        .join(', ');
+  /// Opens the invoice / share sheet.
+  ///
+  /// [forClient] = true  → the professional CLIENT INVOICE; payment is shown
+  ///   subject to the normal view-payment permission.
+  /// [forClient] = false → SHARE EVENT DETAILS for the team / freelancers;
+  ///   payment is hidden unless the owner opted in via [showPaymentInShare].
+  void _showInvoiceSheet(
+    BuildContext context,
+    WidgetRef ref, {
+    required bool forClient,
+  }) {
+    final policy = ref.read(bookingsPolicyProvider);
+    final showPayment = forClient
+        ? shouldShowPayment(
+            role: policy.role,
+            hidePaymentFromTeam: booking.hidePaymentFromTeam,
+            canViewPayments: policy.can(Capability.viewBookingPayments),
+          )
+        : shouldShowPaymentInShare(
+            showPaymentInShare: booking.showPaymentInShare,
+          );
+
+    // Resolve real names + phone numbers from the team list so the
+    // invoice carries contactable info, not internal user ids.
+    final members = ref.read(teamMembersProvider).valueOrNull ?? const [];
+    String memberLine(String userId, String roleLabel) {
+      final m = members.where((m) => m.userId == userId).firstOrNull;
+      if (m == null) return roleLabel;
+      final phone = (m.phone ?? '').trim();
+      return phone.isEmpty
+          ? '${m.fullName} ($roleLabel)'
+          : '${m.fullName} ($roleLabel) – $phone';
+    }
+
+    final chiefName = _resolveChiefName(members);
+    final teamLines = envelope.assignments
+        .map((a) => memberLine(a.userId, _titleCase(a.role.name)))
+        .toList(growable: false);
     final teamNo = envelope.assignments.length.toString();
+
+    final clientName =
+        envelope.client?.name ?? booking.clientName ?? '—';
+    final clientPhone =
+        envelope.client?.phone ?? booking.clientPhone ?? '—';
 
     final total = booking.customPrice ?? envelope.package?.basePrice ?? 0.0;
     final advance = envelope.payments.fold<double>(0, (s, p) => s + p.amount);
     final due = total - advance;
 
     final dateStr = BookingFormat.dateTime(booking.date, lang: lang);
+    String money(double v) =>
+        BookingFormat.money(v, lang: lang, bnNumerals: lang == 'bn');
+
+    // Studio identity for the invoice header.
+    final me = ref.read(currentUserProvider).valueOrNull;
+    final studioName =
+        (me?.companyName?.trim().isNotEmpty ?? false)
+        ? me!.companyName!.trim()
+        : (me?.name ?? 'CLICKER PRO');
+    final studioPhone = me?.phone ?? '';
+    final studioAddress = me?.studioAddress?.trim() ?? '';
+
+    final brideName = booking.brideName?.trim();
+    final groomName = booking.groomName?.trim();
+
     final lines = <String>[
       'DATE: $dateStr',
       'TIME: ${booking.startTime} – ${booking.endTime}',
       'EVENT: ${_titleCase(booking.eventType.name)}',
-      'CLIENT: ${envelope.client?.name ?? '—'}',
-      'PHONE: ${envelope.client?.phone ?? '—'}',
+      if (brideName?.isNotEmpty ?? false) 'BRIDE: $brideName',
+      if (groomName?.isNotEmpty ?? false) 'GROOM: $groomName',
+      'CLIENT: $clientName',
+      'CLIENT NUMBER: $clientPhone',
       'VENUE: ${booking.venue ?? '—'}',
       'CHIEF: $chiefName',
-      'TEAM: $teamNames',
+      if (teamLines.isEmpty)
+        'TEAM: —'
+      else ...[
+        'TEAM:',
+        for (final line in teamLines) '  • $line',
+      ],
       'TEAM NO: $teamNo',
-      'TOTAL: ${BookingFormat.money(total, lang: lang, bnNumerals: lang == 'bn')}',
-      'ADVANCE: ${BookingFormat.money(advance, lang: lang, bnNumerals: lang == 'bn')}',
-      'DUE: ${BookingFormat.money(due, lang: lang, bnNumerals: lang == 'bn')}',
+      if (showPayment) ...[
+        'TOTAL: ${money(total)}',
+        'ADVANCE: ${money(advance)}',
+        'DUE COLLECT: ${money(due)}',
+      ],
     ];
-    final invoiceText = lines.join('\n');
+    // Header carries the studio identity (name + contact), footer-style.
+    final header = <String>[
+      studioName,
+      if (studioPhone.isNotEmpty) 'Contact: $studioPhone',
+      if (studioAddress.isNotEmpty) studioAddress,
+    ].join('\n');
+    final invoiceText = '$header\n\n${lines.join('\n')}';
+
+    // Short, stable document number derived from the booking id's digits.
+    // Client invoices read INV-####; shared event details read EVT-####.
+    final docLabel = forClient ? 'INVOICE' : 'EVENT DETAILS';
+    final numPrefix = forClient ? 'INV' : 'EVT';
+    final idDigits = booking.id.replaceAll(RegExp(r'[^0-9]'), '');
+    final invoiceNo = idDigits.isEmpty
+        ? '$numPrefix-0001'
+        : '$numPrefix-${idDigits.substring(idDigits.length > 4 ? idDigits.length - 4 : 0)}';
+
+    final data = _InvoiceData(
+      docLabel: docLabel,
+      studioName: studioName,
+      studioPhone: studioPhone,
+      studioAddress: studioAddress,
+      logoUrl: me?.logoUrl,
+      signatureUrl: me?.signatureUrl,
+      invoiceNo: invoiceNo,
+      dateStr: dateStr,
+      timeStr: '${booking.startTime} – ${booking.endTime}',
+      eventType: _titleCase(booking.eventType.name),
+      brideName: brideName,
+      groomName: groomName,
+      clientName: clientName,
+      clientPhone: clientPhone,
+      venue: booking.venue ?? '—',
+      chiefName: chiefName,
+      teamLines: teamLines,
+      packageName: envelope.package?.name,
+      showPayment: showPayment,
+      totalText: money(total),
+      advanceText: money(advance),
+      dueText: money(due),
+      dueIsZero: due <= 0.5,
+    );
 
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) =>
-          _InvoiceSheet(invoiceText: invoiceText, bookingTitle: booking.title),
+      builder: (_) => _InvoiceSheet(
+        data: data,
+        invoiceText: invoiceText,
+        bookingTitle: booking.title,
+      ),
     );
   }
 
-  String _resolveChiefName() {
-    if (booking.chiefPhotographerUserId == null) return '—';
-    for (final a in envelope.assignments) {
-      if (a.userId == booking.chiefPhotographerUserId) {
-        return '${_titleCase(a.role.name)} (${a.userId})';
-      }
+  String _resolveChiefName(List<TeamMember> members) {
+    final chiefId = booking.chiefPhotographerUserId;
+    if (chiefId == null) return '—';
+    final m = members.where((m) => m.userId == chiefId).firstOrNull;
+    if (m != null) {
+      final phone = (m.phone ?? '').trim();
+      return phone.isEmpty ? m.fullName : '${m.fullName} – $phone';
     }
-    return booking.chiefPhotographerUserId!;
+    // The chief field stores a free-typed name when not picked from team.
+    return chiefId;
   }
 }
 
-class _InvoiceSheet extends StatelessWidget {
-  const _InvoiceSheet({required this.invoiceText, required this.bookingTitle});
+/// Structured invoice data backing the modern designed invoice template.
+class _InvoiceData {
+  const _InvoiceData({
+    required this.docLabel,
+    required this.studioName,
+    required this.studioPhone,
+    required this.studioAddress,
+    required this.logoUrl,
+    required this.signatureUrl,
+    required this.invoiceNo,
+    required this.dateStr,
+    required this.timeStr,
+    required this.eventType,
+    required this.brideName,
+    required this.groomName,
+    required this.clientName,
+    required this.clientPhone,
+    required this.venue,
+    required this.chiefName,
+    required this.teamLines,
+    required this.packageName,
+    required this.showPayment,
+    required this.totalText,
+    required this.advanceText,
+    required this.dueText,
+    required this.dueIsZero,
+  });
 
+  final String docLabel;
+  final String studioName;
+  final String studioPhone;
+  final String studioAddress;
+  final String? logoUrl;
+  final String? signatureUrl;
+  final String invoiceNo;
+  final String dateStr;
+  final String timeStr;
+  final String eventType;
+  final String? brideName;
+  final String? groomName;
+  final String clientName;
+  final String clientPhone;
+  final String venue;
+  final String chiefName;
+  final List<String> teamLines;
+  final String? packageName;
+  final bool showPayment;
+  final String totalText;
+  final String advanceText;
+  final String dueText;
+  final bool dueIsZero;
+}
+
+/// Modern, designed invoice template (MOD-14). A branded header band,
+/// invoice meta, client + event details, the team list, and a highlighted
+/// totals box — shareable via Copy / WhatsApp / Messenger.
+class _InvoiceSheet extends StatelessWidget {
+  const _InvoiceSheet({
+    required this.data,
+    required this.invoiceText,
+    required this.bookingTitle,
+  });
+
+  final _InvoiceData data;
   final String invoiceText;
   final String bookingTitle;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-      decoration: BoxDecoration(
-        color: AppColors.voidElevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
-      ),
-      child: SafeArea(
-        top: false,
+    return DraggableScrollableSheet(
+      initialChildSize: 0.82,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (context, scrollController) => Container(
+        margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.line(0.08)),
+        ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 36,
-              height: 4,
-              margin: const EdgeInsets.only(top: 12),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-              child: Row(
+            Expanded(
+              child: ListView(
+                controller: scrollController,
+                padding: EdgeInsets.zero,
                 children: [
-                  const Expanded(
-                    child: Text(
-                      'Invoice',
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
+                  _brandHeader(),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _sectionLabel('BILL TO'),
+                        const SizedBox(height: 6),
+                        Text(
+                          data.clientName,
+                          style: TextStyle(
+                            color: AppColors.film,
+                            fontFamily: 'Poppins',
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (data.clientPhone != '—')
+                          Text(
+                            data.clientPhone,
+                            style: TextStyle(
+                              color: AppColors.filmDim.withValues(alpha: 0.85),
+                              fontSize: 13,
+                            ),
+                          ),
+                        const SizedBox(height: 18),
+                        _sectionLabel('EVENT DETAILS'),
+                        const SizedBox(height: 8),
+                        _kv('Event', data.eventType),
+                        if (data.brideName?.isNotEmpty ?? false)
+                          _kv('Bride', data.brideName!),
+                        if (data.groomName?.isNotEmpty ?? false)
+                          _kv('Groom', data.groomName!),
+                        _kv('Date', data.dateStr),
+                        _kv('Time', data.timeStr),
+                        _kv('Venue', data.venue),
+                        if (data.packageName != null)
+                          _kv('Package', data.packageName!),
+                        _kv('Chief', data.chiefName),
+                        if (data.teamLines.isNotEmpty) ...[
+                          const SizedBox(height: 14),
+                          _sectionLabel('TEAM'),
+                          const SizedBox(height: 6),
+                          for (final line in data.teamLines)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 3),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Padding(
+                                    padding: EdgeInsets.only(top: 6, right: 8),
+                                    child: Icon(
+                                      Icons.circle,
+                                      size: 5,
+                                      color: AppColors.gold,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      line,
+                                      style: TextStyle(
+                                        color: AppColors.film,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                        if (data.showPayment) ...[
+                          const SizedBox(height: 18),
+                          _totalsBox(),
+                        ],
+                        const SizedBox(height: 18),
+                        Center(
+                          child: Text(
+                            'Generated by ${data.studioName} · CLICKER PRO',
+                            style: TextStyle(
+                              color: AppColors.filmDim.withValues(alpha: 0.6),
+                              fontSize: 10.5,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.close,
-                      color: AppColors.filmDim,
-                      size: 20,
-                    ),
-                    onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
               ),
             ),
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.03),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
-              ),
-              child: Text(
-                invoiceText,
-                style: const TextStyle(
-                  fontFamily: 'Montserrat',
-                  fontSize: 12.5,
-                  color: AppColors.film,
-                  height: 1.6,
+            _shareBar(context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _brandHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+      decoration: const BoxDecoration(gradient: AppColors.orangeGradient),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  data.studioName.toUpperCase(),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'Poppins',
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                  ),
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _ShareButton(
-                      icon: Icons.copy_rounded,
-                      label: 'Copy',
-                      onTap: () {
-                        Clipboard.setData(ClipboardData(text: invoiceText));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Invoice copied to clipboard.'),
-                          ),
-                        );
-                      },
-                    ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  data.docLabel,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'Montserrat',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.6,
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _ShareButton(
-                      icon: Icons.chat_rounded,
-                      label: 'WhatsApp',
-                      color: const Color(0xFF25D366),
-                      onTap: () => launchUrl(
-                        Uri.parse(
-                          'https://wa.me/?text=${Uri.encodeComponent('$bookingTitle\n\n$invoiceText')}',
-                        ),
-                        mode: LaunchMode.externalApplication,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _ShareButton(
-                      icon: Icons.messenger_outline_rounded,
-                      label: 'Messenger',
-                      color: AppColors.indigo,
-                      // The Facebook sharer URL drops plain text and often
-                      // fails to open Messenger. The system share sheet is
-                      // reliable and lists Messenger among the targets.
-                      onTap: () => SharePlus.instance.share(
-                        ShareParams(text: '$bookingTitle\n\n$invoiceText'),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                data.studioPhone.isEmpty ? '' : '☎ ${data.studioPhone}',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontSize: 12,
+                ),
+              ),
+              Text(
+                data.invoiceNo,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.95),
+                  fontFamily: 'Montserrat',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _totalsBox() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.film,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          _totalRow('Total', data.totalText, Colors.white, false),
+          const SizedBox(height: 8),
+          _totalRow(
+            'Advance Paid',
+            data.advanceText,
+            AppColors.green,
+            false,
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Divider(
+              height: 1,
+              color: Colors.white.withValues(alpha: 0.12),
+            ),
+          ),
+          _totalRow(
+            data.dueIsZero ? 'Due · Fully Paid ✓' : 'Due',
+            data.dueText,
+            data.dueIsZero ? AppColors.green : AppColors.gold,
+            true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _totalRow(String label, String value, Color color, bool big) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.85),
+            fontSize: big ? 14 : 13,
+            fontWeight: big ? FontWeight.w600 : FontWeight.w500,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: color,
+            fontFamily: 'Poppins',
+            fontSize: big ? 20 : 15,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _sectionLabel(String text) => Text(
+    text,
+    style: TextStyle(
+      color: AppColors.orange.withValues(alpha: 0.9),
+      fontFamily: 'Montserrat',
+      fontSize: 10,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 1.6,
+    ),
+  );
+
+  Widget _kv(String key, String value) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 78,
+          child: Text(
+            key,
+            style: TextStyle(
+              color: AppColors.filmDim.withValues(alpha: 0.8),
+              fontSize: 12.5,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(
+              color: AppColors.film,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _shareBar(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+        child: Column(
+          children: [
+            // Row 1 — share the plain event-details text (client / team).
+            Row(
+              children: [
+                Expanded(
+                  child: _ShareButton(
+                    icon: Icons.copy_rounded,
+                    label: 'Copy',
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: invoiceText));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Details copied.')),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _ShareButton(
+                    icon: Icons.chat_rounded,
+                    label: 'WhatsApp',
+                    color: const Color(0xFF25D366),
+                    onTap: () => launchUrl(
+                      Uri.parse(
+                        'https://wa.me/?text=${Uri.encodeComponent(invoiceText)}',
+                      ),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _ShareButton(
+                    icon: Icons.ios_share_rounded,
+                    label: 'Share',
+                    color: AppColors.indigo,
+                    onTap: () => SharePlus.instance.share(
+                      ShareParams(text: invoiceText),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            // Row 2 — the formal booking invoice PDF: Print (blank signature)
+            // or Download (saved signature embedded).
+            Row(
+              children: [
+                Expanded(
+                  child: _ShareButton(
+                    icon: Icons.print_rounded,
+                    label: 'Print',
+                    color: AppColors.teal,
+                    onTap: () => _exportInvoicePdf(context, forPrint: true),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _ShareButton(
+                    icon: Icons.download_rounded,
+                    label: 'Download',
+                    color: AppColors.gold,
+                    onTap: () => _exportInvoicePdf(context, forPrint: false),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
     );
+  }
+
+  /// Builds the formal booking-invoice PDF from [data]. [forPrint] leaves the
+  /// signature blank and opens the print dialog; otherwise the saved
+  /// signature is embedded and the file is shared/downloaded.
+  Future<void> _exportInvoicePdf(
+    BuildContext context, {
+    required bool forPrint,
+  }) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      // Fetch logo + (download-only) signature as image bytes. Fail-soft:
+      // a missing/broken URL just omits that image.
+      final logo = await PdfExporter.fetchImageBytes(data.logoUrl);
+      final signature = forPrint
+          ? null
+          : await PdfExporter.fetchImageBytes(data.signatureUrl);
+
+      final detailRows = <PdfRow>[
+        PdfRow('Bill To', data.clientName),
+        if (data.clientPhone != '—') PdfRow('Client Number', data.clientPhone),
+        PdfRow('Event', data.eventType),
+        if (data.brideName?.isNotEmpty ?? false)
+          PdfRow('Bride', data.brideName!),
+        if (data.groomName?.isNotEmpty ?? false)
+          PdfRow('Groom', data.groomName!),
+        PdfRow('Date', data.dateStr),
+        PdfRow('Time', data.timeStr),
+        PdfRow('Venue', data.venue),
+        if (data.packageName != null) PdfRow('Package', data.packageName!),
+        PdfRow('Chief', data.chiefName),
+      ];
+
+      final doc = PdfDocumentData(
+        documentTitle: 'Invoice',
+        fileName: 'invoice_${data.invoiceNo}',
+        companyName: data.studioName,
+        companyPhone: data.studioPhone,
+        companyAddress: data.studioAddress,
+        logoBytes: logo,
+        signatureBytes: signature,
+        subtitle: data.invoiceNo,
+        detailRows: detailRows,
+        table: data.teamLines.isEmpty
+            ? null
+            : PdfTable(
+                headers: const ['Team'],
+                rows: [for (final l in data.teamLines) [l]],
+              ),
+        summary: data.showPayment
+            ? [
+                PdfRow('Total', data.totalText),
+                PdfRow('Advance', data.advanceText),
+                PdfRow('Due', data.dueText, emphasize: true),
+              ]
+            : const [],
+        footnote: 'Generated by ${data.studioName} · CLICKER PRO',
+      );
+
+      if (forPrint) {
+        await PdfExporter.printDocument(doc);
+      } else {
+        await PdfExporter.download(doc);
+      }
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Could not create the invoice PDF: $e',
+            style: TextStyle(color: AppColors.film),
+          ),
+          backgroundColor: AppColors.voidElevated,
+        ),
+      );
+    }
   }
 }
 
@@ -940,7 +1581,7 @@ class _QuickActionsSection extends StatelessWidget {
           Container(
             height: 1,
             margin: const EdgeInsets.symmetric(vertical: 4),
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppColors.line(0.04),
           ),
           _ActionTile(
             icon: Icons.picture_as_pdf_outlined,
@@ -952,7 +1593,7 @@ class _QuickActionsSection extends StatelessWidget {
           Container(
             height: 1,
             margin: const EdgeInsets.symmetric(vertical: 4),
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppColors.line(0.04),
           ),
           _ActionTile(
             icon: Icons.checklist_rounded,
@@ -1015,7 +1656,7 @@ class _QuickActionsSection extends StatelessWidget {
       );
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('PDF তৈরি করা যায়নি: $e')),
+        SnackBar(content: Text('Could not create PDF: $e')),
       );
     }
   }

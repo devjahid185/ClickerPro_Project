@@ -53,4 +53,30 @@ class RentController extends Controller
 
         return response()->json(['data' => $record], 201);
     }
+
+    /** Mark a rent record returned (or amend it) — owner only. */
+    public function update(Request $request, $id)
+    {
+        $record = RentRecord::where('owner_id', $request->user()->id)->find($id);
+
+        if (!$record) {
+            return response()->json(['message' => 'Not found'], 404);
+        }
+
+        $data = $request->validate([
+            'returned_at' => 'nullable|date',
+            'amount' => 'nullable|numeric|min:0',
+            'notes' => 'nullable|string',
+        ]);
+
+        $record->update(array_filter($data, fn($v) => $v !== null));
+
+        // Returning gear makes it available again.
+        if (!empty($data['returned_at']) && $record->gear_item_id) {
+            GearItem::where('id', $record->gear_item_id)
+                ->update(['is_available' => true]);
+        }
+
+        return response()->json(['data' => $record->fresh()]);
+    }
 }

@@ -35,7 +35,7 @@ class Paywall {
             Text(
               '$featureName is a PRO feature',
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.film,
                 fontSize: 18,
                 fontWeight: FontWeight.w800,

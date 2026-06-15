@@ -25,7 +25,17 @@ export async function api<T = any>(path: string, opts: Opts = {}): Promise<T> {
     throw new Error('Unauthorized');
   }
   const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json?.message || `Error ${res.status}`);
+  if (!res.ok) {
+    // Surface the real backend message — Laravel validation puts the
+    // human text in `message` (e.g. "The email has already been taken.")
+    // and field errors under `errors`. Fall back to the status only when
+    // nothing useful is present.
+    const firstFieldError =
+      json?.errors && typeof json.errors === 'object'
+        ? (Object.values(json.errors)[0] as string[] | undefined)?.[0]
+        : undefined;
+    throw new Error(json?.message || firstFieldError || `Error ${res.status}`);
+  }
   return json as T;
 }
 

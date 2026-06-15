@@ -42,14 +42,14 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
 
   String? _validatePassword(String? v) {
     final t = v ?? '';
-    if (t.length < 8) return 'কমপক্ষে ৮ অক্ষর';
-    if (!RegExp(r'[A-Za-z]').hasMatch(t)) return 'কমপক্ষে ১টি অক্ষর প্রয়োজন';
-    if (!RegExp(r'\d').hasMatch(t)) return 'কমপক্ষে ১টি সংখ্যা প্রয়োজন';
+    if (t.length < 8) return 'At least 8 characters';
+    if (!RegExp(r'[A-Za-z]').hasMatch(t)) return 'At least 1 letter required';
+    if (!RegExp(r'\d').hasMatch(t)) return 'At least 1 number required';
     return null;
   }
 
   String? _validateConfirm(String? v) {
-    if ((v ?? '') != _passwordController.text) return 'পাসওয়ার্ড মিলছে না';
+    if ((v ?? '') != _passwordController.text) return 'Passwords do not match';
     return null;
   }
 
@@ -67,7 +67,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text(
+          content: Text(
             'Password updated. Please sign in.',
             style: TextStyle(color: AppColors.film, fontSize: 13),
           ),
@@ -88,12 +88,12 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       if (!mounted) return;
       setState(
         () => _formError = e.statusCode == 410
-            ? 'এই লিংক মেয়াদোত্তীর্ণ। আবার চেষ্টা করুন।'
+            ? 'This link has expired. Please try again.'
             : e.message,
       );
     } catch (_) {
       if (!mounted) return;
-      setState(() => _formError = 'কিছু একটা ভুল হয়েছে।');
+      setState(() => _formError = 'Something went wrong.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -130,20 +130,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
             ),
           ),
 
-          Positioned(
-            top: 12,
-            left: 8,
-            child: SafeArea(
-              child: IconButton(
-                icon: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  size: 18,
-                  color: AppColors.film,
-                ),
-                onPressed: () => Navigator.of(context).maybePop(),
-              ),
-            ),
-          ),
+
 
           SafeArea(
             child: Center(
@@ -160,7 +147,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                       const SizedBox(height: 36),
                       _smallBrandLogo(),
                       const SizedBox(height: 28),
-                      const Text(
+                      Text(
                         'Set a new\npassword',
                         textAlign: TextAlign.center,
                         style: TextStyle(
@@ -240,6 +227,20 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
               ),
             ),
           ),
+          Positioned(
+            top: 12,
+            left: 8,
+            child: SafeArea(
+              child: IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  size: 18,
+                  color: AppColors.film,
+                ),
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -300,7 +301,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
         obscureText: isPassword && obscured,
         autovalidateMode: AutovalidateMode.onUserInteraction,
         validator: validator,
-        style: const TextStyle(color: AppColors.film, fontSize: 14.5),
+        style: TextStyle(color: AppColors.film, fontSize: 14.5),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(
@@ -382,7 +383,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
             height: 54,
             alignment: Alignment.center,
             child: loading
-                ? const SizedBox(
+                ? SizedBox(
                     width: 22,
                     height: 22,
                     child: CircularProgressIndicator(
@@ -392,7 +393,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                   )
                 : Text(
                     label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.film,
                       fontSize: 15,
                       fontWeight: FontWeight.w600,

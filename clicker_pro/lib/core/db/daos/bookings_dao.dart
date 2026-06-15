@@ -89,6 +89,16 @@ class BookingsDao extends DatabaseAccessor<AppDatabase>
     )..where((t) => t.id.equals(id))).watchSingleOrNull();
   }
 
+  /// Looks up the local row a server row corresponds to. Used by the
+  /// remote-refresh merge so a pulled server row updates the existing
+  /// local row instead of inserting a duplicate under the server id.
+  Future<BookingRow?> getByRemoteId(String remoteId) {
+    return (select(bookingsTable)
+          ..where((t) => t.remoteId.equals(remoteId))
+          ..limit(1))
+        .getSingleOrNull();
+  }
+
   Stream<List<BookingRow>> watchMonth(
     int year,
     int month, {

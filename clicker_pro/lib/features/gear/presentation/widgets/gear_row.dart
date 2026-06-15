@@ -94,7 +94,7 @@ class GearRow extends StatelessWidget {
                 children: [
                   Text(
                     item.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.film,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -109,7 +109,7 @@ class GearRow extends StatelessWidget {
                       item.category,
                       if (item.condition != null) item.condition,
                     ].whereType<String>().join(' • '),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.filmDim,
                       fontSize: 12,
                     ),

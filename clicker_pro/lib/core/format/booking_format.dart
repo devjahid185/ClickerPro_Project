@@ -47,12 +47,13 @@ class BookingFormat {
     return '$s%';
   }
 
-  /// Date+time render for booking timeline, e.g. `"Jan 5, 2025 5:30 PM"`.
+  /// Date+time render for booking timeline, e.g. `"Jan 5, 2025 17:30"`.
   ///
+  /// Time is shown in 24-hour format (`add_Hm`), not 12-hour AM/PM.
   /// When `lang == 'bn'` Bengali numerals are always applied so Property 12
   /// holds for every digit emitted (date numbers, time numbers, year).
   static String dateTime(DateTime dt, {required String lang}) {
-    final formatted = DateFormat.yMMMd(lang).add_jm().format(dt.toLocal());
+    final formatted = DateFormat.yMMMd(lang).add_Hm().format(dt.toLocal());
     return lang == 'bn' ? toBengaliDigits(formatted) : formatted;
   }
 
@@ -82,12 +83,12 @@ class BookingFormat {
         lang == 'bn' ? toBengaliDigits(n.toString()) : n.toString();
 
     if (absSeconds < 60) {
-      return lang == 'bn' ? 'এইমাত্র' : 'just now';
+      return 'just now';
     }
     if (absMinutes < 60) {
       final n = numberStr(absMinutes);
       if (lang == 'bn') {
-        return isPast ? '$n মিনিট আগে' : '$n মিনিটে';
+        return isPast ? '$n min ago' : 'in $n min';
       }
       final unit = absMinutes == 1 ? 'minute' : 'minutes';
       return isPast ? '$n $unit ago' : 'in $n $unit';
@@ -95,7 +96,7 @@ class BookingFormat {
     // absHours < 24
     final n = numberStr(absHours);
     if (lang == 'bn') {
-      return isPast ? '$n ঘণ্টা আগে' : '$n ঘণ্টায়';
+      return isPast ? '$n hr ago' : 'in $n hr';
     }
     final unit = absHours == 1 ? 'hour' : 'hours';
     return isPast ? '$n $unit ago' : 'in $n $unit';

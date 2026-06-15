@@ -34,7 +34,9 @@ void main() {
     await _pumpEditScreen(tester);
 
     expect(find.text('New Booking'), findsOneWidget);
-    expect(find.text('SAVE'), findsOneWidget);
+    // The appbar SAVE was removed (v3.8) — saving goes through the sticky
+    // "Create Booking" bar only.
+    expect(find.text('Create Booking'), findsOneWidget);
     expect(
       find.text('CLIENT NAME', skipOffstage: false),
       findsAtLeastNWidgets(1),
@@ -47,9 +49,9 @@ void main() {
   ) async {
     await _pumpEditScreen(tester);
 
-    // Tap the SAVE button — Client Name is empty so validation
+    // Tap Create Booking — Client Name is empty so validation
     // triggers shake animation.
-    await tester.tap(find.text('SAVE'));
+    await tester.tap(find.text('Create Booking'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 

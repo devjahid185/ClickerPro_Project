@@ -80,10 +80,10 @@ class PerformanceScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Performance',
           style: TextStyle(
             color: AppColors.film,
@@ -324,7 +324,7 @@ class _StatusRow extends StatelessWidget {
             Expanded(
               child: Text(
                 label[0].toUpperCase() + label.substring(1),
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.film,
                   fontSize: 13,
                 ),

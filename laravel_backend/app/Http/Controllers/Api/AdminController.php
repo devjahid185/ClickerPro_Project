@@ -47,13 +47,13 @@ class AdminController extends Controller
     {
         $data = Cache::remember('admin.analytics', self::DASHBOARD_TTL, function () {
             $signups = User::select(
-                    DB::raw("TO_CHAR(created_at, 'YYYY-MM') as month"),
+                    DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month"),
                     DB::raw('COUNT(*) as count')
                 )
                 ->groupBy('month')->orderBy('month')->limit(12)->get();
 
             $bookings = Event::select(
-                    DB::raw("TO_CHAR(created_at, 'YYYY-MM') as month"),
+                    DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month"),
                     DB::raw('COUNT(*) as count')
                 )
                 ->groupBy('month')->orderBy('month')->limit(12)->get();
@@ -138,7 +138,40 @@ class AdminController extends Controller
             return response()->json(['message' => 'Not found'], 404);
         }
 
-        return response()->json(['data' => $user]);
+        // The admin UI renders {user, stats, bookings} — returning the raw
+        // row made every field read crash client-side (data.user.fullName).
+        $eventIds = Event::where('owner_id', $user->id)->pluck('id');
+        $paymentsCount = Payment::whereIn('event_id', $eventIds)->count();
+        $paymentsTotal = (float) Payment::whereIn('event_id', $eventIds)->sum('amount');
+
+        $bookings = Event::where('owner_id', $user->id)
+            ->with('client:id,name')
+            ->orderBy('date', 'desc')
+            ->limit(15)
+            ->get()
+            ->map(fn ($e) => [
+                'id' => (string) $e->id,
+                'title' => $e->title,
+                'type' => $e->event_type,
+                'date' => $e->date,
+                'status' => $e->status,
+                'venue' => $e->venue,
+                'client' => $e->client ? ['name' => $e->client->name] : null,
+            ]);
+
+        return response()->json(['data' => [
+            'user' => array_merge($this->userRow($user), [
+                'whatsapp' => $user->whatsapp ?? null,
+                'businessAddress' => $user->business_address ?? null,
+            ]),
+            'stats' => [
+                'bookings' => $user->events_count ?? 0,
+                'clients' => $user->clients_count ?? 0,
+                'paymentsCount' => $paymentsCount,
+                'paymentsTotal' => $paymentsTotal,
+            ],
+            'bookings' => $bookings,
+        ]]);
     }
 
     public function updateUser(Request $request, $id)
@@ -226,7 +259,7 @@ class AdminController extends Controller
     // ── Admin payments list (all studios) ──
     public function payments(Request $request)
     {
-        $query = Payment::with(['event:id,title,owner_id,client_id', 'event.owner:id,name,business_name', 'event.client:id,name'])
+        $query = Payment::with(['event:id,title,owner_id,client_id', 'event.owner:id,name,business_name,email', 'event.client:id,name'])
             ->orderBy('created_at', 'desc');
 
         $totalAmount = (float) (clone $query)->sum('amount');
@@ -245,6 +278,19 @@ class AdminController extends Controller
                     'title' => $p->event->title,
                     'owner' => $p->event->owner ? ['fullName' => $p->event->owner->name, 'businessName' => $p->event->owner->business_name] : null,
                     'client' => $p->event->client ? ['name' => $p->event->client->name] : null,
+                ] : null,
+                // Aliases the admin Finance page renders directly.
+                'status' => $p->kind === 'DUE' ? 'PENDING' : 'COMPLETED',
+                'paidAt' => $p->paid_at ?? $p->created_at,
+                'currency' => 'BDT',
+                'user' => $p->event?->owner ? [
+                    'id' => (string) $p->event->owner->id,
+                    'fullName' => $p->event->owner->name,
+                    'email' => $p->event->owner->email ?? '',
+                ] : null,
+                'booking' => $p->event ? [
+                    'id' => (string) $p->event->id,
+                    'title' => $p->event->title,
                 ] : null,
             ];
         });

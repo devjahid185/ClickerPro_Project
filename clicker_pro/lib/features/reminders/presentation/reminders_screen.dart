@@ -37,10 +37,10 @@ class RemindersScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Reminders',
           style: TextStyle(
             color: AppColors.film,
@@ -135,7 +135,7 @@ class _AddReminderSheetState extends State<_AddReminderSheet> {
       lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.dark(
+          colorScheme: ColorScheme.dark(
             primary: AppColors.orange,
             onPrimary: Colors.white,
             surface: AppColors.surface,
@@ -207,7 +207,7 @@ class _AddReminderSheetState extends State<_AddReminderSheet> {
               ),
             ),
           ),
-          const Text(
+          Text(
             'Add Reminder',
             style: TextStyle(
               color: AppColors.film,
@@ -294,7 +294,7 @@ class _AddReminderSheetState extends State<_AddReminderSheet> {
                   const SizedBox(width: 10),
                   Text(
                     dateStr,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.film,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -311,7 +311,7 @@ class _AddReminderSheetState extends State<_AddReminderSheet> {
           const SizedBox(height: 6),
           TextField(
             controller: _bookingCtrl,
-            style: const TextStyle(color: AppColors.film, fontSize: 14),
+            style: TextStyle(color: AppColors.film, fontSize: 14),
             decoration: InputDecoration(
               hintText: 'e.g. abc-123',
               hintStyle: TextStyle(
@@ -415,7 +415,7 @@ class _ReminderRow extends StatelessWidget {
         ),
         title: Text(
           reminder.type.name[0].toUpperCase() + reminder.type.name.substring(1),
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.film,
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -449,7 +449,7 @@ class _ReminderRow extends StatelessWidget {
               ),
             const SizedBox(width: 8),
             IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.delete_outline,
                 color: AppColors.filmMuted,
                 size: 18,

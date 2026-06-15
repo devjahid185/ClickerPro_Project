@@ -36,10 +36,10 @@ class TermsScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Terms of Service',
           style: TextStyle(
             color: AppColors.film,
@@ -67,31 +67,31 @@ class TermsScreen extends ConsumerWidget {
 }
 
 MarkdownStyleSheet _markdownStyle() {
-  const baseColor = AppColors.film;
-  const dimColor = AppColors.filmDim;
+  final baseColor = AppColors.film;
+  final dimColor = AppColors.filmDim;
   return MarkdownStyleSheet(
-    p: const TextStyle(color: baseColor, fontSize: 14, height: 1.55),
-    h1: const TextStyle(
+    p: TextStyle(color: baseColor, fontSize: 14, height: 1.55),
+    h1: TextStyle(
       color: AppColors.film,
       fontFamily: 'Poppins',
       fontSize: 28,
       fontWeight: FontWeight.w600,
     ),
-    h2: const TextStyle(
+    h2: TextStyle(
       color: AppColors.film,
       fontFamily: 'Poppins',
       fontSize: 22,
       fontWeight: FontWeight.w600,
     ),
-    h3: const TextStyle(
+    h3: TextStyle(
       color: AppColors.film,
       fontFamily: 'Poppins',
       fontSize: 18,
       fontWeight: FontWeight.w600,
     ),
-    strong: const TextStyle(color: AppColors.film, fontWeight: FontWeight.w700),
-    em: const TextStyle(color: baseColor, fontStyle: FontStyle.italic),
-    listBullet: const TextStyle(color: dimColor, fontSize: 14, height: 1.55),
+    strong: TextStyle(color: AppColors.film, fontWeight: FontWeight.w700),
+    em: TextStyle(color: baseColor, fontStyle: FontStyle.italic),
+    listBullet: TextStyle(color: dimColor, fontSize: 14, height: 1.55),
     a: const TextStyle(
       color: AppColors.gold,
       decoration: TextDecoration.underline,
@@ -99,10 +99,7 @@ MarkdownStyleSheet _markdownStyle() {
   );
 }
 
-String _fallbackTerms(String lang) {
-  if (lang == 'bn') return _termsBn;
-  return _termsEn;
-}
+String _fallbackTerms(String lang) => _termsEn;
 
 const String _termsEn = '''
 By using Clicker Pro you agree to:
@@ -126,24 +123,3 @@ Laws of Bangladesh apply.
 support@clickerpro.app
 ''';
 
-const String _termsBn = '''
-Clicker Pro ব্যবহার করে আপনি সম্মত হচ্ছেন:
-
-**অ্যাকাউন্টের দায়িত্ব**
-আপনার ক্রেডেনশিয়াল সুরক্ষিত রাখুন। আপনার টিম ও ডেটার জন্য আপনি দায়ী।
-
-**গ্রহণযোগ্য ব্যবহার**
-কোনো বেআইনি কার্যকলাপ নয়। ক্লায়েন্টের গোপনীয়তা ও কপিরাইটকে সম্মান করুন।
-
-**অ্যাকাউন্ট বন্ধ**
-এই শর্ত লঙ্ঘনকারী অ্যাকাউন্ট আমরা স্থগিত করতে পারি।
-
-**দায়বদ্ধতা**
-যেমন আছে তেমনই দেওয়া হয়েছে। যৌক্তিক ব্যাকআপের বাইরে আউটেজ বা ডেটা লসের জন্য কোনো ওয়ারেন্টি নেই।
-
-**প্রযোজ্য আইন**
-বাংলাদেশের আইন প্রযোজ্য হবে।
-
-**যোগাযোগ**
-support@clickerpro.app
-''';

@@ -57,7 +57,7 @@ class _CreateAnnouncementSheetState
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
+            colorScheme: ColorScheme.light(
               primary: AppColors.orange,
               surface: AppColors.voidElevated,
               onSurface: AppColors.film,
@@ -120,7 +120,7 @@ class _CreateAnnouncementSheetState
                   ),
                 ),
               ),
-              const Text(
+              Text(
                 'New Announcement',
                 style: TextStyle(
                   color: AppColors.film,
@@ -132,7 +132,7 @@ class _CreateAnnouncementSheetState
               const SizedBox(height: 16),
               TextFormField(
                 controller: _titleCtl,
-                style: const TextStyle(color: AppColors.film),
+                style: TextStyle(color: AppColors.film),
                 decoration: _decoration('Title'),
                 validator: (v) => (v == null || v.trim().isEmpty)
                     ? 'Title is required'
@@ -141,7 +141,7 @@ class _CreateAnnouncementSheetState
               const SizedBox(height: 12),
               TextFormField(
                 controller: _bodyCtl,
-                style: const TextStyle(color: AppColors.film),
+                style: TextStyle(color: AppColors.film),
                 decoration: _decoration('Body'),
                 maxLines: 4,
                 validator: (v) =>
@@ -150,13 +150,13 @@ class _CreateAnnouncementSheetState
               const SizedBox(height: 12),
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.push_pin_outlined,
                     color: AppColors.filmDim,
                     size: 18,
                   ),
                   const SizedBox(width: 8),
-                  const Text(
+                  Text(
                     'Pin this announcement',
                     style: TextStyle(color: AppColors.filmDim, fontSize: 13),
                   ),
@@ -189,7 +189,7 @@ class _CreateAnnouncementSheetState
                   ),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.calendar_today_outlined,
                         color: AppColors.filmDim,
                         size: 16,
@@ -210,7 +210,7 @@ class _CreateAnnouncementSheetState
                       if (_expiresAt != null)
                         GestureDetector(
                           onTap: () => setState(() => _expiresAt = null),
-                          child: const Icon(
+                          child: Icon(
                             Icons.close,
                             color: AppColors.filmDim,
                             size: 16,
@@ -228,7 +228,7 @@ class _CreateAnnouncementSheetState
                       onPressed: _saving
                           ? null
                           : () => Navigator.of(context).pop(),
-                      child: const Text(
+                      child: Text(
                         'Cancel',
                         style: TextStyle(color: AppColors.filmDim),
                       ),
@@ -262,16 +262,16 @@ class _CreateAnnouncementSheetState
 
   InputDecoration _decoration(String label) => InputDecoration(
     labelText: label,
-    labelStyle: const TextStyle(color: AppColors.filmDim),
+    labelStyle: TextStyle(color: AppColors.filmDim),
     filled: true,
     fillColor: AppColors.voidElevated,
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.glassBorder),
+      borderSide: BorderSide(color: AppColors.glassBorder),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.glassBorder),
+      borderSide: BorderSide(color: AppColors.glassBorder),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),

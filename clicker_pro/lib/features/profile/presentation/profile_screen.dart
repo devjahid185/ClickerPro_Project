@@ -23,6 +23,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/format/number_format.dart';
 import '../../../core/navigation/route_names.dart';
@@ -124,10 +125,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       backgroundColor: Colors.transparent,
       elevation: 0,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: AppColors.film),
+        icon: Icon(Icons.arrow_back, color: AppColors.film),
         onPressed: () => Navigator.of(context).maybePop(),
       ),
-      title: const Text(
+      title: Text(
         'Profile',
         style: TextStyle(
           color: AppColors.film,
@@ -138,11 +139,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       actions: [
         PopupMenuButton<String>(
           tooltip: 'More',
-          icon: const Icon(Icons.more_vert_rounded, color: AppColors.film),
+          icon: Icon(Icons.more_vert_rounded, color: AppColors.film),
           color: AppColors.voidElevated,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+            side: BorderSide(color: AppColors.line(0.08)),
           ),
           onSelected: _onMenuSelected,
           itemBuilder: (context) => <PopupMenuEntry<String>>[
@@ -230,15 +231,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               value: view.email,
               icon: Icons.email,
               keyboardType: TextInputType.emailAddress,
-              onChanged: (val) => _updateDraft((d) => d.copyWith(email: val)),
+              // Email is the login identity — the backend (correctly)
+              // refuses to change it from the profile endpoint, so showing
+              // it as editable was a lie. Read-only until a proper
+              // change-email + re-verify flow exists.
+              onChanged: null,
+              isReadOnly: true,
             ),
-            _buildInfoField(
-              label: t('studio_address'),
-              value: view.studioAddress ?? '',
-              icon: Icons.location_on,
-              onChanged: (val) =>
-                  _updateDraft((d) => d.copyWith(studioAddress: val)),
-            ),
+            // Studio address is company information — a pure Freelancer has
+            // no studio, so this field is hidden for them.
+            if (policy.can(Capability.editStudioBranding))
+              _buildInfoField(
+                label: t('studio_address'),
+                value: view.studioAddress ?? '',
+                icon: Icons.location_on,
+                onChanged: (val) =>
+                    _updateDraft((d) => d.copyWith(studioAddress: val)),
+              ),
             _buildInfoField(
               label: t('bio'),
               value: view.bio ?? '',
@@ -264,13 +273,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               keyboardType: TextInputType.phone,
               onChanged: (val) => _updateDraft((d) => d.copyWith(bkash: val)),
             ),
-            _buildInfoField(
-              label: t('bank_details'),
-              value: view.bankDetails ?? '',
-              icon: Icons.account_balance,
-              onChanged: (val) =>
-                  _updateDraft((d) => d.copyWith(bankDetails: val)),
-            ),
+            // Bank account lives behind one tile: collapsed = just the
+            // bank name; tap = form sheet with the 4 payout fields.
+            _buildBankTile(view),
           ]),
 
           // ── Gear inventory + companies (Freelancer / Both) ────
@@ -311,6 +316,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 icon: Icons.image,
                 onChanged: null,
                 isUpload: true,
+                onUpload: () => _pickAndUploadImage(
+                  (url) => _updateDraft((d) => d.copyWith(logoUrl: url)),
+                  successMessage: 'Logo uploaded — tap Save to keep it.',
+                ),
               ),
               _buildInfoField(
                 label: t('digital_signature'),
@@ -321,6 +330,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 icon: Icons.edit,
                 onChanged: null,
                 isUpload: true,
+                onUpload: () => _pickAndUploadImage(
+                  (url) => _updateDraft((d) => d.copyWith(signatureUrl: url)),
+                  successMessage: 'Signature uploaded — tap Save to keep it.',
+                ),
               ),
             ]),
           ],
@@ -345,12 +358,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   // ── Header (avatar + role chip) ───────────────────────────────
   Widget _buildHeader(UserModel user) {
+    final hasPhoto = user.avatarUrl != null && user.avatarUrl!.isNotEmpty;
     final avatar = Container(
       width: 120,
       height: 120,
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: AppColors.accent,
+        // Uploaded profile photo when present; gradient initials otherwise.
+        image: hasPhoto
+            ? DecorationImage(
+                image: NetworkImage(user.avatarUrl!),
+                fit: BoxFit.cover,
+              )
+            : null,
         boxShadow: [
           BoxShadow(
             color: AppColors.accent.withValues(alpha: 0.3),
@@ -359,18 +381,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
         ],
       ),
-      child: Center(
-        child: Text(
-          user.avatarInitials,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 36,
-            fontWeight: FontWeight.w700,
-            fontFamily: 'Poppins',
-            letterSpacing: 1.2,
-          ),
-        ),
-      ),
+      child: hasPhoto
+          ? null
+          : Center(
+              child: Text(
+                user.avatarInitials,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 36,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Poppins',
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ),
     );
 
     return Center(
@@ -390,13 +414,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     backgroundColor: AppColors.accent,
                     radius: 18,
                     child: IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.camera_alt,
                         size: 18,
                         color: AppColors.film,
                       ),
-                      // Avatar upload is out of scope per Req 3.8.
-                      onPressed: () => _showSnack(t('coming_soon')),
+                      onPressed: () => _pickAndUploadImage(
+                        (url) => _updateDraft(
+                          (d) => d.copyWith(avatarUrl: url),
+                        ),
+                        successMessage:
+                            'Photo uploaded — tap Save to keep it.',
+                      ),
                     ),
                   ),
                 ),
@@ -442,7 +471,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         alignment: Alignment.centerLeft,
         child: Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.filmDim,
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -474,6 +503,207 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   // ── Specialization role chips (Photographer / Cinematographer / etc.) ──
+  /// Bank details live in ONE backend column; the UI splits them into
+  /// "bank | account | branch | holder". Legacy free-text values (no
+  /// pipes) surface in the Bank Name field so nothing is lost.
+  String _bankPart(String? raw, int index) {
+    if (raw == null || raw.trim().isEmpty) return '';
+    final parts = raw.split('|').map((p) => p.trim()).toList();
+    return index < parts.length ? parts[index] : '';
+  }
+
+  /// Collapsed bank tile: bank name only (or an "add" prompt). Tapping
+  /// opens the 4-field form sheet so details stay hidden until asked.
+  Widget _buildBankTile(UserModel view) {
+    final bankName = _bankPart(view.bankDetails, 0);
+    final hasBank = bankName.isNotEmpty;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => _openBankSheet(view),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColors.glass,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.glassBorder),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.account_balance,
+                  size: 20,
+                  color: hasBank ? AppColors.teal : AppColors.filmMuted,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        hasBank ? bankName : 'Add Bank Account',
+                        style: TextStyle(
+                          color: hasBank ? AppColors.film : AppColors.filmDim,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        hasBank
+                            ? 'Tap to view / edit details'
+                            : 'Bank name, account number, branch, holder name',
+                        style: TextStyle(
+                          color: AppColors.filmDim.withValues(alpha: 0.7),
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (hasBank)
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    color: AppColors.teal,
+                    size: 18,
+                  ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.filmMuted,
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openBankSheet(UserModel view) async {
+    final raw = (_isEditing ? _draft?.bankDetails : null) ?? view.bankDetails;
+    final ctrls = List.generate(
+      4,
+      (i) => TextEditingController(text: _bankPart(raw, i)),
+    );
+    const labels = [
+      'Bank Name',
+      'Account Number',
+      'Branch',
+      'Account Holder Name',
+    ];
+
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: AppColors.voidLight,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          20,
+          24,
+          24 + MediaQuery.of(ctx).viewInsets.bottom,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Bank Account Details',
+                style: TextStyle(
+                  color: AppColors.film,
+                  fontFamily: 'Poppins',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 14),
+              for (var i = 0; i < 4; i++) ...[
+                TextField(
+                  controller: ctrls[i],
+                  keyboardType: i == 1 ? TextInputType.number : null,
+                  style: TextStyle(color: AppColors.film, fontSize: 14),
+                  decoration: InputDecoration(
+                    labelText: labels[i],
+                    labelStyle: TextStyle(
+                      color: AppColors.filmDim,
+                      fontSize: 13,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.voidBlack,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                        color: AppColors.glassBorder,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                        color: AppColors.glassBorder,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: AppColors.teal),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+              const SizedBox(height: 4),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.teal,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Save'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final parts = ctrls.map((c) => c.text.trim()).toList();
+    for (final c in ctrls) {
+      c.dispose();
+    }
+    if (saved != true) return;
+
+    final joined = parts.every((p) => p.isEmpty) ? '' : parts.join(' | ');
+
+    if (_isEditing) {
+      // Editing session: stage in the draft; the profile Save commits.
+      _updateDraft((d) => d.copyWith(bankDetails: joined));
+      return;
+    }
+
+    // View mode: persist immediately so the tile works standalone.
+    try {
+      final updated = view.copyWith(bankDetails: joined);
+      await ref.read(userRepositoryProvider).updateProfile(updated);
+      if (!mounted) return;
+      _showSnack('Bank details saved');
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack('Could not save — please try again.');
+    }
+  }
+
   Widget _buildSpecializationChips(UserModel view) {
     const options = <({String value, String label, IconData icon})>[
       (
@@ -520,11 +750,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       _updateDraft((d) => d.copyWith(specialization: sorted.join(',')));
     }
 
+    // View mode shows ONLY the saved skills; the full option list is
+    // for edit mode (showing unselected chips read as "skills you have").
+    final visibleOptions = _isEditing
+        ? options
+        : options.where((o) => selected.contains(o.value)).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          children: const [
+          children: [
             Icon(Icons.star_outline, size: 16, color: AppColors.accent),
             SizedBox(width: 8),
             Text(
@@ -540,10 +776,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ],
         ),
         const SizedBox(height: 10),
+        if (visibleOptions.isEmpty)
+          Text(
+            'No skills saved — tap Edit.',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              color: AppColors.filmDim.withValues(alpha: 0.7),
+            ),
+          ),
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: options.map((opt) {
+          children: visibleOptions.map((opt) {
             final isOn = selected.contains(opt.value);
             return GestureDetector(
               onTap: () => toggle(opt.value),
@@ -557,12 +802,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 decoration: BoxDecoration(
                   color: isOn
                       ? AppColors.accent.withValues(alpha: 0.16)
-                      : Colors.black.withValues(alpha: 0.04),
+                      : AppColors.line(0.04),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isOn
                         ? AppColors.accent.withValues(alpha: 0.55)
-                        : Colors.black.withValues(alpha: 0.10),
+                        : AppColors.line(0.10),
                   ),
                 ),
                 child: Row(
@@ -612,6 +857,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     required ValueChanged<String>? onChanged,
     bool isReadOnly = false,
     bool isUpload = false,
+    VoidCallback? onUpload,
     TextInputType? keyboardType,
   }) {
     final canEdit = _isEditing && !isReadOnly && onChanged != null;
@@ -626,7 +872,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.filmMuted,
                   fontSize: 12,
                 ),
@@ -637,7 +883,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   initialValue: value,
                   onChanged: onChanged,
                   keyboardType: keyboardType,
-                  style: const TextStyle(color: AppColors.film, fontSize: 16),
+                  style: TextStyle(color: AppColors.film, fontSize: 16),
                   decoration: const InputDecoration(
                     isDense: true,
                     contentPadding: EdgeInsets.symmetric(vertical: 4),
@@ -648,7 +894,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 Text(
                   value.isEmpty ? '—' : value,
                   style: TextStyle(
-                    color: value.isEmpty ? AppColors.filmMuted : Colors.white,
+                    // film (ink) — Colors.white vanished on the light card
+                    // surface, which made saved values look "invisible".
+                    color: value.isEmpty ? AppColors.filmMuted : AppColors.film,
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                   ),
@@ -663,10 +911,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               color: AppColors.accent,
               size: 20,
             ),
-            onPressed: () => _showSnack(t('coming_soon')),
+            onPressed: onUpload ?? () => _showSnack(t('coming_soon')),
           ),
       ],
     );
+  }
+
+  /// Picks an image from the gallery, uploads it to the backend, and hands
+  /// the hosted URL to [apply] (which stores it on the profile draft).
+  Future<void> _pickAndUploadImage(
+    void Function(String url) apply, {
+    required String successMessage,
+  }) async {
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1600,
+      imageQuality: 88,
+    );
+    if (picked == null || !mounted) return;
+    _showSnack('Uploading…');
+    try {
+      final url = await ref.read(userApiProvider).uploadImage(picked.path);
+      if (!mounted) return;
+      apply(url);
+      _showSnack(successMessage);
+    } catch (e) {
+      if (mounted) _showSnack('Upload failed: $e');
+    }
   }
 
   // ── Gear section (real Drift stream) ──────────────────────────
@@ -680,7 +951,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           children: [
             Text(
               t('prof_gear'),
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.film,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -748,7 +1019,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           const Icon(Icons.camera, color: AppColors.gold, size: 18),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(subtitle, style: const TextStyle(color: AppColors.film)),
+            child: Text(subtitle, style: TextStyle(color: AppColors.film)),
           ),
           if (_isEditing)
             IconButton(
@@ -783,7 +1054,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       children: [
         Text(
           t('my_companies'),
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.film,
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -815,7 +1086,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 children: [
                   const Icon(Icons.business, color: AppColors.indigo, size: 18),
                   const SizedBox(width: 10),
-                  Text(company, style: const TextStyle(color: AppColors.film)),
+                  Text(company, style: TextStyle(color: AppColors.film)),
                   const Spacer(),
                   const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
                 ],
@@ -863,7 +1134,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Manager invite code',
                   style: TextStyle(
@@ -877,7 +1148,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          const Text(
+          Text(
             'Generate a 6-digit code to invite a manager into your company.\nCode expires in 24 hours.',
             style: TextStyle(
               fontFamily: 'Inter',
@@ -906,7 +1177,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                   ],
                 ),
-                child: const Text(
+                child: Text(
                   'Generate Invite Code',
                   style: TextStyle(
                     fontFamily: 'Inter',
@@ -995,7 +1266,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               : Text(
                   value,
                   key: ValueKey(value),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.film,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -1008,7 +1279,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         const SizedBox(height: 2),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.filmMuted,
             fontSize: 11,
             letterSpacing: 0.4,
@@ -1036,10 +1307,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             _isEditing = true;
             _draft = user.copyWith();
           }),
-          icon: const Icon(Icons.edit_rounded, color: AppColors.film, size: 18),
+          icon: Icon(Icons.edit_rounded, color: AppColors.film, size: 18),
           label: Text(
             t('edit_profile'),
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.film,
               fontWeight: FontWeight.bold,
             ),
@@ -1062,7 +1333,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               onPressed: _isSaving ? null : _onCancel,
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.filmDim,
-                side: BorderSide(color: Colors.black.withValues(alpha: 0.18)),
+                side: BorderSide(color: AppColors.line(0.18)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1097,7 +1368,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 200),
                     child: _isSaving
-                        ? const SizedBox(
+                        ? SizedBox(
                             key: ValueKey('saving'),
                             width: 20,
                             height: 20,
@@ -1109,7 +1380,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         : Text(
                             t('save_changes'),
                             key: const ValueKey('save'),
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.film,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 0.3,
@@ -1192,11 +1463,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           backgroundColor: AppColors.voidElevated,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
-            side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+            side: BorderSide(color: AppColors.line(0.08)),
           ),
           title: Text(
             t('add_gear'),
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.film,
               fontFamily: 'Poppins',
             ),
@@ -1204,12 +1475,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           content: TextField(
             controller: controller,
             autofocus: true,
-            style: const TextStyle(color: AppColors.film),
+            style: TextStyle(color: AppColors.film),
             decoration: InputDecoration(
               hintText: 'e.g. Canon EOS R5',
-              hintStyle: const TextStyle(color: AppColors.filmMuted),
+              hintStyle: TextStyle(color: AppColors.filmMuted),
               errorText: errorText,
-              enabledBorder: const OutlineInputBorder(
+              enabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: AppColors.glassBorder),
               ),
               focusedBorder: const OutlineInputBorder(
@@ -1220,7 +1491,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text(
+              child: Text(
                 'Cancel',
                 style: TextStyle(color: AppColors.filmDim),
               ),
@@ -1237,7 +1508,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 }
                 Navigator.of(ctx).pop(true);
               },
-              child: const Text('Save', style: TextStyle(color: AppColors.film)),
+              child: Text('Save', style: TextStyle(color: AppColors.film)),
             ),
           ],
         ),
@@ -1277,6 +1548,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         _showSnack('Could not change role');
         return;
       }
+      // Pull the authoritative profile back + refresh the role-driven
+      // providers so the whole UI (capabilities, tabs, finance) reflects
+      // the new role immediately — not just after a restart.
+      await ref.read(userRepositoryProvider).refreshFromRemote();
+      if (!mounted) return;
+      ref.invalidate(currentUserProvider);
       _showSnack('Role updated to ${picked.displayLabel}');
     } catch (_) {
       if (!mounted) return;
@@ -1313,9 +1590,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         backgroundColor: AppColors.voidElevated,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+          side: BorderSide(color: AppColors.line(0.08)),
         ),
-        title: const Text(
+        title: Text(
           'Manager invite',
           style: TextStyle(
             color: AppColors.film,
@@ -1357,7 +1634,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             const SizedBox(height: 14),
             Text(
               hours > 0 ? 'Expires in $hours hours' : 'Expires soon',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.filmMuted,
                 fontSize: 12,
                 letterSpacing: 0.6,
@@ -1381,7 +1658,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text(
+            child: Text(
               'Close',
               style: TextStyle(color: AppColors.filmDim),
             ),
@@ -1398,14 +1675,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         SnackBar(
           content: Text(
             message,
-            style: const TextStyle(color: AppColors.film, fontSize: 13),
+            style: TextStyle(color: AppColors.film, fontSize: 13),
           ),
           backgroundColor: AppColors.voidElevated,
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
-            side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+            side: BorderSide(color: AppColors.line(0.08)),
           ),
           duration: const Duration(seconds: 2),
         ),

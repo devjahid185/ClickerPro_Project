@@ -117,7 +117,7 @@ class _AddGearSheetState extends ConsumerState<AddGearSheet> {
               ),
               Text(
                 loc.gear_add,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.film,
                   fontFamily: 'Poppins',
                   fontSize: 22,
@@ -127,7 +127,7 @@ class _AddGearSheetState extends ConsumerState<AddGearSheet> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _nameCtl,
-                style: const TextStyle(color: AppColors.film),
+                style: TextStyle(color: AppColors.film),
                 decoration: _decoration(loc.gear_name),
                 validator: (v) => (v == null || v.trim().isEmpty)
                     ? loc.gear_validation_name_required
@@ -136,7 +136,7 @@ class _AddGearSheetState extends ConsumerState<AddGearSheet> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _brandCtl,
-                style: const TextStyle(color: AppColors.film),
+                style: TextStyle(color: AppColors.film),
                 decoration: _decoration(loc.gear_brand),
               ),
               const SizedBox(height: 12),
@@ -148,13 +148,13 @@ class _AddGearSheetState extends ConsumerState<AddGearSheet> {
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                 ],
-                style: const TextStyle(color: AppColors.film),
+                style: TextStyle(color: AppColors.film),
                 decoration: _decoration(loc.gear_value),
               ),
               const SizedBox(height: 12),
               Text(
                 loc.gear_category,
-                style: const TextStyle(color: AppColors.filmDim, fontSize: 12),
+                style: TextStyle(color: AppColors.filmDim, fontSize: 12),
               ),
               const SizedBox(height: 6),
               Wrap(
@@ -184,7 +184,7 @@ class _AddGearSheetState extends ConsumerState<AddGearSheet> {
               const SizedBox(height: 12),
               Text(
                 loc.gear_condition,
-                style: const TextStyle(color: AppColors.filmDim, fontSize: 12),
+                style: TextStyle(color: AppColors.filmDim, fontSize: 12),
               ),
               const SizedBox(height: 6),
               Wrap(
@@ -220,7 +220,7 @@ class _AddGearSheetState extends ConsumerState<AddGearSheet> {
                           : () => Navigator.of(context).pop(),
                       child: Text(
                         loc.gear_cancel,
-                        style: const TextStyle(color: AppColors.filmDim),
+                        style: TextStyle(color: AppColors.filmDim),
                       ),
                     ),
                   ),
@@ -252,16 +252,16 @@ class _AddGearSheetState extends ConsumerState<AddGearSheet> {
 
   InputDecoration _decoration(String label) => InputDecoration(
     labelText: label,
-    labelStyle: const TextStyle(color: AppColors.filmDim),
+    labelStyle: TextStyle(color: AppColors.filmDim),
     filled: true,
     fillColor: AppColors.voidElevated,
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.glassBorder),
+      borderSide: BorderSide(color: AppColors.glassBorder),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.glassBorder),
+      borderSide: BorderSide(color: AppColors.glassBorder),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),

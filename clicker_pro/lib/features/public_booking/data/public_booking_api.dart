@@ -1,20 +1,21 @@
 // lib/features/public_booking/data/public_booking_api.dart
 //
-// Wire-level methods for the Public Booking endpoints. Has two faces:
+// Public Booking endpoints against the Laravel backend.
 //
-//   * Owner-side (authenticated): issue tokens, list pending requests,
-//     approve, reject. The studio's bearer token is attached automatically
-//     by `ApiClient` when present.
+// Laravel contract (routes/api.php + PublicBookingController):
+//   GET  /api/public-booking/{token}  → { data: { studio, packages } }
+//   POST /api/public-booking/{token}  → { data: event } (201)
 //
-//   * Visitor-side (unauthenticated): peek at a token, submit a request.
-//     The opaque HMAC token in the `?token=` query parameter IS the only
-//     credential — these calls pass `authenticated: false` so `ApiClient`
-//     does NOT inject the studio's Bearer header.
-//
-// Source of truth: `.kiro/specs/bookings-module/design.md` →
-// "Remote API Contract" section. Validates Requirements 13.14, 13.15.
+// The owner's share link uses the `public_booking_token` already issued
+// on the user account (UserResource exposes it as bookingToken). Visitor
+// submissions become PENDING bookings directly server-side, so they show
+// up in the normal bookings list — there is no separate pending-requests
+// queue on this backend, and [listPending] reflects that by returning
+// empty.
 
+import '../../../core/env/app_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../bookings/domain/event_type.dart';
 import '../domain/public_booking_request.dart';
 import '../domain/public_booking_token.dart';
 
@@ -23,101 +24,110 @@ class PublicBookingApi {
 
   final ApiClient _client;
 
+  Map<String, dynamic> _data(dynamic r) {
+    if (r is! Map) return <String, dynamic>{};
+    final d = r['data'];
+    return (d is Map ? d : r).cast<String, dynamic>();
+  }
+
   // ---------------------------------------------------------------------
   // Owner-side (authenticated)
   // ---------------------------------------------------------------------
 
-  /// `POST /api/team/public-booking-tokens` — issue a fresh public link.
+  /// Returns the owner's permanent public-booking link. The token lives
+  /// on the user account (issued at registration); there is no rotating
+  /// token endpoint on this backend yet.
   Future<({String url, String token, DateTime expiresAt})> issueToken({
     int? expiresInDays,
     int? maxUses,
   }) async {
-    final r =
-        await _client.post(
-              '/api/team/public-booking-tokens',
-              body: {'expiresInDays': ?expiresInDays, 'maxUses': ?maxUses},
-            )
-            as Map<String, dynamic>;
+    final r = await _client.get('/api/profile');
+    final d = _data(r);
+    final u = d['user'] is Map
+        ? (d['user'] as Map).cast<String, dynamic>()
+        : d;
+    final token =
+        (u['bookingToken'] ?? u['public_booking_token'] ?? u['publicToken'] ?? '')
+            .toString();
     return (
-      url: r['url'] as String,
-      token: r['token'] as String,
-      expiresAt: DateTime.parse(r['expiresAt'] as String),
+      // The shareable link must open the WEB booking form, not the raw
+      // JSON API endpoint — clients tap this from WhatsApp/SMS.
+      url: '${AppConfig.webBaseUrl}/book/$token',
+      token: token,
+      // The account token does not expire — surface a far-future date so
+      // the share sheet renders something sensible.
+      expiresAt: DateTime.now().add(const Duration(days: 365)),
     );
   }
 
-  /// `GET /api/bookings/pending-public` — list pending submissions.
+  /// Visitor submissions become PENDING bookings directly on this
+  /// backend — they appear in the main bookings list, so the separate
+  /// pending queue is always empty.
   Future<List<PublicBookingRequest>> listPending() async {
-    final r =
-        await _client.get('/api/bookings/pending-public')
-            as Map<String, dynamic>;
-    return (r['items'] as List? ?? const [])
-        .map(
-          (e) =>
-              PublicBookingRequest.fromJson((e as Map).cast<String, dynamic>()),
-        )
-        .toList(growable: false);
+    return const [];
   }
 
-  /// `POST /api/bookings/pending-public/:requestId/approve` — promote a
-  /// pending request to a real Event server-side. Returns the freshly
-  /// materialized event payload as a raw map; the repository decodes it
-  /// via `Booking.fromJson` (avoids a circular import on the booking
-  /// domain layer).
+  /// Not applicable on this backend (submissions are already bookings) —
+  /// kept for interface compatibility; never reachable while
+  /// [listPending] returns empty.
   Future<Map<String, dynamic>> approve(String requestId) async {
-    final r =
-        await _client.post('/api/bookings/pending-public/$requestId/approve')
-            as Map<String, dynamic>;
-    return (r['event'] as Map).cast<String, dynamic>();
+    throw UnsupportedError(
+      'Public submissions are created as PENDING bookings directly.',
+    );
   }
 
-  /// `POST /api/bookings/pending-public/:requestId/reject`.
   Future<PublicBookingRequest> reject(
     String requestId, {
     String? reason,
   }) async {
-    final r =
-        await _client.post(
-              '/api/bookings/pending-public/$requestId/reject',
-              body: {'reason': ?reason},
-            )
-            as Map<String, dynamic>;
-    return PublicBookingRequest.fromJson(
-      (r['request'] as Map).cast<String, dynamic>(),
+    throw UnsupportedError(
+      'Public submissions are created as PENDING bookings directly.',
     );
   }
 
   // ---------------------------------------------------------------------
-  // Visitor-side (unauthenticated — token in query string is the credential)
+  // Visitor-side (unauthenticated — token in the path is the credential)
   // ---------------------------------------------------------------------
 
-  /// `GET /api/public/booking?token=` — visitor peeks at the token's
-  /// branding + supported event types. `authenticated: false` so no
-  /// Bearer header is attached.
+  /// `GET /api/public-booking/{token}` — visitor peeks at the studio's
+  /// branding. `authenticated: false` so no Bearer header is attached.
   Future<PublicBookingToken> peek(String token) async {
-    final r =
-        await _client.get(
-              '/api/public/booking',
-              query: {'token': token},
-              authenticated: false,
-            )
-            as Map<String, dynamic>;
-    // The server response shape is `{ studioName, studioLogoUrl?,
-    // supportedEventTypes, locale, expiresAt }`. The `token` itself is
-    // not echoed — we splice the caller's token back in so the resulting
-    // `PublicBookingToken` is self-contained for the submit step.
-    return PublicBookingToken.fromJson({...r, 'token': token});
+    final r = await _client.get(
+      '/api/public-booking/$token',
+      authenticated: false,
+    );
+    final d = _data(r);
+    final studio = d['studio'] is Map
+        ? (d['studio'] as Map).cast<String, dynamic>()
+        : <String, dynamic>{};
+    return PublicBookingToken(
+      token: token,
+      studioName: (studio['name'] ?? 'Studio').toString(),
+      studioLogoUrl: studio['avatar'] as String?,
+      // The backend accepts any event type on submit.
+      supportedEventTypes: EventType.values.toSet(),
+      locale: 'en',
+      expiresAt: DateTime.now().add(const Duration(days: 365)),
+    );
   }
 
-  /// `POST /api/public/booking?token=` — visitor submits a request.
-  /// Returns the server-issued `requestId` for the success screen.
+  /// `POST /api/public-booking/{token}` — visitor submits a request.
+  /// Returns the created PENDING booking's id.
   Future<String> submit(String token, PublicBookingRequest payload) async {
-    final r =
-        await _client.post(
-              '/api/public/booking?token=${Uri.encodeQueryComponent(token)}',
-              body: payload.toJson(),
-              authenticated: false,
-            )
-            as Map<String, dynamic>;
-    return r['requestId'] as String;
+    final r = await _client.post(
+      '/api/public-booking/$token',
+      body: {
+        'name': payload.clientName,
+        'phone': payload.clientPhone,
+        'email': ?payload.clientEmail,
+        'event_type': payload.eventType.name,
+        'date': payload.date.toIso8601String().split('T').first,
+        'venue': ?payload.venue,
+        'notes': ?payload.notes,
+      },
+      authenticated: false,
+    );
+    final d = _data(r);
+    return (d['id'] ?? '').toString();
   }
 }

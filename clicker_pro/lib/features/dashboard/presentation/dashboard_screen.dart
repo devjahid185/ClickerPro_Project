@@ -34,19 +34,29 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
+import '../../../core/format/bd_holidays.dart';
 import '../../../core/navigation/route_names.dart';
+import '../../../core/notifications/event_reminder_service.dart';
+import '../../../core/update/app_update_service.dart';
 import '../../../core/providers.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../shared/states/offline_banner.dart';
+import '../../../shared/widgets/motion.dart';
 import '../../../shared/widgets/sync_indicator.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_strings.dart';
 import '../../../theme/app_theme.dart';
 import '../../auth/application/session_controller.dart';
 import '../../auth/domain/user_role.dart';
-import '../../broadcasts/presentation/broadcast_banner.dart';
+import '../../../core/role/capability.dart';
+import '../../../core/role/role_policy.dart';
+import '../../../core/booking_status/booking_status.dart';
+import '../../bookings/application/booking_providers.dart';
+import '../../broadcasts/presentation/broadcast_popup.dart';
+import '../../push/application/fcm_bootstrap.dart';
 import '../../announcements/application/announcement_providers.dart';
 import '../../announcements/domain/announcement.dart';
 import '../../profile/application/profile_controllers.dart';
@@ -97,6 +107,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         setState(() => _visible[i] = true);
       });
     }
+
+    // Admin broadcast popup — shows once per broadcast on app open,
+    // auto-dismisses after 10s (see broadcast_popup.dart).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      showBroadcastPopupIfNeeded(context, ref);
+      // Register this device for push notifications (fail-soft).
+      initPushNotifications(ref);
+      // Prime the on-device event-reminder channel + permissions so the
+      // "1 hour before" alarms can be scheduled (fail-soft).
+      EventReminderService.instance.init();
+      // Over-the-air update check — prompts if a newer APK is published.
+      AppUpdateService.checkAndPrompt(context, ref.read(apiClientProvider));
+    });
   }
 
   @override
@@ -129,7 +153,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         // Center FAB handled in `_navFab`.
         break;
       case 3:
-        _pushNamed(RouteNames.finance);
+        // Freelancer's "Finance" is their earnings view — they have no
+        // studio income/expense data to show.
+        final role = ref.read(currentUserProvider).valueOrNull?.role;
+        _pushNamed(
+          role == UserRole.freelancer
+              ? RouteNames.freelancerEarnings
+              : RouteNames.finance,
+        );
         break;
       case 4:
         _pushNamed(RouteNames.settings);
@@ -212,7 +243,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: AppColors.glassBorder),
               ),
-              child: const Icon(Icons.menu, color: AppColors.film, size: 20),
+              child: Icon(Icons.menu, color: AppColors.film, size: 20),
             ),
           ),
         ),
@@ -234,7 +265,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: AppColors.glassBorder),
               ),
-              child: const Icon(Icons.search, color: AppColors.film, size: 20),
+              child: Icon(Icons.search, color: AppColors.film, size: 20),
             ),
           ),
         ),
@@ -251,7 +282,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: AppColors.glassBorder),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.notifications_none_rounded,
                 color: AppColors.film,
                 size: 20,
@@ -269,7 +300,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         preferredSize: const Size.fromHeight(1),
         child: Container(
           height: 1,
-          color: Colors.black.withValues(alpha: 0.04),
+          color: AppColors.line(0.04),
         ),
       ),
     );
@@ -287,7 +318,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             shape: BoxShape.circle,
             color: AppColors.accent,
             border: Border.all(
-              color: Colors.black.withValues(alpha: 0.12),
+              color: AppColors.line(0.12),
               width: 2,
             ),
           ),
@@ -326,10 +357,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       ..sort((a, b) => a.order.compareTo(b.order));
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 20),
+      // Bottom padding clears the floating 56px nav bar + its margin so
+      // the last card (weather) is never hidden behind it.
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 96),
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
-        const BroadcastBanner(),
+        // Platform broadcasts now arrive as the 10s popup + the drawer's
+        // "Platform Updates" screen — the persistent welcome banner was
+        // removed per design feedback.
         for (var i = 0; i < enabled.length; i++) ...[
           if (i > 0) const SizedBox(height: 12),
           _stagger(i, _buildSection(enabled[i].type, user)),
@@ -409,7 +444,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.07)),
+        border: Border.all(color: AppColors.line(0.07)),
       ),
       child: Row(
         children: List.generate(days.length, (int i) {
@@ -434,10 +469,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 )
               : isSelected
               ? BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.08),
+                  color: AppColors.line(0.08),
                   borderRadius: BorderRadius.circular(9),
                   border: Border.all(
-                    color: Colors.black.withValues(alpha: 0.10),
+                    color: AppColors.line(0.10),
                   ),
                 )
               : null;
@@ -545,14 +580,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         ],
       ),
       data: (m) {
-        final dayNight = _dayNightBreakdown(m.todayEvents);
+        final dayNight = (m.todayDayEvents, m.todayNightEvents);
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ── Left: Big today count card ──
             Expanded(
               child: GestureDetector(
-                onTap: () => _pushNamed(RouteNames.bookings),
+                onTap: _openTodayEvents,
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -647,14 +682,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     title: 'Upcoming',
                     value: '${m.upcomingEvents}',
                     color: AppColors.gold,
-                    onTap: () => _pushNamed(RouteNames.bookings),
+                    onTap: _openUpcomingEvents,
                   ),
                   const SizedBox(height: 10),
                   _miniHeroCard(
                     title: 'Total',
                     value: '${m.totalEvents}',
                     color: AppColors.indigo,
-                    onTap: () => _pushNamed(RouteNames.bookings),
+                    onTap: _openAllEvents,
                   ),
                 ],
               ),
@@ -663,12 +698,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         );
       },
     );
-  }
-
-  (int, int) _dayNightBreakdown(int total) {
-    // Placeholder split — Phase 2 will use real day/night data.
-    final day = (total * 0.6).round();
-    return (day, total - day);
   }
 
   Widget _dayNightPill({
@@ -708,7 +737,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+          border: Border.all(color: AppColors.line(0.08)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -751,7 +780,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.10)),
+        border: Border.all(color: AppColors.line(0.10)),
       ),
       child: const LensLoader(size: 22),
     );
@@ -764,7 +793,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.10)),
+        border: Border.all(color: AppColors.line(0.10)),
       ),
       child: ErrorState(
         message: 'Failed to load',
@@ -782,7 +811,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.10)),
+          border: Border.all(color: AppColors.line(0.10)),
         ),
         child: const LensLoader(size: 22),
       ),
@@ -951,7 +980,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     required String routeName,
   }) {
     return Expanded(
-      child: GestureDetector(
+      child: TapScale(
         onTap: () => _pushNamed(routeName),
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -959,7 +988,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+            border: Border.all(color: AppColors.line(0.08)),
           ),
           child: Column(
             children: [
@@ -997,13 +1026,69 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   Widget _buildAnnouncementCard() {
     final announcementsAsync = ref.watch(sortedAnnouncementsProvider);
 
+    // The section header is always rendered above this card, so an
+    // invisible card here looked like a broken/missing announcement box.
+    // Loading / error / empty all render a real placeholder box that
+    // links to the Announcements screen instead of disappearing.
+    Widget placeholderBox(String message) {
+      return GestureDetector(
+        onTap: () => Navigator.of(context).pushNamed(RouteNames.announcements),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.line(0.08)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppColors.gold.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.campaign_outlined,
+                  color: AppColors.gold,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  message,
+                  style: TextStyle(
+                    color: AppColors.filmDim.withValues(alpha: 0.85),
+                    fontSize: 12.5,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.filmDim.withValues(alpha: 0.5),
+                size: 20,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return announcementsAsync.when(
-      loading: () => const SizedBox.shrink(),
-      error: (_, _) => const SizedBox.shrink(),
+      loading: () => placeholderBox('Loading announcements…'),
+      error: (_, _) =>
+          placeholderBox('Could not load announcements — tap to retry.'),
       data: (items) {
-        // Show only latest non-expired item; hide card if nothing available.
         final active = items.where((a) => !a.isExpired).toList();
-        if (active.isEmpty) return const SizedBox.shrink();
+        if (active.isEmpty) {
+          return placeholderBox(
+            'No announcements yet — tap to post one.',
+          );
+        }
         final a = active.first;
         return GestureDetector(
           onTap: () {
@@ -1026,13 +1111,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
     final metricsAsync = ref.watch(dashboardMetricsProvider);
     final m = metricsAsync.value ?? DashboardMetrics.placeholder;
+    final dueEntries = ref.watch(dueBreakdownProvider).valueOrNull;
+    final dueSub = dueEntries == null
+        ? 'tap to see events'
+        : '${dueEntries.length} events with due';
 
     if (isManager) {
       return _buildPayCard(
         isCollect: false,
         label: 'Due',
         amount: _formatBdt(m.pendingDue),
-        sub: '7 clients · 3 overdue',
+        sub: dueSub,
+        onTap: _showDueSheet,
       );
     }
 
@@ -1044,7 +1134,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               isCollect: true,
               label: 'Received',
               amount: _formatBdt(m.todayCollection),
-              sub: '4 payments received',
+              sub: 'today',
             ),
           ),
           const SizedBox(width: 10),
@@ -1053,7 +1143,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               isCollect: false,
               label: 'Pending\nPayout',
               amount: _formatBdt(m.pendingDue),
-              sub: '7 clients · 3 overdue',
+              sub: dueSub,
+              onTap: _showDueSheet,
             ),
           ),
         ],
@@ -1068,7 +1159,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             isCollect: true,
             label: 'Today\nCollection',
             amount: _formatBdt(m.todayCollection),
-            sub: '4 payments received',
+            sub: 'today',
           ),
         ),
         const SizedBox(width: 10),
@@ -1077,10 +1168,166 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             isCollect: false,
             label: 'Pending\nDue',
             amount: _formatBdt(m.pendingDue),
-            sub: '7 clients · 3 overdue',
+            sub: dueSub,
+            onTap: _showDueSheet,
           ),
         ),
       ],
+    );
+  }
+
+  /// Due drill-down: lists every event that still has money owed.
+  /// Tapping an entry opens that event's details.
+  void _showDueSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.voidElevated,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Consumer(
+        builder: (ctx, sheetRef, _) {
+          final entriesAsync = sheetRef.watch(dueBreakdownProvider);
+          return SafeArea(
+            child: Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(ctx).size.height * 0.7,
+              ),
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 14),
+                      decoration: BoxDecoration(
+                        color: AppColors.line(0.18),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    'Events with outstanding due',
+                    style: TextStyle(
+                      color: AppColors.film,
+                      fontFamily: 'Poppins',
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Flexible(
+                    child: entriesAsync.when(
+                      loading: () => const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24),
+                        child: Center(child: LensLoader()),
+                      ),
+                      error: (_, _) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 24),
+                        child: Text(
+                          'Could not load the due list.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppColors.filmDim.withValues(alpha: 0.85),
+                          ),
+                        ),
+                      ),
+                      data: (entries) {
+                        if (entries.isEmpty) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 24),
+                            child: Text(
+                              'No dues 🎉',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: AppColors.filmDim.withValues(
+                                  alpha: 0.85,
+                                ),
+                                fontSize: 14,
+                              ),
+                            ),
+                          );
+                        }
+                        return ListView.separated(
+                          shrinkWrap: true,
+                          itemCount: entries.length,
+                          separatorBuilder: (_, _) => Divider(
+                            height: 1,
+                            color: AppColors.line(0.05),
+                          ),
+                          itemBuilder: (_, i) {
+                            final e = entries[i];
+                            return ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: AppColors.coral.withValues(
+                                    alpha: 0.12,
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.event_note_rounded,
+                                  color: AppColors.coral,
+                                  size: 20,
+                                ),
+                              ),
+                              title: Text(
+                                e.clientName?.trim().isNotEmpty == true
+                                    ? e.clientName!
+                                    : e.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: AppColors.film,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              subtitle: Text(
+                                '${e.date.day}/${e.date.month}/${e.date.year}'
+                                ' · Paid ৳${e.paid.toStringAsFixed(0)}'
+                                ' / ৳${e.total.toStringAsFixed(0)}',
+                                style: TextStyle(
+                                  color: AppColors.filmDim.withValues(
+                                    alpha: 0.85,
+                                  ),
+                                  fontSize: 11.5,
+                                ),
+                              ),
+                              trailing: Text(
+                                '৳${e.due.toStringAsFixed(0)}',
+                                style: const TextStyle(
+                                  color: AppColors.coral,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              onTap: () {
+                                Navigator.of(ctx).pop();
+                                Navigator.of(context).pushNamed(
+                                  RouteNames.bookingDetail,
+                                  arguments: e.bookingId,
+                                );
+                              },
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -1103,14 +1350,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     required String label,
     required String amount,
     required String sub,
+    VoidCallback? onTap,
   }) {
     final color = isCollect ? AppColors.teal : AppColors.coral;
-    return Container(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+        border: Border.all(color: AppColors.line(0.08)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1135,7 +1385,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 label,
                 style: TextStyle(
                   fontFamily: AppText.sectionTitle.fontFamily,
-                  fontSize: 9,
+                  fontSize: 10,
                   letterSpacing: 0.5,
                   color: AppColors.filmDim,
                   height: 1.4,
@@ -1163,11 +1413,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             sub,
             style: TextStyle(
               fontFamily: AppText.sectionTitle.fontFamily,
-              fontSize: 9.5,
-              color: AppColors.filmDim.withValues(alpha: 0.6),
+              fontSize: 10.5,
+              color: AppColors.filmDim.withValues(alpha: 0.85),
             ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -1184,6 +1435,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             number: '${m.holidaysThisMonth}',
             label: 'Holidays\nThis Month',
             isCancel: false,
+            // Tapping lists WHICH dates are holidays this month.
+            onTap: _showHolidaySheet,
           ),
         ),
         const SizedBox(width: 10),
@@ -1193,10 +1446,175 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             number: '${m.cancelledEvents}',
             label: 'Cancelled\nEvents',
             isCancel: true,
+            // Tapping opens the booking list pre-filtered to Cancelled.
+            onTap: _openCancelledEvents,
           ),
         ),
       ],
     );
+  }
+
+  /// Lists this month's public holidays (date + name) in a sheet.
+  void _showHolidaySheet() {
+    final now = DateTime.now();
+    final holidays = bdHolidaysOfMonth(now);
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.voidElevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: AppColors.line(0.18),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Text(
+                '🎉 ${DateFormat.MMMM().format(now)} — holidays this month',
+                style: TextStyle(
+                  color: AppColors.film,
+                  fontFamily: 'Poppins',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (holidays.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Text(
+                    'No public holidays this month.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.filmDim.withValues(alpha: 0.85),
+                      fontSize: 13,
+                    ),
+                  ),
+                )
+              else
+                for (final h in holidays)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.gold.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: AppColors.gold.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            '${h.date.day}',
+                            style: const TextStyle(
+                              color: AppColors.gold,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                h.name,
+                                style: TextStyle(
+                                  color: AppColors.film,
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Text(
+                                DateFormat.EEEE().format(h.date),
+                                style: TextStyle(
+                                  color: AppColors.filmDim.withValues(
+                                    alpha: 0.7,
+                                  ),
+                                  fontSize: 11.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              if (holidays.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  '* May shift ±1 day depending on the moon sighting.',
+                  style: TextStyle(
+                    color: AppColors.filmDim.withValues(alpha: 0.6),
+                    fontSize: 10.5,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Opens the booking list showing ONLY today's events (date range =
+  /// today → tomorrow), so the Today card never surfaces future dates.
+  void _openTodayEvents() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    ref.read(bookingFilterProvider.notifier).state = ref
+        .read(bookingFilterProvider)
+        .copyWith(
+          from: today,
+          to: today.add(const Duration(days: 1)),
+          statuses: {},
+        );
+    _pushNamed(RouteNames.bookings);
+  }
+
+  /// Upcoming = tomorrow → 6 months ahead (matches the dashboard count).
+  void _openUpcomingEvents() {
+    final now = DateTime.now();
+    final tomorrow = DateTime(now.year, now.month, now.day + 1);
+    final sixMonths = DateTime(now.year, now.month + 6, now.day);
+    ref.read(bookingFilterProvider.notifier).state = ref
+        .read(bookingFilterProvider)
+        .copyWith(from: tomorrow, to: sixMonths, statuses: {});
+    _pushNamed(RouteNames.bookings);
+  }
+
+  /// Total = every booking, no date/status filter.
+  void _openAllEvents() {
+    ref.read(bookingFilterProvider.notifier).state = ref
+        .read(bookingFilterProvider)
+        .copyWith(clearFrom: true, clearTo: true, statuses: {});
+    _pushNamed(RouteNames.bookings);
+  }
+
+  /// Opens the booking list showing ONLY cancelled events.
+  void _openCancelledEvents() {
+    ref.read(bookingFilterProvider.notifier).state = ref
+        .read(bookingFilterProvider)
+        .copyWith(statuses: {BookingStatus.cancelled});
+    _pushNamed(RouteNames.bookings);
   }
 
   Widget _buildInfoCard({
@@ -1204,13 +1622,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     required String number,
     required String label,
     required bool isCancel,
+    VoidCallback? onTap,
   }) {
-    return Container(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+        border: Border.all(color: AppColors.line(0.08)),
       ),
       child: Row(
         children: [
@@ -1228,7 +1649,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     fontFamily: AppText.brand.fontFamily,
                     fontSize: 22,
                     fontWeight: FontWeight.w600,
-                    color: isCancel ? AppColors.red : Colors.white,
+                    color: isCancel ? AppColors.red : AppColors.film,
                     height: 1,
                   ),
                 ),
@@ -1238,15 +1659,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 label,
                 style: TextStyle(
                   fontFamily: AppText.sectionTitle.fontFamily,
-                  fontSize: 9,
+                  fontSize: 10,
                   letterSpacing: 0.5,
-                  color: AppColors.filmDim.withValues(alpha: 0.6),
+                  color: AppColors.filmDim.withValues(alpha: 0.85),
                   height: 1.4,
                 ),
               ),
             ],
           ),
         ],
+      ),
       ),
     );
   }
@@ -1265,67 +1687,54 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         : hour < 18
         ? ('⛅', 'PARTLY CLOUDY', '30')
         : ('🌇', 'EVENING', '28');
+    // Compact one-line strip — the old oversized emoji + 30px temperature
+    // crowded the column and collided with neighbouring sections.
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.indigo.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.indigo.withValues(alpha: 0.20)),
       ),
       child: Row(
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 36)),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Text(emoji, style: const TextStyle(fontSize: 22)),
+          const SizedBox(width: 10),
+          RichText(
+            text: TextSpan(
+              style: TextStyle(
+                fontFamily: AppText.brand.fontFamily,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: AppColors.film,
+              ),
               children: [
-                RichText(
-                  text: TextSpan(
-                    style: TextStyle(
-                      fontFamily: AppText.brand.fontFamily,
-                      fontSize: 30,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.film,
-                    ),
-                    children: [
-                      TextSpan(text: temp),
-                      const TextSpan(
-                        text: '°',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    ],
-                  ),
-                ),
-                Text(
-                  condition,
-                  style: TextStyle(
-                    fontFamily: AppText.sectionTitle.fontFamily,
-                    fontSize: 9,
-                    letterSpacing: 1,
-                    color: AppColors.filmDim.withValues(alpha: 0.6),
-                  ),
-                ),
+                TextSpan(text: temp),
+                const TextSpan(text: '°', style: TextStyle(fontSize: 13)),
               ],
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              const Text(
-                'Dhaka, BD',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.film,
-                ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              condition,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: AppText.sectionTitle.fontFamily,
+                fontSize: 9,
+                letterSpacing: 1,
+                color: AppColors.filmDim.withValues(alpha: 0.85),
               ),
-              const SizedBox(height: 2),
-              const Text(
-                '💧 Humidity varies',
-                style: TextStyle(fontSize: 10, color: AppColors.indigo),
-              ),
-            ],
+            ),
+          ),
+          Text(
+            'Dhaka, BD',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.film,
+            ),
           ),
         ],
       ),
@@ -1334,6 +1743,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   // ─── Drawer ────────────────────────────────────────────────────────
   Widget _buildSidebar(UserModel? user) {
+    final policy = RolePolicy(user?.role ?? UserRole.owner);
     final initials = user?.avatarInitials ?? '..';
     final name = user?.name ?? 'Welcome';
     final headerLine =
@@ -1343,7 +1753,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       backgroundColor: Colors.transparent,
       width: 260,
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.surface,
           border: Border(right: BorderSide(color: AppColors.glassBorder, width: 1)),
         ),
@@ -1362,7 +1772,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     color: AppColors.accent.withValues(alpha: 0.06),
                     border: Border(
                       bottom: BorderSide(
-                        color: Colors.black.withValues(alpha: 0.05),
+                        color: AppColors.line(0.05),
                       ),
                     ),
                   ),
@@ -1375,7 +1785,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                           shape: BoxShape.circle,
                           color: AppColors.accent,
                           border: Border.all(
-                            color: Colors.black.withValues(alpha: 0.15),
+                            color: AppColors.line(0.15),
                             width: 2,
                           ),
                         ),
@@ -1452,22 +1862,25 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     Navigator.pop(context);
                     _pushNamed(RouteNames.bookings);
                   }),
-                  _sbItem(Icons.edit_note_outlined, 'Re-edit Requests', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.reEditRequests);
-                  }),
+                  if (policy.can(Capability.requestReEdit))
+                    _sbItem(Icons.edit_note_outlined, 'Re-edit Requests', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.reEditRequests);
+                    }),
                   _sbItem(Icons.chat_bubble_outline, 'Team Chat', () {
                     Navigator.pop(context);
                     _pushNamed(RouteNames.chat);
                   }),
-                  _sbItem(Icons.people_outline, 'Team & Staff', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.team);
-                  }),
-                  _sbItem(Icons.campaign_outlined, 'Announcements', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.announcements);
-                  }),
+                  if (policy.can(Capability.accessTeam))
+                    _sbItem(Icons.people_outline, 'Team & Staff', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.team);
+                    }),
+                  if (policy.can(Capability.viewAnnouncements))
+                    _sbItem(Icons.campaign_outlined, 'Announcements', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.announcements);
+                    }),
                   _sbItem(Icons.cell_tower_outlined, 'Platform Updates', () {
                     Navigator.pop(context);
                     _pushNamed(RouteNames.broadcasts);
@@ -1477,10 +1890,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     Navigator.pop(context);
                     _pushNamed(RouteNames.paymentEntry);
                   }),
-                  _sbItem(Icons.receipt_long_outlined, 'Invoices', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.invoice);
-                  }),
+                  if (policy.can(Capability.accessInvoice))
+                    _sbItem(Icons.receipt_long_outlined, 'Invoices', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.invoice);
+                    }),
                   _sbItem(Icons.money_off_outlined, 'Expenses', () {
                     Navigator.pop(context);
                     _pushNamed(RouteNames.finance);
@@ -1493,10 +1907,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     Navigator.pop(context);
                     _pushNamed(RouteNames.performance);
                   }),
-                  _sbItem(Icons.calculate_outlined, 'Tax / VAT (NBR)', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.finance);
-                  }),
+                  if (policy.can(Capability.accessTax))
+                    _sbItem(Icons.calculate_outlined, 'Tax / VAT (NBR)', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.finance);
+                    }),
                   _sbItem(Icons.timeline_outlined, 'Cash Flow', () {
                     Navigator.pop(context);
                     _pushNamed(RouteNames.cashFlow);
@@ -1506,38 +1921,53 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     _pushNamed(RouteNames.pettyCash);
                   }),
                   _sbGroup('OPERATIONS'),
-                  _sbItem(Icons.task_alt, 'Daily Tasks', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.bookings);
-                  }),
+                  if (policy.can(Capability.accessDailyTasks))
+                    _sbItem(Icons.task_alt, 'Daily Tasks', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.bookings);
+                    }),
                   _sbItem(Icons.camera_alt_outlined, 'Gear & Equipment', () {
                     Navigator.pop(context);
                     _pushNamed(RouteNames.gear);
                   }),
-                  _sbItem(Icons.swap_horiz, 'Rent Tracking', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.rent);
-                  }),
-                  _sbItem(Icons.local_shipping_outlined, 'Delivery System', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.bookings);
-                  }),
-                  _sbItem(Icons.inventory_2_outlined, 'Packages', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.packages);
-                  }),
-                  _sbItem(Icons.follow_the_signs_outlined, 'Client Follow-up', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.followup);
-                  }),
-                  _sbItem(Icons.alarm_outlined, 'Reminders', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.reminders);
-                  }),
-                  _sbItem(Icons.hourglass_empty_outlined, 'Waitlist', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.waitlist);
-                  }),
+                  if (policy.can(Capability.accessRentTracking))
+                    _sbItem(Icons.swap_horiz, 'Rent Tracking', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.rent);
+                    }),
+                  if (policy.can(Capability.accessDelivery))
+                    _sbItem(
+                      Icons.local_shipping_outlined,
+                      'Delivery System',
+                      () {
+                        Navigator.pop(context);
+                        _pushNamed(RouteNames.bookings);
+                      },
+                    ),
+                  if (policy.can(Capability.accessPackages))
+                    _sbItem(Icons.inventory_2_outlined, 'Packages', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.packages);
+                    }),
+                  if (policy.can(Capability.accessFollowup))
+                    _sbItem(
+                      Icons.follow_the_signs_outlined,
+                      'Client Follow-up',
+                      () {
+                        Navigator.pop(context);
+                        _pushNamed(RouteNames.followup);
+                      },
+                    ),
+                  if (policy.can(Capability.accessReminders))
+                    _sbItem(Icons.alarm_outlined, 'Reminders', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.reminders);
+                    }),
+                  if (policy.can(Capability.accessWaitlist))
+                    _sbItem(Icons.hourglass_empty_outlined, 'Waitlist', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.waitlist);
+                    }),
                   _sbItem(Icons.home_outlined, 'Home Widget', () {
                     Navigator.pop(context);
                     _pushNamed(RouteNames.widgetSettings);
@@ -1546,67 +1976,79 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     Navigator.pop(context);
                     _pushNamed(RouteNames.calendarSyncSettings);
                   }),
+                  if (policy.can(Capability.editGearInventory)) ...[
+                    Container(
+                      height: 1,
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 8,
+                      ),
+                      color: AppColors.line(0.05),
+                    ),
+                    _sbGroup('FREELANCER'),
+                    _sbItem(
+                      Icons.account_balance_wallet_outlined,
+                      'My Earnings',
+                      () {
+                        Navigator.pop(context);
+                        _pushNamed(RouteNames.freelancerEarnings);
+                      },
+                    ),
+                    _sbItem(Icons.military_tech_outlined, 'My Badges', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.freelancerBadges);
+                    }),
+                    _sbItem(
+                      Icons.event_available_outlined,
+                      'My Availability',
+                      () {
+                        Navigator.pop(context);
+                        _pushNamed(RouteNames.freelancerAvailability);
+                      },
+                    ),
+                    _sbItem(Icons.login_outlined, 'Check-In', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.freelancerCheckin);
+                    }),
+                    _sbItem(Icons.beach_access_outlined, 'Leave Request', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.freelancerLeave);
+                    }),
+                    _sbItem(Icons.history_outlined, 'Work History', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.freelancerWorkHistory);
+                    }),
+                  ],
+                  if (policy.can(Capability.viewFinancials)) ...[
+                    Container(
+                      height: 1,
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 8,
+                      ),
+                      color: AppColors.line(0.05),
+                    ),
+                    _sbGroup('ADMIN'),
+                    _sbItem(Icons.backup_outlined, 'Backup & Restore', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.backup);
+                    }),
+                    _sbItem(Icons.history_edu_outlined, 'Audit Log', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.auditLog);
+                    }),
+                    _sbItem(Icons.bug_report_outlined, 'Crash Reports', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.crashSettings);
+                    }),
+                  ],
                   Container(
                     height: 1,
                     margin: const EdgeInsets.symmetric(
                       horizontal: 20,
                       vertical: 8,
                     ),
-                    color: Colors.black.withValues(alpha: 0.05),
-                  ),
-                  _sbGroup('FREELANCER'),
-                  _sbItem(Icons.account_balance_wallet_outlined, 'My Earnings', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.freelancerEarnings);
-                  }),
-                  _sbItem(Icons.military_tech_outlined, 'My Badges', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.freelancerBadges);
-                  }),
-                  _sbItem(Icons.event_available_outlined, 'My Availability', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.freelancerAvailability);
-                  }),
-                  _sbItem(Icons.login_outlined, 'Check-In', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.freelancerCheckin);
-                  }),
-                  _sbItem(Icons.beach_access_outlined, 'Leave Request', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.freelancerLeave);
-                  }),
-                  _sbItem(Icons.history_outlined, 'Work History', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.freelancerWorkHistory);
-                  }),
-                  Container(
-                    height: 1,
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 8,
-                    ),
-                    color: Colors.black.withValues(alpha: 0.05),
-                  ),
-                  _sbGroup('ADMIN'),
-                  _sbItem(Icons.backup_outlined, 'Backup & Restore', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.backup);
-                  }),
-                  _sbItem(Icons.history_edu_outlined, 'Audit Log', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.auditLog);
-                  }),
-                  _sbItem(Icons.bug_report_outlined, 'Crash Reports', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.crashSettings);
-                  }),
-                  Container(
-                    height: 1,
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 8,
-                    ),
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: AppColors.line(0.05),
                   ),
                   _sbGroup('ACCOUNT'),
                   _sbItem(Icons.person_outline, 'Profile', () {
@@ -1644,7 +2086,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               decoration: BoxDecoration(
                 border: Border(
-                  top: BorderSide(color: Colors.black.withValues(alpha: 0.05)),
+                  top: BorderSide(color: AppColors.line(0.05)),
                 ),
               ),
               child: Row(
@@ -1684,7 +2126,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         backgroundColor: AppColors.voidElevated,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+          side: BorderSide(color: AppColors.line(0.08)),
         ),
         title: Text(
           'Sign out of Clicker Pro?',
@@ -1736,22 +2178,57 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
+  /// Per-module accent so every drawer icon carries its own colour —
+  /// modern SaaS sidebars colour-code by domain, not one flat accent.
+  Color _sbTintFor(String label) {
+    final l = label.toLowerCase();
+    if (l.contains('payment') ||
+        l.contains('invoice') ||
+        l.contains('expense') ||
+        l.contains('petty') ||
+        l.contains('finance') ||
+        l.contains('earning')) {
+      return AppColors.green;
+    }
+    if (l.contains('booking') ||
+        l.contains('calendar') ||
+        l.contains('re-edit') ||
+        l.contains('waitlist')) {
+      return AppColors.indigo;
+    }
+    if (l.contains('team') || l.contains('chat') || l.contains('staff')) {
+      return AppColors.gold;
+    }
+    if (l.contains('announce') ||
+        l.contains('platform') ||
+        l.contains('notification')) {
+      return AppColors.red;
+    }
+    return AppColors.orange;
+  }
+
   Widget _sbItem(IconData icon, String label, VoidCallback onTap) {
+    final tint = _sbTintFor(label);
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
         child: Row(
           children: [
-            SizedBox(
-              width: 22,
-              child: Icon(icon, color: AppColors.accent, size: 16),
+            Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: tint.withValues(alpha: 0.13),
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: Icon(icon, color: tint, size: 16),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 label,
-                style: TextStyle(fontSize: 13.5, color: AppColors.filmDim),
+                style: TextStyle(fontSize: 13.5, color: AppColors.film),
               ),
             ),
             Text(
@@ -1772,15 +2249,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     return SafeArea(
       top: false,
       child: Container(
-        height: 66,
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        // Slim bar — 56px keeps icon + label readable while reclaiming
+        // vertical space for content.
+        height: 56,
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.line(0.06)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.10),
+              color: AppColors.line(0.10),
               blurRadius: 20,
               spreadRadius: -2,
               offset: const Offset(0, 6),
@@ -1859,11 +2338,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   scale: isActive ? 1.15 : 1.0,
                   duration: const Duration(milliseconds: 220),
                   curve: Curves.easeOutBack,
+                  // Always-colourful tabs: filled icons in each module's
+                  // own colour (inactive just slightly softened) — the old
+                  // grey-washed inactive state read as monochrome.
                   child: Icon(
-                    isActive ? filledIcon : outlinedIcon,
-                    color: isActive
-                        ? tint
-                        : Color.lerp(tint, AppColors.filmMuted, 0.5),
+                    filledIcon,
+                    color: isActive ? tint : tint.withValues(alpha: 0.75),
                     size: 19,
                   ),
                 ),
@@ -1894,9 +2374,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         onTap: _openNewBooking,
         child: Center(
           child: Container(
-            width: 46,
-            height: 46,
-            margin: const EdgeInsets.only(bottom: 6),
+            width: 42,
+            height: 42,
+            margin: const EdgeInsets.only(bottom: 4),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppColors.accent,
@@ -1975,7 +2455,7 @@ class _AnimatedBrand extends StatelessWidget {
               fontFamily: AppText.body.fontFamily,
               fontSize: 9.5,
               fontWeight: FontWeight.w600,
-              color: AppColors.filmDim.withValues(alpha: 0.6),
+              color: AppColors.filmDim.withValues(alpha: 0.85),
               letterSpacing: 1.0,
             ),
           ),
@@ -2032,7 +2512,7 @@ class _AnnouncementCardView extends StatelessWidget {
               const Spacer(),
               Text(
                 announcement.timeAgo,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
                   color: AppColors.filmDim,
                 ),
@@ -2042,7 +2522,7 @@ class _AnnouncementCardView extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             announcement.title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
               color: AppColors.film,
@@ -2054,7 +2534,7 @@ class _AnnouncementCardView extends StatelessWidget {
             announcement.body,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12.5,
               color: AppColors.filmDim,
               height: 1.5,
@@ -2062,11 +2542,11 @@ class _AnnouncementCardView extends StatelessWidget {
           ),
           if (announcement.readCount > 0) ...[
             const SizedBox(height: 10),
-            Container(height: 1, color: Colors.black.withValues(alpha: 0.06)),
+            Container(height: 1, color: AppColors.line(0.06)),
             const SizedBox(height: 8),
             Text(
               '${announcement.readCount} read',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 10,
                 color: AppColors.filmDim,
               ),

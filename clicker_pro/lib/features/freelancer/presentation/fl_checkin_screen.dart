@@ -76,10 +76,10 @@ class _FlCheckinScreenState extends ConsumerState<FlCheckinScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.film),
+          icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Check-In',
           style: TextStyle(
             color: AppColors.film,
@@ -120,7 +120,7 @@ class _FlCheckinScreenState extends ConsumerState<FlCheckinScreen> {
                         children: [
                           Text(
                             companyName,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.film,
                               fontFamily: 'Poppins',
                               fontSize: 18,
@@ -129,7 +129,7 @@ class _FlCheckinScreenState extends ConsumerState<FlCheckinScreen> {
                           ),
                           Text(
                             '$eventType · $role',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.filmDim,
                               fontSize: 13,
                             ),
@@ -214,7 +214,7 @@ class _FlCheckinScreenState extends ConsumerState<FlCheckinScreen> {
           const SizedBox(width: 5),
           Text(
             text,
-            style: const TextStyle(color: AppColors.filmDim, fontSize: 12),
+            style: TextStyle(color: AppColors.filmDim, fontSize: 12),
           ),
         ],
       ),
@@ -234,14 +234,14 @@ class _FlCheckinScreenState extends ConsumerState<FlCheckinScreen> {
               color: AppColors.filmMuted.withValues(alpha: 0.25),
             ),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.location_searching,
             color: AppColors.filmMuted,
             size: 36,
           ),
         ),
         const SizedBox(height: 12),
-        const Text(
+        Text(
           'Not checked in yet',
           style: TextStyle(
             color: AppColors.filmDim,
@@ -252,7 +252,7 @@ class _FlCheckinScreenState extends ConsumerState<FlCheckinScreen> {
         const SizedBox(height: 4),
         Text(
           'Expected at $eventTime',
-          style: const TextStyle(color: AppColors.filmMuted, fontSize: 12),
+          style: TextStyle(color: AppColors.filmMuted, fontSize: 12),
         ),
         const SizedBox(height: 20),
         SizedBox(
@@ -323,7 +323,7 @@ class _FlCheckinScreenState extends ConsumerState<FlCheckinScreen> {
                 const SizedBox(height: 2),
                 Text(
                   'Checked in at $timeStr',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.filmDim,
                     fontSize: 13,
                   ),
@@ -417,7 +417,7 @@ class _ConflictWarning extends StatelessWidget {
           Expanded(
             child: Text(
               'Overlapping event with $ownerName$timeSlot',
-              style: const TextStyle(color: AppColors.filmDim, fontSize: 12),
+              style: TextStyle(color: AppColors.filmDim, fontSize: 12),
             ),
           ),
         ],
