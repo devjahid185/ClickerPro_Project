@@ -2,15 +2,16 @@
 //
 // Pure scheduling-conflict rules for new/edited bookings.
 //
-// Two distinct rules per the v12 architecture:
+// Two distinct rules:
 //
-//   • Freelancer (R-01) — strict 1 event per shift. A second booking on
-//     the same date + shift is a HARD BLOCK, with no bypass even when
-//     Distribution mode is on (Key Decisions → "Freelancer booking limit").
+//   • Owner — may always take multiple events in the same shift. No
+//     warning, no block. (Distribution mode does not apply to owners; the
+//     option is not even shown to them.)
 //
-//   • Owner / Both (R-02 / R-03) — a same date + shift booking raises a
-//     WARNING the user can override. With Distribution mode ON the warning
-//     is suppressed entirely (multiple bookings per slot are expected).
+//   • Freelancer — strict 1 event per shift by default: a second booking
+//     on the same date + shift is a HARD BLOCK. Turning Distribution mode
+//     ON lifts that cap, letting the freelancer stack multiple events in a
+//     shift just like an owner.
 //
 // Pure Dart — no Flutter / Riverpod / Drift imports so it can be unit
 // tested exhaustively.
@@ -58,8 +59,8 @@ class BookingConflict {
   /// Evaluates the candidate against [existing] for the given [role].
   ///
   /// [candidateId] is excluded from the scan so editing a booking never
-  /// conflicts with itself. [distributionOn] only relaxes the Owner/Both
-  /// warning — it never unlocks the Freelancer hard block.
+  /// conflicts with itself. [distributionOn] applies to freelancers only:
+  /// when ON it lifts the 1-per-shift block. Owners are never limited.
   static BookingConflictResult evaluate({
     required UserRole role,
     required bool freelancerMode,
@@ -83,25 +84,20 @@ class BookingConflict {
       return const BookingConflictResult(BookingConflictLevel.none);
     }
 
-    // Freelancer (including a Both-role user in freelancer mode) is hard
-    // capped at 1 event per shift — no override.
+    // Freelancer (including a Both-role user in freelancer mode) is capped at
+    // 1 event per shift — UNLESS Distribution mode is on, which lifts the cap.
     final isFreelancerBooking = role == UserRole.freelancer || freelancerMode;
     if (isFreelancerBooking) {
+      if (distributionOn) {
+        return const BookingConflictResult(BookingConflictLevel.none);
+      }
       return BookingConflictResult(
         BookingConflictLevel.block,
         clashingTitle: clashes.first.title,
       );
     }
 
-    // Owner / Both: Distribution mode lets them stack multiple bookings on
-    // the same slot without a warning.
-    if (distributionOn) {
-      return const BookingConflictResult(BookingConflictLevel.none);
-    }
-
-    return BookingConflictResult(
-      BookingConflictLevel.warning,
-      clashingTitle: clashes.first.title,
-    );
+    // Owner: may always stack multiple bookings on the same slot, silently.
+    return const BookingConflictResult(BookingConflictLevel.none);
   }
 }

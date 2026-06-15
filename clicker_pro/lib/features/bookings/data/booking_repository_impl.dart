@@ -471,6 +471,7 @@ class BookingRepositoryImpl implements BookingRepository {
     chiefPhotographerUserId: r.chiefPhotographerUserId,
     chiefHours: r.chiefHours,
     hidePaymentFromTeam: r.hidePaymentFromTeam,
+    showPaymentInShare: r.showPaymentInShare,
     status: BookingStatus.values.firstWhere(
       (s) => s.name == r.status,
       orElse: () => BookingStatus.pending,
@@ -635,6 +636,7 @@ class BookingRepositoryImpl implements BookingRepository {
       chiefPhotographerUserId: Value(b.chiefPhotographerUserId),
       chiefHours: Value(b.chiefHours),
       hidePaymentFromTeam: Value(b.hidePaymentFromTeam),
+      showPaymentInShare: Value(b.showPaymentInShare),
       status: Value(b.status.name),
       createdAt: Value(b.createdAt),
       updatedAt: Value(b.updatedAt),

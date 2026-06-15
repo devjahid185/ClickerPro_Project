@@ -97,7 +97,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -160,6 +160,11 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(packagesTable, packagesTable.photographerCount);
         await m.addColumn(packagesTable, packagesTable.cinematographerCount);
         await m.addColumn(packagesTable, packagesTable.includesChief);
+      }
+      // v8 → v9: owner opt-in flag for showing payment on shared event
+      // details. Default false — shared details hide money unless turned on.
+      if (from <= 8 && to >= 9) {
+        await m.addColumn(bookingsTable, bookingsTable.showPaymentInShare);
       }
     },
   );

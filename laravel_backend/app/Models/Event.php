@@ -20,7 +20,7 @@ class Event extends Model
         'outdoor_location', 'reporting_time', 'start_time', 'end_time',
         'map_link', 'coverage_hours', 'extra_hour_rate', 'custom_price',
         'drive_link', 'requirements_note', 'chief_photographer_name',
-        'hide_payment_from_team',
+        'hide_payment_from_team', 'show_payment_in_share',
     ];
 
     protected $casts = [
@@ -32,6 +32,7 @@ class Event extends Model
         'completed_at' => 'datetime',
         'outdoor' => 'boolean',
         'hide_payment_from_team' => 'boolean',
+        'show_payment_in_share' => 'boolean',
         'coverage_hours' => 'decimal:2',
         'extra_hour_rate' => 'decimal:2',
         'custom_price' => 'decimal:2',

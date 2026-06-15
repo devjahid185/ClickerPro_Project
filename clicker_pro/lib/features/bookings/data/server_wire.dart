@@ -254,6 +254,11 @@ Booking bookingFromServer(Map<String, dynamic> j, {Booking? fallback}) {
               j['hide_payment_from_team'] == 1 ||
               j['hide_payment_from_team'] == '1')
         : fallback?.hidePaymentFromTeam ?? false,
+    showPaymentInShare: j.containsKey('show_payment_in_share')
+        ? (j['show_payment_in_share'] == true ||
+              j['show_payment_in_share'] == 1 ||
+              j['show_payment_in_share'] == '1')
+        : fallback?.showPaymentInShare ?? false,
     status: j.containsKey('status')
         ? bookingStatusFromServer(
             j['status'],
@@ -293,6 +298,7 @@ Map<String, dynamic> bookingToServer(Booking b) {
     // Rich detail fields — now persisted server-side for mobile↔web parity.
     'outdoor': b.outdoor,
     'hide_payment_from_team': b.hidePaymentFromTeam,
+    'show_payment_in_share': b.showPaymentInShare,
     if (b.brideName != null) 'bride_name': b.brideName,
     if (b.groomName != null) 'groom_name': b.groomName,
     if (b.startTime.isNotEmpty) 'start_time': b.startTime,

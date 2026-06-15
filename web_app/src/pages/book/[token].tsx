@@ -1,7 +1,7 @@
 import { useEffect, useState, FormEvent } from 'react';
 import { useRouter } from 'next/router';
 
-const EVENT_TYPES = ['Wedding', 'Holud', 'Reception', 'Corporate', 'Birthday', 'Engagement', 'Aqiqah', 'Portrait', 'Other'];
+const EVENT_TYPES = ['Wedding', 'Holud', 'Reception', 'Corporate', 'Birthday', 'Engagement', 'Aqiqah', 'Anniversary', 'Outdoor', 'Other'];
 
 const blank = () => ({
   clientName: '', clientPhone: '', eventType: 'Wedding', date: '', shift: 'DAY',

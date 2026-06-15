@@ -16,7 +16,7 @@ function statusBadge(s: string) {
   return <span className={`badge ${map[s] || 'gray'}`}>{s.replace(/_/g, ' ')}</span>;
 }
 
-const EVENT_TYPES = ['Wedding', 'Holud', 'Reception', 'Corporate', 'Birthday', 'Engagement', 'Aqiqah', 'Portrait', 'Other'];
+const EVENT_TYPES = ['Wedding', 'Holud', 'Reception', 'Corporate', 'Birthday', 'Engagement', 'Aqiqah', 'Anniversary', 'Outdoor', 'Other'];
 const STATUSES = ['ALL', 'PENDING', 'CONFIRMED', 'IN_PROGRESS', 'SHOT_COMPLETE', 'DELIVERED', 'COMPLETED', 'CANCELLED'];
 const DATE_FILTERS = ['Today', 'This Week', 'This Month', 'Custom'];
 

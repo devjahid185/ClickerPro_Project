@@ -24,7 +24,10 @@ class RolePolicy {
       UserRole.both,
       UserRole.manager,
     },
-    Capability.toggleDistribution: {UserRole.owner, UserRole.both},
+    // Distribution lifts the freelancer 1-event-per-shift cap, so it is only
+    // relevant to users who take freelance work. Owners are never limited and
+    // therefore never see the option.
+    Capability.toggleDistribution: {UserRole.freelancer, UserRole.both},
     Capability.toggleVat: {UserRole.owner, UserRole.both},
     Capability.changeRole: {UserRole.owner, UserRole.freelancer, UserRole.both},
     Capability.generateTeamInvite: {UserRole.owner, UserRole.both},

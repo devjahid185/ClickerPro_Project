@@ -165,6 +165,8 @@ class _HistoryRow extends StatelessWidget {
       'birthday': Icons.cake_outlined,
       'corporate': Icons.business_center_outlined,
       'preWedding': Icons.photo_camera_outlined,
+      'anniversary': Icons.celebration_outlined,
+      'outdoor': Icons.landscape_outlined,
       'other': Icons.event_outlined,
     };
     final icon = icons[eventType] ?? Icons.event_outlined;

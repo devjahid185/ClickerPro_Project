@@ -539,6 +539,7 @@ class BookingsOutboxDispatcher {
     chiefPhotographerUserId: r.chiefPhotographerUserId,
     chiefHours: r.chiefHours,
     hidePaymentFromTeam: r.hidePaymentFromTeam,
+    showPaymentInShare: r.showPaymentInShare,
     status: _statusFromString(r.status),
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,

@@ -61,6 +61,7 @@ class BookingRequest extends FormRequest
             'requirements_note' => 'nullable|string',
             'chief_photographer_name' => 'nullable|string|max:255',
             'hide_payment_from_team' => 'nullable|boolean',
+            'show_payment_in_share' => 'nullable|boolean',
         ];
     }
 }

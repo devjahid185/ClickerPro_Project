@@ -569,6 +569,19 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
               controller.setHidePaymentFromTeam(v);
             },
           ),
+        // 15b. Show payment on shared event details (owner opt-in).
+        if (policy.can(Capability.toggleHidePayment))
+          LensSwitchTile(
+            label: 'Show payment in shared details',
+            subtitle:
+                'Off by default. When on, Total / Advance / Due appear on the '
+                'event details you share with the team and freelancers.',
+            value: draft.showPaymentInShare,
+            onChanged: (v) {
+              _markDirty();
+              controller.setShowPaymentInShare(v);
+            },
+          ),
         // 16. Assignments editor
         AssignmentsEditor(
           draft: draft,
@@ -1558,7 +1571,8 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
         content: Text(
           'A freelancer can take only one event per shift.'
           '${clashTitle != null ? '\n\nAlready booked this day/shift: "$clashTitle".' : ''}\n\n'
-          'Change the existing booking or pick another shift/date.',
+          'To take multiple events in a shift, turn on Settings → Distribution. '
+          'Otherwise change the existing booking or pick another shift/date.',
           style: TextStyle(color: AppColors.filmDim, fontSize: 13.5),
         ),
         actions: [
@@ -1915,7 +1929,9 @@ String _eventTypeChipLabel(EventType type) {
     EventType.holud => 'Holud',
     EventType.birthday => 'Birthday',
     EventType.corporate => 'Corporate',
-    EventType.preWedding => 'Portrait',
+    EventType.preWedding => 'Pre-Wedding',
+    EventType.anniversary => 'Anniversary',
+    EventType.outdoor => 'Outdoor',
     EventType.other => 'Other',
   };
 }

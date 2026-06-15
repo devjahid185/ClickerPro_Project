@@ -4885,6 +4885,20 @@ class $BookingsTableTable extends BookingsTable
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _showPaymentInShareMeta =
+      const VerificationMeta('showPaymentInShare');
+  @override
+  late final GeneratedColumn<bool> showPaymentInShare = GeneratedColumn<bool>(
+    'show_payment_in_share',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_payment_in_share" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _statusMeta = const VerificationMeta('status');
   @override
   late final GeneratedColumn<String> status = GeneratedColumn<String>(
@@ -4963,6 +4977,7 @@ class $BookingsTableTable extends BookingsTable
     chiefPhotographerUserId,
     chiefHours,
     hidePaymentFromTeam,
+    showPaymentInShare,
     status,
     createdAt,
     updatedAt,
@@ -5181,6 +5196,15 @@ class $BookingsTableTable extends BookingsTable
         ),
       );
     }
+    if (data.containsKey('show_payment_in_share')) {
+      context.handle(
+        _showPaymentInShareMeta,
+        showPaymentInShare.isAcceptableOrUnknown(
+          data['show_payment_in_share']!,
+          _showPaymentInShareMeta,
+        ),
+      );
+    }
     if (data.containsKey('status')) {
       context.handle(
         _statusMeta,
@@ -5322,6 +5346,10 @@ class $BookingsTableTable extends BookingsTable
         DriftSqlType.bool,
         data['${effectivePrefix}hide_payment_from_team'],
       )!,
+      showPaymentInShare: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_payment_in_share'],
+      )!,
       status: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}status'],
@@ -5375,6 +5403,7 @@ class BookingRow extends DataClass implements Insertable<BookingRow> {
   final String? chiefPhotographerUserId;
   final double? chiefHours;
   final bool hidePaymentFromTeam;
+  final bool showPaymentInShare;
   final String status;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -5407,6 +5436,7 @@ class BookingRow extends DataClass implements Insertable<BookingRow> {
     this.chiefPhotographerUserId,
     this.chiefHours,
     required this.hidePaymentFromTeam,
+    required this.showPaymentInShare,
     required this.status,
     required this.createdAt,
     required this.updatedAt,
@@ -5478,6 +5508,7 @@ class BookingRow extends DataClass implements Insertable<BookingRow> {
       map['chief_hours'] = Variable<double>(chiefHours);
     }
     map['hide_payment_from_team'] = Variable<bool>(hidePaymentFromTeam);
+    map['show_payment_in_share'] = Variable<bool>(showPaymentInShare);
     map['status'] = Variable<String>(status);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -5546,6 +5577,7 @@ class BookingRow extends DataClass implements Insertable<BookingRow> {
           ? const Value.absent()
           : Value(chiefHours),
       hidePaymentFromTeam: Value(hidePaymentFromTeam),
+      showPaymentInShare: Value(showPaymentInShare),
       status: Value(status),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -5592,6 +5624,7 @@ class BookingRow extends DataClass implements Insertable<BookingRow> {
       hidePaymentFromTeam: serializer.fromJson<bool>(
         json['hidePaymentFromTeam'],
       ),
+      showPaymentInShare: serializer.fromJson<bool>(json['showPaymentInShare']),
       status: serializer.fromJson<String>(json['status']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -5633,6 +5666,7 @@ class BookingRow extends DataClass implements Insertable<BookingRow> {
       ),
       'chiefHours': serializer.toJson<double?>(chiefHours),
       'hidePaymentFromTeam': serializer.toJson<bool>(hidePaymentFromTeam),
+      'showPaymentInShare': serializer.toJson<bool>(showPaymentInShare),
       'status': serializer.toJson<String>(status),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -5668,6 +5702,7 @@ class BookingRow extends DataClass implements Insertable<BookingRow> {
     Value<String?> chiefPhotographerUserId = const Value.absent(),
     Value<double?> chiefHours = const Value.absent(),
     bool? hidePaymentFromTeam,
+    bool? showPaymentInShare,
     String? status,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -5708,6 +5743,7 @@ class BookingRow extends DataClass implements Insertable<BookingRow> {
         : this.chiefPhotographerUserId,
     chiefHours: chiefHours.present ? chiefHours.value : this.chiefHours,
     hidePaymentFromTeam: hidePaymentFromTeam ?? this.hidePaymentFromTeam,
+    showPaymentInShare: showPaymentInShare ?? this.showPaymentInShare,
     status: status ?? this.status,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -5762,6 +5798,9 @@ class BookingRow extends DataClass implements Insertable<BookingRow> {
       hidePaymentFromTeam: data.hidePaymentFromTeam.present
           ? data.hidePaymentFromTeam.value
           : this.hidePaymentFromTeam,
+      showPaymentInShare: data.showPaymentInShare.present
+          ? data.showPaymentInShare.value
+          : this.showPaymentInShare,
       status: data.status.present ? data.status.value : this.status,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -5799,6 +5838,7 @@ class BookingRow extends DataClass implements Insertable<BookingRow> {
           ..write('chiefPhotographerUserId: $chiefPhotographerUserId, ')
           ..write('chiefHours: $chiefHours, ')
           ..write('hidePaymentFromTeam: $hidePaymentFromTeam, ')
+          ..write('showPaymentInShare: $showPaymentInShare, ')
           ..write('status: $status, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -5836,6 +5876,7 @@ class BookingRow extends DataClass implements Insertable<BookingRow> {
     chiefPhotographerUserId,
     chiefHours,
     hidePaymentFromTeam,
+    showPaymentInShare,
     status,
     createdAt,
     updatedAt,
@@ -5872,6 +5913,7 @@ class BookingRow extends DataClass implements Insertable<BookingRow> {
           other.chiefPhotographerUserId == this.chiefPhotographerUserId &&
           other.chiefHours == this.chiefHours &&
           other.hidePaymentFromTeam == this.hidePaymentFromTeam &&
+          other.showPaymentInShare == this.showPaymentInShare &&
           other.status == this.status &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
@@ -5906,6 +5948,7 @@ class BookingsTableCompanion extends UpdateCompanion<BookingRow> {
   final Value<String?> chiefPhotographerUserId;
   final Value<double?> chiefHours;
   final Value<bool> hidePaymentFromTeam;
+  final Value<bool> showPaymentInShare;
   final Value<String> status;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -5939,6 +5982,7 @@ class BookingsTableCompanion extends UpdateCompanion<BookingRow> {
     this.chiefPhotographerUserId = const Value.absent(),
     this.chiefHours = const Value.absent(),
     this.hidePaymentFromTeam = const Value.absent(),
+    this.showPaymentInShare = const Value.absent(),
     this.status = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -5973,6 +6017,7 @@ class BookingsTableCompanion extends UpdateCompanion<BookingRow> {
     this.chiefPhotographerUserId = const Value.absent(),
     this.chiefHours = const Value.absent(),
     this.hidePaymentFromTeam = const Value.absent(),
+    this.showPaymentInShare = const Value.absent(),
     this.status = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -6015,6 +6060,7 @@ class BookingsTableCompanion extends UpdateCompanion<BookingRow> {
     Expression<String>? chiefPhotographerUserId,
     Expression<double>? chiefHours,
     Expression<bool>? hidePaymentFromTeam,
+    Expression<bool>? showPaymentInShare,
     Expression<String>? status,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -6052,6 +6098,8 @@ class BookingsTableCompanion extends UpdateCompanion<BookingRow> {
       if (chiefHours != null) 'chief_hours': chiefHours,
       if (hidePaymentFromTeam != null)
         'hide_payment_from_team': hidePaymentFromTeam,
+      if (showPaymentInShare != null)
+        'show_payment_in_share': showPaymentInShare,
       if (status != null) 'status': status,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -6088,6 +6136,7 @@ class BookingsTableCompanion extends UpdateCompanion<BookingRow> {
     Value<String?>? chiefPhotographerUserId,
     Value<double?>? chiefHours,
     Value<bool>? hidePaymentFromTeam,
+    Value<bool>? showPaymentInShare,
     Value<String>? status,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
@@ -6124,6 +6173,7 @@ class BookingsTableCompanion extends UpdateCompanion<BookingRow> {
           chiefPhotographerUserId ?? this.chiefPhotographerUserId,
       chiefHours: chiefHours ?? this.chiefHours,
       hidePaymentFromTeam: hidePaymentFromTeam ?? this.hidePaymentFromTeam,
+      showPaymentInShare: showPaymentInShare ?? this.showPaymentInShare,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -6220,6 +6270,9 @@ class BookingsTableCompanion extends UpdateCompanion<BookingRow> {
     if (hidePaymentFromTeam.present) {
       map['hide_payment_from_team'] = Variable<bool>(hidePaymentFromTeam.value);
     }
+    if (showPaymentInShare.present) {
+      map['show_payment_in_share'] = Variable<bool>(showPaymentInShare.value);
+    }
     if (status.present) {
       map['status'] = Variable<String>(status.value);
     }
@@ -6268,6 +6321,7 @@ class BookingsTableCompanion extends UpdateCompanion<BookingRow> {
           ..write('chiefPhotographerUserId: $chiefPhotographerUserId, ')
           ..write('chiefHours: $chiefHours, ')
           ..write('hidePaymentFromTeam: $hidePaymentFromTeam, ')
+          ..write('showPaymentInShare: $showPaymentInShare, ')
           ..write('status: $status, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -14595,6 +14649,7 @@ typedef $$BookingsTableTableCreateCompanionBuilder =
       Value<String?> chiefPhotographerUserId,
       Value<double?> chiefHours,
       Value<bool> hidePaymentFromTeam,
+      Value<bool> showPaymentInShare,
       Value<String> status,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -14630,6 +14685,7 @@ typedef $$BookingsTableTableUpdateCompanionBuilder =
       Value<String?> chiefPhotographerUserId,
       Value<double?> chiefHours,
       Value<bool> hidePaymentFromTeam,
+      Value<bool> showPaymentInShare,
       Value<String> status,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -14778,6 +14834,11 @@ class $$BookingsTableTableFilterComposer
 
   ColumnFilters<bool> get hidePaymentFromTeam => $composableBuilder(
     column: $table.hidePaymentFromTeam,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showPaymentInShare => $composableBuilder(
+    column: $table.showPaymentInShare,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -14946,6 +15007,11 @@ class $$BookingsTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get showPaymentInShare => $composableBuilder(
+    column: $table.showPaymentInShare,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get status => $composableBuilder(
     column: $table.status,
     builder: (column) => ColumnOrderings(column),
@@ -15077,6 +15143,11 @@ class $$BookingsTableTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<bool> get showPaymentInShare => $composableBuilder(
+    column: $table.showPaymentInShare,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
 
@@ -15148,6 +15219,7 @@ class $$BookingsTableTableTableManager
                 Value<String?> chiefPhotographerUserId = const Value.absent(),
                 Value<double?> chiefHours = const Value.absent(),
                 Value<bool> hidePaymentFromTeam = const Value.absent(),
+                Value<bool> showPaymentInShare = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -15181,6 +15253,7 @@ class $$BookingsTableTableTableManager
                 chiefPhotographerUserId: chiefPhotographerUserId,
                 chiefHours: chiefHours,
                 hidePaymentFromTeam: hidePaymentFromTeam,
+                showPaymentInShare: showPaymentInShare,
                 status: status,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -15216,6 +15289,7 @@ class $$BookingsTableTableTableManager
                 Value<String?> chiefPhotographerUserId = const Value.absent(),
                 Value<double?> chiefHours = const Value.absent(),
                 Value<bool> hidePaymentFromTeam = const Value.absent(),
+                Value<bool> showPaymentInShare = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -15249,6 +15323,7 @@ class $$BookingsTableTableTableManager
                 chiefPhotographerUserId: chiefPhotographerUserId,
                 chiefHours: chiefHours,
                 hidePaymentFromTeam: hidePaymentFromTeam,
+                showPaymentInShare: showPaymentInShare,
                 status: status,
                 createdAt: createdAt,
                 updatedAt: updatedAt,

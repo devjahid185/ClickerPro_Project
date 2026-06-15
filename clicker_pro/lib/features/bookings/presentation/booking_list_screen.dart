@@ -1089,3 +1089,15 @@ bool shouldShowPayment({
   if (role == UserRole.manager && hidePaymentFromTeam) return false;
   return true;
 }
+
+/// Whether payment figures appear on the *shared event details* the owner
+/// sends to the team and freelancers.
+///
+/// Default is OFF: shared details never expose money. Payment is included
+/// only when the owner has explicitly turned on [showPaymentInShare] for
+/// this booking — and then everyone who receives the share (team and
+/// freelancers alike) sees it. The client invoice ignores this flag and
+/// always shows payment.
+bool shouldShowPaymentInShare({required bool showPaymentInShare}) {
+  return showPaymentInShare;
+}

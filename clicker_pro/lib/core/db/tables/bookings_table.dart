@@ -41,6 +41,8 @@ class BookingsTable extends Table {
   RealColumn get chiefHours => real().nullable()();
   BoolColumn get hidePaymentFromTeam =>
       boolean().withDefault(const Constant(false))();
+  BoolColumn get showPaymentInShare =>
+      boolean().withDefault(const Constant(false))();
   TextColumn get status => text().withDefault(const Constant('pending'))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();

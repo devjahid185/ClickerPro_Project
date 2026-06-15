@@ -50,7 +50,8 @@ import '../application/booking_providers.dart';
 import 'widgets/delivery_checklist_sheet.dart';
 import '../domain/booking.dart';
 import '../domain/booking_detail_envelope.dart';
-import 'booking_list_screen.dart' show shouldShowPayment;
+import 'booking_list_screen.dart'
+    show shouldShowPayment, shouldShowPaymentInShare;
 import 'widgets/assignments_section.dart';
 import 'widgets/booking_status_badge.dart';
 import 'widgets/detail_section.dart';
@@ -795,36 +796,71 @@ class _InvoiceAction extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return DetailSection(
-      title: 'Invoice',
-      child: SizedBox(
-        width: double.infinity,
-        child: FilledButton.icon(
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.teal,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+      title: 'Invoice & Share',
+      child: Column(
+        children: [
+          // Client invoice — professional, always carries payment/due.
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.teal,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              icon: const Icon(Icons.receipt_long_rounded, size: 18),
+              label: const Text('Client Invoice'),
+              onPressed: () => _showInvoiceSheet(context, ref, forClient: true),
             ),
           ),
-          icon: const Icon(Icons.receipt_long_rounded, size: 18),
-          label: const Text('View Invoice'),
-          onPressed: () => _showInvoiceSheet(context, ref),
-        ),
+          const SizedBox(height: 10),
+          // Share event details — for the team / freelancers; payment is
+          // hidden unless the owner opted in on the booking.
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.film,
+                side: BorderSide(color: AppColors.gold.withValues(alpha: 0.5)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              icon: const Icon(Icons.ios_share_rounded, size: 18),
+              label: const Text('Share Event Details'),
+              onPressed: () => _showInvoiceSheet(context, ref, forClient: false),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  void _showInvoiceSheet(BuildContext context, WidgetRef ref) {
-    // Hide-payment must hold on the invoice too — otherwise the eye
-    // toggle was pointless (team members could read Total/Advance/Due
-    // straight off the generated invoice).
+  /// Opens the invoice / share sheet.
+  ///
+  /// [forClient] = true  → the professional CLIENT INVOICE; payment is shown
+  ///   subject to the normal view-payment permission.
+  /// [forClient] = false → SHARE EVENT DETAILS for the team / freelancers;
+  ///   payment is hidden unless the owner opted in via [showPaymentInShare].
+  void _showInvoiceSheet(
+    BuildContext context,
+    WidgetRef ref, {
+    required bool forClient,
+  }) {
     final policy = ref.read(bookingsPolicyProvider);
-    final showPayment = shouldShowPayment(
-      role: policy.role,
-      hidePaymentFromTeam: booking.hidePaymentFromTeam,
-      canViewPayments: policy.can(Capability.viewBookingPayments),
-    );
+    final showPayment = forClient
+        ? shouldShowPayment(
+            role: policy.role,
+            hidePaymentFromTeam: booking.hidePaymentFromTeam,
+            canViewPayments: policy.can(Capability.viewBookingPayments),
+          )
+        : shouldShowPaymentInShare(
+            showPaymentInShare: booking.showPaymentInShare,
+          );
 
     // Resolve real names + phone numbers from the team list so the
     // invoice carries contactable info, not internal user ids.
@@ -900,13 +936,17 @@ class _InvoiceAction extends ConsumerWidget {
     ].join('\n');
     final invoiceText = '$header\n\n${lines.join('\n')}';
 
-    // Short, stable invoice number derived from the booking id's digits.
+    // Short, stable document number derived from the booking id's digits.
+    // Client invoices read INV-####; shared event details read EVT-####.
+    final docLabel = forClient ? 'INVOICE' : 'EVENT DETAILS';
+    final numPrefix = forClient ? 'INV' : 'EVT';
     final idDigits = booking.id.replaceAll(RegExp(r'[^0-9]'), '');
     final invoiceNo = idDigits.isEmpty
-        ? 'INV-0001'
-        : 'INV-${idDigits.substring(idDigits.length > 4 ? idDigits.length - 4 : 0)}';
+        ? '$numPrefix-0001'
+        : '$numPrefix-${idDigits.substring(idDigits.length > 4 ? idDigits.length - 4 : 0)}';
 
     final data = _InvoiceData(
+      docLabel: docLabel,
       studioName: studioName,
       studioPhone: studioPhone,
       studioAddress: studioAddress,
@@ -959,6 +999,7 @@ class _InvoiceAction extends ConsumerWidget {
 /// Structured invoice data backing the modern designed invoice template.
 class _InvoiceData {
   const _InvoiceData({
+    required this.docLabel,
     required this.studioName,
     required this.studioPhone,
     required this.studioAddress,
@@ -983,6 +1024,7 @@ class _InvoiceData {
     required this.dueIsZero,
   });
 
+  final String docLabel;
   final String studioName;
   final String studioPhone;
   final String studioAddress;
@@ -1171,9 +1213,9 @@ class _InvoiceSheet extends StatelessWidget {
                   color: Colors.white.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(999),
                 ),
-                child: const Text(
-                  'INVOICE',
-                  style: TextStyle(
+                child: Text(
+                  data.docLabel,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontFamily: 'Montserrat',
                     fontSize: 11,

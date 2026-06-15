@@ -21,6 +21,8 @@ enum EventType {
   birthday,
   corporate,
   preWedding,
+  anniversary,
+  outdoor,
   other;
 
   /// Parses a camelCase event-type string back into an [EventType].

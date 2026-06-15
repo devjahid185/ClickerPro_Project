@@ -61,6 +61,7 @@ class BookingDraft {
     this.driveLink,
     this.notes,
     this.hidePaymentFromTeam = false,
+    this.showPaymentInShare = false,
     this.chiefPhotographerUserId,
     this.status = BookingStatus.pending,
     this.assignments = const <Assignment>[],
@@ -95,6 +96,7 @@ class BookingDraft {
   final String? driveLink;
   final String? notes;
   final bool hidePaymentFromTeam;
+  final bool showPaymentInShare;
   final String? chiefPhotographerUserId;
   final BookingStatus status;
 
@@ -148,6 +150,7 @@ class BookingDraft {
     String? driveLink,
     String? notes,
     bool? hidePaymentFromTeam,
+    bool? showPaymentInShare,
     String? chiefPhotographerUserId,
     BookingStatus? status,
     List<Assignment>? assignments,
@@ -184,6 +187,7 @@ class BookingDraft {
       driveLink: driveLink ?? this.driveLink,
       notes: notes ?? this.notes,
       hidePaymentFromTeam: hidePaymentFromTeam ?? this.hidePaymentFromTeam,
+      showPaymentInShare: showPaymentInShare ?? this.showPaymentInShare,
       chiefPhotographerUserId: clearChief
           ? null
           : (chiefPhotographerUserId ?? this.chiefPhotographerUserId),
@@ -229,6 +233,7 @@ class BookingDraft {
       driveLink: driveLink,
       notes: notes,
       hidePaymentFromTeam: hidePaymentFromTeam,
+      showPaymentInShare: showPaymentInShare,
       chiefPhotographerUserId: chiefPhotographerUserId,
       status: status,
       clientRequirements: clientRequirements,
@@ -266,6 +271,7 @@ class BookingDraft {
     driveLink: b.driveLink,
     notes: b.notes,
     hidePaymentFromTeam: b.hidePaymentFromTeam,
+    showPaymentInShare: b.showPaymentInShare,
     chiefPhotographerUserId: b.chiefPhotographerUserId,
     status: b.status,
     assignments: List<Assignment>.unmodifiable(assignments),
@@ -432,6 +438,10 @@ class BookingEditController
   void setNotes(String? value) => _update((d) => d.copyWith(notes: value));
   void setHidePaymentFromTeam(bool value) =>
       _update((d) => d.copyWith(hidePaymentFromTeam: value));
+
+  /// Owner opt-in: include payment on the shared event details.
+  void setShowPaymentInShare(bool value) =>
+      _update((d) => d.copyWith(showPaymentInShare: value));
 
   /// Both-role mode picker: true = FL-12 short form active.
   void setFreelancerMode(bool value) =>
