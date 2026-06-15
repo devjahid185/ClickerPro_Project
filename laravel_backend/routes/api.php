@@ -153,6 +153,10 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::get('freelancer/work-history', [FreelancerController::class, 'workHistory']);
     Route::get('freelancer/earnings', [FreelancerController::class, 'earnings']);
     Route::post('freelancer/earnings/request-payment', [FreelancerController::class, 'requestPayment'])->middleware('throttle:10,1');
+    Route::get('freelancer/dashboard/events', [FreelancerController::class, 'dashboardEvents']);
+    Route::get('freelancer/dashboard/conflicts', [FreelancerController::class, 'dashboardConflicts']);
+    Route::post('freelancer/checkin', [FreelancerController::class, 'checkin']);
+    Route::get('freelancer/checkin/{eventId}', [FreelancerController::class, 'checkinStatus']);
 
     // Packages
     Route::get('packages', [PackageController::class, 'index']);
