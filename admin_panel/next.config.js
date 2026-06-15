@@ -26,6 +26,14 @@ const securityHeaders = [
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // This App-Router admin panel cannot `next build` on the thread-capped
+  // shared host (page-data/static-generation workers get SIGABRT). It is
+  // built locally and shipped prebuilt. `standalone` bundles a self-contained
+  // server with the BUILD_ID + Server-Action encryption key baked in, so a
+  // prebuilt deploy can't drift from the server's runtime (the React #418
+  // hydration / "Failed to find Server Action" errors a bare prebuilt .next
+  // hit). See project memory "Shared-Host Build".
+  output: 'standalone',
   // Types + lint are validated locally; skip at build time — the shared
   // host's build worker crashes on them ("id argument must be of type string").
   typescript: { ignoreBuildErrors: true },

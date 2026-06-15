@@ -18,13 +18,13 @@ export const metadata: Metadata = {
 // client-rendered dashboard, so there is nothing to statically prerender.
 export const dynamic = 'force-dynamic';
 
-const FONT_STACK =
-  "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // Font comes from globals.css (system stack) — no inline style, so the
+  // server-rendered and client-rendered <body> markup match exactly (avoids
+  // the React #418 hydration mismatch).
   return (
     <html lang="en">
-      <body style={{ fontFamily: FONT_STACK }}>{children}</body>
+      <body>{children}</body>
     </html>
   );
 }
