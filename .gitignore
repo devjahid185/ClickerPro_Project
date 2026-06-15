@@ -28,6 +28,10 @@ Thumbs.db
 laravel_backend/storage/app/firebase/
 firebase-adminsdk*.json
 
+# local debug logs (adb logcat dumps — large, may contain device data)
+_*_log.txt
+_google_login_log.txt
+
 # local debug screenshots
 _p0_*.png
 _r_*.png
