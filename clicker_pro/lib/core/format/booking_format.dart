@@ -47,12 +47,13 @@ class BookingFormat {
     return '$s%';
   }
 
-  /// Date+time render for booking timeline, e.g. `"Jan 5, 2025 5:30 PM"`.
+  /// Date+time render for booking timeline, e.g. `"Jan 5, 2025 17:30"`.
   ///
+  /// Time is shown in 24-hour format (`add_Hm`), not 12-hour AM/PM.
   /// When `lang == 'bn'` Bengali numerals are always applied so Property 12
   /// holds for every digit emitted (date numbers, time numbers, year).
   static String dateTime(DateTime dt, {required String lang}) {
-    final formatted = DateFormat.yMMMd(lang).add_jm().format(dt.toLocal());
+    final formatted = DateFormat.yMMMd(lang).add_Hm().format(dt.toLocal());
     return lang == 'bn' ? toBengaliDigits(formatted) : formatted;
   }
 

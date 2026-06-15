@@ -73,9 +73,9 @@ void _expectBengaliDigitsOnly(String out) {
 void main() {
   setUpAll(() async {
     // `BookingFormat.dateTime(_, lang: 'bn')` uses
-    // `DateFormat.yMMMd('bn').add_jm()`, which throws `LocaleDataException`
-    // in non-browser test environments unless the Bengali locale data has
-    // been registered. Initialize both locales we test against.
+    // `DateFormat.yMMMd('bn').add_Hm()` (24-hour), which throws
+    // `LocaleDataException` in non-browser test environments unless the
+    // Bengali locale data has been registered. Initialize both locales.
     await initializeDateFormatting('bn');
     await initializeDateFormatting('en');
   });
