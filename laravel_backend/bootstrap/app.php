@@ -16,20 +16,24 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'admin.web' => \App\Http\Middleware\AdminWebMiddleware::class,
             'manager' => \App\Http\Middleware\ManagerMiddleware::class,
         ]);
         // Security headers on every API response.
         $middleware->api(append: [
             \App\Http\Middleware\SecurityHeaders::class,
         ]);
-        // This is an API-only backend with NO `login` named route. When an
-        // unauthenticated request reaches `auth:sanctum`, Laravel's default
-        // guest handler tries to redirect to route('login') and crashes
-        // with "Route [login] not defined" → a 500. Returning null here
-        // disables the redirect so the AuthenticationException renderer
-        // below produces a clean 401 JSON for EVERY unauthenticated request
-        // (even when the client didn't send `Accept: application/json`).
-        $middleware->redirectGuestsTo(fn () => null);
+        // The API surface has NO `login` named route: an unauthenticated
+        // `auth:sanctum` request must yield clean 401 JSON, not a redirect
+        // (returning null disables the redirect). The Blade admin console
+        // DOES have `admin.login`, so guests hitting `/admin/*` are sent
+        // there instead. Branch on the request path.
+        $middleware->redirectGuestsTo(function (Request $request) {
+            if ($request->is('admin') || $request->is('admin/*')) {
+                return route('admin.login');
+            }
+            return null;
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Force JSON for the whole API surface, then render auth failures
@@ -39,6 +43,12 @@ return Application::configure(basePath: dirname(__DIR__))
                 $request->is('api/*') || $request->expectsJson()
         );
         $exceptions->render(function (AuthenticationException $e, Request $request) {
+            // Blade admin console: bounce guests to the login screen rather
+            // than emitting 401 JSON (which the API surface still gets).
+            if ($request->is('admin') || $request->is('admin/*')) {
+                return redirect()->guest(route('admin.login'))
+                    ->with('error', 'Please sign in to continue.');
+            }
             return response()->json(['message' => 'Unauthenticated.'], 401);
         });
     })->create();
