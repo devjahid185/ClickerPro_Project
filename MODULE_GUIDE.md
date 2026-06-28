@@ -117,13 +117,17 @@ Next.js **Pages Router**; routes = files under `src/pages/`. **36 pages.**
 
 ---
 
-## 4. Admin Panel Modules (admin_panel)
+## 4. Admin Console Modules (Laravel Blade — `laravel_backend`, `/admin`)
 
-Next.js **App Router**; routes = `app/<name>/page.tsx`. **17 pages.**
+Server-rendered Blade; routes in `laravel_backend/routes/web.php`
+(`admin.*`), controllers in `app/Http/Controllers/Admin/`, views in
+`resources/views/admin/`. **17 screens.**
 
-dashboard (`page.tsx`), login, users (+`[id]`), studios, bookings, payments,
-finance, analytics, broadcasts, support, coupons, audit, security, settings,
-subscription, files.
+dashboard, login, users (+detail), studios, bookings, payments, finance,
+analytics, broadcasts, support, coupons, audit, security, settings,
+subscriptions, files.
+
+> Replaced the old Next.js `admin_panel/`. See DEVELOPER_GUIDE §6.
 
 ### Shared layers
 - `components/Shell.tsx` (nav + auth gate), `components/BarChart.tsx`

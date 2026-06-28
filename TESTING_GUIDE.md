@@ -8,7 +8,7 @@ the repo.
 | Flutter (clicker_pro) | ✅ 31 test files (`test/`) | `flutter test`, manual on device |
 | Laravel (laravel_backend) | ⚠️ phpunit set up; only example tests | `php artisan test`; live API checks |
 | Web app (web_app) | ❌ no test suite | `tsc` + `npm run build` + manual/curl |
-| Admin panel (admin_panel) | ❌ no test suite | `tsc` + `npm run build` + manual/curl |
+| Admin console (Laravel Blade, `/admin`) | ❌ no test suite | manual / Playwright browser checks |
 
 > The current project verification approach (used throughout the audit/fix
 > phases) is: **typecheck + build + live API checks with a bearer token**, plus
@@ -119,14 +119,13 @@ API calls return data (Network tab shows `{ data: ... }`).
 
 ---
 
-## 4. Admin Panel testing
+## 4. Admin Console testing
 
-Same toolchain as the web app:
+The admin console is Laravel Blade — no build step. Run the backend and open
+`/admin`:
 ```bash
-cd admin_panel
-npx tsc --noEmit
-npm run build
-npm run dev             # http://localhost:3001
+cd laravel_backend
+php artisan serve       # http://localhost:5000/admin/login
 ```
 **Manual smoke:** login as admin (`admin@clickerpro.app` / `Admin@1234`) →
 Dashboard (stats + analytics) → Users (role/plan/suspend) → Businesses →
@@ -155,9 +154,9 @@ cd clicker_pro && flutter analyze && flutter test
 cd laravel_backend && php artisan test
 php artisan route:list | grep -c "api/"        # expect 166
 
-# Web / Admin
-cd web_app     && npx tsc --noEmit && npm run build
-cd admin_panel && npx tsc --noEmit && npm run build
+# Web
+cd web_app && npx tsc --noEmit && npm run build
+# Admin: no build — open http://localhost:5000/admin after `php artisan serve`
 ```
 
 ---

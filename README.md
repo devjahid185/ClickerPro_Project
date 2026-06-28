@@ -17,7 +17,7 @@ all served by one Laravel API.
 | Backend API | `laravel_backend/` | Laravel 12, PHP 8.2, PostgreSQL, Sanctum | http://localhost:5000 |
 | Mobile app | `clicker_pro/` | Flutter (Dart SDK ^3.12), Riverpod, Drift | device/emulator |
 | Web app | `web_app/` | Next.js 14.2 (Pages Router), React 18, TypeScript | http://localhost:3000 |
-| Admin panel | `admin_panel/` | Next.js 14.2 (App Router), React 18, TypeScript | http://localhost:3001 |
+| Admin console | `laravel_backend/` (`/admin`) | Laravel Blade + CSS (no JS framework) | http://localhost:5000/admin |
 
 **Scale (current):** 42 API controllers · 34 models · 40 migrations · 166 API
 routes · 37 Flutter feature modules · 36 web pages · 17 admin pages.
@@ -81,12 +81,9 @@ npm install
 # .env.local: API_URL=http://localhost:5000   (proxy target for /api/*)
 ```
 
-### 3. Admin panel
-```bash
-cd admin_panel
-npm install
-# optional: API_PROXY_TARGET=http://localhost:5000
-```
+### 3. Admin console
+No separate setup — the admin console is part of `laravel_backend` (Laravel
+Blade) and is served at `/admin` once the backend is running.
 
 ### 4. Mobile app
 ```bash
@@ -106,10 +103,9 @@ cd laravel_backend && php artisan serve --port=5000
 # Terminal 2 — web app  → http://localhost:3000
 cd web_app && npm run dev
 
-# Terminal 3 — admin panel → http://localhost:3001
-cd admin_panel && npm run dev
+# Admin console → http://localhost:5000/admin (served by the backend above)
 
-# Terminal 4 — mobile app (device/emulator attached)
+# Terminal 3 — mobile app (device/emulator attached)
 cd clicker_pro && flutter run
 ```
 
@@ -128,7 +124,7 @@ cd clicker_pro && flutter run
 
 ```bash
 cd web_app     && npm run build && npm run start
-cd admin_panel && npm run build && npm run start
+# admin console: no build — served by the Laravel backend at /admin
 cd clicker_pro && flutter build apk         # or: flutter build ios / appbundle
 # backend: deploy laravel_backend with php-fpm behind nginx (see DEPLOYMENT_GUIDE.md)
 ```

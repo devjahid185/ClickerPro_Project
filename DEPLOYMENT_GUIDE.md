@@ -19,7 +19,7 @@ sudo apt install -y nginx php8.2-fpm php8.2-cli php8.2-pgsql php8.2-mbstring \
   php8.2-xml php8.2-curl php8.2-zip unzip postgresql-client
 # Composer
 curl -sS https://getcomposer.org/installer | php && sudo mv composer.phar /usr/local/bin/composer
-# Node 18+ (for web_app & admin_panel)
+# Node 18+ (for web_app; admin is Laravel Blade, no Node needed)
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - && sudo apt install -y nodejs
 ```
 
@@ -36,13 +36,15 @@ php artisan route:cache
 php artisan view:cache
 ```
 
-### Web app & Admin panel — deploy
+### Web app — deploy
 ```bash
 cd web_app && npm ci && npm run build && npm run start    # serves on :3000
-cd admin_panel && npm ci && npm run build && npm run start # serves on :3001
 # (use pm2 / systemd to keep `next start` running)
 # Set API_URL / API_PROXY_TARGET to the backend's internal URL.
 ```
+
+> **Admin panel:** now served by Laravel itself at `/admin` (Blade) — no
+> separate Node process or port. The backend deploy steps above cover it.
 
 ### Mobile app — release builds
 ```bash
@@ -113,7 +115,8 @@ LOG_LEVEL=error               # avoid leaking detail in prod logs
 
 Frontend env:
 - `web_app/.env.production`: `API_URL=https://api.yourdomain.com`
-- `admin_panel`: `API_PROXY_TARGET=https://api.yourdomain.com`
+- Admin: no env — it's part of the Laravel backend, reachable at
+  `https://api.yourdomain.com/admin`.
 
 ---
 
@@ -141,11 +144,11 @@ server {
   }
 }
 # app.yourdomain.com → proxy_pass http://127.0.0.1:3000  (web_app)
-# admin.yourdomain.com → proxy_pass http://127.0.0.1:3001 (admin_panel)
-server { listen 80; server_name api.yourdomain.com app.yourdomain.com admin.yourdomain.com;
+# admin → no extra server block: served by Laravel at api.yourdomain.com/admin
+server { listen 80; server_name api.yourdomain.com app.yourdomain.com;
          return 301 https://$host$request_uri; }
 ```
-Issue certs with certbot: `sudo certbot --nginx -d api… -d app… -d admin…`.
+Issue certs with certbot: `sudo certbot --nginx -d api… -d app…`.
 
 ---
 

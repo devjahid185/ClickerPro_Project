@@ -19,7 +19,7 @@ ClickerPro_Project/
 ├── clicker_pro/        # Flutter mobile app (Android + iOS)
 ├── laravel_backend/    # Laravel 11 REST API + database
 ├── web_app/            # Next.js 14 (Pages router) — public web app + booking
-├── admin_panel/        # Next.js 14 (App router) — studio/admin dashboard
+│                       #   (admin is now Laravel Blade — see laravel_backend)
 ├── keystores/          # release signing keystore (gitignored)
 ├── tools/              # helper scripts
 ├── data/               # sample/seed data
@@ -31,7 +31,7 @@ ClickerPro_Project/
 | Mobile | Flutter / Dart 3 | — | `clicker_pro/lib/main.dart` |
 | API | Laravel 11 / PHP 8.2 | 5000 | `laravel_backend/routes/api.php` |
 | Web app | Next.js 14 Pages | 3000 | `web_app/src/pages/` |
-| Admin | Next.js 14 App | 3001 | `admin_panel/app/` |
+| Admin | Laravel Blade (web routes) | 5000 | `laravel_backend/routes/web.php` (`/admin`) |
 
 Live API base (used by web & admin proxies by default): `https://api.deyalghori.com`.
 
@@ -171,28 +171,31 @@ npx next start          # serve on :3000
 
 ---
 
-## 6. Admin panel — `admin_panel/` (Next.js App router)
+## 6. Admin console — Laravel Blade (`laravel_backend`, `/admin`)
+
+The admin panel is now a server-rendered Blade app inside `laravel_backend`
+(it replaced the old Next.js `admin_panel/`). No separate build or port —
+it's served by the Laravel app itself at `/admin`.
 
 ```
-app/
-├── login/  users/[id]  studios/  bookings/  payments/  finance/
-├── coupons/  broadcasts/  support/  analytics/  audit/  security/
-├── files/  settings/  subscription/
-components/   lib/
-next.config.js   # tight CSP, /api/* proxy to live API
+laravel_backend/
+├── routes/web.php                       # /admin/* routes (session auth, ADMIN-only)
+├── app/Http/Controllers/Admin/          # Dashboard, Users, Bookings, Finance, …
+├── resources/views/admin/               # Blade views (layouts, partials, modules)
+└── public/admin-assets/                 # design-system.css + minimal admin.js
 ```
 
-- **Shared-host rule:** the App-Router admin **cannot** `next build` on the
-  thread-capped shared host. Build locally, ship the **complete prebuilt
-  `.next`**, run with `next start -p 3001` via Passenger.
-  Do **not** use `output: 'standalone'` — it breaks `next start`.
+- **Auth:** web session (CSRF), `admin.web` middleware gates ADMIN role.
+- **Data:** read/list endpoints reuse the API `AdminController` (one source of
+  truth for console + mobile). Mutations post back to `Admin/*Controller`.
+- **No JS framework:** pure CSS design system; tiny vanilla JS only for the
+  theme toggle, sidebar, and modals.
 
-### Build
+### Run
 ```bash
-cd admin_panel
-npm install
-npx next build          # locally only
-npx next start -p 3001
+cd laravel_backend
+php artisan serve          # admin at http://localhost:8000/admin/login
+# seeded admin: admin@clickerpro.app / Admin@1234
 ```
 
 ---
@@ -200,7 +203,7 @@ npx next start -p 3001
 ## 7. Local setup & seed data
 
 - Backend test logins & sample seeder: `php artisan migrate --seed`.
-- Ports: API 5000, web 3000, admin 3001.
+- Ports: API + admin 5000 (admin at `/admin`), web 3000.
 - Firebase / Google sign-in needs OAuth client + `WEB_BASE_URL` env — see
   [GOOGLE_SIGNIN_SETUP.md](GOOGLE_SIGNIN_SETUP.md).
 
@@ -218,7 +221,7 @@ Deploy-ready build outputs:
 |-----------|----------|
 | Mobile | `clicker_pro/build/app/outputs/flutter-apk/app-release.apk` (+ `.aab` for Play Store) |
 | Web app | `web_app/.next/` (run `next start`) or `web_app/out/` (static export) |
-| Admin | `admin_panel/.next/` (prebuilt, run `next start -p 3001`) |
+| Admin | served by Laravel at `/admin` (no separate build) |
 | Backend | upload `laravel_backend/` minus `.env`; run migrate on server |
 
 ---

@@ -11,9 +11,9 @@
 
 **Final layout we'll create:**
 ```
-deyalghori.com / api.deyalghori.com  → Laravel API (PHP)
+deyalghori.com / api.deyalghori.com  → Laravel API + admin console (PHP)
+                                       (admin at api.deyalghori.com/admin)
 app.deyalghori.com                   → web_app (Next.js, Node)
-admin.deyalghori.com                 → admin_panel (Next.js, Node)
 PostgreSQL DB: deyalgho_clickerpro
 Mobile app (Flutter): APK on phone, API base → https://api.deyalghori.com
 ```
@@ -161,31 +161,18 @@ Test: `https://app.deyalghori.com` → landing/login page loads.
 
 ---
 
-## STEP 5 — admin_panel (Next.js) — **DO NOT build on the server**
+## STEP 5 — Admin console (Laravel Blade — nothing extra to deploy)
 
-> ⚠️ The admin panel is an **App-Router** Next.js app. Its `next build` **crashes
-> on this shared host** (thread cap → `pthread_create: Resource temporarily
-> unavailable` / SIGABRT). So the **prebuilt `.next` is committed to git** and
-> already came down with `git clone`/`git pull`. On the server you only
-> `npm install` + `npm start` — **never `npm run build` here.**
+The admin console is **part of the Laravel backend** now (server-rendered
+Blade at `/admin`). It needs **no Node app, no subdomain, no build** — STEP 2
+(the Laravel deploy) already shipped it.
 
-cPanel → **Setup Node.js App** → **Create Application**:
-- Application root: `clickerpro/admin_panel`
-- Application URL: `admin.deyalghori.com`
-```bash
-cd ~/clickerpro/admin_panel
-source ~/nodevenv/clickerpro/admin_panel/*/bin/activate
-npm install --omit=dev               # deps only; .next is already built (committed)
-echo "API_PROXY_TARGET=https://api.deyalghori.com" > .env.production
-# NO build step — the committed .next is used as-is.
-# Sanity check the prebuilt output is present:
-test -f .next/BUILD_ID && echo "prebuilt .next OK" || echo "MISSING .next — re-pull the repo"
-```
-Start command: `npm start` (it runs on port 3001 per package.json; cPanel maps
-the subdomain to it). **Restart**.
-
-Test: `https://admin.deyalghori.com` → admin login. Sign in with
+Test: `https://api.deyalghori.com/admin` → admin login. Sign in with
 `admin@clickerpro.app` / `Admin@1234`.
+
+> If you cached config/routes/views during the Laravel deploy, the admin
+> routes are included automatically. After any update, re-run
+> `php artisan route:cache && php artisan view:cache`.
 
 ---
 
@@ -249,11 +236,9 @@ php artisan config:cache && php artisan route:cache
 cd ~/clickerpro/web_app && source ~/nodevenv/clickerpro/web_app/*/bin/activate
 npm install && RAYON_NUM_THREADS=1 NODE_OPTIONS=--max-old-space-size=1536 npm run build
 
-# admin_panel — DO NOT build; the new .next came from git pull. Just:
-cd ~/clickerpro/admin_panel && source ~/nodevenv/clickerpro/admin_panel/*/bin/activate
-npm install --omit=dev
+# admin console — nothing to do here; it's served by the Laravel app at /admin.
 
-# Finally: Restart BOTH apps from the "Setup Node.js App" page.
+# Finally: Restart the web_app from the "Setup Node.js App" page.
 ```
 > ⚠️ This release fixed a live bug: Admin **Analytics** and **Reports** pages
 > threw 500 on PostgreSQL (MySQL-only `DATE_FORMAT` → now `TO_CHAR`). After this
