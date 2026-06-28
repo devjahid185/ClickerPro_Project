@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/states/empty_state.dart';
@@ -164,7 +164,7 @@ class _AddReminderSheetState extends State<_AddReminderSheet> {
       if (mounted) {
         setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to save reminder')),
+          SnackBar(content: Text('Failed to save reminder')),
         );
       }
     }
@@ -289,7 +289,7 @@ class _AddReminderSheetState extends State<_AddReminderSheet> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.calendar_today_outlined,
+                  Icon(Icons.calendar_today_outlined,
                       color: AppColors.orange, size: 18),
                   const SizedBox(width: 10),
                   Text(
@@ -343,13 +343,13 @@ class _AddReminderSheetState extends State<_AddReminderSheet> {
                 elevation: 0,
               ),
               child: _saving
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: Colors.white),
                     )
-                  : const Text(
+                  : Text(
                       'Save Reminder',
                       style: TextStyle(
                           fontWeight: FontWeight.w700, fontSize: 15),
@@ -438,7 +438,7 @@ class _ReminderRow extends StatelessWidget {
                   color: AppColors.green.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
+                child: Text(
                   'Sent',
                   style: TextStyle(
                     color: AppColors.green,

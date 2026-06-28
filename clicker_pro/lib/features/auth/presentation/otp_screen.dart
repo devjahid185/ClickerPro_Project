@@ -1,4 +1,4 @@
-// lib/features/auth/presentation/otp_screen.dart
+﻿// lib/features/auth/presentation/otp_screen.dart
 //
 // Clicker Pro — OTP Verification (Dark Luxury Lens)
 //
@@ -378,7 +378,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                     Text(
                       _maskedIdentifier,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Montserrat',
                         fontSize: 13.5,
                         color: AppColors.gold,
@@ -416,7 +416,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                       Text(
                         _error!,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.redAccent,
                           fontSize: 12.5,
                         ),
@@ -456,7 +456,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                                   vertical: 6,
                                 ),
                                 child: _isResending
-                                    ? const SizedBox(
+                                    ? SizedBox(
                                         width: 16,
                                         height: 16,
                                         child: CircularProgressIndicator(
@@ -464,7 +464,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                                           strokeWidth: 2,
                                         ),
                                       )
-                                    : const Text(
+                                    : Text(
                                         'Resend code',
                                         style: TextStyle(
                                           color: AppColors.gold,
@@ -523,7 +523,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                 width: 1.4,
               ),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.shield_outlined,
               size: 22,
               color: AppColors.orange,

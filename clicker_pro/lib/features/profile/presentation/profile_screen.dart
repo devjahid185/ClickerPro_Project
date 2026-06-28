@@ -1,4 +1,4 @@
-// lib/features/profile/presentation/profile_screen.dart
+﻿// lib/features/profile/presentation/profile_screen.dart
 //
 // Clicker Pro — Profile Screen (Dark Luxury Lens)
 //
@@ -386,7 +386,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           : Center(
               child: Text(
                 user.avatarInitials,
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white,
                   fontSize: 36,
                   fontWeight: FontWeight.w700,
@@ -451,7 +451,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
             child: Text(
               user.role.displayLabel,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.accent,
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
@@ -566,7 +566,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ),
                 if (hasBank)
-                  const Icon(
+                  Icon(
                     Icons.check_circle_rounded,
                     color: AppColors.teal,
                     size: 18,
@@ -653,7 +653,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: AppColors.teal),
+                      borderSide: BorderSide(color: AppColors.teal),
                     ),
                   ),
                 ),
@@ -670,7 +670,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ),
                 onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text('Save'),
+                child: Text('Save'),
               ),
             ],
           ),
@@ -906,7 +906,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
         if (isUpload && _isEditing)
           IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.upload_file,
               color: AppColors.accent,
               size: 20,
@@ -959,7 +959,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
             if (_isEditing)
               IconButton(
-                icon: const Icon(Icons.add_circle, color: AppColors.accent),
+                icon: Icon(Icons.add_circle, color: AppColors.accent),
                 onPressed: () => _showAddGearDialog(userId),
               ),
           ],
@@ -1016,7 +1016,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.camera, color: AppColors.gold, size: 18),
+          Icon(Icons.camera, color: AppColors.gold, size: 18),
           const SizedBox(width: 10),
           Expanded(
             child: Text(subtitle, style: TextStyle(color: AppColors.film)),
@@ -1065,10 +1065,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Center(
             child: TextButton.icon(
               onPressed: _openManagerInvite,
-              icon: const Icon(Icons.group_add, color: AppColors.accent),
+              icon: Icon(Icons.group_add, color: AppColors.accent),
               label: Text(
                 t('join_team'),
-                style: const TextStyle(color: AppColors.accent),
+                style: TextStyle(color: AppColors.accent),
               ),
             ),
           )
@@ -1084,7 +1084,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.business, color: AppColors.indigo, size: 18),
+                  Icon(Icons.business, color: AppColors.indigo, size: 18),
                   const SizedBox(width: 10),
                   Text(company, style: TextStyle(color: AppColors.film)),
                   const Spacer(),
@@ -1127,7 +1127,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   color: AppColors.accent.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.qr_code_2_rounded,
                   color: AppColors.accent,
                   size: 18,
@@ -1338,7 +1338,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('Cancel'),
+              child: Text('Cancel'),
             ),
           ),
         ),
@@ -1483,7 +1483,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               enabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: AppColors.glassBorder),
               ),
-              focusedBorder: const OutlineInputBorder(
+              focusedBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: AppColors.accent),
               ),
             ),
@@ -1622,7 +1622,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
               child: Text(
                 code,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Montserrat',
                   color: AppColors.gold,
                   fontSize: 32,
@@ -1644,12 +1644,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
         actions: [
           TextButton.icon(
-            icon: const Icon(
+            icon: Icon(
               Icons.copy_rounded,
               color: AppColors.gold,
               size: 18,
             ),
-            label: const Text('Copy', style: TextStyle(color: AppColors.gold)),
+            label: Text('Copy', style: TextStyle(color: AppColors.gold)),
             onPressed: () async {
               await Clipboard.setData(ClipboardData(text: code));
               if (!mounted) return;

@@ -1,4 +1,4 @@
-// lib/features/gear/presentation/dialogs/add_gear_sheet.dart
+﻿// lib/features/gear/presentation/dialogs/add_gear_sheet.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -265,7 +265,7 @@ class _AddGearSheetState extends ConsumerState<AddGearSheet> {
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.orange),
+      borderSide: BorderSide(color: AppColors.orange),
     ),
   );
 }

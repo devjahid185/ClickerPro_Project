@@ -1,4 +1,4 @@
-// lib/features/team/presentation/salary_sheet_screen.dart
+﻿// lib/features/team/presentation/salary_sheet_screen.dart
 //
 // Owner-side staff / freelancer payout sheet. Lists every team member with
 // their assignment earnings across the owner's events: events count, earned,
@@ -47,7 +47,7 @@ class SalarySheetScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.picture_as_pdf_outlined,
               color: AppColors.gold,
             ),
@@ -262,7 +262,7 @@ class _StaffPayoutCard extends ConsumerWidget {
                           payout.name.isNotEmpty
                               ? payout.name[0].toUpperCase()
                               : '?',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.teal,
                             fontWeight: FontWeight.w700,
                             fontSize: 15,
@@ -480,7 +480,7 @@ class _PayoutBreakdownSheet extends ConsumerWidget {
           .read(teamControllerProvider.notifier)
           .markPayoutPaid(userId, assignmentId: assignmentId);
       messenger.showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Payment recorded ✓'),
           backgroundColor: AppColors.green,
         ),
@@ -565,7 +565,7 @@ class _PayoutItemRow extends ConsumerWidget {
                 color: AppColors.green.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: const Text(
+              child: Text(
                 'PAID',
                 style: TextStyle(
                   color: AppColors.green,
@@ -621,7 +621,7 @@ class _PayButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
         ),
-        child: const Text(
+        child: Text(
           'Pay',
           style: TextStyle(
             color: AppColors.teal,

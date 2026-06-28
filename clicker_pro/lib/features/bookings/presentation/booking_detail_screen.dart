@@ -1,4 +1,4 @@
-// lib/features/bookings/presentation/booking_detail_screen.dart
+﻿// lib/features/bookings/presentation/booking_detail_screen.dart
 //
 // Read-only booking detail surface. Renders the eight sections in the
 // order pinned by Requirement 5.2 — header, client info, schedule,
@@ -97,7 +97,7 @@ class BookingDetailScreen extends ConsumerWidget {
             if (policy.can(Capability.editBooking))
               IconButton(
                 tooltip: 'Edit',
-                icon: const Icon(Icons.edit_outlined, color: AppColors.gold),
+                icon: Icon(Icons.edit_outlined, color: AppColors.gold),
                 onPressed: () async {
                   await Navigator.of(
                     context,
@@ -121,7 +121,7 @@ class BookingDetailScreen extends ConsumerWidget {
                 final canCancel = policy.can(Capability.cancelBooking);
                 return [
                   if (canCancel)
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: _DetailMenuAction.cancel,
                       child: Text(
                         'Cancel booking',
@@ -563,7 +563,7 @@ class _HeaderCard extends StatelessWidget {
                   booking.title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
                     fontFamily: 'Poppins',
                     fontSize: 24,
@@ -628,7 +628,7 @@ class _CancelReasonDialogState extends State<_CancelReasonDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
+            Text(
               'Cancel booking',
               style: TextStyle(
                 fontFamily: 'Poppins',
@@ -652,7 +652,7 @@ class _CancelReasonDialogState extends State<_CancelReasonDialog> {
               maxLines: 4,
               maxLength: 500,
               autofocus: true,
-              style: const TextStyle(color: Colors.white, fontSize: 13.5),
+              style: TextStyle(color: Colors.white, fontSize: 13.5),
               decoration: InputDecoration(
                 hintText: 'Reason for cancellation (optional)',
                 hintStyle: TextStyle(
@@ -674,7 +674,7 @@ class _CancelReasonDialogState extends State<_CancelReasonDialog> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppColors.orange),
+                  borderSide: BorderSide(color: AppColors.orange),
                 ),
               ),
             ),
@@ -698,7 +698,7 @@ class _CancelReasonDialogState extends State<_CancelReasonDialog> {
                       foregroundColor: Colors.white,
                     ),
                     onPressed: _onConfirm,
-                    child: const Text('Cancel booking'),
+                    child: Text('Cancel booking'),
                   ),
                 ),
               ],
@@ -811,7 +811,7 @@ class _InvoiceAction extends ConsumerWidget {
                 ),
               ),
               icon: const Icon(Icons.receipt_long_rounded, size: 18),
-              label: const Text('Client Invoice'),
+              label: Text('Client Invoice'),
               onPressed: () => _showInvoiceSheet(context, ref, forClient: true),
             ),
           ),
@@ -830,7 +830,7 @@ class _InvoiceAction extends ConsumerWidget {
                 ),
               ),
               icon: const Icon(Icons.ios_share_rounded, size: 18),
-              label: const Text('Share Event Details'),
+              label: Text('Share Event Details'),
               onPressed: () => _showInvoiceSheet(context, ref, forClient: false),
             ),
           ),
@@ -1209,7 +1209,7 @@ class _InvoiceSheet extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
-      decoration: const BoxDecoration(gradient: AppColors.orangeGradient),
+      decoration: BoxDecoration(gradient: AppColors.orangeGradient),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1220,7 +1220,7 @@ class _InvoiceSheet extends StatelessWidget {
                   data.studioName.toUpperCase(),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
                     fontFamily: 'Poppins',
                     fontSize: 20,
@@ -1237,7 +1237,7 @@ class _InvoiceSheet extends StatelessWidget {
                 ),
                 child: Text(
                   data.docLabel,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
                     fontFamily: 'Montserrat',
                     fontSize: 11,
@@ -1393,7 +1393,7 @@ class _InvoiceSheet extends StatelessWidget {
                     onTap: () {
                       Clipboard.setData(ClipboardData(text: invoiceText));
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Details copied.')),
+                        SnackBar(content: Text('Details copied.')),
                       );
                     },
                   ),

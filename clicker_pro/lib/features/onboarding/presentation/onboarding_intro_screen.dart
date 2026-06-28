@@ -1,4 +1,4 @@
-// lib/features/onboarding/presentation/onboarding_intro_screen.dart
+﻿// lib/features/onboarding/presentation/onboarding_intro_screen.dart
 //
 // MOD-02 three-slide intro. PageView with Skip / dot-indicator / Next-Done.
 // Done (or Skip) marks `onboarding_complete` and pushes Login with a fade
@@ -120,7 +120,7 @@ class _OnboardingIntroScreenState extends ConsumerState<OnboardingIntroScreen> {
                         ),
                         child: Text(
                           'Skip',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
                           ),
@@ -189,7 +189,7 @@ class _OnboardingIntroScreenState extends ConsumerState<OnboardingIntroScreen> {
                                 isLast
                                     ? ('Get Started')
                                     : ('Next'),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 14,

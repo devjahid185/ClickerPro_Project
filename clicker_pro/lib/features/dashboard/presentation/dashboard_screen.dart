@@ -1,4 +1,4 @@
-// lib/features/dashboard/presentation/dashboard_screen.dart
+﻿// lib/features/dashboard/presentation/dashboard_screen.dart
 //
 // Clicker Pro — Dashboard (Dark Luxury Lens)
 //
@@ -647,7 +647,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               color: AppColors.teal.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.calendar_today_outlined,
                               color: AppColors.teal,
                               size: 15,
@@ -864,7 +864,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   color: AppColors.green.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.check_circle_outline,
                   color: AppColors.green,
                   size: 15,
@@ -1080,7 +1080,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   color: AppColors.gold.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.campaign_outlined,
                   color: AppColors.gold,
                   size: 20,
@@ -1302,7 +1302,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                   ),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.event_note_rounded,
                                   color: AppColors.coral,
                                   size: 20,
@@ -1333,7 +1333,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               ),
                               trailing: Text(
                                 '৳${e.due.toStringAsFixed(0)}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: AppColors.coral,
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
@@ -1553,7 +1553,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                           alignment: Alignment.center,
                           child: Text(
                             '${h.date.day}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.gold,
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
@@ -1728,7 +1728,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       ),
       child: Row(
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 22)),
+          Text(emoji, style: TextStyle(fontSize: 22)),
           const SizedBox(width: 10),
           RichText(
             text: TextSpan(
@@ -2473,8 +2473,8 @@ class _AnimatedBrand extends StatelessWidget {
                 fontWeight: FontWeight.w800,
                 color: AppColors.film,
               ),
-              children: const [
-                TextSpan(text: 'Clicker '),
+              children: [
+                const TextSpan(text: 'Clicker '),
                 TextSpan(
                   text: 'Pro',
                   style: TextStyle(
@@ -2525,7 +2525,7 @@ class _AnnouncementCardView extends StatelessWidget {
           Row(
             children: [
               if (announcement.pinned) ...[
-                const Icon(Icons.push_pin, size: 13, color: AppColors.gold),
+                Icon(Icons.push_pin, size: 13, color: AppColors.gold),
                 const SizedBox(width: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -2536,7 +2536,7 @@ class _AnnouncementCardView extends StatelessWidget {
                     color: AppColors.gold.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: const Text(
+                  child: Text(
                     'PINNED',
                     style: TextStyle(
                       fontSize: 8.5,

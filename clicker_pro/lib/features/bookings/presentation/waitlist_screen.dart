@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers.dart';
@@ -84,7 +84,7 @@ class WaitlistScreen extends ConsumerWidget {
         backgroundColor: AppColors.teal,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_rounded),
-        label: const Text('Add', style: TextStyle(fontWeight: FontWeight.w600)),
+        label: Text('Add', style: TextStyle(fontWeight: FontWeight.w600)),
         onPressed: () => _showAddSheet(context, ref),
       ),
     );
@@ -111,7 +111,7 @@ class WaitlistScreen extends ConsumerWidget {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.teal),
+        borderSide: BorderSide(color: AppColors.teal),
       ),
     );
 
@@ -225,7 +225,7 @@ class WaitlistScreen extends ConsumerWidget {
                         } catch (_) {
                           if (ctx.mounted) {
                             ScaffoldMessenger.of(ctx).showSnackBar(
-                              const SnackBar(
+                              SnackBar(
                                 content: Text('Failed to save. Check your connection.'),
                               ),
                             );
@@ -240,7 +240,7 @@ class WaitlistScreen extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Add',
                         style: TextStyle(fontWeight: FontWeight.w600),
                       ),

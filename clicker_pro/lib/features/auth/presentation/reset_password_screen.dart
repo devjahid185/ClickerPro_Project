@@ -1,4 +1,4 @@
-// lib/features/auth/presentation/reset_password_screen.dart
+﻿// lib/features/auth/presentation/reset_password_screen.dart
 //
 // Clicker Pro — Reset Password (Dark Luxury Lens)
 //
@@ -207,7 +207,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                         Text(
                           _formError!,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.redAccent,
                             fontSize: 12.5,
                           ),
@@ -270,7 +270,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                 width: 1.4,
               ),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.lock_reset_rounded,
               size: 22,
               color: AppColors.orange,
@@ -308,7 +308,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
             color: AppColors.filmDim.withValues(alpha: 0.7),
             fontSize: 13.5,
           ),
-          floatingLabelStyle: const TextStyle(
+          floatingLabelStyle: TextStyle(
             color: AppColors.orange,
             fontSize: 13,
           ),
@@ -345,7 +345,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
               width: 1.5,
             ),
           ),
-          errorStyle: const TextStyle(
+          errorStyle: TextStyle(
             color: Colors.redAccent,
             fontSize: 11,
             height: 0.9,

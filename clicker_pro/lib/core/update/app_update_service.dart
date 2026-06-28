@@ -1,4 +1,4 @@
-// lib/core/update/app_update_service.dart
+﻿// lib/core/update/app_update_service.dart
 //
 // Over-the-air update check for the Android APK (no Play Store needed).
 // On app launch it asks the backend (GET /api/app/version) for the latest
@@ -51,7 +51,7 @@ class AppUpdateService {
             backgroundColor: AppColors.voidElevated,
             title: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.system_update_rounded,
                   color: AppColors.orange,
                   size: 22,
@@ -107,7 +107,7 @@ class AppUpdateService {
                   mode: LaunchMode.externalApplication,
                 ),
                 icon: const Icon(Icons.download_rounded, size: 18),
-                label: const Text('Update now'),
+                label: Text('Update now'),
               ),
             ],
           ),

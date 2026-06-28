@@ -1,4 +1,4 @@
-// lib/features/bookings/presentation/booking_list_screen.dart
+﻿// lib/features/bookings/presentation/booking_list_screen.dart
 //
 // First end-to-end booking surface. Subscribes to `bookingListProvider`
 // keyed by the active filter, renders one of the four shared async
@@ -152,7 +152,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
       );
     } catch (_) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Could not fetch the link — please try again.')),
+        SnackBar(content: Text('Could not fetch the link — please try again.')),
       );
     }
   }
@@ -187,7 +187,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
         actions: [
           IconButton(
             tooltip: loc.bookings_calendar,
-            icon: const Icon(
+            icon: Icon(
               Icons.calendar_month_outlined,
               color: AppColors.gold,
             ),
@@ -196,7 +196,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
           ),
           IconButton(
             tooltip: 'Waitlist',
-            icon: const Icon(
+            icon: Icon(
               Icons.hourglass_empty_rounded,
               color: AppColors.gold,
             ),
@@ -206,12 +206,12 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
           if (policy.can(Capability.approvePublicBooking)) ...[
             IconButton(
               tooltip: 'Share booking link',
-              icon: const Icon(Icons.share_outlined, color: AppColors.teal),
+              icon: Icon(Icons.share_outlined, color: AppColors.teal),
               onPressed: () => _shareBookingLink(context),
             ),
             IconButton(
               tooltip: 'Pending requests',
-              icon: const Icon(
+              icon: Icon(
                 Icons.mark_email_unread_outlined,
                 color: AppColors.gold,
               ),
@@ -273,7 +273,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
               icon: const Icon(Icons.add_rounded),
               label: Text(
                 loc.bookings_new_booking,
-                style: const TextStyle(fontWeight: FontWeight.w600),
+                style: TextStyle(fontWeight: FontWeight.w600),
               ),
               onPressed: () =>
                   Navigator.of(context).pushNamed(RouteNames.bookingNew),
@@ -421,7 +421,7 @@ class _SearchBar extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.teal),
+            borderSide: BorderSide(color: AppColors.teal),
           ),
         ),
       ),
@@ -773,7 +773,7 @@ class _BookingColumnRow extends ConsumerWidget {
                     width: 6,
                     height: 6,
                     margin: const EdgeInsets.only(right: 6),
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppColors.teal,
                       shape: BoxShape.circle,
                     ),
@@ -997,7 +997,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'Apply Filters',
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),

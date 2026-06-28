@@ -1,4 +1,4 @@
-// lib/features/broadcasts/presentation/broadcast_popup.dart
+﻿// lib/features/broadcasts/presentation/broadcast_popup.dart
 //
 // Premium modal popup for admin broadcasts (created from the Admin Panel).
 //
@@ -282,7 +282,7 @@ class _BroadcastPopupDialogState extends State<_BroadcastPopupDialog>
                               ),
                               child: Text(
                                 b.buttonLabel ?? 'Learn more',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13.5,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -331,7 +331,7 @@ class _CloseButton extends StatelessWidget {
       child: InkWell(
         customBorder: const CircleBorder(),
         onTap: onTap,
-        child: const Padding(
+        child: Padding(
           padding: EdgeInsets.all(7),
           child: Icon(Icons.close_rounded, color: Colors.white, size: 18),
         ),

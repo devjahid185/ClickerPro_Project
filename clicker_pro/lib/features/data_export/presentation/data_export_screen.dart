@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../theme/app_colors.dart';
@@ -74,7 +74,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
             width: 44,
             height: 44,
             decoration: AppDecorations.iconWrap(AppColors.tealSoft),
-            child: const Icon(
+            child: Icon(
               Icons.file_download_outlined,
               color: AppColors.teal,
             ),

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../theme/app_colors.dart';
 
@@ -28,7 +28,7 @@ class Paywall {
                 color: AppColors.gold.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(18),
               ),
-              child: const Icon(Icons.workspace_premium_rounded,
+              child: Icon(Icons.workspace_premium_rounded,
                   color: AppColors.gold, size: 34),
             ),
             const SizedBox(height: 18),
@@ -66,7 +66,7 @@ class Paywall {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('Got it',
+                child: Text('Got it',
                     style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
               ),
             ),

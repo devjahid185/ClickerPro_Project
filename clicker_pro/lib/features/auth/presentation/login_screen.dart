@@ -1,4 +1,4 @@
-// lib/features/auth/presentation/login_screen.dart
+﻿// lib/features/auth/presentation/login_screen.dart
 //
 // Clicker Pro — Login Screen v2 (Dark Luxury Lens)
 //
@@ -485,7 +485,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                 ),
                                 child: Text(
                                   t('forgot_password'),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12.5,
                                     color: AppColors.gold,
                                     fontWeight: FontWeight.w500,
@@ -575,7 +575,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                               onTap: _handleRegister,
                               child: Text(
                                 t('create_account'),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: AppColors.accent,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 13,
@@ -648,7 +648,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.schedule_rounded, color: AppColors.red, size: 18),
+          Icon(Icons.schedule_rounded, color: AppColors.red, size: 18),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -656,7 +656,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
               children: [
                 Text(
                   'Your account is scheduled for deletion on $dateLabel.',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
                     fontSize: 13,
                     height: 1.4,
@@ -664,7 +664,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   'Sign in to cancel',
                   style: TextStyle(
                     color: AppColors.gold,
@@ -712,7 +712,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             color: AppColors.filmDim.withValues(alpha: 0.7),
             fontSize: 13.5,
           ),
-          floatingLabelStyle: const TextStyle(
+          floatingLabelStyle: TextStyle(
             color: AppColors.accent,
             fontSize: 13,
             fontWeight: FontWeight.w500,
@@ -751,7 +751,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
               width: 1.5,
             ),
           ),
-          errorStyle: const TextStyle(
+          errorStyle: TextStyle(
             color: Colors.redAccent,
             fontSize: 11,
             height: 0.8,
@@ -786,7 +786,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             height: 54,
             alignment: Alignment.center,
             child: _isLoading
-                ? const SizedBox(
+                ? SizedBox(
                     width: 22,
                     height: 22,
                     child: CircularProgressIndicator(
@@ -799,7 +799,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     children: [
                       Text(
                         label,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white,
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -937,7 +937,7 @@ class _SocialButton extends StatelessWidget {
           border: Border.all(color: AppColors.glassBorder),
         ),
         child: loading
-            ? const Center(
+            ? Center(
                 child: SizedBox(
                   width: 20,
                   height: 20,

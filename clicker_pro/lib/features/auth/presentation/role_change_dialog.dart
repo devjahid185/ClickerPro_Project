@@ -1,4 +1,4 @@
-// lib/features/auth/presentation/role_change_dialog.dart
+﻿// lib/features/auth/presentation/role_change_dialog.dart
 //
 // Clicker Pro — Role Change Dialog (Dark Luxury Lens)
 //
@@ -248,7 +248,7 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
                             children: [
                               Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.warning_amber_rounded,
                                     color: AppColors.gold,
                                     size: 16,
@@ -331,7 +331,7 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
                         ),
                       ),
                       onPressed: () => Navigator.of(context).pop(null),
-                      child: const Text('Cancel'),
+                      child: Text('Cancel'),
                     ),
                   ),
                   const SizedBox(width: 10),

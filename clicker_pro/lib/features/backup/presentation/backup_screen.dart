@@ -1,4 +1,4 @@
-// lib/features/backup/presentation/backup_screen.dart
+﻿// lib/features/backup/presentation/backup_screen.dart
 //
 // Clicker Pro — Backup & Restore Screen (Dark Luxury Lens)
 //
@@ -72,7 +72,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
           borderRadius: BorderRadius.circular(14),
           side: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
         ),
-        title: const Text(
+        title: Text(
           'Restore Database',
           style: TextStyle(
             color: Colors.white,
@@ -97,7 +97,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.teal),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Restore', style: TextStyle(color: Colors.black)),
+            child: Text('Restore', style: TextStyle(color: Colors.black)),
           ),
         ],
       ),
@@ -133,7 +133,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
           icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Backup & Restore',
           style: TextStyle(
             color: Colors.white,
@@ -159,7 +159,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                     decoration: AppColors.iconWrapDecoration(
                       AppColors.teal.withValues(alpha: 0.12),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.cloud_done_outlined,
                       color: AppColors.teal,
                       size: 20,
@@ -182,7 +182,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                           lastBackup != null
                               ? _formatDate(lastBackup.createdAt)
                               : 'No backups yet',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
@@ -236,7 +236,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       padding: const EdgeInsets.only(bottom: 12, top: 4),
       child: Text(
         title.toUpperCase(),
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.accent,
           fontSize: 12,
           fontWeight: FontWeight.bold,
@@ -262,7 +262,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     required IconData icon,
     required String label,
     VoidCallback? onTap,
-    Color color = AppColors.teal,
+    Color? color,
     bool loading = false,
   }) {
     final enabled = onTap != null;
@@ -272,7 +272,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
         contentPadding: EdgeInsets.zero,
         leading: Icon(
           icon,
-          color: enabled ? color : AppColors.filmMuted,
+          color: enabled ? (color ?? AppColors.teal) : AppColors.filmMuted,
           size: 22,
         ),
         title: Text(
@@ -283,7 +283,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
           ),
         ),
         trailing: loading
-            ? const SizedBox(
+            ? SizedBox(
                 width: 18,
                 height: 18,
                 child: CircularProgressIndicator(
@@ -314,7 +314,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
               const SizedBox(width: 12),
               Text(
                 label,
-                style: const TextStyle(color: Colors.white, fontSize: 15),
+                style: TextStyle(color: Colors.white, fontSize: 15),
               ),
             ],
           ),
@@ -341,7 +341,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
             decoration: AppColors.iconWrapDecoration(
               AppColors.tealSoft.withValues(alpha: 0.5),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.file_copy_outlined,
               color: AppColors.teal,
               size: 16,
@@ -354,7 +354,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
               children: [
                 Text(
                   '${record.type.name.toUpperCase()} Backup',
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  style: TextStyle(color: Colors.white, fontSize: 13),
                 ),
                 Text(
                   '${record.sizeLabel} · ${_formatDate(record.createdAt)}',

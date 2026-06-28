@@ -1,4 +1,4 @@
-// lib/features/gear/presentation/gear_screen.dart
+﻿// lib/features/gear/presentation/gear_screen.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -123,7 +123,7 @@ class GearScreen extends ConsumerWidget {
                         lang: lang,
                         bnNumerals: lang == 'bn',
                       ),
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.gold,
                         fontFamily: 'Poppins',
                         fontSize: 22,

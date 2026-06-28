@@ -1,4 +1,4 @@
-// lib/shared/widgets/sync_status_sheet.dart
+﻿// lib/shared/widgets/sync_status_sheet.dart
 //
 // Bottom sheet that surfaces the current outbox state. Tapping the
 // top-bar SyncIndicator opens this sheet so the user can see what is
@@ -100,7 +100,7 @@ class SyncStatusSheet extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.check_circle_outline_rounded,
                     color: AppColors.green,
                     size: 18,
@@ -162,7 +162,7 @@ class _PendingSummary extends StatelessWidget {
               ),
             ),
             alignment: Alignment.center,
-            child: const Icon(
+            child: Icon(
               Icons.cloud_sync_outlined,
               size: 18,
               color: AppColors.orange,
@@ -202,7 +202,7 @@ class _PendingSummary extends StatelessWidget {
               onPressed: onRetry,
               child: Text(
                 loc.sync_retry,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.orange,
                   fontFamily: 'Montserrat',
                   fontSize: 11,
@@ -268,7 +268,7 @@ class _StuckRow extends StatelessWidget {
             ),
             child: Text(
               loc.sync_stuck_label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.red,
                 fontSize: 9.5,
                 letterSpacing: 0.6,
@@ -308,7 +308,7 @@ class _StuckRow extends StatelessWidget {
           const SizedBox(width: 8),
           IconButton(
             tooltip: 'Retry',
-            icon: const Icon(
+            icon: Icon(
               Icons.refresh_rounded,
               color: AppColors.orange,
               size: 20,
@@ -317,7 +317,7 @@ class _StuckRow extends StatelessWidget {
           ),
           IconButton(
             tooltip: 'Discard',
-            icon: const Icon(
+            icon: Icon(
               Icons.delete_outline_rounded,
               color: AppColors.red,
               size: 20,

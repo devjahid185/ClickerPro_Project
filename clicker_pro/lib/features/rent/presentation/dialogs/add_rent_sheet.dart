@@ -1,4 +1,4 @@
-// lib/features/rent/presentation/dialogs/add_rent_sheet.dart
+﻿// lib/features/rent/presentation/dialogs/add_rent_sheet.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -210,7 +210,7 @@ class _AddRentSheetState extends ConsumerState<AddRentSheet> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.calendar_today_outlined,
                         color: AppColors.gold,
                         size: 18,
@@ -291,7 +291,7 @@ class _AddRentSheetState extends ConsumerState<AddRentSheet> {
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.orange),
+      borderSide: BorderSide(color: AppColors.orange),
     ),
   );
 }

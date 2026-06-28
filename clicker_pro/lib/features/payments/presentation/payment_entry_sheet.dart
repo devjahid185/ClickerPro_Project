@@ -1,4 +1,4 @@
-// lib/features/payments/presentation/payment_entry_sheet.dart
+﻿// lib/features/payments/presentation/payment_entry_sheet.dart
 //
 // Modal bottom-sheet for recording a new payment. Uses the
 // `PaymentEntrySheet.show()` static helper so callers don't need to
@@ -80,7 +80,7 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_effectiveEventId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pick a booking for this payment first')),
+        SnackBar(content: Text('Pick a booking for this payment first')),
       );
       return;
     }
@@ -105,7 +105,7 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Failed to save payment')));
+      ).showSnackBar(SnackBar(content: Text('Failed to save payment')));
       setState(() => _saving = false);
     }
   }
@@ -291,7 +291,7 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
                       ),
                       child: _saving
                           ? const LensLoader(size: 18)
-                          : const Text('Save Payment'),
+                          : Text('Save Payment'),
                     ),
                   ),
                 ],
@@ -446,7 +446,7 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.teal),
+        borderSide: BorderSide(color: AppColors.teal),
       ),
     );
   }

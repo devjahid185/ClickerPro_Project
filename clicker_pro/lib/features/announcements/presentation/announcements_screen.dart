@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/role/capability.dart';
@@ -59,7 +59,7 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.red),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
+            child: Text('Delete'),
           ),
         ],
       ),
@@ -70,7 +70,7 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
     } catch (_) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to delete announcement')),
+        SnackBar(content: Text('Failed to delete announcement')),
       );
     }
   }
@@ -170,7 +170,7 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
                 foregroundColor: Colors.white,
                 onPressed: () => CreateAnnouncementSheet.show(context),
                 icon: const Icon(Icons.add),
-                label: const Text('New'),
+                label: Text('New'),
               ),
               orElse: () => null,
             )
@@ -228,7 +228,7 @@ class _AnnouncementCard extends StatelessWidget {
                 Row(
                   children: [
                     if (announcement.pinned) ...[
-                      const Icon(
+                      Icon(
                         Icons.push_pin,
                         color: AppColors.gold,
                         size: 14,
@@ -243,7 +243,7 @@ class _AnnouncementCard extends StatelessWidget {
                           color: AppColors.gold.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: const Text(
+                        child: Text(
                           'PINNED',
                           style: TextStyle(
                             fontFamily: 'Poppins',
@@ -285,7 +285,7 @@ class _AnnouncementCard extends StatelessWidget {
                               style: TextStyle(color: AppColors.film),
                             ),
                           ),
-                          const PopupMenuItem(
+                          PopupMenuItem(
                             value: 'delete',
                             child: Text(
                               'Delete',

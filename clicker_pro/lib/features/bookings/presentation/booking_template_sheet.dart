@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -209,7 +209,7 @@ class _BookingTemplateSheetState extends ConsumerState<BookingTemplateSheet> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.teal),
+                          borderSide: BorderSide(color: AppColors.teal),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -250,7 +250,7 @@ class _BookingTemplateSheetState extends ConsumerState<BookingTemplateSheet> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Save',
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),

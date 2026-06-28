@@ -1,4 +1,4 @@
-// lib/features/bookings/presentation/calendar_screen.dart
+﻿// lib/features/bookings/presentation/calendar_screen.dart
 //
 // Monthly calendar view for the bookings module. Renders a 7-column,
 // 6-row grid for the visible month with up to three status-coloured
@@ -55,7 +55,7 @@ class CalendarScreen extends ConsumerWidget {
         actions: [
           IconButton(
             tooltip: 'Bookings list',
-            icon: const Icon(Icons.event_note_outlined, color: AppColors.gold),
+            icon: Icon(Icons.event_note_outlined, color: AppColors.gold),
             onPressed: () =>
                 Navigator.of(context).pushNamed(RouteNames.bookings),
           ),
@@ -68,7 +68,7 @@ class CalendarScreen extends ConsumerWidget {
               icon: const Icon(Icons.add_rounded),
               label: Text(
                 loc.bookings_new_booking,
-                style: const TextStyle(fontWeight: FontWeight.w600),
+                style: TextStyle(fontWeight: FontWeight.w600),
               ),
               onPressed: () =>
                   Navigator.of(context).pushNamed(RouteNames.bookingNew),
@@ -167,7 +167,7 @@ class _MonthHeader extends StatelessWidget {
         children: [
           IconButton(
             tooltip: prevTooltip,
-            icon: const Icon(Icons.chevron_left_rounded, color: AppColors.gold),
+            icon: Icon(Icons.chevron_left_rounded, color: AppColors.gold),
             onPressed: onPrev,
           ),
           Expanded(
@@ -185,7 +185,7 @@ class _MonthHeader extends StatelessWidget {
           ),
           IconButton(
             tooltip: nextTooltip,
-            icon: const Icon(
+            icon: Icon(
               Icons.chevron_right_rounded,
               color: AppColors.gold,
             ),

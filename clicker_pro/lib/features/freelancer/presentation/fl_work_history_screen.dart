@@ -1,4 +1,4 @@
-// lib/features/freelancer/presentation/fl_work_history_screen.dart
+﻿// lib/features/freelancer/presentation/fl_work_history_screen.dart
 //
 // Freelancer Work History screen (FL-06).
 // Chronological list of past events with PDF export placeholder.
@@ -52,12 +52,12 @@ class FlWorkHistoryScreen extends ConsumerWidget {
         actions: [
           TextButton.icon(
             onPressed: () => _exportPdf(context, ref),
-            icon: const Icon(
+            icon: Icon(
               Icons.picture_as_pdf,
               color: AppColors.teal,
               size: 18,
             ),
-            label: const Text(
+            label: Text(
               'Export PDF',
               style: TextStyle(color: AppColors.teal, fontSize: 12),
             ),
@@ -100,7 +100,7 @@ class FlWorkHistoryScreen extends ConsumerWidget {
     final items = ref.read(flWorkHistoryProvider).value ?? const [];
     if (items.isEmpty) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('No history to export.')),
+        SnackBar(content: Text('No history to export.')),
       );
       return;
     }
@@ -232,7 +232,7 @@ class _HistoryRow extends StatelessWidget {
                   ),
                   child: Text(
                     role,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.purple,
                       fontSize: 10,
                       fontWeight: FontWeight.w600,

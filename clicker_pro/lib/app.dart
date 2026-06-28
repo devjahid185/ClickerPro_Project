@@ -10,6 +10,7 @@ import 'features/onboarding/presentation/splash_screen.dart';
 import 'features/settings/application/language_controller.dart';
 import 'l10n/app_localizations.dart';
 import 'theme/app_colors.dart';
+import 'theme/app_colors_pulse.dart';
 import 'theme/app_theme.dart';
 import 'theme/app_theme_mode.dart';
 import 'theme/reduce_motion.dart';
@@ -22,61 +23,61 @@ class ClickerProApp extends ConsumerWidget {
     final locale = ref.watch(activeLocaleProvider);
     final themeMode = ref.watch(resolvedThemeModeProvider);
     final reduceMotion = ref.watch(reduceMotionProvider);
-    // Flip the AppColors palette (custom-painted surfaces read this flag)
-    // to match the resolved theme. `system` follows the device brightness.
-    final platformDark =
-        WidgetsBinding.instance.platformDispatcher.platformBrightness ==
-        Brightness.dark;
-    final isDark =
-        themeMode == ThemeMode.dark ||
-        (themeMode == ThemeMode.system && platformDark);
+    final activeAppTheme = ref.watch(themeModeControllerProvider).maybeWhen(
+      data: (m) => m,
+      orElse: () => AppThemeMode.sunsetStudio,
+    );
+
+    // Sync AppColors.isDark so every custom-painted surface reads the
+    // correct palette without needing a BuildContext.
+    final isDark = activeAppTheme == AppThemeMode.sunrisePulse;
     AppColors.isDark = isDark;
+    AppColorsPulse; // ensure the palette class is loaded
+
     return MaterialApp(
       title: 'Clicker Pro',
       debugShowCheckedModeBanner: false,
-      // Light = Orange Horizon Pro · Dark = Deep Ocean. The Settings
-      // toggle drives `themeMode`.
-      theme: AppTheme.orangeHorizon(),
-      darkTheme: AppTheme.oceanDeep(),
+      // Sunset Studio = light ThemeData · Sunrise Pulse = dark ThemeData.
+      theme: AppTheme.sunsetStudio(),
+      darkTheme: AppTheme.sunrisePulse(),
       themeMode: themeMode,
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      // Many surfaces are custom-painted and read the static AppColors.isDark
-      // flag directly rather than the inherited Theme, so they only adopt the
-      // new palette when they rebuild — toggling the mode used to leave stale
-      // dark/light patches until a manual refresh. Keying the routed subtree on
-      // the resolved brightness forces the visible page to rebuild on every
-      // switch, while the MaterialApp's Navigator (kept outside this builder)
-      // preserves the navigation stack.
+      // Key the routed subtree on the active theme so custom-painted widgets
+      // (which read AppColors.isDark directly) rebuild on every theme switch.
       builder: (context, child) {
         final media = MediaQuery.of(context);
-        // Fold the manual "reduce motion" toggle into the platform flag so
-        // every motion primitive (which already honours disableAnimations)
-        // also obeys the in-app setting — the low-RAM escape hatch.
         return MediaQuery(
           data: media.copyWith(
             disableAnimations: media.disableAnimations || reduceMotion,
           ),
           child: KeyedSubtree(
-            key: ValueKey(isDark ? 'dark' : 'light'),
+            key: ValueKey(isDark ? 'pulse' : 'sunset'),
             child: child ?? const SizedBox.shrink(),
           ),
         );
       },
-      // Splash drives the initial routing decision (onboarding / login /
-      // dashboard). `onGenerateRoute` is wired so any `pushNamed` call
-      // throughout the app resolves through the central route table.
-      home: const _OutboxAutoStart(child: SplashScreen()),
+      // On web, the initial URL path (e.g. `/book/<token>` shared by a studio)
+      // must be honoured instead of always booting the splash flow. Using
+      // `onGenerateInitialRoutes` lets that initial path flow through the
+      // router; the normal `/` entry still lands on the splash, which then
+      // decides onboarding / login / dashboard as before.
+      onGenerateInitialRoutes: (initialRoute) {
+        if (initialRoute.startsWith('/book/')) {
+          return [AppRouter.onGenerateRoute(RouteSettings(name: initialRoute))];
+        }
+        return [
+          MaterialPageRoute<void>(
+            builder: (_) => const _OutboxAutoStart(child: SplashScreen()),
+          ),
+        ];
+      },
       onGenerateRoute: AppRouter.onGenerateRoute,
     );
   }
 }
 
-/// Boots the bookings module's outbox worker once the connectivity
-/// stream is available. Wraps the splash screen so the worker is alive
-/// from the very first frame; it stays attached to the provider
-/// container's lifetime via `outboxWorkerProvider.onDispose`.
 class _OutboxAutoStart extends ConsumerStatefulWidget {
   const _OutboxAutoStart({required this.child});
   final Widget child;
@@ -109,9 +110,6 @@ class _OutboxAutoStartState extends ConsumerState<_OutboxAutoStart> {
 
   @override
   Widget build(BuildContext context) {
-    // Forward every connectivity emission to the worker via our
-    // controller. `ref.listen` keeps the listener wired across
-    // Riverpod's normal lifecycle without re-triggering `start`.
     ref.listen<AsyncValue<bool>>(connectivityProvider, (prev, next) {
       next.whenData((online) {
         if (!_connectivityController.isClosed) {

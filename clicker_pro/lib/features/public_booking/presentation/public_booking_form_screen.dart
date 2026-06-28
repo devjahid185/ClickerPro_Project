@@ -1,4 +1,4 @@
-// lib/features/public_booking/presentation/public_booking_form_screen.dart
+﻿// lib/features/public_booking/presentation/public_booking_form_screen.dart
 //
 // Unauthenticated public booking form. The visitor reaches this screen
 // via a deep link — `clickerpro://public/booking?token=...` or the
@@ -152,7 +152,7 @@ class _FormState extends ConsumerState<_Form> {
             ),
             child: Text(
               _topLevelError!,
-              style: const TextStyle(color: AppColors.red, fontSize: 13),
+              style: TextStyle(color: AppColors.red, fontSize: 13),
             ),
           ),
         LensTextField(
@@ -269,7 +269,7 @@ class _FormState extends ConsumerState<_Form> {
           ),
           onPressed: _submitting ? null : _onSubmit,
           child: _submitting
-              ? const SizedBox(
+              ? SizedBox(
                   height: 18,
                   width: 18,
                   child: CircularProgressIndicator(
@@ -277,7 +277,7 @@ class _FormState extends ConsumerState<_Form> {
                     color: Colors.white,
                   ),
                 )
-              : const Text(
+              : Text(
                   'Submit request',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,

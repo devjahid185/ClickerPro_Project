@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/pdf/pdf_export.dart';
@@ -81,7 +81,7 @@ class PettyCashScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.picture_as_pdf_outlined,
               color: AppColors.gold,
             ),
@@ -103,7 +103,7 @@ class PettyCashScreen extends ConsumerWidget {
                   decoration: AppColors.iconWrapDecoration(
                     AppColors.teal.withValues(alpha: 0.15),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.account_balance_wallet_outlined,
                     color: AppColors.teal,
                     size: 20,
@@ -123,7 +123,7 @@ class PettyCashScreen extends ConsumerWidget {
                     const SizedBox(height: 2),
                     Text(
                       balance.toStringAsFixed(2),
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.teal,
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
@@ -173,7 +173,7 @@ class PettyCashScreen extends ConsumerWidget {
         backgroundColor: AppColors.teal,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_rounded),
-        label: const Text(
+        label: Text(
           'Add Entry',
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
@@ -295,7 +295,7 @@ class PettyCashScreen extends ConsumerWidget {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.teal),
+                        borderSide: BorderSide(color: AppColors.teal),
                       ),
                     ),
                   ),
@@ -325,7 +325,7 @@ class PettyCashScreen extends ConsumerWidget {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.teal),
+                        borderSide: BorderSide(color: AppColors.teal),
                       ),
                     ),
                   ),
@@ -386,7 +386,7 @@ class PettyCashScreen extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Save',
                         style: TextStyle(fontWeight: FontWeight.w600),
                       ),
@@ -468,7 +468,7 @@ class _PettyCashRow extends StatelessWidget {
           children: [
             Text(
               entry.amount.toStringAsFixed(2),
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.teal,
                 fontSize: 14,
                 fontWeight: FontWeight.w600,

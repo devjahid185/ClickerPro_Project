@@ -25,20 +25,20 @@ class TeamMemberPickerSheet extends ConsumerStatefulWidget {
     required this.title,
     this.excludedUserIds = const <String>{},
     this.multiSelect = true,
-    this.accentColor = AppColors.teal,
+    this.accentColor,
   });
 
   final String title;
   final Set<String> excludedUserIds;
   final bool multiSelect;
-  final Color accentColor;
+  final Color? accentColor;
 
   static Future<List<TeamMember>?> show(
     BuildContext context, {
     required String title,
     Set<String> excludedUserIds = const <String>{},
     bool multiSelect = true,
-    Color accentColor = AppColors.teal,
+    Color? accentColor,
   }) {
     return showModalBottomSheet<List<TeamMember>>(
       context: context,
@@ -65,6 +65,8 @@ class _TeamMemberPickerSheetState extends ConsumerState<TeamMemberPickerSheet> {
   final _searchCtrl = TextEditingController();
   final Set<String> _selectedUserIds = <String>{};
   String _query = '';
+
+  Color get _accent => widget.accentColor ?? AppColors.teal;
 
   @override
   void dispose() {
@@ -183,7 +185,7 @@ class _TeamMemberPickerSheetState extends ConsumerState<TeamMemberPickerSheet> {
                       : 'Add ${_selectedUserIds.length} selected',
                 ),
                 style: FilledButton.styleFrom(
-                  backgroundColor: widget.accentColor,
+                  backgroundColor: _accent,
                   foregroundColor: AppColors.voidBlack,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
@@ -223,7 +225,7 @@ class _TeamMemberPickerSheetState extends ConsumerState<TeamMemberPickerSheet> {
       enabled: !alreadyAdded,
       leading: CircleAvatar(
         radius: 16,
-        backgroundColor: widget.accentColor.withValues(alpha: 0.15),
+        backgroundColor: _accent.withValues(alpha: 0.15),
         backgroundImage: (m.avatarUrl != null && m.avatarUrl!.isNotEmpty)
             ? NetworkImage(m.avatarUrl!)
             : null,
@@ -231,7 +233,7 @@ class _TeamMemberPickerSheetState extends ConsumerState<TeamMemberPickerSheet> {
             ? Text(
                 m.fullName.isEmpty ? '?' : m.fullName[0].toUpperCase(),
                 style: TextStyle(
-                  color: widget.accentColor,
+                  color: _accent,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
@@ -268,7 +270,7 @@ class _TeamMemberPickerSheetState extends ConsumerState<TeamMemberPickerSheet> {
           ? Checkbox(
               value: selected,
               onChanged: alreadyAdded ? null : (_) => _toggle(m.userId),
-              activeColor: widget.accentColor,
+              activeColor: _accent,
               checkColor: AppColors.voidBlack,
             )
           : Icon(

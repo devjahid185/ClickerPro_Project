@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -41,11 +41,11 @@ class TeamScreen extends ConsumerWidget {
         actions: [
           IconButton(
             tooltip: 'Join a team with code',
-            icon: const Icon(Icons.key_outlined, color: AppColors.teal),
+            icon: Icon(Icons.key_outlined, color: AppColors.teal),
             onPressed: () => _showJoinSheet(context),
           ),
           IconButton(
-            icon: const Icon(Icons.person_add_outlined, color: AppColors.gold),
+            icon: Icon(Icons.person_add_outlined, color: AppColors.gold),
             onPressed: () => _showInviteSheet(context, ref),
           ),
         ],
@@ -134,7 +134,7 @@ class _PendingInvitesBanner extends ConsumerWidget {
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.mark_email_unread_outlined,
                   color: AppColors.gold,
                   size: 20,
@@ -201,7 +201,7 @@ class _PendingInvitesBanner extends ConsumerWidget {
         } catch (_) {
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not complete — please try again.')),
+            SnackBar(content: Text('Could not complete — please try again.')),
           );
         }
       },
@@ -240,7 +240,7 @@ class _JoinTeamSheetState extends ConsumerState<_JoinTeamSheet> {
     final code = _codeCtrl.text.trim();
     if (code.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter the 6-digit code.')),
+        SnackBar(content: Text('Enter the 6-digit code.')),
       );
       return;
     }
@@ -250,13 +250,13 @@ class _JoinTeamSheetState extends ConsumerState<_JoinTeamSheet> {
       if (!mounted) return;
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Joined the team ✓')),
+        SnackBar(content: Text('Joined the team ✓')),
       );
     } catch (_) {
       if (!mounted) return;
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Code is wrong or expired.')),
+        SnackBar(content: Text('Code is wrong or expired.')),
       );
     }
   }
@@ -307,7 +307,7 @@ class _JoinTeamSheetState extends ConsumerState<_JoinTeamSheet> {
             textAlign: TextAlign.center,
             maxLength: 6,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.teal,
               fontSize: 28,
               fontWeight: FontWeight.w700,
@@ -337,7 +337,7 @@ class _JoinTeamSheetState extends ConsumerState<_JoinTeamSheet> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: AppColors.teal),
+                borderSide: BorderSide(color: AppColors.teal),
               ),
             ),
           ),
@@ -355,12 +355,12 @@ class _JoinTeamSheetState extends ConsumerState<_JoinTeamSheet> {
                 ),
               ),
               child: _loading
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Join Team'),
+                  : Text('Join Team'),
             ),
           ),
         ],
@@ -398,7 +398,7 @@ class _TeamMemberTile extends ConsumerWidget {
               member.fullName.isNotEmpty
                   ? member.fullName[0].toUpperCase()
                   : '?',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.teal,
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
@@ -426,7 +426,7 @@ class _TeamMemberTile extends ConsumerWidget {
             ),
             child: Text(
               roleDisplay,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.teal,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -487,7 +487,7 @@ class _TeamMemberTile extends ConsumerWidget {
                 value: 'remove',
                 child: Text(
                   loc.team_remove,
-                  style: const TextStyle(color: AppColors.red),
+                  style: TextStyle(color: AppColors.red),
                 ),
               ),
             ],
@@ -562,7 +562,7 @@ class _MemberProfileSheet extends ConsumerWidget {
                           member.fullName.isNotEmpty
                               ? member.fullName[0].toUpperCase()
                               : '?',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.teal,
                             fontWeight: FontWeight.w700,
                             fontSize: 26,
@@ -715,7 +715,7 @@ class _MemberProfileSheet extends ConsumerWidget {
                           padding: const EdgeInsets.symmetric(vertical: 4),
                           child: Row(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.camera_outlined,
                                 size: 16,
                                 color: AppColors.teal,
@@ -850,7 +850,7 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
     final email = _emailCtrl.text.trim();
     if (email.isEmpty || !email.contains('@')) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid email।')),
+        SnackBar(content: Text('Enter a valid email।')),
       );
       return;
     }
@@ -933,7 +933,7 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
                 children: [
                   Text(
                     _code!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.teal,
                       fontSize: 36,
                       fontWeight: FontWeight.w700,
@@ -1031,7 +1031,7 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
                   color: AppColors.filmDim.withValues(alpha: 0.5),
                   fontSize: 13,
                 ),
-                prefixIcon: const Icon(
+                prefixIcon: Icon(
                   Icons.mail_outline_rounded,
                   color: AppColors.gold,
                   size: 19,
@@ -1052,7 +1052,7 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.gold),
+                  borderSide: BorderSide(color: AppColors.gold),
                 ),
               ),
             ),
@@ -1062,7 +1062,7 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
               child: OutlinedButton.icon(
                 onPressed: _emailSending ? null : _sendEmailInvite,
                 icon: _emailSending
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 16,
                         height: 16,
                         child: CircularProgressIndicator(
@@ -1070,9 +1070,9 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
                           color: AppColors.gold,
                         ),
                       )
-                    : const Icon(Icons.send_rounded,
+                    : Icon(Icons.send_rounded,
                         color: AppColors.gold, size: 18),
-                label: const Text(
+                label: Text(
                   'Send invite',
                   style: TextStyle(color: AppColors.gold),
                 ),

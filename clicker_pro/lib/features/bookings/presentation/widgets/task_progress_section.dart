@@ -1,4 +1,4 @@
-// lib/features/bookings/presentation/widgets/task_progress_section.dart
+﻿// lib/features/bookings/presentation/widgets/task_progress_section.dart
 //
 // Per-staff task progress on the booking detail screen. Two visibility
 // rules:
@@ -119,7 +119,7 @@ class _TaskProgressSectionState extends ConsumerState<TaskProgressSection> {
             onPressed: () => _enterEdit(own),
             child: Text(
               own == null ? 'SET' : 'UPDATE',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.orange,
                 fontFamily: 'Montserrat',
                 fontSize: 11,
@@ -161,7 +161,7 @@ class _TaskProgressSectionState extends ConsumerState<TaskProgressSection> {
                     value: pct / 100,
                     minHeight: 8,
                     backgroundColor: AppColors.line(0.06),
-                    valueColor: const AlwaysStoppedAnimation(AppColors.orange),
+                    valueColor: AlwaysStoppedAnimation(AppColors.orange),
                   ),
                 ),
               ),
@@ -266,7 +266,7 @@ class _TaskProgressSectionState extends ConsumerState<TaskProgressSection> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: AppColors.orange),
+                borderSide: BorderSide(color: AppColors.orange),
               ),
             ),
             onChanged: (v) => _draftNote = v,
@@ -291,7 +291,7 @@ class _TaskProgressSectionState extends ConsumerState<TaskProgressSection> {
                     foregroundColor: Colors.white,
                   ),
                   onPressed: _onSave,
-                  child: const Text('Save'),
+                  child: Text('Save'),
                 ),
               ),
             ],
@@ -350,7 +350,7 @@ class _TaskProgressSectionState extends ConsumerState<TaskProgressSection> {
       setState(() => _editing = false);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Progress saved.')));
+      ).showSnackBar(SnackBar(content: Text('Progress saved.')));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -383,7 +383,7 @@ class _AllProgressRow extends StatelessWidget {
               ),
             ),
             alignment: Alignment.center,
-            child: const Icon(
+            child: Icon(
               Icons.person_outline_rounded,
               size: 14,
               color: AppColors.orange,
@@ -411,7 +411,7 @@ class _AllProgressRow extends StatelessWidget {
                     value: pct / 100,
                     minHeight: 5,
                     backgroundColor: AppColors.line(0.06),
-                    valueColor: const AlwaysStoppedAnimation(AppColors.orange),
+                    valueColor: AlwaysStoppedAnimation(AppColors.orange),
                   ),
                 ),
                 if ((progress.note ?? '').isNotEmpty) ...[
@@ -432,7 +432,7 @@ class _AllProgressRow extends StatelessWidget {
           const SizedBox(width: 10),
           Text(
             BookingFormat.percent(pct, lang: lang, bnNumerals: lang == 'bn'),
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.gold,
               fontSize: 13,
               fontWeight: FontWeight.w700,

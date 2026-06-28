@@ -1,4 +1,4 @@
-// lib/features/public_booking/presentation/pending_public_bookings_screen.dart
+﻿// lib/features/public_booking/presentation/pending_public_bookings_screen.dart
 //
 // Owner / Both inbox of public-booking submissions awaiting decision.
 // Streams the local Drift mirror, kicks a background `refreshPending`
@@ -180,7 +180,7 @@ class _PendingPublicBookingsScreenState
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Reject'),
+            child: Text('Reject'),
           ),
         ],
       ),
@@ -193,7 +193,7 @@ class _PendingPublicBookingsScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Request rejected.')));
+      ).showSnackBar(SnackBar(content: Text('Request rejected.')));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -245,7 +245,7 @@ class _RequestRow extends StatelessWidget {
                     color: AppColors.indigo.withValues(alpha: 0.45),
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'PENDING',
                   style: TextStyle(
                     color: AppColors.indigo,
@@ -304,12 +304,12 @@ class _RequestRow extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.close_rounded,
                     color: AppColors.red,
                     size: 16,
                   ),
-                  label: const Text(
+                  label: Text(
                     'Reject',
                     style: TextStyle(color: AppColors.red),
                   ),
@@ -326,7 +326,7 @@ class _RequestRow extends StatelessWidget {
               Expanded(
                 child: FilledButton.icon(
                   icon: const Icon(Icons.check_rounded, size: 16),
-                  label: const Text('Approve'),
+                  label: Text('Approve'),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.orange,
                     foregroundColor: Colors.white,

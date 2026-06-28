@@ -1,16 +1,18 @@
 // lib/theme/app_theme.dart
 //
-// Clicker Pro — Deep Ocean Dark Luxury Lens
-// Single source of truth for typography, spacing, and decorations.
+// Clicker Pro v15 — Theme entry point
+// Two themes: Sunset Studio (light, default) · Sunrise Pulse (dark, bold)
+// Deep Ocean retired in v15.
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
+import 'app_theme_light.dart';
+import 'app_theme_pulse.dart';
 
 /// ============================================================
-/// SPACING — 4px base scale
+/// SPACING — 8px base scale (v15 spec)
 /// ============================================================
 class AppSpacing {
   AppSpacing._();
@@ -24,39 +26,40 @@ class AppSpacing {
 }
 
 /// ============================================================
-/// RADII
+/// RADII — v15 Sunset Studio: 18–24px cards · Sunrise Pulse: 10–14px
 /// ============================================================
 class AppRadius {
   AppRadius._();
   static const double sm = 8;
   static const double md = 10;
   static const double lg = 14;
-  static const double xl = 16;
+  static const double xl = 18;
+  static const double xxl = 24;
   static const double pill = 999;
 }
 
 /// ============================================================
-/// TYPOGRAPHY — Orange Horizon Pro
-///   - brand/display & headings: Poppins
-///   - sans/body: Inter
-///   - numbers/labels: Montserrat
-/// Bengali fallback: Noto Sans Bengali (auto via Google Fonts)
+/// TYPOGRAPHY — Sunset Studio
+///   display/brand: Mood Booster (dashboard only) → Playfair Display (serif)
+///   body: Outfit
+///   mono/labels: IBM Plex Mono
+///
+/// Typography — Sunrise Pulse → see AppTextPulse in app_theme_pulse.dart
 /// ============================================================
 class AppText {
   AppText._();
 
-  static final String? _brandFont = GoogleFonts.poppins().fontFamily;
-  static final String? _bodyFont = GoogleFonts.inter().fontFamily;
-  static final String? _monoFont = GoogleFonts.montserrat().fontFamily;
+  static final String? _brandFont = GoogleFonts.playfairDisplay().fontFamily;
+  static final String? _bodyFont = GoogleFonts.outfit().fontFamily;
+  static final String? _monoFont = GoogleFonts.ibmPlexMono().fontFamily;
 
-  // --- Serif / Brand (Display, numbers) ---
   static TextStyle get brand => TextStyle(
     fontFamily: _brandFont,
     fontSize: 22,
     fontWeight: FontWeight.w700,
     color: AppColors.film,
     height: 1.1,
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   );
 
   static TextStyle get brandAccent => TextStyle(
@@ -101,7 +104,6 @@ class AppText {
     height: 1.0,
   );
 
-  // --- Sans (body) ---
   static TextStyle get body => TextStyle(
     fontFamily: _bodyFont,
     fontSize: 14,
@@ -134,7 +136,6 @@ class AppText {
     height: 1.3,
   );
 
-  // --- Mono (uppercase labels, KEY:VALUE) ---
   static TextStyle get sectionTitle => TextStyle(
     fontFamily: _monoFont,
     fontSize: 13,
@@ -191,24 +192,24 @@ class AppText {
 }
 
 /// ============================================================
-/// GLASS DECORATIONS
+/// GLASS DECORATIONS (Sunset Studio)
 /// ============================================================
 class AppDecorations {
   AppDecorations._();
 
-  static BoxDecoration glassCard({double radius = AppRadius.lg, Color? tint}) {
+  static BoxDecoration glassCard({double radius = AppRadius.xl, Color? tint}) {
     return BoxDecoration(
       color: tint ?? AppColors.glass,
       borderRadius: BorderRadius.circular(radius),
       border: Border.all(color: AppColors.glassBorder, width: 1),
       boxShadow: const [
         BoxShadow(
-          color: Color(0x0A1C1917), // 4% warm ink — crisp key
+          color: Color(0x0A1C1917),
           blurRadius: 4,
           offset: Offset(0, 1),
         ),
         BoxShadow(
-          color: Color(0x14803500), // 8% warm umber — soft ambient
+          color: Color(0x14803500),
           blurRadius: 24,
           spreadRadius: -6,
           offset: Offset(0, 12),
@@ -219,7 +220,7 @@ class AppDecorations {
 
   static BoxDecoration tintedGlassCard({
     required Color tint,
-    double radius = AppRadius.lg,
+    double radius = AppRadius.xl,
   }) {
     return BoxDecoration(
       color: tint,
@@ -227,12 +228,12 @@ class AppDecorations {
       border: Border.all(color: AppColors.glassBorder, width: 1),
       boxShadow: const [
         BoxShadow(
-          color: Color(0x0A1C1917), // 4% warm ink — crisp key
+          color: Color(0x0A1C1917),
           blurRadius: 4,
           offset: Offset(0, 1),
         ),
         BoxShadow(
-          color: Color(0x14803500), // 8% warm umber — soft ambient
+          color: Color(0x14803500),
           blurRadius: 24,
           spreadRadius: -6,
           offset: Offset(0, 12),
@@ -278,182 +279,18 @@ class AppFilters {
 class AppTheme {
   AppTheme._();
 
-  // ── Deep Ocean dark palette ──────────────────────────────────────
-  // Navy-to-abyss surfaces with the brand orange kept as the accent so
-  // the two themes feel like the same product after dark.
-  static const Color oceanBg = Color(0xFF0A1222); // abyss background
-  static const Color oceanSurface = Color(0xFF111B2E); // card / sheet
-  static const Color oceanSurfaceAlt = Color(0xFF18253C); // elevated
-  static const Color oceanInk = Color(0xFFEAF1FB); // primary text
-  static const Color oceanInkDim = Color(0xFF9DB0CC); // secondary text
-  static const Color oceanBorder = Color(0x1FFFFFFF); // hairline (white 12%)
+  /// Sunset Studio — warm, editorial, romantic (v15 default).
+  /// Delegates to AppThemeLight which owns the full ThemeData.
+  static ThemeData sunsetStudio() => AppThemeLight.light();
 
-  /// Orange Horizon Pro theme. Named `dark()` only for backward
-  /// compatibility with `app.dart` wiring — it now returns the light
-  /// SaaS ThemeData.
-  static ThemeData dark() => orangeHorizon();
+  /// Sunrise Pulse — bold, high-contrast, punchy (v15 alt).
+  /// Delegates to AppThemePulse which owns the full ThemeData.
+  static ThemeData sunrisePulse() => AppThemePulse.dark();
 
-  /// Deep Ocean dark theme (MOD-64). Darkens every Material surface —
-  /// scaffold, app bars, bottom sheets, dialogs, inputs, nav, dividers —
-  /// while keeping the orange brand accent.
-  static ThemeData oceanDeep() {
-    final base = ThemeData.dark();
-    final interTextTheme = GoogleFonts.interTextTheme(base.textTheme);
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: oceanBg,
-      canvasColor: oceanBg,
-      primaryColor: AppColors.primary500,
-      colorScheme: const ColorScheme.dark(
-        primary: AppColors.primary500,
-        secondary: AppColors.gold,
-        tertiary: AppColors.info,
-        surface: oceanSurface,
-        surfaceContainerHighest: oceanSurfaceAlt,
-        error: AppColors.red,
-        onPrimary: Colors.white,
-        onSecondary: Colors.black,
-        onSurface: oceanInk,
-      ),
-      textTheme: interTextTheme
-          .apply(bodyColor: oceanInk, displayColor: oceanInk)
-          .copyWith(
-            bodyMedium: interTextTheme.bodyMedium?.copyWith(
-              color: oceanInk,
-              fontSize: 16,
-              height: 1.5,
-              fontWeight: FontWeight.w500,
-            ),
-            bodySmall: interTextTheme.bodySmall?.copyWith(
-              color: oceanInkDim,
-              fontSize: 14,
-              height: 1.5,
-              fontWeight: FontWeight.w500,
-            ),
-            titleMedium: interTextTheme.titleMedium?.copyWith(
-              color: oceanInk,
-              fontWeight: FontWeight.w700,
-            ),
-            titleLarge: interTextTheme.titleLarge?.copyWith(
-              color: oceanInk,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-      splashColor: AppColors.orangeSoft,
-      highlightColor: AppColors.orangeSoft,
-      dividerColor: oceanBorder,
-      cardColor: oceanSurface,
-      dialogTheme: const DialogThemeData(backgroundColor: oceanSurface),
-      bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: oceanSurface,
-        modalBackgroundColor: oceanSurface,
-      ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: oceanBg,
-        foregroundColor: oceanInk,
-        elevation: 0,
-        scrolledUnderElevation: 1,
-        // Dark background → LIGHT status-bar icons.
-        systemOverlayStyle: SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.light,
-          statusBarBrightness: Brightness.dark,
-        ),
-      ),
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: oceanSurface,
-        selectedItemColor: AppColors.primary500,
-        unselectedItemColor: oceanInkDim,
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: oceanSurfaceAlt,
-        hintStyle: const TextStyle(color: oceanInkDim),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: oceanBorder),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: oceanBorder),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary500),
-        ),
-      ),
-    );
-  }
-
-  static ThemeData orangeHorizon() {
-    final base = ThemeData.light();
-    final interTextTheme = GoogleFonts.interTextTheme(base.textTheme);
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
-      scaffoldBackgroundColor: AppColors.appBg,
-      primaryColor: AppColors.primary500,
-      colorScheme: ColorScheme.light(
-        primary: AppColors.primary500,
-        secondary: AppColors.gold,
-        tertiary: AppColors.info,
-        surface: AppColors.surface,
-        error: AppColors.red,
-        onPrimary: Colors.white,
-        onSecondary: Colors.white,
-        onSurface: AppColors.film,
-      ),
-      // Slightly heavier global weights for crisper, more legible text.
-      textTheme: interTextTheme.copyWith(
-        bodyLarge: interTextTheme.bodyLarge?.copyWith(
-          color: AppColors.film,
-          fontWeight: FontWeight.w600,
-        ),
-        bodyMedium: interTextTheme.bodyMedium?.copyWith(
-          color: AppColors.film,
-          fontSize: 16,
-          height: 1.5,
-          fontWeight: FontWeight.w600,
-        ),
-        bodySmall: interTextTheme.bodySmall?.copyWith(
-          color: AppColors.filmDim,
-          fontSize: 14,
-          height: 1.5,
-          fontWeight: FontWeight.w600,
-        ),
-        titleMedium: interTextTheme.titleMedium?.copyWith(
-          color: AppColors.film,
-          fontWeight: FontWeight.w700,
-        ),
-        titleLarge: interTextTheme.titleLarge?.copyWith(
-          color: AppColors.film,
-          fontWeight: FontWeight.w700,
-        ),
-        labelLarge: interTextTheme.labelLarge?.copyWith(
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-      splashColor: AppColors.orangeSoft,
-      highlightColor: AppColors.orangeSoft,
-      dividerColor: AppColors.hairline,
-      appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.film,
-        elevation: 0,
-        scrolledUnderElevation: 1,
-        // Match the status-bar icons to the active surface so time/network/
-        // battery stay legible: dark icons on a light surface, light on dark.
-        systemOverlayStyle: SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: AppColors.isDark
-              ? Brightness.light
-              : Brightness.dark,
-          statusBarBrightness: AppColors.isDark
-              ? Brightness.dark
-              : Brightness.light,
-        ),
-      ),
-    );
-  }
+  // ── Backward-compat shims ──────────────────────────────────────────
+  // `app.dart` was wired to these names. Point them at the v15 equivalents
+  // so nothing else needs to change until a full rename sweep.
+  static ThemeData dark() => sunrisePulse();
+  static ThemeData orangeHorizon() => sunsetStudio();
+  static ThemeData oceanDeep() => sunrisePulse(); // retired → maps to Pulse
 }

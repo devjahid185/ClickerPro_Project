@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/states/lens_loader.dart';
@@ -92,7 +92,7 @@ class _CreateAnnouncementSheetState
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to create announcement')),
+        SnackBar(content: Text('Failed to create announcement')),
       );
       setState(() => _saving = false);
     }
@@ -248,7 +248,7 @@ class _CreateAnnouncementSheetState
                       ),
                       child: _saving
                           ? const LensLoader(size: 18)
-                          : const Text('Publish'),
+                          : Text('Publish'),
                     ),
                   ),
                 ],
@@ -275,7 +275,7 @@ class _CreateAnnouncementSheetState
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.orange),
+      borderSide: BorderSide(color: AppColors.orange),
     ),
   );
 }

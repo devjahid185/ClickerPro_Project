@@ -1,4 +1,4 @@
-// lib/features/chat/presentation/chat_screen.dart
+﻿// lib/features/chat/presentation/chat_screen.dart
 //
 // Team chat surface।  Two states:
 //
@@ -274,7 +274,7 @@ class _ChatThreadViewState extends ConsumerState<_ChatThreadView> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(20),
-                        borderSide: const BorderSide(color: AppColors.orange),
+                        borderSide: BorderSide(color: AppColors.orange),
                       ),
                     ),
                     onSubmitted: (_) => _send(),

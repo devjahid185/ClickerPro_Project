@@ -1,4 +1,4 @@
-// lib/features/audit/presentation/audit_log_screen.dart
+﻿// lib/features/audit/presentation/audit_log_screen.dart
 //
 // Clicker Pro — Audit Log Viewer (Dark Luxury Lens)
 //
@@ -76,7 +76,7 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
           _buildFilters(),
           Expanded(
             child: _isLoading
-                ? const Center(
+                ? Center(
                     child: CircularProgressIndicator(color: AppColors.teal),
                   )
                 : _entries.isEmpty
@@ -207,7 +207,7 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
               color: AppColors.teal.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.history_rounded,
               color: AppColors.teal,
               size: 32,
@@ -269,7 +269,7 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
                     children: [
                       TextSpan(
                         text: entry.actorName,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                        style: TextStyle(fontWeight: FontWeight.w600),
                       ),
                       TextSpan(
                         text: ' ${entry.actionVerb} ',
@@ -277,7 +277,7 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
                       ),
                       TextSpan(
                         text: entry.entityLabel ?? entry.entityType,
-                        style: const TextStyle(fontWeight: FontWeight.w500),
+                        style: TextStyle(fontWeight: FontWeight.w500),
                       ),
                     ],
                   ),
@@ -339,7 +339,7 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
                 Expanded(
                   child: Text(
                     '${before[key]} → ${after[key]}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.teal,
                       fontSize: 11,
                       fontFamily: 'monospace',

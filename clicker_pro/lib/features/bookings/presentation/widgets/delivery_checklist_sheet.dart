@@ -1,4 +1,4 @@
-// lib/features/bookings/presentation/widgets/delivery_checklist_sheet.dart
+﻿// lib/features/bookings/presentation/widgets/delivery_checklist_sheet.dart
 //
 // Delivery checklist bottom sheet for a booking. Tracks the post-shoot
 // deliverables a studio works through (backup → cull → edit → album →
@@ -71,7 +71,7 @@ class _DeliveryChecklistSheetState
       if (!mounted) return;
       Navigator.of(context).pop();
       messenger.showSnackBar(
-        const SnackBar(content: Text('Delivery checklist saved.')),
+        SnackBar(content: Text('Delivery checklist saved.')),
       );
     } catch (e) {
       if (!mounted) return;
@@ -124,7 +124,7 @@ class _DeliveryChecklistSheetState
                 ),
                 Text(
                   '$_doneCount / $total',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.teal,
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -139,7 +139,7 @@ class _DeliveryChecklistSheetState
                 value: total == 0 ? 0 : _doneCount / total,
                 minHeight: 6,
                 backgroundColor: AppColors.glass,
-                valueColor: const AlwaysStoppedAnimation(AppColors.teal),
+                valueColor: AlwaysStoppedAnimation(AppColors.teal),
               ),
             ),
             const SizedBox(height: 12),
@@ -176,7 +176,7 @@ class _DeliveryChecklistSheetState
                   ),
                 ),
                 child: _saving
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
@@ -184,7 +184,7 @@ class _DeliveryChecklistSheetState
                           color: Colors.white,
                         ),
                       )
-                    : const Text(
+                    : Text(
                         'Save',
                         style: TextStyle(fontWeight: FontWeight.w600),
                       ),

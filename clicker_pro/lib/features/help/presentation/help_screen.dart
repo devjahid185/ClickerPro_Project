@@ -1,4 +1,4 @@
-// lib/features/help/presentation/help_screen.dart
+﻿// lib/features/help/presentation/help_screen.dart
 //
 // Help & Support — FAQ list (collapsible cards) + contact card with
 // "Send a ticket" CTA।  FAQ endpoint is public (no auth)।  Submitting a
@@ -83,7 +83,7 @@ class HelpScreen extends ConsumerWidget {
                           color: AppColors.orangeSoft,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.support_agent_rounded,
                           color: AppColors.orange,
                           size: 22,
@@ -115,7 +115,7 @@ class HelpScreen extends ConsumerWidget {
                   const SizedBox(height: 8),
                   SelectableText(
                     loc.help_contact_email,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.gold,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -146,7 +146,7 @@ class HelpScreen extends ConsumerWidget {
             // ── FAQ section header ────────────────────────────────
             Text(
               loc.help_faq_section.toUpperCase(),
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.gold,
                 fontSize: 11,
                 letterSpacing: 1.4,

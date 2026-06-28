@@ -1,4 +1,4 @@
-// lib/features/chat/presentation/widgets/message_bubble.dart
+﻿// lib/features/chat/presentation/widgets/message_bubble.dart
 
 import 'package:flutter/material.dart';
 
@@ -54,7 +54,7 @@ class MessageBubble extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 2),
                   child: Text(
                     message.senderName!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.gold,
                       fontSize: 11,
                       fontWeight: FontWeight.w700,

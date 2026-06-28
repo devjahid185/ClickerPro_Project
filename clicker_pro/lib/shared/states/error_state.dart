@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../theme/app_colors.dart';
 
@@ -26,7 +26,7 @@ class ErrorState extends StatelessWidget {
                   color: AppColors.red.withValues(alpha: 0.30),
                 ),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.error_outline_rounded,
                 color: AppColors.red,
                 size: 28,
@@ -47,7 +47,7 @@ class ErrorState extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: const Text('Retry'),
+                label: Text('Retry'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.orange,
                   side: BorderSide(

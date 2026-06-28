@@ -1,4 +1,4 @@
-// lib/features/profile/presentation/delete_account_screen.dart
+﻿// lib/features/profile/presentation/delete_account_screen.dart
 //
 // Two-step Delete Account flow with a 7-day grace window.
 //
@@ -183,7 +183,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
                 ),
               ),
               onPressed: () => setState(() => _step = 1),
-              child: const Text(
+              child: Text(
                 'Continue',
                 style: TextStyle(
                   color: Colors.white,
@@ -276,7 +276,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
                     onPressed: _submitting
                         ? null
                         : () => Navigator.of(context).maybePop(),
-                    child: const Text('Cancel'),
+                    child: Text('Cancel'),
                   ),
                 ),
               ),
@@ -296,7 +296,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
                     ),
                     onPressed: _canConfirm ? _handleConfirm : null,
                     child: _submitting
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
@@ -338,7 +338,7 @@ class _Bullet extends StatelessWidget {
             margin: const EdgeInsets.only(top: 6, right: 10),
             width: 6,
             height: 6,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.orange,
               shape: BoxShape.circle,
             ),

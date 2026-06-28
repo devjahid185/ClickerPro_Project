@@ -1,4 +1,4 @@
-// lib/features/expenses/presentation/widgets/profit_loss_card.dart
+﻿// lib/features/expenses/presentation/widgets/profit_loss_card.dart
 //
 // Top-of-screen P&L summary card.  Shows three metrics — income,
 // expense, net — pulled from `profitLossProvider`.  The "net" tile
@@ -36,7 +36,7 @@ class ProfitLossCard extends ConsumerWidget {
         children: [
           Text(
             loc.expenses_pl_card_title,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.gold,
               fontFamily: 'Poppins',
               fontSize: 14,
@@ -54,7 +54,7 @@ class ProfitLossCard extends ConsumerWidget {
             ),
             error: (_, _) => Text(
               loc.expenses_pl_load_failed,
-              style: const TextStyle(color: AppColors.red, fontSize: 13),
+              style: TextStyle(color: AppColors.red, fontSize: 13),
             ),
             data: (pl) {
               return Row(

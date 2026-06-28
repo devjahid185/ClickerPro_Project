@@ -1,4 +1,4 @@
-// lib/features/expenses/presentation/dialogs/add_expense_sheet.dart
+﻿// lib/features/expenses/presentation/dialogs/add_expense_sheet.dart
 //
 // Modal bottom-sheet for recording a new expense.  Uses the
 // `AddExpenseSheet.show()` static helper so callers don't need to know
@@ -239,7 +239,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.calendar_today_outlined,
                         color: AppColors.gold,
                         size: 18,
@@ -329,7 +329,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.orange),
+        borderSide: BorderSide(color: AppColors.orange),
       ),
     );
   }

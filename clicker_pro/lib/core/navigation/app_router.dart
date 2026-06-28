@@ -1,4 +1,4 @@
-// lib/core/navigation/app_router.dart
+﻿// lib/core/navigation/app_router.dart
 //
 // Central route table for `MaterialApp.onGenerateRoute`. Every named route
 // listed in `RouteNames` resolves to a widget here. Routes that are still
@@ -90,6 +90,21 @@ class AppRouter {
   /// `lensPageRoute`-wrapped widget. Unknown routes fall back to a "Coming
   /// soon" screen so deep links survive the Foundation slice.
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
+    // Web deep-link: the public self-booking page is shared as a path URL
+    // `/book/<token>` (matching the old web app's link format). On Flutter
+    // web, `settings.name` is that full path, so it won't hit any exact
+    // `case` below — intercept it here and pull the token out of the path.
+    final name = settings.name ?? '';
+    if (name.startsWith('/book/')) {
+      final token = Uri.decodeComponent(name.substring('/book/'.length)).trim();
+      if (token.isNotEmpty) {
+        return lensPageRoute<void>(PublicBookingFormScreen(token: token));
+      }
+      return lensPageRoute<void>(
+        _ComingSoonRoute(name: 'Public booking (missing token)'),
+      );
+    }
+
     switch (settings.name) {
       case RouteNames.splash:
         return lensPageRoute<void>(const SplashScreen());
@@ -442,7 +457,7 @@ class _ComingSoonRoute extends StatelessWidget {
                 color: AppColors.orange.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.rocket_launch_outlined,
                 color: AppColors.orange,
                 size: 32,

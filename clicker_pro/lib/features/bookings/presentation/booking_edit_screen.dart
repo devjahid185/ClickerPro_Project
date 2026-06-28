@@ -1,4 +1,4 @@
-// lib/features/bookings/presentation/booking_edit_screen.dart
+﻿// lib/features/bookings/presentation/booking_edit_screen.dart
 //
 // Combined create / edit form for a Booking. The screen is keyed by an
 // optional booking local id — `null` opens a fresh draft, a non-null id
@@ -315,7 +315,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      textStyle: const TextStyle(
+                      textStyle: TextStyle(
                         fontFamily: 'Montserrat',
                         fontSize: 12,
                         letterSpacing: 1.2,
@@ -1049,7 +1049,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
             hint: 'Type a name or pick from team',
             suffix: IconButton(
               tooltip: 'Pick from team',
-              icon: const Icon(
+              icon: Icon(
                 Icons.group_add_outlined,
                 color: AppColors.gold,
                 size: 20,
@@ -1092,7 +1092,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
       keyboardType: TextInputType.url,
       suffix: IconButton(
         tooltip: 'Open in maps',
-        icon: const Icon(
+        icon: Icon(
           Icons.location_on_outlined,
           color: AppColors.teal,
           size: 20,
@@ -1582,7 +1582,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Got it'),
+            child: Text('Got it'),
           ),
         ],
       ),
@@ -1620,7 +1620,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Yes, save'),
+            child: Text('Yes, save'),
           ),
         ],
       ),
@@ -1735,7 +1735,7 @@ class _PackagePickerSheet extends ConsumerWidget {
                       ),
                     ),
                     trailing: p.id == currentSelection
-                        ? const Icon(
+                        ? Icon(
                             Icons.check_circle_rounded,
                             color: AppColors.orange,
                           )
@@ -1753,8 +1753,8 @@ class _PackagePickerSheet extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
-            icon: const Icon(Icons.tune_rounded, color: AppColors.gold),
-            label: const Text(
+            icon: Icon(Icons.tune_rounded, color: AppColors.gold),
+            label: Text(
               'Use custom price',
               style: TextStyle(color: AppColors.gold),
             ),

@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'app.dart';
@@ -7,6 +9,12 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Web: use clean path URLs (no `#`) so shared deep links like
+  // `/book/<token>` resolve to the right screen. No-op on mobile.
+  if (kIsWeb) {
+    usePathUrlStrategy();
+  }
 
   // Initialize Firebase
   try {

@@ -1,4 +1,4 @@
-// lib/features/settings/presentation/settings_screen.dart
+﻿// lib/features/settings/presentation/settings_screen.dart
 //
 // Clicker Pro — Settings Screen (Dark Luxury Lens)
 //
@@ -355,8 +355,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }) {
     final prefsAsync = ref.watch(notificationPrefsProvider(userId));
     return prefsAsync.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.symmetric(vertical: 16),
+      loading: () => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
         child: SizedBox(
           height: 22,
           child: Center(
@@ -556,7 +556,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final asyncMode = ref.watch(themeModeControllerProvider);
     final currentMode = asyncMode.maybeWhen(
       data: (m) => m,
-      orElse: () => AppThemeMode.dark,
+      orElse: () => AppThemeMode.sunsetStudio,
     );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -565,11 +565,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.palette_outlined,
-                color: AppColors.filmDim,
-                size: 20,
-              ),
+              Icon(Icons.palette_outlined, color: AppColors.filmDim, size: 20),
               const SizedBox(width: 12),
               Text(
                 'Theme',
@@ -578,7 +574,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ],
           ),
           SizedBox(
-            width: 200,
+            width: 220,
             child: SegmentedButton<AppThemeMode>(
               showSelectedIcon: false,
               style: ButtonStyle(
@@ -588,11 +584,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 visualDensity: VisualDensity.compact,
               ),
               segments: const [
-                ButtonSegment(value: AppThemeMode.dark, label: Text('Dark')),
-                ButtonSegment(value: AppThemeMode.light, label: Text('Light')),
                 ButtonSegment(
-                  value: AppThemeMode.system,
-                  label: Text('System'),
+                  value: AppThemeMode.sunsetStudio,
+                  label: Text('Sunset', overflow: TextOverflow.ellipsis),
+                ),
+                ButtonSegment(
+                  value: AppThemeMode.sunrisePulse,
+                  label: Text('Sunrise', overflow: TextOverflow.ellipsis),
                 ),
               ],
               selected: {currentMode},
@@ -630,7 +628,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ],
           ),
           if (value == null)
-            const SizedBox(
+            SizedBox(
               width: 18,
               height: 18,
               child: CircularProgressIndicator(
@@ -711,7 +709,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Close', style: TextStyle(color: AppColors.gold)),
+            child: Text('Close', style: TextStyle(color: AppColors.gold)),
           ),
         ],
       ),

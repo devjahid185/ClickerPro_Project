@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously
+﻿// ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -91,7 +91,7 @@ class FollowupScreen extends ConsumerWidget {
         foregroundColor: Colors.white,
         onPressed: () => _showAddDialog(context, ref),
         icon: const Icon(Icons.add),
-        label: const Text(
+        label: Text(
           'Add Follow-up',
           style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600),
         ),
@@ -277,7 +277,7 @@ class _AddFollowupSheetState extends State<_AddFollowupSheet> {
           const SizedBox(height: 12),
           ListTile(
             contentPadding: EdgeInsets.zero,
-            leading: const Icon(
+            leading: Icon(
               Icons.calendar_today_outlined,
               color: AppColors.teal,
               size: 20,
@@ -294,7 +294,7 @@ class _AddFollowupSheetState extends State<_AddFollowupSheet> {
                 lastDate: DateTime.now().add(const Duration(days: 365)),
                 builder: (ctx, child) => Theme(
                   data: ThemeData.dark().copyWith(
-                    colorScheme: const ColorScheme.dark(
+                    colorScheme: ColorScheme.dark(
                       primary: AppColors.orange,
                       onPrimary: Colors.white,
                     ),
@@ -329,7 +329,7 @@ class _AddFollowupSheetState extends State<_AddFollowupSheet> {
                   ),
                 );
               },
-              child: const Text(
+              child: Text(
                 'Add Follow-up',
                 style: TextStyle(
                   fontFamily: 'Poppins',

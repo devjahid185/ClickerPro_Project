@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../theme/app_colors.dart';
@@ -77,7 +77,7 @@ class GatedScreen extends ConsumerWidget {
                   color: AppColors.gold.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(22),
                 ),
-                child: const Icon(Icons.workspace_premium_rounded,
+                child: Icon(Icons.workspace_premium_rounded,
                     color: AppColors.gold, size: 42),
               ),
               const SizedBox(height: 22),
@@ -108,7 +108,7 @@ class GatedScreen extends ConsumerWidget {
                 child: ElevatedButton.icon(
                   onPressed: () => Paywall.show(context, featureName: featureName),
                   icon: const Icon(Icons.workspace_premium_rounded, size: 20),
-                  label: const Text('Upgrade to PRO',
+                  label: Text('Upgrade to PRO',
                       style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.gold,

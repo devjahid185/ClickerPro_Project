@@ -13,11 +13,17 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class AppConfig {
   AppConfig._();
 
-  /// Reads [key] from a --dart-define first (for production builds), then
-  /// from the loaded .env file, then falls back to [fallback].
+  /// Reads [key] from the loaded .env file, falling back to [fallback].
+  ///
+  /// NOTE: `String.fromEnvironment` is intentionally NOT used here. It only
+  /// accepts a *const* key argument, so calling it with a runtime [key] is a
+  /// no-op on native and a hard runtime crash on web (dart2js throws
+  /// "String.fromEnvironment can only be used as a const constructor").
+  /// Compile-time `--dart-define` overrides are wired explicitly in
+  /// [_defineOverride] below for the keys that need them.
   static String _read(String key, String fallback) {
-    final fromDefine = String.fromEnvironment(key);
-    if (fromDefine.isNotEmpty) return fromDefine;
+    final fromDefine = _defineOverride(key);
+    if (fromDefine != null && fromDefine.isNotEmpty) return fromDefine;
 
     // dotenv.maybeGet throws if load() never ran; guard so config access
     // can never crash the app.
@@ -29,6 +35,29 @@ class AppConfig {
     }
 
     return fallback;
+  }
+
+  /// Compile-time `--dart-define` overrides. Each `fromEnvironment` MUST take
+  /// a const literal key (that's the whole point — it's resolved at build
+  /// time), so we map the supported keys one-by-one. An unset define yields
+  /// an empty string, which the caller treats as "not provided".
+  static String? _defineOverride(String key) {
+    switch (key) {
+      case 'API_BASE_URL':
+        const v = String.fromEnvironment('API_BASE_URL');
+        return v.isEmpty ? null : v;
+      case 'WEB_BASE_URL':
+        const v = String.fromEnvironment('WEB_BASE_URL');
+        return v.isEmpty ? null : v;
+      case 'JWT_SECRET':
+        const v = String.fromEnvironment('JWT_SECRET');
+        return v.isEmpty ? null : v;
+      case 'ENVIRONMENT':
+        const v = String.fromEnvironment('ENVIRONMENT');
+        return v.isEmpty ? null : v;
+      default:
+        return null;
+    }
   }
 
   static String get baseUrl => _read('API_BASE_URL', 'http://127.0.0.1:5000');

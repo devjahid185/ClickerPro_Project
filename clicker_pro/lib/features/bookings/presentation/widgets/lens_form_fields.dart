@@ -1,4 +1,4 @@
-// lib/features/bookings/presentation/widgets/lens_form_fields.dart
+﻿// lib/features/bookings/presentation/widgets/lens_form_fields.dart
 //
 // Shared themed form primitives for the booking edit screen. Keeps the
 // Dark Luxury Lens contract (subtle glass surface, soft hairline border,
@@ -189,7 +189,7 @@ class LensSelector<T> extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               errorText!,
-              style: const TextStyle(color: AppColors.red, fontSize: 11),
+              style: TextStyle(color: AppColors.red, fontSize: 11),
             ),
           ],
         ],
@@ -363,7 +363,7 @@ class LensPickerRow extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               errorText!,
-              style: const TextStyle(color: AppColors.red, fontSize: 11),
+              style: TextStyle(color: AppColors.red, fontSize: 11),
             ),
           ],
         ],

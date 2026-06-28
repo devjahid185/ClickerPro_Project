@@ -1,4 +1,4 @@
-// lib/features/crash_reporting/presentation/crash_settings_screen.dart
+﻿// lib/features/crash_reporting/presentation/crash_settings_screen.dart
 //
 // Clicker Pro — Crash Reporting Settings (Dark Luxury Lens)
 //
@@ -95,7 +95,7 @@ class _CrashSettingsScreenState extends ConsumerState<CrashSettingsScreen> {
                     decoration: AppColors.iconWrapDecoration(
                       AppColors.teal.withValues(alpha: 0.12),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.analytics_outlined,
                       color: AppColors.teal,
                       size: 20,
@@ -149,7 +149,7 @@ class _CrashSettingsScreenState extends ConsumerState<CrashSettingsScreen> {
       padding: const EdgeInsets.only(bottom: 12, top: 4),
       child: Text(
         title.toUpperCase(),
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.accent,
           fontSize: 12,
           fontWeight: FontWeight.bold,
@@ -206,13 +206,13 @@ class _CrashSettingsScreenState extends ConsumerState<CrashSettingsScreen> {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
-    Color color = AppColors.teal,
+    Color? color,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: ListTile(
         contentPadding: EdgeInsets.zero,
-        leading: Icon(icon, color: color, size: 22),
+        leading: Icon(icon, color: color ?? AppColors.teal, size: 22),
         title: Text(
           label,
           style: TextStyle(color: AppColors.film, fontSize: 15),

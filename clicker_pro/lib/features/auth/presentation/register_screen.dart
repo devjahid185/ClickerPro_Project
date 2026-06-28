@@ -1,4 +1,4 @@
-// lib/features/auth/presentation/register_screen.dart
+﻿// lib/features/auth/presentation/register_screen.dart
 //
 // Clicker Pro — Register Screen (Dark Luxury Lens)
 //
@@ -411,7 +411,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             ),
                             child: RichText(
                               text: TextSpan(
-                                style: const TextStyle(fontSize: 13),
+                                style: TextStyle(fontSize: 13),
                                 children: [
                                   TextSpan(
                                     text: 'Already have an account? ',
@@ -423,7 +423,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                   ),
                                   TextSpan(
                                     text: 'Sign In',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: AppColors.orange,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -485,7 +485,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 width: 1.5,
               ),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.camera_alt_outlined,
               size: 24,
               color: AppColors.orange,
@@ -536,7 +536,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             color: AppColors.filmDim.withValues(alpha: 0.7),
             fontSize: 13.5,
           ),
-          floatingLabelStyle: const TextStyle(
+          floatingLabelStyle: TextStyle(
             color: AppColors.orange,
             fontSize: 13,
             fontWeight: FontWeight.w500,
@@ -574,7 +574,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               width: 1.5,
             ),
           ),
-          errorStyle: const TextStyle(
+          errorStyle: TextStyle(
             color: Colors.redAccent,
             fontSize: 11,
             height: 0.9,
@@ -614,7 +614,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               height: 54,
               alignment: Alignment.center,
               child: loading
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 22,
                       height: 22,
                       child: CircularProgressIndicator(
@@ -817,7 +817,7 @@ class _ConsentRow extends StatelessWidget {
                 const TextSpan(text: 'I agree to the '),
                 TextSpan(
                   text: 'Terms',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.gold,
                     fontWeight: FontWeight.w600,
                     decoration: TextDecoration.underline,
@@ -827,7 +827,7 @@ class _ConsentRow extends StatelessWidget {
                 const TextSpan(text: ' & '),
                 TextSpan(
                   text: 'Privacy Policy',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.gold,
                     fontWeight: FontWeight.w600,
                     decoration: TextDecoration.underline,

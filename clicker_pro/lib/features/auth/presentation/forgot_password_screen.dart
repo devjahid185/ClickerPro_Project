@@ -1,4 +1,4 @@
-// lib/features/auth/presentation/forgot_password_screen.dart
+﻿// lib/features/auth/presentation/forgot_password_screen.dart
 //
 // Clicker Pro — Forgot Password (Dark Luxury Lens)
 //
@@ -370,7 +370,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 width: 1.4,
               ),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.lock_outline_rounded,
               size: 22,
               color: AppColors.orange,
@@ -413,7 +413,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             color: AppColors.filmDim.withValues(alpha: 0.7),
             fontSize: 13.5,
           ),
-          floatingLabelStyle: const TextStyle(
+          floatingLabelStyle: TextStyle(
             color: AppColors.orange,
             fontSize: 13,
           ),
@@ -439,7 +439,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               width: 1.5,
             ),
           ),
-          errorStyle: const TextStyle(
+          errorStyle: TextStyle(
             color: Colors.redAccent,
             fontSize: 11,
             height: 0.9,

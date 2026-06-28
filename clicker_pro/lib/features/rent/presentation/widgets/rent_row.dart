@@ -1,4 +1,4 @@
-// lib/features/rent/presentation/widgets/rent_row.dart
+﻿// lib/features/rent/presentation/widgets/rent_row.dart
 
 import 'package:flutter/material.dart';
 
@@ -107,7 +107,7 @@ class RentRow extends StatelessWidget {
                   lang: lang,
                   bnNumerals: lang == 'bn',
                 ),
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.gold,
                   fontFamily: 'Poppins',
                   fontSize: 16,
@@ -162,7 +162,7 @@ class RentRow extends StatelessWidget {
                   ),
                   child: Text(
                     loc.rent_mark_returned,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                     ),

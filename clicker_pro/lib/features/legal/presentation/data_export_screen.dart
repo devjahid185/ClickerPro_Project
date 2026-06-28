@@ -1,4 +1,4 @@
-// lib/features/legal/presentation/data_export_screen.dart
+﻿// lib/features/legal/presentation/data_export_screen.dart
 //
 // Data Export request screen. Single button to fire
 // `legalRepository.requestDataExport()`. On success a glass status card
@@ -105,7 +105,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
                         color: AppColors.orange.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.cloud_download_outlined,
                         color: AppColors.orange,
                       ),
@@ -157,7 +157,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
         ),
         onPressed: _submit,
         icon: const Icon(Icons.outbox_outlined, color: Colors.white, size: 18),
-        label: const Text(
+        label: Text(
           'Request Data Export',
           style: TextStyle(
             color: Colors.white,
@@ -210,7 +210,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
             const SizedBox(height: 12),
             SelectableText(
               _downloadUrl!,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.gold,
                 fontFamily: 'Montserrat',
                 fontSize: 12,

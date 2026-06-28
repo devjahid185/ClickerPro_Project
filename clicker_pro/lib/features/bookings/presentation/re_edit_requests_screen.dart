@@ -1,4 +1,4 @@
-// lib/features/bookings/presentation/re_edit_requests_screen.dart
+﻿// lib/features/bookings/presentation/re_edit_requests_screen.dart
 //
 // Standalone screen listing all re-edit requests across every booking.
 // Groups by status (open vs. closed) and shows overdue badges.
@@ -200,7 +200,7 @@ class _ReEditCard extends StatelessWidget {
               ),
               child: Text(
                 'R${request.round}',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.gold,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -310,7 +310,7 @@ class _OverdueBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: AppColors.red.withValues(alpha: 0.5)),
       ),
-      child: const Text(
+      child: Text(
         'OVERDUE',
         style: TextStyle(
           color: AppColors.red,

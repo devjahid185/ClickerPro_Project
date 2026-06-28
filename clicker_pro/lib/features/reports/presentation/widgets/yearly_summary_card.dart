@@ -1,4 +1,4 @@
-// lib/features/reports/presentation/widgets/yearly_summary_card.dart
+﻿// lib/features/reports/presentation/widgets/yearly_summary_card.dart
 //
 // Year-scoped P&L summary card.  Four metrics: revenue, expenses,
 // freelancer payouts, net profit।  Layout: 2×2 grid so each metric
@@ -51,7 +51,7 @@ class YearlySummaryCard extends ConsumerWidget {
         ),
         error: (_, _) => Text(
           loc.reports_summary_load_failed,
-          style: const TextStyle(color: AppColors.red, fontSize: 13),
+          style: TextStyle(color: AppColors.red, fontSize: 13),
         ),
         data: (s) {
           String fmt(double v) =>
@@ -127,7 +127,7 @@ class _Card extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.gold,
               fontFamily: 'Poppins',
               fontSize: 14,

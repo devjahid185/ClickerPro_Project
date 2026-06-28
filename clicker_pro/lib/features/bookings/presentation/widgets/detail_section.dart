@@ -1,4 +1,4 @@
-// lib/features/bookings/presentation/widgets/detail_section.dart
+﻿// lib/features/bookings/presentation/widgets/detail_section.dart
 //
 // Shared section scaffold used by every block of the booking detail
 // screen — header card, client info, schedule, package, etc. Keeps the
@@ -159,7 +159,7 @@ class CallIconButton extends StatelessWidget {
       child: InkWell(
         customBorder: const CircleBorder(),
         onTap: onTap,
-        child: const Padding(
+        child: Padding(
           padding: EdgeInsets.all(7),
           child: Icon(Icons.call_rounded, size: 16, color: AppColors.green),
         ),

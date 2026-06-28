@@ -1,4 +1,4 @@
-// lib/features/finance/presentation/finance_screen.dart
+﻿// lib/features/finance/presentation/finance_screen.dart
 //
 // Finance Dashboard — "Aura" bento layout on the warm-porcelain theme.
 //
@@ -225,7 +225,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.lock_outline, color: AppColors.gold, size: 20),
+          Icon(Icons.lock_outline, color: AppColors.gold, size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -277,7 +277,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
             fit: BoxFit.scaleDown,
             child: Text(
               '৳${net.toStringAsFixed(0)}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Poppins',
                 color: Colors.white,
                 fontSize: 44,
@@ -307,7 +307,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                 const SizedBox(width: 6),
                 Text(
                   'Collected ৳${collected.toStringAsFixed(0)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -841,7 +841,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
               alignment: Alignment.center,
               child: Text(
                 initial,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.gold,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -877,7 +877,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
             ),
             Text(
               '-৳${e.due.toStringAsFixed(0)}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Poppins',
                 color: AppColors.coral,
                 fontSize: 15,

@@ -1,4 +1,4 @@
-// lib/features/bookings/presentation/widgets/assignments_section.dart
+﻿// lib/features/bookings/presentation/widgets/assignments_section.dart
 //
 // Renders the booking's assignments list. Two visibility rules apply:
 //
@@ -129,12 +129,12 @@ class _AssignmentRow extends StatelessWidget {
             ),
             alignment: Alignment.center,
             child: isChief
-                ? const Icon(
+                ? Icon(
                     Icons.star_rounded,
                     size: 16,
                     color: AppColors.gold,
                   )
-                : const Icon(
+                : Icon(
                     Icons.person_outline_rounded,
                     size: 16,
                     color: AppColors.orange,
@@ -173,7 +173,7 @@ class _AssignmentRow extends StatelessWidget {
                             color: AppColors.gold.withValues(alpha: 0.4),
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'CHIEF',
                           style: TextStyle(
                             color: AppColors.gold,

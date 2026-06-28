@@ -1,4 +1,4 @@
-// lib/features/freelancer/presentation/fl_leave_request_screen.dart
+﻿// lib/features/freelancer/presentation/fl_leave_request_screen.dart
 //
 // Freelancer Leave Request form screen (FL-07).
 // Formal leave request with reason, date range, and notes.
@@ -218,7 +218,7 @@ class _FlLeaveRequestScreenState extends ConsumerState<FlLeaveRequestScreen> {
                 ),
                 onPressed: _submitting ? null : _submit,
                 child: _submitting
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
@@ -226,7 +226,7 @@ class _FlLeaveRequestScreenState extends ConsumerState<FlLeaveRequestScreen> {
                           strokeWidth: 2,
                         ),
                       )
-                    : const Text('Submit Request'),
+                    : Text('Submit Request'),
               ),
             ),
           ],
@@ -238,13 +238,13 @@ class _FlLeaveRequestScreenState extends ConsumerState<FlLeaveRequestScreen> {
   Future<void> _submit() async {
     if (_startDate == null || _endDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select start and end dates.')),
+        SnackBar(content: Text('Please select start and end dates.')),
       );
       return;
     }
     if (_endDate!.isBefore(_startDate!)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('End date must be after start date.')),
+        SnackBar(content: Text('End date must be after start date.')),
       );
       return;
     }
@@ -273,14 +273,14 @@ class _FlLeaveRequestScreenState extends ConsumerState<FlLeaveRequestScreen> {
           _submitting = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Leave request submitted.')),
+          SnackBar(content: Text('Leave request submitted.')),
         );
       }
     } catch (_) {
       if (mounted) {
         setState(() => _submitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to submit request.')),
+          SnackBar(content: Text('Failed to submit request.')),
         );
       }
     }

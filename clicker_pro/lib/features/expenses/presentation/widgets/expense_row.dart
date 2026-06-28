@@ -1,4 +1,4 @@
-// lib/features/expenses/presentation/widgets/expense_row.dart
+﻿// lib/features/expenses/presentation/widgets/expense_row.dart
 //
 // Single row in the expense list — left side icon + category + note,
 // right side amount + date.  Designed to be lazy-list-friendly: no
@@ -39,7 +39,7 @@ class ExpenseRow extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: AppColors.orangeGlow),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.payments_outlined,
               color: AppColors.orange,
               size: 18,
@@ -90,7 +90,7 @@ class ExpenseRow extends StatelessWidget {
               lang: lang,
               bnNumerals: lang == 'bn',
             ),
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.red,
               fontFamily: 'Poppins',
               fontSize: 18,

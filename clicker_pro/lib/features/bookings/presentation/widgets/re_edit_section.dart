@@ -1,4 +1,4 @@
-// lib/features/bookings/presentation/widgets/re_edit_section.dart
+﻿// lib/features/bookings/presentation/widgets/re_edit_section.dart
 //
 // Re-edit requests section on the booking detail screen. Two modes:
 //
@@ -61,7 +61,7 @@ class ReEditSection extends ConsumerWidget {
         if (canRequest)
           IconButton(
             tooltip: 'Request re-edit',
-            icon: const Icon(
+            icon: Icon(
               Icons.add_circle_outline_rounded,
               color: AppColors.orange,
             ),
@@ -126,7 +126,7 @@ class ReEditSection extends ConsumerWidget {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Re-edit request filed.')));
+      ).showSnackBar(SnackBar(content: Text('Re-edit request filed.')));
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
@@ -165,7 +165,7 @@ class _ReEditRow extends ConsumerWidget {
             ),
             child: Text(
               'Round ${request.round}',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.gold,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -194,7 +194,7 @@ class _ReEditRow extends ConsumerWidget {
                             color: AppColors.red.withValues(alpha: 0.5),
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'OVERDUE',
                           style: TextStyle(
                             color: AppColors.red,
@@ -508,7 +508,7 @@ class _RequestReEditDialogState extends State<_RequestReEditDialog> {
                       foregroundColor: Colors.white,
                     ),
                     onPressed: _onSubmit,
-                    child: const Text('File request'),
+                    child: Text('File request'),
                   ),
                 ),
               ],

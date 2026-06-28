@@ -1,4 +1,4 @@
-// lib/features/bookings/presentation/widgets/payment_summary_card.dart
+﻿// lib/features/bookings/presentation/widgets/payment_summary_card.dart
 //
 // Renders the four-line payment summary for the booking detail screen:
 // advance / due / extra / total. Reads the aggregate from the payment
@@ -63,7 +63,7 @@ class PaymentSummaryCard extends ConsumerWidget {
     return DetailSection(
       title: 'Payments',
       child: aggregateAsync.when(
-        loading: () => const SizedBox(
+        loading: () => SizedBox(
           height: 60,
           child: Center(
             child: SizedBox(
@@ -172,7 +172,7 @@ class PaymentSummaryCard extends ConsumerWidget {
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Yes, received'),
+            child: Text('Yes, received'),
           ),
         ],
       ),
@@ -201,7 +201,7 @@ class PaymentSummaryCard extends ConsumerWidget {
       // 🪙 payment received — coin-pop celebration.
       if (context.mounted) Celebration.coinPop(context);
       messenger.showSnackBar(
-        const SnackBar(content: Text('Due added to collection ✓')),
+        SnackBar(content: Text('Due added to collection ✓')),
       );
     } catch (e) {
       messenger.showSnackBar(

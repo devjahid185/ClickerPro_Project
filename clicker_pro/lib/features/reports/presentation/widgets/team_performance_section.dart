@@ -1,4 +1,4 @@
-// lib/features/reports/presentation/widgets/team_performance_section.dart
+﻿// lib/features/reports/presentation/widgets/team_performance_section.dart
 //
 // Leaderboard list — each row carries a member's name, role, event
 // count, earnings, pending re-edit count, and the composite score।
@@ -38,7 +38,7 @@ class TeamPerformanceSection extends ConsumerWidget {
         children: [
           Text(
             loc.reports_team_section,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.gold,
               fontFamily: 'Poppins',
               fontSize: 14,
@@ -54,7 +54,7 @@ class TeamPerformanceSection extends ConsumerWidget {
             ),
             error: (_, _) => Text(
               loc.reports_team_load_failed,
-              style: const TextStyle(color: AppColors.red, fontSize: 13),
+              style: TextStyle(color: AppColors.red, fontSize: 13),
             ),
             data: (entries) {
               if (entries.isEmpty) {

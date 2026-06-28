@@ -1,4 +1,4 @@
-// lib/features/bookings/presentation/packages_screen.dart
+﻿// lib/features/bookings/presentation/packages_screen.dart
 //
 // MOD-25 — Studio Package Management.
 //
@@ -32,7 +32,7 @@ const _printSizeOptions = [
 
 const _deliveryOptions = ['Pendrive', 'Google Drive', 'Both'];
 
-const _cardColors = [
+List<Color> get _cardColors => [
   AppColors.teal,
   AppColors.gold,
   AppColors.purple,
@@ -77,7 +77,7 @@ class _PackagesScreenState extends ConsumerState<PackagesScreen> {
               backgroundColor: AppColors.teal,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.add_rounded),
-              label: const Text(
+              label: Text(
                 'New Package',
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
@@ -284,7 +284,7 @@ class _PackageCard extends ConsumerWidget {
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
+            child: Text('Delete'),
           ),
         ],
       ),
@@ -371,7 +371,7 @@ class _PriceRow extends StatelessWidget {
             ),
             child: Text(
               '-${package.discount.toStringAsFixed(0)}',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.red,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -697,7 +697,7 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
                             Navigator.of(context).pop();
                             _deleteFromSheet();
                           },
-                          child: const Text(
+                          child: Text(
                             'Delete',
                             style: TextStyle(color: AppColors.red),
                           ),
@@ -757,7 +757,7 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
                         ),
                         child: Row(
                           children: [
-                            const Text(
+                            Text(
                               'NET PRICE',
                               style: TextStyle(
                                 fontFamily: 'Montserrat',
@@ -770,7 +770,7 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
                             const Spacer(),
                             Text(
                               _netPrice.toStringAsFixed(0),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.teal,
                                 fontFamily: 'Poppins',
                                 fontSize: 20,
@@ -893,7 +893,7 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
                                   _isEditing
                                       ? 'Save Changes'
                                       : 'Create Package',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -1050,7 +1050,7 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
                     color: AppColors.teal.withValues(alpha: 0.3),
                   ),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.add, size: 14, color: AppColors.teal),
@@ -1112,7 +1112,7 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: AppColors.teal),
+                          borderSide: BorderSide(color: AppColors.teal),
                         ),
                       ),
                       onChanged: (v) => _items[i] = v,
@@ -1131,7 +1131,7 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
                         color: AppColors.red.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.close,
                         size: 14,
                         color: AppColors.red,
@@ -1278,7 +1278,7 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
+            child: Text('Delete'),
           ),
         ],
       ),

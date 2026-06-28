@@ -1,4 +1,4 @@
-// lib/features/gear/presentation/widgets/gear_row.dart
+﻿// lib/features/gear/presentation/widgets/gear_row.dart
 
 import 'package:flutter/material.dart';
 
@@ -55,7 +55,7 @@ class GearRow extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppColors.red),
         ),
-        child: const Icon(Icons.delete_outline, color: AppColors.red),
+        child: Icon(Icons.delete_outline, color: AppColors.red),
       ),
       confirmDismiss: (_) async {
         await onDelete();
@@ -124,7 +124,7 @@ class GearRow extends StatelessWidget {
                 lang: lang,
                 bnNumerals: lang == 'bn',
               ),
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.gold,
                 fontFamily: 'Poppins',
                 fontSize: 16,

@@ -1,21 +1,18 @@
 // lib/theme/theme_aware_colors.dart
 //
-// Clicker Pro — Theme-aware color accessor (MOD-64)
-// Returns the correct palette (dark AppColors or light AppColorsLight)
-// based on the current brightness. Use in widgets that need a single
-// entry point regardless of active theme.
+// Clicker Pro v15 — Theme-aware color accessor
+// Delegates to AppColorsLight (Sunset Studio) or AppColorsPulse (Sunrise Pulse)
+// based on the active theme brightness.
 
 import 'package:flutter/material.dart';
-import 'app_colors.dart';
 import 'app_colors_light.dart';
+import 'app_colors_pulse.dart';
 
-/// Accessor that delegates to the correct color palette.
 class ThemeAwareColors {
   const ThemeAwareColors._(this._isDark);
 
   final bool _isDark;
 
-  /// Build-time accessor from BuildContext.
   factory ThemeAwareColors.of(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     return ThemeAwareColors._(brightness == Brightness.dark);
@@ -23,45 +20,62 @@ class ThemeAwareColors {
 
   bool get isDark => _isDark;
 
-  // ── Surface ──────────────────────────────────────────────
-  Color get cream => _isDark ? AppColors.voidBlack : AppColorsLight.cream;
-  Color get creamDark =>
-      _isDark ? AppColors.voidLight : AppColorsLight.creamDark;
-  Color get voidElevated =>
-      _isDark ? AppColors.voidElevated : AppColorsLight.voidElevated;
+  // ── Surface ──────────────────────────────────────────────────
+  Color get bg =>
+      _isDark ? AppColorsPulse.bg : AppColorsLight.cream;
+  Color get surface =>
+      _isDark ? AppColorsPulse.surface : AppColorsLight.glass;
+  Color get surfaceAlt =>
+      _isDark ? AppColorsPulse.surfaceAlt : AppColorsLight.creamDark;
+  Color get surfaceHigh =>
+      _isDark ? AppColorsPulse.surfaceHigh : AppColorsLight.creamDeep;
 
-  // ── Primary (teal in dark, terracotta in light) ──────────
-  Color get accent => _isDark ? AppColors.teal : AppColorsLight.terracotta;
+  // Backward-compat
+  Color get cream => bg;
+  Color get creamDark => surfaceAlt;
+  Color get voidElevated => surfaceAlt;
+
+  // ── Primary accent ────────────────────────────────────────────
+  // Sunset Studio: terracotta · Sunrise Pulse: sunrise red-orange
+  Color get accent =>
+      _isDark ? AppColorsPulse.primary : AppColorsLight.terracotta;
   Color get accentLight =>
-      _isDark ? AppColors.tealLight : AppColorsLight.terracottaLight;
+      _isDark ? AppColorsPulse.primaryLight : AppColorsLight.terracottaLight;
   Color get accentSoft =>
-      _isDark ? AppColors.tealSoft : AppColorsLight.terracottaSoft;
+      _isDark ? AppColorsPulse.primarySoft : AppColorsLight.terracottaSoft;
+  Color get accentGlow =>
+      _isDark ? AppColorsPulse.primaryGlow : AppColorsLight.terracottaGlow;
 
-  // ── Secondary ────────────────────────────────────────────
-  Color get gold => _isDark ? AppColors.gold : AppColorsLight.gold;
-  Color get purple => _isDark ? AppColors.purple : AppColorsLight.plum;
+  // ── Secondary ─────────────────────────────────────────────────
+  Color get gold =>
+      _isDark ? AppColorsPulse.amber : AppColorsLight.gold;
+  Color get purple =>
+      _isDark ? AppColorsPulse.purple : AppColorsLight.plum;
 
-  // ── Text ─────────────────────────────────────────────────
+  // ── Text ──────────────────────────────────────────────────────
   Color get textPrimary =>
-      _isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+      _isDark ? AppColorsPulse.textPrimary : AppColorsLight.textPrimary;
   Color get textSecondary =>
-      _isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+      _isDark ? AppColorsPulse.textSecondary : AppColorsLight.textSecondary;
   Color get textMuted =>
-      _isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+      _isDark ? AppColorsPulse.textMuted : AppColorsLight.textMuted;
 
-  // ── Semantic ─────────────────────────────────────────────
-  Color get success => _isDark ? AppColors.green : AppColorsLight.sage;
-  Color get error => _isDark ? AppColors.red : AppColorsLight.rust;
-  Color get warning => _isDark ? AppColors.yellow : AppColorsLight.yellow;
+  // ── Semantic ──────────────────────────────────────────────────
+  Color get success => _isDark ? AppColorsPulse.green : AppColorsLight.sage;
+  Color get error => _isDark ? AppColorsPulse.red : AppColorsLight.rust;
+  Color get warning => _isDark ? AppColorsPulse.yellow : AppColorsLight.yellow;
 
-  // ── Glass ────────────────────────────────────────────────
-  Color get glass => _isDark ? AppColors.glass : AppColorsLight.glass;
+  // ── Glass / borders ───────────────────────────────────────────
+  Color get glass =>
+      _isDark ? AppColorsPulse.surface : AppColorsLight.glass;
   Color get glassBorder =>
-      _isDark ? AppColors.glassBorder : AppColorsLight.glassBorder;
-  Color get hairline => _isDark ? AppColors.hairline : AppColorsLight.hairline;
+      _isDark ? AppColorsPulse.border : AppColorsLight.glassBorder;
+  Color get hairline =>
+      _isDark ? AppColorsPulse.hairline : AppColorsLight.hairline;
 
-  // ── Nav / Topbar ─────────────────────────────────────────
-  Color get topbarBg => _isDark ? AppColors.topbarBg : AppColorsLight.topbarBg;
+  // ── Nav / Topbar ──────────────────────────────────────────────
+  Color get topbarBg =>
+      _isDark ? AppColorsPulse.topbarBg : AppColorsLight.topbarBg;
   Color get bottomNavBg =>
-      _isDark ? AppColors.bottomNavBg : AppColorsLight.bottomNavBg;
+      _isDark ? AppColorsPulse.bottomNavBg : AppColorsLight.bottomNavBg;
 }

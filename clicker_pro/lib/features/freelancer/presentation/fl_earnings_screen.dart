@@ -1,4 +1,4 @@
-// lib/features/freelancer/presentation/fl_earnings_screen.dart
+﻿// lib/features/freelancer/presentation/fl_earnings_screen.dart
 //
 // Freelancer Earnings Dashboard — FL-01 to FL-04.
 //
@@ -395,7 +395,7 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
                     foregroundColor: Colors.black,
                   ),
                   onPressed: () => Navigator.of(ctx).pop(true),
-                  child: const Text('Send'),
+                  child: Text('Send'),
                 ),
               ],
             ),
@@ -438,7 +438,7 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
           }
         },
         icon: const Icon(Icons.send_outlined, size: 18),
-        label: const Text('Request Payment'),
+        label: Text('Request Payment'),
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.teal,
           foregroundColor: Colors.black,
@@ -604,7 +604,7 @@ class _OwnerCard extends StatelessWidget {
                   color: AppColors.teal.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.business_outlined,
                   color: AppColors.teal,
                   size: 16,
@@ -754,7 +754,7 @@ class _PendingPaymentRow extends StatelessWidget {
               color: AppColors.coral.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.hourglass_bottom_outlined,
               color: AppColors.coral,
               size: 16,
@@ -804,7 +804,7 @@ class _PendingPaymentRow extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.chat_bubble_outline,
                     color: AppColors.green,
                     size: 13,

@@ -1,4 +1,4 @@
-// lib/features/notifications/presentation/widgets/notification_row.dart
+﻿// lib/features/notifications/presentation/widgets/notification_row.dart
 //
 // Single row in the inbox.  Layout: category badge (icon + colour),
 // message + relative time, optional "unread" dot on the right।  Tapping
@@ -145,7 +145,7 @@ class NotificationRow extends StatelessWidget {
                 Container(
                   width: 8,
                   height: 8,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: AppColors.orange,
                     shape: BoxShape.circle,
                   ),

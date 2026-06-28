@@ -1,4 +1,4 @@
-// lib/features/auth/presentation/manager_invite_screen.dart
+﻿// lib/features/auth/presentation/manager_invite_screen.dart
 //
 // Clicker Pro — Accept Invite (Manager onboarding) (Dark Luxury Lens)
 //
@@ -295,7 +295,7 @@ class _ManagerInviteScreenState extends ConsumerState<ManagerInviteScreen> {
                         Text(
                           _codeError!,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.redAccent,
                             fontSize: 12.5,
                           ),
@@ -421,7 +421,7 @@ class _ManagerInviteScreenState extends ConsumerState<ManagerInviteScreen> {
                 width: 1.4,
               ),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.group_outlined,
               size: 22,
               color: AppColors.orange,
@@ -461,7 +461,7 @@ class _ManagerInviteScreenState extends ConsumerState<ManagerInviteScreen> {
             color: AppColors.filmDim.withValues(alpha: 0.7),
             fontSize: 13.5,
           ),
-          floatingLabelStyle: const TextStyle(
+          floatingLabelStyle: TextStyle(
             color: AppColors.orange,
             fontSize: 13,
           ),
@@ -498,7 +498,7 @@ class _ManagerInviteScreenState extends ConsumerState<ManagerInviteScreen> {
               width: 1.5,
             ),
           ),
-          errorStyle: const TextStyle(
+          errorStyle: TextStyle(
             color: Colors.redAccent,
             fontSize: 11,
             height: 0.9,
@@ -536,7 +536,7 @@ class _ManagerInviteScreenState extends ConsumerState<ManagerInviteScreen> {
             height: 54,
             alignment: Alignment.center,
             child: loading
-                ? const SizedBox(
+                ? SizedBox(
                     width: 22,
                     height: 22,
                     child: CircularProgressIndicator(
@@ -546,7 +546,7 @@ class _ManagerInviteScreenState extends ConsumerState<ManagerInviteScreen> {
                   )
                 : Text(
                     label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
                       fontSize: 15,
                       fontWeight: FontWeight.w600,

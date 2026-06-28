@@ -1,4 +1,4 @@
-// lib/features/legal/presentation/privacy_screen.dart
+﻿// lib/features/legal/presentation/privacy_screen.dart
 //
 // Privacy Policy reader (Dark Luxury Lens).
 //
@@ -115,12 +115,12 @@ MarkdownStyleSheet _markdownStyle() {
         ),
       ),
     ),
-    code: const TextStyle(
+    code: TextStyle(
       color: AppColors.gold,
       fontFamily: 'Montserrat',
       fontSize: 12.5,
     ),
-    a: const TextStyle(
+    a: TextStyle(
       color: AppColors.gold,
       decoration: TextDecoration.underline,
     ),

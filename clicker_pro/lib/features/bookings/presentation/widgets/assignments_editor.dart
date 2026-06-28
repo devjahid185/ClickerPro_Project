@@ -1,4 +1,4 @@
-// lib/features/bookings/presentation/widgets/assignments_editor.dart
+﻿// lib/features/bookings/presentation/widgets/assignments_editor.dart
 //
 // Editable assignments list for the booking edit screen. Differs from
 // `AssignmentsSection` (the read-only section on the detail screen) in
@@ -73,7 +73,7 @@ class AssignmentsEditor extends ConsumerWidget {
       actions: [
         IconButton(
           tooltip: 'Add assignment',
-          icon: const Icon(
+          icon: Icon(
             Icons.add_circle_outline_rounded,
             color: AppColors.orange,
           ),
@@ -204,7 +204,7 @@ class _AssignmentRow extends ConsumerWidget {
               ),
             ),
             alignment: Alignment.center,
-            child: const Icon(
+            child: Icon(
               Icons.person_outline_rounded,
               size: 16,
               color: AppColors.orange,
@@ -255,7 +255,7 @@ class _AssignmentRow extends ConsumerWidget {
           ],
           IconButton(
             tooltip: 'Edit',
-            icon: const Icon(
+            icon: Icon(
               Icons.edit_outlined,
               color: AppColors.gold,
               size: 18,
@@ -264,7 +264,7 @@ class _AssignmentRow extends ConsumerWidget {
           ),
           IconButton(
             tooltip: 'Remove',
-            icon: const Icon(
+            icon: Icon(
               Icons.delete_outline_rounded,
               color: AppColors.red,
               size: 18,
@@ -378,7 +378,7 @@ class _AssignmentEditDialogState extends State<_AssignmentEditDialog> {
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.person_outline_rounded,
                       size: 16,
                       color: AppColors.orange,

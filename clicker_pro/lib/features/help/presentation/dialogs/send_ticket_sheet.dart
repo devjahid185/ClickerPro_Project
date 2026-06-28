@@ -1,4 +1,4 @@
-// lib/features/help/presentation/dialogs/send_ticket_sheet.dart
+﻿// lib/features/help/presentation/dialogs/send_ticket_sheet.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -173,7 +173,7 @@ class _SendTicketSheetState extends ConsumerState<SendTicketSheet> {
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.orange),
+      borderSide: BorderSide(color: AppColors.orange),
     ),
   );
 }

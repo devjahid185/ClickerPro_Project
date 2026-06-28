@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../theme/app_colors.dart';
@@ -62,7 +62,7 @@ class _WidgetSettingsScreenState extends State<WidgetSettingsScreen> {
         ),
       ),
       body: _service == null
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(color: AppColors.teal),
             )
           : SingleChildScrollView(
@@ -141,7 +141,7 @@ class _WidgetSettingsScreenState extends State<WidgetSettingsScreen> {
                       width: 32,
                       height: 32,
                       decoration: AppDecorations.iconWrap(AppColors.tealSoft),
-                      child: const Icon(
+                      child: Icon(
                         Icons.calendar_today,
                         color: AppColors.teal,
                         size: 16,

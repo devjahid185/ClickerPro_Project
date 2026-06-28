@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../theme/app_colors.dart';
@@ -217,7 +217,7 @@ class _FlBadgesScreenState extends State<FlBadgesScreen> {
             child: Center(
               child: Text(
                 _levelIcon(_summary.currentLevel),
-                style: const TextStyle(fontSize: 36),
+                style: TextStyle(fontSize: 36),
               ),
             ),
           ),
@@ -440,7 +440,7 @@ class _BadgeTile extends StatelessWidget {
           children: [
             Opacity(
               opacity: locked ? 0.3 : 1.0,
-              child: Text(badge.icon, style: const TextStyle(fontSize: 28)),
+              child: Text(badge.icon, style: TextStyle(fontSize: 28)),
             ),
             const SizedBox(height: 6),
             Text(
@@ -482,7 +482,7 @@ class _BadgeTile extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            Text(badge.icon, style: const TextStyle(fontSize: 48)),
+            Text(badge.icon, style: TextStyle(fontSize: 48)),
             const SizedBox(height: 12),
             Text(
               badge.name,
@@ -526,14 +526,14 @@ class _BadgeTile extends StatelessWidget {
                     );
                     Navigator.of(ctx).pop();
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
+                      SnackBar(
                         content: Text('Badge text copied to clipboard'),
                         backgroundColor: AppColors.green,
                       ),
                     );
                   },
                   icon: const Icon(Icons.share_outlined, size: 16),
-                  label: const Text('Share Badge'),
+                  label: Text('Share Badge'),
                   style: FilledButton.styleFrom(
                     backgroundColor: _levelColor(badge.level),
                     foregroundColor: Colors.black,

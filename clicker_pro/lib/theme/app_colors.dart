@@ -1,114 +1,119 @@
 // lib/theme/app_colors.dart
 //
-// Clicker Pro — Orange Horizon Pro (Light SaaS theme)
-// Bright orange identity on clean light surfaces.
+// Clicker Pro v15 — AppColors (Sunset Studio + Sunrise Pulse compat layer)
 //
-// ⚠️ এই ফাইল backward compatible — পুরোনো কোডের
-// AppColors.accent, AppColors.teal, AppColors.voidBlack, AppColors.film,
-// AppColors.orange, AppColors.error — সব নামই কাজ করবে, শুধু এখন
-// Orange Horizon Pro মান ফেরত দেবে।
+// This class serves as the single static accessor used throughout the
+// existing codebase. When `isDark` is true (Sunrise Pulse), all getters
+// delegate to AppColorsPulse. When false (Sunset Studio), they delegate
+// to AppColorsLight.
+//
+// New code should prefer ThemeAwareColors.of(context) or import the
+// specific palette (AppColorsLight / AppColorsPulse) directly.
 
 import 'package:flutter/material.dart';
+import 'app_colors_light.dart';
+import 'app_colors_pulse.dart';
 
 class AppColors {
   AppColors._();
 
   // ============================================================
-  // 🌗 THEME SWITCH
-  //   `isDark` is flipped by app.dart from the persisted theme mode.
-  //   The surface + text tokens below are GETTERS that read it, so the
-  //   whole app (incl. custom-painted cards) recolors when dark mode is
-  //   toggled — no per-screen rewrite needed.
+  // 🌗 THEME SWITCH — flipped by app.dart
   // ============================================================
-  static bool isDark = false;
-
-  // Deep Ocean dark surfaces (mirror AppTheme.oceanDeep).
-  static const Color _dkBg = Color(0xFF0A1222);
-  static const Color _dkSurface = Color(0xFF111B2E);
-  static const Color _dkSurfaceAlt = Color(0xFF18253C);
-  static const Color _dkInk = Color(0xFFEAF1FB);
-  static const Color _dkInkDim = Color(0xFF9DB0CC);
-  static const Color _dkInkMuted = Color(0xFF6B7E9C);
-  static const Color _dkBorder = Color(0x1FFFFFFF); // white 12%
-  static const Color _dkHairline = Color(0x14FFFFFF); // white 8%
+  static bool isDark = false; // false = Sunset Studio, true = Sunrise Pulse
 
   // ============================================================
-  // ☀️ SURFACES — warm porcelain (light) / deep ocean (dark)
+  // ☀️ SURFACES
   // ============================================================
-  static const Color _ltBg = Color(0xFFFAF8F5); // Warm porcelain background
-  static const Color _ltSurface = Color(0xFFFFFFFF); // Card / surface
-  static const Color _ltSurfaceAlt = Color(0xFFF5F1EA); // Warm linen surface
+  static Color get appBg => isDark ? AppColorsPulse.bg : AppColorsLight.cream;
+  static Color get surface =>
+      isDark ? AppColorsPulse.surface : AppColorsLight.glass;
+  static Color get surfaceAlt =>
+      isDark ? AppColorsPulse.surfaceAlt : AppColorsLight.creamDark;
 
-  static Color get appBg => isDark ? _dkBg : _ltBg;
-  static Color get surface => isDark ? _dkSurface : _ltSurface;
-  static Color get surfaceAlt => isDark ? _dkSurfaceAlt : _ltSurfaceAlt;
-
-  // 🔁 Backward-compat: old dark "void" names now map to themed surfaces.
-  static Color get voidBlack => appBg; // Main BG
-  static Color get voidLight => surface; // Elevated surface
-  static Color get voidElevated => surfaceAlt; // More elevated surface
+  // Backward-compat aliases
+  static Color get voidBlack => appBg;
+  static Color get voidLight => surface;
+  static Color get voidElevated => surfaceAlt;
   static Color get void3 => surfaceAlt;
   static Color get void2 => surface;
 
   // ============================================================
-  // 🔶 PRIMARY ORANGE (Orange Horizon Pro)
+  // 🎨 PRIMARY ACCENT
+  // Sunset Studio = terracotta · Sunrise Pulse = sunrise red-orange
   // ============================================================
-  static const Color primary50 = Color(0xFFFFF4EB);
-  static const Color primary100 = Color(0xFFFFE4CC);
-  static const Color primary200 = Color(0xFFFFD0A3);
-  static const Color primary300 = Color(0xFFFFBA75);
-  static const Color primary400 = Color(0xFFFFA14A);
-  static const Color primary500 = Color(0xFFFF6B00); // Brand orange
-  static const Color primary600 = Color(0xFFE55F00);
-  static const Color primary700 = Color(0xFFCC5500);
-  static const Color primary800 = Color(0xFFA34400);
-  static const Color primary900 = Color(0xFF803500);
 
-  // Canonical accent + soft/glow tints used across the app.
-  static const Color orange = primary500;
-  static const Color orangeLight = primary400;
-  static const Color orangeSoft = Color(0x1FFF6B00); // 12% primary
-  static const Color orangeGlow = Color(0x33FF6B00); // 20% primary
+  // Static constants (used in const contexts — Sunset Studio values)
+  static const Color primary50 = Color(0xFFFFF1ED);
+  static const Color primary100 = Color(0xFFFFDDD5);
+  static const Color primary200 = Color(0xFFFFBCAE);
+  static const Color primary300 = Color(0xFFFF9580);
+  static const Color primary400 = Color(0xFFE07A5F); // terracotta light
+  static const Color primary500 = Color(0xFFC75A3C); // terracotta (SS default)
+  static const Color primary600 = Color(0xFFB04E35);
+  static const Color primary700 = Color(0xFF8B3A2E);
+  static const Color primary800 = Color(0xFF6B2B22);
+  static const Color primary900 = Color(0xFF4A1D18);
 
-  // 🔁 Backward-compat: teal/accent/signalOrange all map to brand orange.
-  static const Color teal = primary500;
-  static const Color tealLight = primary400;
-  static const Color tealSoft = orangeSoft;
-  static const Color tealGlow = orangeGlow;
-  static const Color accent = primary500;
-  static const Color accentLight = primary400;
-  static const Color signalOrange = primary500;
+  // Theme-aware getters (use these in non-const contexts)
+  static Color get orange =>
+      isDark ? AppColorsPulse.primary : AppColorsLight.terracotta;
+  static Color get orangeLight =>
+      isDark ? AppColorsPulse.primaryLight : AppColorsLight.terracottaLight;
+  static Color get orangeSoft =>
+      isDark ? AppColorsPulse.primarySoft : AppColorsLight.terracottaSoft;
+  static Color get orangeGlow =>
+      isDark ? AppColorsPulse.primaryGlow : AppColorsLight.terracottaGlow;
+
+  // Static const fallbacks — compile-time safe for const constructors.
+  // These resolve to Sunset Studio values and are for legacy const usage only.
+  // Prefer the theme-aware getters above in new code.
+  static const Color orangeConst = AppColorsLight.terracotta;
+  static const Color redConst = AppColorsLight.rust;
+  static const Color greenConst = AppColorsLight.sage;
+  static const Color goldConst = AppColorsLight.gold;
+  static const Color indigoConst = Color(0xFF2563EB);
+
+  // Backward-compat aliases
+  static Color get teal => orange;
+  static Color get tealLight => orangeLight;
+  static Color get tealSoft => orangeSoft;
+  static Color get tealGlow => orangeGlow;
+  static Color get accent => orange;
+  static Color get accentLight => orangeLight;
+  static Color get signalOrange => orange;
 
   // ============================================================
-  // 🟡 GOLD / SECONDARY WARM ACCENT
+  // 🟡 GOLD / AMBER
   // ============================================================
-  static const Color gold = Color(0xFFB8893A); // champagne / lens gold
-  static const Color goldSoft = Color(0x26B8893A);
+  static const Color gold = AppColorsLight.gold; // Sunset Studio gold
+  static const Color goldSoft = AppColorsLight.goldSoft;
 
   // ============================================================
-  // 💜 PURPLE / INFO TERTIARY
+  // 💜 PURPLE / INFO
   // ============================================================
-  static const Color purple = Color(0xFF7C3AED);
-  static const Color purpleSoft = Color(0x267C3AED);
-  static const Color indigo = Color(0xFF2563EB); // Info blue
+  static const Color purple = AppColorsLight.plum;
+  static const Color purpleSoft = AppColorsLight.plumSoft;
+  static const Color indigo = Color(0xFF2563EB);
   static const Color indigoSoft = Color(0x262563EB);
+  static const Color info = indigo;
+  static const Color infoSoft = indigoSoft;
 
   // ============================================================
-  // 📝 TEXT (Gray scale on light)
+  // 📝 TEXT
   // ============================================================
-  static const Color _ltFilm = Color(0xFF1C1917); // Warm ink — primary text
-  static const Color _ltFilmDim = Color(0xFF78716C); // Warm stone — secondary
-  static const Color _ltFilmMuted = Color(0xFFA8A29E); // tertiary
-
-  static Color get film => isDark ? _dkInk : _ltFilm;
-  static Color get filmDim => isDark ? _dkInkDim : _ltFilmDim;
-  static Color get filmMuted => isDark ? _dkInkMuted : _ltFilmMuted;
+  static Color get film =>
+      isDark ? AppColorsPulse.textPrimary : AppColorsLight.textPrimary;
+  static Color get filmDim =>
+      isDark ? AppColorsPulse.textSecondary : AppColorsLight.textSecondary;
+  static Color get filmMuted =>
+      isDark ? AppColorsPulse.textMuted : AppColorsLight.textMuted;
 
   static Color get textPrimary => film;
   static Color get textSecondary => filmDim;
   static Color get textMuted => filmMuted;
 
-  // Warm-neutral ramp (stone) — borders, dividers, fills
+  // Gray scale (Sunset Studio — used in light mode only)
   static const Color gray50 = Color(0xFFFAFAF9);
   static const Color gray100 = Color(0xFFF5F5F4);
   static const Color gray200 = Color(0xFFE7E5E4);
@@ -121,112 +126,85 @@ class AppColors {
   static const Color gray900 = Color(0xFF1C1917);
 
   // ============================================================
-  // 🟢🔴 SEMANTIC / STATUS COLORS
+  // 🟢🔴 SEMANTIC / STATUS
   // ============================================================
-  static const Color green = Color(0xFF16A34A); // Success
-  static const Color greenSoft = Color(0x2616A34A);
-  static const Color success = green;
-  static const Color mint = green;
+  static Color get green =>
+      isDark ? AppColorsPulse.green : AppColorsLight.sage;
+  static Color get greenSoft =>
+      isDark ? AppColorsPulse.greenSoft : AppColorsLight.sageSoft;
+  static const Color success = AppColorsLight.sage;
+  static const Color mint = AppColorsLight.sage;
 
-  static const Color yellow = Color(0xFFF59E0B); // Warning
-  static const Color yellowSoft = Color(0x26F59E0B);
-  static const Color warning = yellow;
+  static Color get yellow =>
+      isDark ? AppColorsPulse.yellow : AppColorsLight.yellow;
+  static Color get yellowSoft =>
+      isDark ? AppColorsPulse.yellowSoft : AppColorsLight.yellowSoft;
+  static const Color warning = AppColorsLight.yellow;
 
-  static const Color red = Color(0xFFDC2626); // Error
-  static const Color redSoft = Color(0x26DC2626);
-  static const Color error = red;
-  static const Color danger = red;
-  static const Color coral = red;
-
-  static const Color info = Color(0xFF2563EB);
-  static const Color infoSoft = Color(0x262563EB);
+  static Color get red =>
+      isDark ? AppColorsPulse.red : AppColorsLight.rust;
+  static Color get redSoft =>
+      isDark ? AppColorsPulse.redSoft : AppColorsLight.rustSoft;
+  static Color get error => red;
+  static Color get danger => red;
+  static Color get coral => red;
 
   // ============================================================
-  // 🪟 CARD SURFACES (soft shadows, not transparency)
+  // 🪟 CARD SURFACES
   // ============================================================
-  /// Theme-aware subtle overlay used for hairline borders / faint fills.
-  /// In light mode it's a faint black tint; in dark mode a faint white
-  /// tint — so borders/dividers stay visible after dark mode is on. Pass
-  /// the same alpha you'd have used with `Colors.black.withValues`.
   static Color line([double alpha = 0.08]) => isDark
-      ? Colors.white.withValues(alpha: (alpha * 1.4).clamp(0.0, 1.0))
+      ? Colors.white.withValues(alpha: (alpha * 1.5).clamp(0.0, 1.0))
       : Colors.black.withValues(alpha: alpha);
 
-  static Color get glass => isDark ? _dkSurface : _ltSurface; // card bg
-  static Color get glassBorder => isDark ? _dkBorder : const Color(0x1A803500);
-  static Color get glassHover => isDark ? _dkSurfaceAlt : const Color(0xFFFFF4EB);
-  static Color get hairline => isDark ? _dkHairline : const Color(0x12803500);
+  static Color get glass =>
+      isDark ? AppColorsPulse.surface : AppColorsLight.glass;
+  static Color get glassBorder =>
+      isDark ? AppColorsPulse.border : AppColorsLight.glassBorder;
+  static Color get glassHover =>
+      isDark ? AppColorsPulse.surfaceAlt : AppColorsLight.glassHover;
+  static Color get hairline =>
+      isDark ? AppColorsPulse.hairline : AppColorsLight.hairline;
 
-  // Topbar surface (sticky header)
-  static Color get topbarBg => isDark ? _dkBg : _ltSurface;
-  static Color get topbarBorder => isDark ? _dkBorder : const Color(0x1A803500);
-
-  // Bottom nav surface
-  static Color get bottomNavBg => isDark ? _dkSurface : _ltSurface;
+  static Color get topbarBg =>
+      isDark ? AppColorsPulse.topbarBg : AppColorsLight.topbarBg;
+  static Color get topbarBorder =>
+      isDark ? AppColorsPulse.topbarBorder : AppColorsLight.topbarBorder;
+  static Color get bottomNavBg =>
+      isDark ? AppColorsPulse.bottomNavBg : AppColorsLight.bottomNavBg;
   static Color get bottomNavBorder =>
-      isDark ? _dkBorder : const Color(0x1A803500);
+      isDark ? AppColorsPulse.bottomNavBorder : AppColorsLight.bottomNavBorder;
 
   // ============================================================
-  // 🌈 GRADIENTS (helpers)
+  // 🌈 GRADIENTS
   // ============================================================
-  // Light catches the top-left, deepens to ember at the bottom —
-  // reads richer than the old flat light-to-lighter ramp.
-  static const LinearGradient orangeGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFFFF8534), primary500, primary600],
-    stops: [0.0, 0.55, 1.0],
-  );
+  static LinearGradient get orangeGradient =>
+      isDark ? AppColorsPulse.primaryGradient : AppColorsLight.terracottaGradient;
+  static const LinearGradient tealGradient = AppColorsLight.terracottaGradient;
 
-  static const LinearGradient tealGradient = orangeGradient; // back-compat
+  static LinearGradient get drawerHeaderGradient => isDark
+      ? AppColorsPulse.drawerHeaderGradient
+      : AppColorsLight.drawerHeaderGradient;
 
-  static const LinearGradient drawerHeaderGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFFFF8534), primary500, primary700],
-    stops: [0.0, 0.5, 1.0],
-  );
-
-  /// Champagne sheen for premium accents (badges, chief highlights).
   static const LinearGradient goldGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFFD9B45C), gold, Color(0xFF96702D)],
+    colors: [Color(0xFFD9B45C), AppColorsLight.gold, Color(0xFF96702D)],
   );
 
   static const LinearGradient cardGlow = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      Color(0x0AFF6B00), // 4% orange
-      Color(0x00FF6B00), // 0% orange
-    ],
+    colors: [Color(0x0AC75A3C), Color(0x00C75A3C)],
   );
 
   // ============================================================
   // 🎨 CARD DECORATION HELPERS
   // ============================================================
-  static BoxDecoration glassCardDecoration({double radius = 16, Color? tint}) {
-    return BoxDecoration(
-      color: tint ?? glass,
-      borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: glassBorder, width: 1),
-      // Two-layer shadow: tight key light + wide warm ambient. The warm
-      // tint in the ambient layer is what sells the luxury read.
-      boxShadow: const [
-        BoxShadow(
-          color: Color(0x0A1C1917), // 4% warm ink — crisp key
-          blurRadius: 4,
-          offset: Offset(0, 1),
-        ),
-        BoxShadow(
-          color: Color(0x14803500), // 8% warm umber — soft ambient
-          blurRadius: 24,
-          spreadRadius: -6,
-          offset: Offset(0, 12),
-        ),
-      ],
-    );
+  static BoxDecoration glassCardDecoration({double radius = 18, Color? tint}) {
+    if (isDark) {
+      return AppColorsPulse.glassCardDecoration(radius: radius, tint: tint);
+    }
+    return AppColorsLight.glassCardDecoration(radius: radius, tint: tint);
   }
 
   static BoxDecoration iconWrapDecoration(Color tint, {double radius = 12}) {
@@ -237,10 +215,9 @@ class AppColors {
   }
 
   static BoxDecoration pillChipDecoration({Color? tint}) {
-    return BoxDecoration(
-      color: tint ?? surfaceAlt,
-      borderRadius: BorderRadius.circular(999),
-      border: Border.all(color: glassBorder, width: 1),
-    );
+    if (isDark) {
+      return AppColorsPulse.pillChipDecoration(tint: tint);
+    }
+    return AppColorsLight.pillChipDecoration(tint: tint);
   }
 }

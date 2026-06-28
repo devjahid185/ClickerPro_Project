@@ -1,4 +1,4 @@
-// lib/features/public_booking/presentation/public_booking_success_screen.dart
+﻿// lib/features/public_booking/presentation/public_booking_success_screen.dart
 //
 // Final screen of the public booking flow. Renders a thank-you state
 // after the visitor's request is accepted by the server.
@@ -40,7 +40,7 @@ class PublicBookingSuccessScreen extends StatelessWidget {
                   ),
                 ),
                 alignment: Alignment.center,
-                child: const Icon(
+                child: Icon(
                   Icons.check_rounded,
                   color: AppColors.green,
                   size: 38,
@@ -118,7 +118,7 @@ class PublicBookingSuccessScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: () => Navigator.of(context).maybePop(),
-                  child: const Text(
+                  child: Text(
                     'Done',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,

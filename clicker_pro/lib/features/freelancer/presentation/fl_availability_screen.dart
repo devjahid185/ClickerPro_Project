@@ -1,4 +1,4 @@
-// lib/features/freelancer/presentation/fl_availability_screen.dart
+﻿// lib/features/freelancer/presentation/fl_availability_screen.dart
 //
 // Freelancer Availability + Blackout Dates screen (FL-05).
 // Layout:
@@ -152,7 +152,7 @@ class _FlAvailabilityScreenState extends ConsumerState<FlAvailabilityScreen> {
         foregroundColor: Colors.white,
         onPressed: () => _onDateTap(DateTime.now()),
         icon: const Icon(Icons.add),
-        label: const Text('Add Blackout'),
+        label: Text('Add Blackout'),
       ),
     );
   }
@@ -189,7 +189,7 @@ class _FlAvailabilityScreenState extends ConsumerState<FlAvailabilityScreen> {
           } catch (_) {
             if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Failed to create blackout.')),
+              SnackBar(content: Text('Failed to create blackout.')),
             );
           }
         },
@@ -221,7 +221,7 @@ class _FlAvailabilityScreenState extends ConsumerState<FlAvailabilityScreen> {
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.red),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Remove'),
+            child: Text('Remove'),
           ),
         ],
       ),
@@ -232,7 +232,7 @@ class _FlAvailabilityScreenState extends ConsumerState<FlAvailabilityScreen> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to remove blackout.')),
+        SnackBar(content: Text('Failed to remove blackout.')),
       );
     }
   }
@@ -431,7 +431,7 @@ class _BlackoutRow extends StatelessWidget {
             decoration: AppColors.iconWrapDecoration(
               AppColors.red.withValues(alpha: 0.15),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.event_busy_outlined,
               color: AppColors.red,
               size: 20,
@@ -464,7 +464,7 @@ class _BlackoutRow extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     'Repeats ${item.recurrence.name}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.teal,
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
@@ -648,7 +648,7 @@ class _AddBlackoutSheetState extends State<_AddBlackoutSheet> {
                         strokeWidth: 2,
                       ),
                     )
-                  : const Text('Save Blackout'),
+                  : Text('Save Blackout'),
             ),
           ),
         ],

@@ -1,4 +1,4 @@
-// lib/features/legal/presentation/terms_screen.dart
+﻿// lib/features/legal/presentation/terms_screen.dart
 //
 // Terms of Service reader (Dark Luxury Lens). Mirror of PrivacyScreen.
 
@@ -92,7 +92,7 @@ MarkdownStyleSheet _markdownStyle() {
     strong: TextStyle(color: AppColors.film, fontWeight: FontWeight.w700),
     em: TextStyle(color: baseColor, fontStyle: FontStyle.italic),
     listBullet: TextStyle(color: dimColor, fontSize: 14, height: 1.55),
-    a: const TextStyle(
+    a: TextStyle(
       color: AppColors.gold,
       decoration: TextDecoration.underline,
     ),

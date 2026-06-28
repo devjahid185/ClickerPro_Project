@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../theme/app_colors.dart';
@@ -161,13 +161,13 @@ class _CalendarSyncSettingsState extends State<CalendarSyncSettings> {
       width: double.infinity,
       child: OutlinedButton.icon(
         onPressed: _syncAllConfirmed,
-        icon: const Icon(Icons.sync_outlined, color: AppColors.teal, size: 18),
-        label: const Text(
+        icon: Icon(Icons.sync_outlined, color: AppColors.teal, size: 18),
+        label: Text(
           'Sync All Confirmed',
           style: TextStyle(color: AppColors.teal, fontWeight: FontWeight.w600),
         ),
         style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: AppColors.tealGlow),
+          side: BorderSide(color: AppColors.tealGlow),
           padding: const EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -189,7 +189,7 @@ class _CalendarSyncSettingsState extends State<CalendarSyncSettings> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'LAST SYNC',
                 style: TextStyle(
                   color: AppColors.teal,

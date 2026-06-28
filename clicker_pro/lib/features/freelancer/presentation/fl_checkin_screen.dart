@@ -1,4 +1,4 @@
-// lib/features/freelancer/presentation/fl_checkin_screen.dart
+﻿// lib/features/freelancer/presentation/fl_checkin_screen.dart
 //
 // Freelancer Live Check-In screen (FL-09).
 // "I'm Here" button on event day; owner sees real-time status.
@@ -107,7 +107,7 @@ class _FlCheckinScreenState extends ConsumerState<FlCheckinScreen> {
                       decoration: AppColors.iconWrapDecoration(
                         AppColors.teal.withValues(alpha: 0.12),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.event_outlined,
                         color: AppColors.teal,
                         size: 22,
@@ -183,7 +183,7 @@ class _FlCheckinScreenState extends ConsumerState<FlCheckinScreen> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'SCHEDULE CONFLICTS',
                     style: TextStyle(
                       color: AppColors.gold,
@@ -268,7 +268,7 @@ class _FlCheckinScreenState extends ConsumerState<FlCheckinScreen> {
             ),
             onPressed: _handleCheckin,
             icon: const Icon(Icons.check_circle_outline, size: 22),
-            label: const Text(
+            label: Text(
               "I'm Here",
               style: TextStyle(
                 fontSize: 16,
@@ -337,7 +337,7 @@ class _FlCheckinScreenState extends ConsumerState<FlCheckinScreen> {
               decoration: AppColors.pillChipDecoration(tint: AppColors.redSoft),
               child: Text(
                 '${checkin.lateness.inMinutes}m late',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.red,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -354,7 +354,7 @@ class _FlCheckinScreenState extends ConsumerState<FlCheckinScreen> {
     if (eventId.isEmpty) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('No event selected.')));
+      ).showSnackBar(SnackBar(content: Text('No event selected.')));
       return;
     }
 
@@ -380,7 +380,7 @@ class _FlCheckinScreenState extends ConsumerState<FlCheckinScreen> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Check-in failed. Please try again.')),
+        SnackBar(content: Text('Check-in failed. Please try again.')),
       );
     }
   }
@@ -408,7 +408,7 @@ class _ConflictWarning extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.warning_amber_rounded,
             color: AppColors.gold,
             size: 20,

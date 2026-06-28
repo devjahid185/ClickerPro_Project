@@ -1,4 +1,4 @@
-// lib/features/security/presentation/security_settings_screen.dart
+﻿// lib/features/security/presentation/security_settings_screen.dart
 //
 // Clicker Pro — Security Settings screen (PROD-04)
 //
@@ -148,7 +148,7 @@ class _SecuritySettingsScreenState
             const SizedBox(height: 12),
             SelectableText(
               secret,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.gold,
                 fontFamily: 'monospace',
                 fontSize: 15,
@@ -176,7 +176,7 @@ class _SecuritySettingsScreenState
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(codeCtrl.text.trim()),
-            child: const Text('Verify', style: TextStyle(color: AppColors.orange)),
+            child: Text('Verify', style: TextStyle(color: AppColors.orange)),
           ),
         ],
       ),
@@ -360,7 +360,7 @@ class _SecuritySettingsScreenState
       padding: const EdgeInsets.only(bottom: 15, top: 4),
       child: Text(
         title.toUpperCase(),
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.accent,
           fontSize: 12,
           fontWeight: FontWeight.bold,
@@ -416,7 +416,7 @@ class _SecuritySettingsScreenState
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.accent, width: 1.2),
+            borderSide: BorderSide(color: AppColors.accent, width: 1.2),
           ),
           suffixIcon: IconButton(
             icon: Icon(
@@ -526,11 +526,11 @@ class _SecuritySettingsScreenState
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(
+            child: Text(
               'Revoke',
               style: TextStyle(color: AppColors.red),
             ),
@@ -540,7 +540,7 @@ class _SecuritySettingsScreenState
     );
     if (confirmed != true || !mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text('Remote sign-out is coming soon.'),
       ),
     );

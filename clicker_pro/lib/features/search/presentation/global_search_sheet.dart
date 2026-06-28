@@ -1,4 +1,4 @@
-// lib/features/search/presentation/global_search_sheet.dart
+﻿// lib/features/search/presentation/global_search_sheet.dart
 //
 // Live global-search bottom sheet opened from the dashboard topbar 🔍.
 // Types are debounced, queried against `GET /api/search/global`, and the
@@ -189,8 +189,8 @@ class _GlobalSearchSheetState extends ConsumerState<GlobalSearchSheet> {
 
   Widget _buildResults() {
     if (_loading) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 28),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 28),
         child: Center(
           child: SizedBox(
             width: 22,
@@ -209,7 +209,7 @@ class _GlobalSearchSheetState extends ConsumerState<GlobalSearchSheet> {
         child: Text(
           _error!,
           textAlign: TextAlign.center,
-          style: const TextStyle(color: AppColors.red),
+          style: TextStyle(color: AppColors.red),
         ),
       );
     }

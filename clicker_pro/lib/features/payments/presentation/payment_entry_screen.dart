@@ -1,4 +1,4 @@
-// lib/features/payments/presentation/payment_entry_screen.dart
+﻿// lib/features/payments/presentation/payment_entry_screen.dart
 //
 // Standalone Payment Entry screen — lists all payment records and allows
 // recording new payments via the PaymentEntrySheet bottom-sheet.
@@ -44,7 +44,7 @@ class PaymentEntryScreen extends ConsumerWidget {
         backgroundColor: AppColors.teal,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_rounded),
-        label: const Text(
+        label: Text(
           'Record Payment',
           style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600),
         ),
@@ -117,7 +117,7 @@ class _SummaryCard extends StatelessWidget {
             decoration: AppColors.iconWrapDecoration(
               AppColors.teal.withValues(alpha: 0.15),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.account_balance_wallet_outlined,
               color: AppColors.teal,
               size: 22,
@@ -134,7 +134,7 @@ class _SummaryCard extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 '৳ ${total.toStringAsFixed(2)}',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.teal,
                   fontSize: 22,
                   fontWeight: FontWeight.w700,

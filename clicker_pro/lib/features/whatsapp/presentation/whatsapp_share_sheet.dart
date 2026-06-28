@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../theme/app_colors.dart';
@@ -93,7 +93,7 @@ class _WhatsAppShareSheetState extends State<WhatsAppShareSheet> {
     if (!mounted) return;
     if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
             'Could not open WhatsApp. SMS fallback also unavailable.',
           ),
@@ -154,7 +154,7 @@ class _WhatsAppShareSheetState extends State<WhatsAppShareSheet> {
                             color: AppColors.green.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.chat_bubble_outline,
                             color: AppColors.green,
                             size: 18,
@@ -238,7 +238,7 @@ class _WhatsAppShareSheetState extends State<WhatsAppShareSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'PHONE',
           style: TextStyle(
             color: AppColors.teal,
@@ -255,7 +255,7 @@ class _WhatsAppShareSheetState extends State<WhatsAppShareSheet> {
           decoration: InputDecoration(
             hintText: '+8801XXXXXXXXX',
             hintStyle: TextStyle(color: AppColors.filmMuted),
-            prefixIcon: const Icon(
+            prefixIcon: Icon(
               Icons.phone_outlined,
               color: AppColors.teal,
               size: 18,
@@ -272,7 +272,7 @@ class _WhatsAppShareSheetState extends State<WhatsAppShareSheet> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.teal),
+              borderSide: BorderSide(color: AppColors.teal),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
@@ -291,7 +291,7 @@ class _WhatsAppShareSheetState extends State<WhatsAppShareSheet> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'MESSAGE',
               style: TextStyle(
                 color: AppColors.teal,
@@ -309,7 +309,7 @@ class _WhatsAppShareSheetState extends State<WhatsAppShareSheet> {
               onPressed: () {
                 Clipboard.setData(ClipboardData(text: _messageController.text));
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Message copied to clipboard')),
+                  SnackBar(content: Text('Message copied to clipboard')),
                 );
               },
               padding: EdgeInsets.zero,
@@ -335,7 +335,7 @@ class _WhatsAppShareSheetState extends State<WhatsAppShareSheet> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.teal),
+              borderSide: BorderSide(color: AppColors.teal),
             ),
             contentPadding: const EdgeInsets.all(14),
           ),
@@ -350,7 +350,7 @@ class _WhatsAppShareSheetState extends State<WhatsAppShareSheet> {
       child: ElevatedButton.icon(
         onPressed: _send,
         icon: const Icon(Icons.send_outlined, size: 18),
-        label: const Text(
+        label: Text(
           'Send via WhatsApp',
           style: TextStyle(fontWeight: FontWeight.w600),
         ),

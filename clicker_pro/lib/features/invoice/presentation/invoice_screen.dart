@@ -1,4 +1,4 @@
-// lib/features/invoice/presentation/invoice_screen.dart
+﻿// lib/features/invoice/presentation/invoice_screen.dart
 //
 // Invoice view for a single booking. Layout:
 //
@@ -96,7 +96,7 @@ class InvoiceScreen extends ConsumerWidget {
               color: AppColors.tealSoft,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.camera_alt,
               color: AppColors.teal,
               size: 28,
@@ -255,7 +255,7 @@ class InvoiceScreen extends ConsumerWidget {
             onTap: () {
               Clipboard.setData(ClipboardData(text: summary));
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Invoice copied to clipboard')),
+                SnackBar(content: Text('Invoice copied to clipboard')),
               );
             },
           ),
@@ -305,13 +305,13 @@ class InvoiceScreen extends ConsumerWidget {
       width: double.infinity,
       child: OutlinedButton.icon(
         onPressed: () => _exportPdf(context, inv),
-        icon: const Icon(Icons.picture_as_pdf_outlined, color: AppColors.teal),
-        label: const Text(
+        icon: Icon(Icons.picture_as_pdf_outlined, color: AppColors.teal),
+        label: Text(
           'Export PDF',
           style: TextStyle(color: AppColors.teal, fontWeight: FontWeight.w600),
         ),
         style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: AppColors.tealGlow),
+          side: BorderSide(color: AppColors.tealGlow),
           padding: const EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
