@@ -35,6 +35,7 @@ import '../../features/dashboard/presentation/dashboard_customize_screen.dart';
 import '../../features/expenses/presentation/expenses_screen.dart';
 import '../../features/freelancer/presentation/fl_availability_screen.dart';
 import '../../features/freelancer/presentation/fl_checkin_screen.dart';
+import '../../features/freelancer/presentation/fl_companies_screen.dart';
 import '../../features/freelancer/presentation/fl_earnings_screen.dart';
 import '../../features/freelancer/presentation/fl_leave_request_screen.dart';
 import '../../features/freelancer/presentation/fl_work_history_screen.dart';
@@ -213,6 +214,8 @@ class AppRouter {
         return lensPageRoute<void>(const AnnouncementsScreen());
       case RouteNames.freelancerEarnings:
         return lensPageRoute<void>(const FlEarningsScreen());
+      case RouteNames.freelancerCompanies:
+        return lensPageRoute<void>(const FlCompaniesScreen());
       case RouteNames.freelancerBadges:
         return lensPageRoute<void>(const FlBadgesScreen());
       case RouteNames.freelancerAvailability:

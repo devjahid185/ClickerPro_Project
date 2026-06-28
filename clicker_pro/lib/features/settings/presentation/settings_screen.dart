@@ -148,16 +148,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               ? null
                               : (v) => _setVat(user.id, v),
                         ),
-                      _buildListItem(
-                        label: t('biz_studio'),
-                        icon: Icons.business,
-                        // Studio/company details (name, VAT BIN, logo, address,
-                        // signature) are edited in the profile screen's
-                        // "Company & Business" section — route there instead of
-                        // duplicating the form.
-                        onTap: () =>
-                            Navigator.pushNamed(context, RouteNames.profile),
-                      ),
+                      // Studio/company details (name, VAT BIN, logo, address,
+                      // signature) only exist for studio owners. A pure
+                      // Freelancer runs no studio, so the "Company" entry is
+                      // hidden for them — gated on editStudioBranding (owner/both).
+                      if (policy.can(Capability.editStudioBranding))
+                        _buildListItem(
+                          label: t('biz_studio'),
+                          icon: Icons.business,
+                          onTap: () =>
+                              Navigator.pushNamed(context, RouteNames.profile),
+                        ),
                     ]),
                   ],
 

@@ -5,6 +5,11 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers.dart';
+import '../../bookings/application/booking_providers.dart';
+import '../../dashboard/application/dashboard_providers.dart';
+import '../../freelancer/application/fl_earning_providers.dart';
+import '../../invoice/application/invoice_providers.dart';
+import '../../team/application/team_providers.dart';
 import '../../profile/domain/user_model.dart';
 import '../domain/otp_purpose.dart';
 import '../domain/session.dart';
@@ -119,6 +124,24 @@ class SessionController extends AsyncNotifier<Session?> {
     } else {
       state = const AsyncData(null);
     }
+    // A role switch changes which data the user is allowed to see (owner
+    // bookings vs freelancer earnings, team, finance, dues…). The cached
+    // providers still hold the OLD role's data until something refetches —
+    // that stale data is the "আগের রোলের ডাটা থেকে যায়" bug. Invalidate the
+    // role-scoped data providers so each refetches for the new role.
+    _invalidateRoleScopedData();
+  }
+
+  /// Drops cached, role-dependent data so it refetches under the new role.
+  /// `currentUserProvider` / `rolePolicyProvider` update on their own (they
+  /// stream the persisted user), so they're not listed here.
+  void _invalidateRoleScopedData() {
+    ref.invalidate(bookingListProvider);
+    ref.invalidate(dashboardMetricsProvider);
+    ref.invalidate(dueBreakdownProvider);
+    ref.invalidate(teamMembersProvider);
+    ref.invalidate(flEarningOverviewControllerProvider);
+    ref.invalidate(invoiceListControllerProvider);
   }
 
   Future<void> logout() async {

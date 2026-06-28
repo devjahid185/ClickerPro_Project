@@ -983,7 +983,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               : Icons.receipt_long_rounded,
           color: AppColors.gold,
           label: isFreelancer ? 'Company' : t('btn_invoice'),
-          routeName: isFreelancer ? RouteNames.profile : RouteNames.invoice,
+          routeName: isFreelancer
+              ? RouteNames.freelancerCompanies
+              : RouteNames.invoice,
         ),
         _qaBtn(
           icon: Icons.chat_bubble_rounded,

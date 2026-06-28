@@ -70,7 +70,6 @@ final dashboardMetricsProvider = StreamProvider<DashboardMetrics>((ref) {
       int upcomingEvents = 0;
       int successEvents = 0;
       int cancelledEvents = 0;
-      int pendingDueCount = 0; // count of pending-payment bookings
       int todayRevenue = 0; // sum of customPrice for today bookings in paisa
 
       for (final b in bookings) {
@@ -104,22 +103,19 @@ final dashboardMetricsProvider = StreamProvider<DashboardMetrics>((ref) {
           successEvents++;
         }
         if (b.status == BookingStatus.cancelled) cancelledEvents++;
-        if (b.status == BookingStatus.confirmed ||
-            b.status == BookingStatus.inProgress) {
-          pendingDueCount++;
-        }
       }
 
-      // pendingDue expressed in paisa as a rough estimate
-      final avgPrice = bookings.isEmpty
-          ? 0
-          : bookings
-                  .map((b) => ((b.customPrice ?? 0) * 100).round())
-                  .fold<int>(0, (a, b) => a + b) ~/
-              bookings.length;
-
-      return Stream.value(
-        DashboardMetrics(
+      // Real outstanding due = Σ(total − payments) across non-cancelled
+      // bookings, sourced from `dueBreakdownProvider` (which aggregates
+      // actual payments per event). The previous `count × avgPrice` estimate
+      // produced a meaningless figure — and ৳0 whenever bookings had no
+      // customPrice — which is the "due count হয় না" bug.
+      return ref.watch(dueBreakdownProvider.future).then((dueEntries) {
+        final pendingDuePaisa = dueEntries.fold<int>(
+          0,
+          (sum, e) => sum + (e.due * 100).round(),
+        );
+        return DashboardMetrics(
           todayEvents: todayEvents,
           todayDayEvents: todayDayEvents,
           todayNightEvents: todayNightEvents,
@@ -127,11 +123,11 @@ final dashboardMetricsProvider = StreamProvider<DashboardMetrics>((ref) {
           successEvents: successEvents,
           totalEvents: bookings.length,
           todayCollection: todayRevenue,
-          pendingDue: pendingDueCount * avgPrice,
+          pendingDue: pendingDuePaisa,
           holidaysThisMonth: bdHolidaysInMonth(DateTime.now()),
           cancelledEvents: cancelledEvents,
-        ),
-      );
+        );
+      }).asStream();
     },
   );
 });

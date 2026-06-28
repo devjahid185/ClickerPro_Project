@@ -23,11 +23,19 @@ import 'package:share_plus/share_plus.dart';
 import '../../../theme/app_colors.dart';
 import '../../../core/navigation/route_names.dart';
 import '../../../core/pdf/pdf_export.dart';
+import '../../../core/format/booking_format.dart';
+import '../../../shared/states/error_state.dart';
+import '../../../shared/states/lens_loader.dart';
+import '../application/invoice_providers.dart';
 import '../domain/invoice.dart';
 
 class InvoiceScreen extends ConsumerWidget {
   const InvoiceScreen({super.key, this.invoice});
 
+  /// When provided, the screen shows that one invoice's detail. When null
+  /// (e.g. opened from the dashboard "Invoice" quick action), it shows the
+  /// list of all invoices so the user can pick one — instead of a dead
+  /// "No invoice data" screen.
   final Invoice? invoice;
 
   @override
@@ -44,7 +52,7 @@ class InvoiceScreen extends ConsumerWidget {
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
-          'Invoice',
+          inv == null ? 'Invoices' : 'Invoice',
           style: TextStyle(
             color: AppColors.film,
             fontFamily: 'Poppins',
@@ -54,12 +62,7 @@ class InvoiceScreen extends ConsumerWidget {
         ),
       ),
       body: inv == null
-          ? Center(
-              child: Text(
-                'No invoice data',
-                style: TextStyle(color: AppColors.filmDim),
-              ),
-            )
+          ? _InvoiceList()
           : SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
               child: Column(
@@ -451,6 +454,180 @@ class _ShareButton extends StatelessWidget {
                 color: c,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Invoice list shown when `InvoiceScreen` is opened without a specific
+/// invoice (dashboard quick action). Tapping a row opens its detail.
+class _InvoiceList extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(invoiceListControllerProvider);
+
+    return async.when(
+      loading: () => const Center(child: LensLoader()),
+      error: (e, _) => ErrorState(
+        message: 'Could not load invoices.',
+        onRetry: () =>
+            ref.read(invoiceListControllerProvider.notifier).refresh(),
+      ),
+      data: (invoices) {
+        if (invoices.isEmpty) {
+          return RefreshIndicator(
+            color: AppColors.accent,
+            onRefresh: () =>
+                ref.read(invoiceListControllerProvider.notifier).refresh(),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                const SizedBox(height: 120),
+                Icon(
+                  Icons.receipt_long_outlined,
+                  size: 48,
+                  color: AppColors.filmDim.withValues(alpha: 0.4),
+                ),
+                const SizedBox(height: 16),
+                Center(
+                  child: Text(
+                    'No invoices yet',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.film,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 40),
+                  child: Text(
+                    'Open a booking and generate its invoice from the '
+                    'event details.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 13,
+                      height: 1.5,
+                      color: AppColors.filmDim.withValues(alpha: 0.8),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        return RefreshIndicator(
+          color: AppColors.accent,
+          onRefresh: () =>
+              ref.read(invoiceListControllerProvider.notifier).refresh(),
+          child: ListView.separated(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(20),
+            itemCount: invoices.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 10),
+            itemBuilder: (context, i) => _InvoiceRow(invoice: invoices[i]),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _InvoiceRow extends StatelessWidget {
+  const _InvoiceRow({required this.invoice});
+
+  final Invoice invoice;
+
+  @override
+  Widget build(BuildContext context) {
+    final statusColor = switch (invoice.status.toLowerCase()) {
+      'paid' => AppColors.green,
+      'sent' => AppColors.gold,
+      _ => AppColors.filmDim,
+    };
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => InvoiceScreen(invoice: invoice),
+        ),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.glass,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.glassBorder),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: AppColors.tealSoft,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.receipt_long_rounded,
+                color: AppColors.teal,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    invoice.packageName.isEmpty
+                        ? (invoice.companyName.isEmpty
+                              ? 'Invoice'
+                              : invoice.companyName)
+                        : invoice.packageName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.film,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Due ${BookingFormat.money(invoice.due, lang: 'en', bnNumerals: false)}',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 12,
+                      color: AppColors.filmDim.withValues(alpha: 0.8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                invoice.status.toUpperCase(),
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                  color: statusColor,
+                ),
               ),
             ),
           ],

@@ -814,14 +814,6 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
   String? _code;
   DateTime? _expiresAt;
   bool _loading = false;
-  bool _emailSending = false;
-  final _emailCtrl = TextEditingController();
-
-  @override
-  void dispose() {
-    _emailCtrl.dispose();
-    super.dispose();
-  }
 
   Future<void> _generate() async {
     setState(() => _loading = true);
@@ -843,38 +835,6 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
           context,
         ).showSnackBar(SnackBar(content: Text(widget.loc.team_invite_failed)));
       }
-    }
-  }
-
-  Future<void> _sendEmailInvite() async {
-    final email = _emailCtrl.text.trim();
-    if (email.isEmpty || !email.contains('@')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Enter a valid email।')),
-      );
-      return;
-    }
-    setState(() => _emailSending = true);
-    try {
-      await ref.read(teamControllerProvider.notifier).inviteByEmail(email);
-      if (!mounted) return;
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Invite sent to $email — they join once they confirm in the app.',
-          ),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _emailSending = false);
-      final msg = e.toString().contains('No registered account')
-          ? 'No registered account with this email.'
-          : 'Could not send the invite — please try again.';
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(msg)));
     }
   }
 
@@ -993,98 +953,18 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
                     : Text(widget.loc.team_generate_code),
               ),
             ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 1,
-                    color: AppColors.filmDim.withValues(alpha: 0.15),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    'Or by email',
-                    style: TextStyle(
-                      color: AppColors.filmDim.withValues(alpha: 0.6),
-                      fontSize: 11,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Container(
-                    height: 1,
-                    color: AppColors.filmDim.withValues(alpha: 0.15),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _emailCtrl,
-              keyboardType: TextInputType.emailAddress,
-              style: TextStyle(color: AppColors.film, fontSize: 14),
-              decoration: InputDecoration(
-                hintText: 'Registered Gmail / email',
-                hintStyle: TextStyle(
-                  color: AppColors.filmDim.withValues(alpha: 0.5),
-                  fontSize: 13,
-                ),
-                prefixIcon: Icon(
-                  Icons.mail_outline_rounded,
-                  color: AppColors.gold,
-                  size: 19,
-                ),
-                filled: true,
-                fillColor: AppColors.voidBlack,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: AppColors.gold.withValues(alpha: 0.25),
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: AppColors.gold.withValues(alpha: 0.25),
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.gold),
-                ),
-              ),
-            ),
             const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _emailSending ? null : _sendEmailInvite,
-                icon: _emailSending
-                    ? SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.gold,
-                        ),
-                      )
-                    : Icon(Icons.send_rounded,
-                        color: AppColors.gold, size: 18),
-                label: Text(
-                  'Send invite',
-                  style: TextStyle(color: AppColors.gold),
-                ),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(
-                    color: AppColors.gold.withValues(alpha: 0.4),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 13),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+            // Passcode-only joining (v15 rule): the owner shares this 6-digit
+            // code and the freelancer joins with it — no email, no manual
+            // entry. The email-invite path was removed per Heaven's request.
+            Text(
+              'Share this code — your teammate joins with it. '
+              'No email needed.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.filmDim.withValues(alpha: 0.6),
+                fontSize: 12,
+                height: 1.4,
               ),
             ),
           ],

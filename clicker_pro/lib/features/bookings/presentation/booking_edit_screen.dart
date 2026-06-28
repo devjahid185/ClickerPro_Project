@@ -195,10 +195,17 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     final policy = ref.watch(bookingsPolicyProvider);
 
     final isCreate = widget.bookingId == null;
+    // A pure Freelancer doesn't hold `createBooking` (that's the full studio
+    // form), but FL-12 lets them log their OWN short-form bookings. So on
+    // create, a Freelancer is allowed through here and routed to the
+    // freelancer form below; the capability gate only applies to edits and to
+    // the full owner/manager create form.
+    final isFreelancerCreate =
+        isCreate && policy.role == UserRole.freelancer;
     final required = isCreate
         ? Capability.createBooking
         : Capability.editBooking;
-    if (!policy.can(required)) {
+    if (!isFreelancerCreate && !policy.can(required)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) Navigator.of(context).maybePop();
       });
@@ -361,7 +368,10 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     final policy = ref.read(bookingsPolicyProvider);
 
     final isBothRole = role == UserRole.both;
-    final showFreelancer = isBothRole && _showFreelancerForm;
+    final isFreelancer = role == UserRole.freelancer;
+    // Both-role picks per booking; a pure Freelancer ALWAYS uses the FL-12
+    // short form (no picker — they have only the one mode).
+    final showFreelancer = isFreelancer || (isBothRole && _showFreelancerForm);
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
