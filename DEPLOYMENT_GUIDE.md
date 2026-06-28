@@ -19,7 +19,7 @@ sudo apt install -y nginx php8.2-fpm php8.2-cli php8.2-pgsql php8.2-mbstring \
   php8.2-xml php8.2-curl php8.2-zip unzip postgresql-client
 # Composer
 curl -sS https://getcomposer.org/installer | php && sudo mv composer.phar /usr/local/bin/composer
-# Node 18+ (for web_app; admin is Laravel Blade, no Node needed)
+# Flutter SDK (for the web app build); admin is Laravel Blade, no Node needed
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - && sudo apt install -y nodejs
 ```
 
@@ -36,11 +36,13 @@ php artisan route:cache
 php artisan view:cache
 ```
 
-### Web app — deploy
+### Web app — deploy (Flutter Web)
 ```bash
-cd web_app && npm ci && npm run build && npm run start    # serves on :3000
-# (use pm2 / systemd to keep `next start` running)
-# Set API_URL / API_PROXY_TARGET to the backend's internal URL.
+cd clicker_pro
+flutter build web --release --dart-define=API_BASE_URL=https://api.yourdomain.com
+# Serve build/web/ as static files WITH an SPA fallback (any unknown path →
+# index.html), required for deep links like /book/<token>.
+# See clicker_pro/WEB_DEPLOY.md for the nginx/Apache config.
 ```
 
 > **Admin panel:** now served by Laravel itself at `/admin` (Blade) — no
@@ -114,7 +116,8 @@ LOG_LEVEL=error               # avoid leaking detail in prod logs
 ```
 
 Frontend env:
-- `web_app/.env.production`: `API_URL=https://api.yourdomain.com`
+- Web app: pass `--dart-define=API_BASE_URL=https://api.yourdomain.com` at
+  `flutter build web` time (no runtime env file).
 - Admin: no env — it's part of the Laravel backend, reachable at
   `https://api.yourdomain.com/admin`.
 
@@ -143,7 +146,7 @@ server {
     fastcgi_param HTTPS on;            # so $request->secure() is true
   }
 }
-# app.yourdomain.com → proxy_pass http://127.0.0.1:3000  (web_app)
+# app.yourdomain.com → static root clicker_pro/build/web (SPA fallback)
 # admin → no extra server block: served by Laravel at api.yourdomain.com/admin
 server { listen 80; server_name api.yourdomain.com app.yourdomain.com;
          return 301 https://$host$request_uri; }

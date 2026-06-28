@@ -96,24 +96,17 @@ features/<name>/
 
 ---
 
-## 3. Web App Modules (web_app)
+## 3. Web App Modules (Flutter Web — `clicker_pro`)
 
-Next.js **Pages Router**; routes = files under `src/pages/`. **36 pages.**
+The web app is the **Flutter app built for web** (`flutter build web`), so the
+modules are the same as the mobile app — see §4 (the 37 Flutter feature
+modules under `clicker_pro/lib/features/`). It replaced the old Next.js
+`web_app/`.
 
-- **Public:** `index.tsx` (landing), `login.tsx`, `register.tsx`,
-  `book/[token].tsx` (public booking).
-- **Authenticated app (`src/pages/app/`, 26 pages):** dashboard, bookings
-  (+`[id]`), clients (+`[id]`), invoices (+`[id]`), finance, payments, expenses,
-  petty-cash, freelancer, calendar, packages, waitlist, gear, rent, team, chat,
-  reports, search, reminders, followup, support, help, announcements, activity,
-  notifications, settings, onboarding.
-
-### Shared layers
-- `components/AppShell.tsx` — nav + auth gate + responsive drawer
-- `lib/api.ts` — fetch client (bearer token, 401→login), `lib/format.ts` (`tk`)
-- `hooks/useApiResource.ts` — typed `useApiList`/`useApiItem`
-- `types/api.ts` — shared API TypeScript types
-- `styles/globals.css` — design system (CSS variables, components)
+- **Public deep link:** `/book/<token>` (public self-booking) resolves via the
+  router (`onGenerateInitialRoutes` → `app_router.dart`).
+- **Auth, persistence, theming** are shared with mobile (secure_storage JWT,
+  Drift→IndexedDB, Sunset Studio / Sunrise Pulse).
 
 ---
 

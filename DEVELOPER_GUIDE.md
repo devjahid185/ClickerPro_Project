@@ -18,8 +18,8 @@ booking links, push notifications, and an admin dashboard.
 ClickerPro_Project/
 ├── clicker_pro/        # Flutter mobile app (Android + iOS)
 ├── laravel_backend/    # Laravel 11 REST API + database
-├── web_app/            # Next.js 14 (Pages router) — public web app + booking
-│                       #   (admin is now Laravel Blade — see laravel_backend)
+│                       # web app = Flutter built for web (clicker_pro)
+│                       # admin = Laravel Blade (laravel_backend, /admin)
 ├── keystores/          # release signing keystore (gitignored)
 ├── tools/              # helper scripts
 ├── data/               # sample/seed data
@@ -30,7 +30,7 @@ ClickerPro_Project/
 |-----------|-------|----------|-------------|
 | Mobile | Flutter / Dart 3 | — | `clicker_pro/lib/main.dart` |
 | API | Laravel 11 / PHP 8.2 | 5000 | `laravel_backend/routes/api.php` |
-| Web app | Next.js 14 Pages | 3000 | `web_app/src/pages/` |
+| Web app | Flutter Web (`clicker_pro`) | 3000 | `flutter build web` → `build/web/` |
 | Admin | Laravel Blade (web routes) | 5000 | `laravel_backend/routes/web.php` (`/admin`) |
 
 Live API base (used by web & admin proxies by default): `https://api.deyalghori.com`.
@@ -138,35 +138,23 @@ php artisan serve --port=5000
 
 ---
 
-## 5. Web app — `web_app/` (Next.js Pages router)
+## 5. Web app — Flutter Web (`clicker_pro`, built for web)
 
-```
-src/
-├── pages/          # routes: /login /register /app/* /book/[token]
-│   ├── app/        # authenticated app screens (dashboard, bookings, finance…)
-│   └── book/       # public booking by token
-├── components/     # shared UI
-├── hooks/          # data/state hooks
-├── lib/            # api client, helpers
-├── styles/         # CSS / theme (orange/black)
-└── types/
-next.config.mjs     # CSP headers, /api/* proxy, optional static export
-```
+The web app is the **same Flutter codebase** as the mobile app, built for
+web (it replaced the old Next.js `web_app/`). All features come from
+`clicker_pro/lib/` — no separate web source tree.
 
-- **API proxy:** browser calls same-origin `/api/*`; Next rewrites to
-  `API_URL` (default `https://api.deyalghori.com`). For local dev set
-  `API_URL=http://localhost:5000`.
-- **Static-only landing:** `STATIC_EXPORT=1 next build` emits plain HTML in
-  `out/` for static hosts (no Node needed).
+- **API base:** `--dart-define=API_BASE_URL=...` (read by
+  `lib/core/env/app_config.dart`). Local dev: `http://localhost:5000`.
+- **Deep links:** clean URLs via path strategy; `/book/<token>` (public
+  booking) resolves through `onGenerateInitialRoutes` → the router.
+- **Persistence:** Drift → IndexedDB; JWT → secure_storage (localStorage).
 
 ### Build
 ```bash
-cd web_app
-npm install
-npx next build          # full Node build (use ≥2 GB heap)
-npx next start          # serve on :3000
-# Shared host: prefix RAYON_NUM_THREADS=1 (and DO NOT cap heap to 512 MB —
-# the Next build worker crashes; use 2048+ or omit).
+cd clicker_pro
+flutter build web --release --dart-define=API_BASE_URL=http://localhost:5000
+# output: build/web/  — serve with an SPA fallback (see clicker_pro/WEB_DEPLOY.md)
 ```
 
 ---
@@ -220,7 +208,7 @@ Deploy-ready build outputs:
 | Component | Artifact |
 |-----------|----------|
 | Mobile | `clicker_pro/build/app/outputs/flutter-apk/app-release.apk` (+ `.aab` for Play Store) |
-| Web app | `web_app/.next/` (run `next start`) or `web_app/out/` (static export) |
+| Web app | `clicker_pro/build/web/` (static; serve with SPA fallback) |
 | Admin | served by Laravel at `/admin` (no separate build) |
 | Backend | upload `laravel_backend/` minus `.env`; run migrate on server |
 

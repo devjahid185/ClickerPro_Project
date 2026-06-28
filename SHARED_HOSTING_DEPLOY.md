@@ -13,7 +13,7 @@
 ```
 deyalghori.com / api.deyalghori.com  → Laravel API + admin console (PHP)
                                        (admin at api.deyalghori.com/admin)
-app.deyalghori.com                   → web_app (Next.js, Node)
+app.deyalghori.com                   → Flutter Web static (clicker_pro/build/web)
 PostgreSQL DB: deyalgho_clickerpro
 Mobile app (Flutter): APK on phone, API base → https://api.deyalghori.com
 ```
@@ -129,35 +129,38 @@ curl -s https://api.deyalghori.com/api/auth/login -X POST \
 
 ---
 
-## STEP 4 — web_app (Next.js) via "Setup Node.js App"
+## STEP 4 — Web app (Flutter Web) — static files, no Node app
 
-cPanel → **Setup Node.js App** → **Create Application**:
-- Node version: pick the highest (18+)
-- Application mode: **Production**
-- Application root: `clickerpro/web_app`
-- Application URL: `app.deyalghori.com` (create the subdomain when prompted)
-- Application startup file: leave default; we'll use `npm start`
+The web app is the Flutter app built for web — **plain static files**, so
+there's no Node app to run. Build it **locally** (the shared host has no
+Flutter SDK), then upload the output.
 
-After it's created, click **"Run JS script"** isn't enough — open **Terminal**:
+Locally:
 ```bash
-cd ~/clickerpro/web_app
-# activate the Node env cPanel made (it prints this command on the Node App page —
-# looks like: source /home/deyalgho/nodevenv/clickerpro/web_app/18/bin/activate)
-source ~/nodevenv/clickerpro/web_app/*/bin/activate
-npm install
-echo "API_URL=https://api.deyalghori.com" > .env.production
-# Build with the shared-host flags. RAYON_NUM_THREADS=1 avoids the thread-cap
-# SIGABRT. Give Node enough heap — do NOT cap it to 512MB (the Next build worker
-# crashes with exit 3221226505 / "worker exited"). 1536–2048MB is safe on 1GB+.
-RAYON_NUM_THREADS=1 NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS=--max-old-space-size=1536 npm run build
+cd clicker_pro
+flutter build web --release --dart-define=API_BASE_URL=https://api.deyalghori.com
+# → build/web/  (index.html, main.dart.js, assets, Drift WASM worker)
 ```
-> If the web build still OOMs on the 1 GB plan, build it **locally** (`cd web_app
-> && npm run build`) and upload the `web_app/.next` folder via cPanel File
-> Manager — same prebuilt approach as admin. Then just `npm start` on the server.
-Back on the **Setup Node.js App** page → set **Start command** to `npm start`
-(or startup file to `node_modules/.bin/next start`) → **Restart**.
 
-Test: `https://app.deyalghori.com` → landing/login page loads.
+On the host:
+1. Create the `app.deyalghori.com` subdomain, document root e.g.
+   `~/clickerpro_web` (or `public_html/app`).
+2. Upload the **contents of `build/web/`** there (zip → upload → extract).
+3. **SPA fallback is required** (clean URLs / deep links like `/book/<token>`).
+   Add this `.htaccess` in the web root:
+   ```apache
+   <IfModule mod_rewrite.c>
+     RewriteEngine On
+     RewriteBase /
+     RewriteRule ^index\.html$ - [L]
+     RewriteCond %{REQUEST_FILENAME} !-f
+     RewriteCond %{REQUEST_FILENAME} !-d
+     RewriteRule . /index.html [L]
+   </IfModule>
+   ```
+
+Test: `https://app.deyalghori.com` → app loads → login → dashboard.
+(See `clicker_pro/WEB_DEPLOY.md` for the full recipe incl. nginx.)
 
 ---
 
@@ -232,13 +235,12 @@ composer install --no-dev -o
 php artisan migrate --force
 php artisan config:cache && php artisan route:cache
 
-# web_app — rebuild on server (or upload a local .next if it OOMs):
-cd ~/clickerpro/web_app && source ~/nodevenv/clickerpro/web_app/*/bin/activate
-npm install && RAYON_NUM_THREADS=1 NODE_OPTIONS=--max-old-space-size=1536 npm run build
+# web app (Flutter Web) — build LOCALLY, upload build/web/ contents to the
+# app subdomain root (static; keep the SPA-fallback .htaccess in place).
+#   local:  cd clicker_pro && flutter build web --release \
+#             --dart-define=API_BASE_URL=https://api.deyalghori.com
 
 # admin console — nothing to do here; it's served by the Laravel app at /admin.
-
-# Finally: Restart the web_app from the "Setup Node.js App" page.
 ```
 > ⚠️ This release fixed a live bug: Admin **Analytics** and **Reports** pages
 > threw 500 on PostgreSQL (MySQL-only `DATE_FORMAT` → now `TO_CHAR`). After this

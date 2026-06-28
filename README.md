@@ -16,7 +16,7 @@ all served by one Laravel API.
 |-----------|------|------|-------------------|
 | Backend API | `laravel_backend/` | Laravel 12, PHP 8.2, PostgreSQL, Sanctum | http://localhost:5000 |
 | Mobile app | `clicker_pro/` | Flutter (Dart SDK ^3.12), Riverpod, Drift | device/emulator |
-| Web app | `web_app/` | Next.js 14.2 (Pages Router), React 18, TypeScript | http://localhost:3000 |
+| Web app | `clicker_pro/` (`flutter build web`) | Flutter Web (same codebase as mobile) | http://localhost:3000 |
 | Admin console | `laravel_backend/` (`/admin`) | Laravel Blade + CSS (no JS framework) | http://localhost:5000/admin |
 
 **Scale (current):** 42 API controllers · 34 models · 40 migrations · 166 API
@@ -75,10 +75,11 @@ DB_PASSWORD=...
 ```
 
 ### 2. Web app
+The web app is the Flutter app built for web (same `clicker_pro/` codebase):
 ```bash
-cd web_app
-npm install
-# .env.local: API_URL=http://localhost:5000   (proxy target for /api/*)
+cd clicker_pro
+flutter build web --dart-define=API_BASE_URL=http://localhost:5000
+# serve build/web/ with an SPA fallback — see clicker_pro/WEB_DEPLOY.md
 ```
 
 ### 3. Admin console
@@ -100,8 +101,8 @@ flutter pub get
 # Terminal 1 — backend
 cd laravel_backend && php artisan serve --port=5000
 
-# Terminal 2 — web app  → http://localhost:3000
-cd web_app && npm run dev
+# Web app → build the Flutter app for web and serve build/web/ (SPA fallback)
+cd clicker_pro && flutter build web --dart-define=API_BASE_URL=http://localhost:5000
 
 # Admin console → http://localhost:5000/admin (served by the backend above)
 
@@ -123,7 +124,7 @@ cd clicker_pro && flutter run
 ## Build (production)
 
 ```bash
-cd web_app     && npm run build && npm run start
+cd clicker_pro && flutter build web --release --dart-define=API_BASE_URL=https://api.yourdomain.com
 # admin console: no build — served by the Laravel backend at /admin
 cd clicker_pro && flutter build apk         # or: flutter build ios / appbundle
 # backend: deploy laravel_backend with php-fpm behind nginx (see DEPLOYMENT_GUIDE.md)

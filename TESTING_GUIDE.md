@@ -7,7 +7,7 @@ the repo.
 |-----------|------------------------|---------------|
 | Flutter (clicker_pro) | ✅ 31 test files (`test/`) | `flutter test`, manual on device |
 | Laravel (laravel_backend) | ⚠️ phpunit set up; only example tests | `php artisan test`; live API checks |
-| Web app (web_app) | ❌ no test suite | `tsc` + `npm run build` + manual/curl |
+| Web app (Flutter Web) | ❌ no web test suite | `flutter analyze` + `flutter build web` + browser smoke |
 | Admin console (Laravel Blade, `/admin`) | ❌ no test suite | manual / Playwright browser checks |
 
 > The current project verification approach (used throughout the audit/fix
@@ -98,15 +98,14 @@ Key checks to cover (all behave this way in the code):
 
 ---
 
-## 3. Web App testing
+## 3. Web App testing (Flutter Web)
 
-No JS test runner is configured. Verify with:
+The web app is the Flutter build. Verify with:
 ```bash
-cd web_app
-npx tsc --noEmit        # strict type check (catches shape/type errors)
-npm run build           # full production build (catches route/runtime issues)
-npm run lint            # next lint
-npm run dev             # manual testing at http://localhost:3000
+cd clicker_pro
+flutter analyze
+flutter build web --dart-define=API_BASE_URL=http://localhost:5000
+# serve build/web/ with an SPA fallback and smoke-test in a browser
 ```
 **Manual smoke (authenticated app):** login → dashboard loads KPIs → Bookings
 (Day/Night split, filters, create/edit) → Clients → Finance → Invoices →
@@ -154,8 +153,8 @@ cd clicker_pro && flutter analyze && flutter test
 cd laravel_backend && php artisan test
 php artisan route:list | grep -c "api/"        # expect 166
 
-# Web
-cd web_app && npx tsc --noEmit && npm run build
+# Web (Flutter Web)
+cd clicker_pro && flutter analyze && flutter build web --dart-define=API_BASE_URL=http://localhost:5000
 # Admin: no build — open http://localhost:5000/admin after `php artisan serve`
 ```
 
