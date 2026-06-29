@@ -365,7 +365,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: AppColors.accent,
+        // Solid accent only sits behind the gradient initials. With a real
+        // photo it would peek out as an orange ring/frame, so leave it null.
+        color: hasPhoto ? null : AppColors.accent,
         // Uploaded profile photo when present; gradient initials otherwise.
         image: hasPhoto
             ? DecorationImage(
@@ -373,11 +375,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 fit: BoxFit.cover,
               )
             : null,
+        // A spreading orange glow read as an unwanted frame around photos —
+        // use a soft neutral drop shadow with no spread instead.
         boxShadow: [
           BoxShadow(
-            color: AppColors.accent.withValues(alpha: 0.3),
-            blurRadius: 20,
-            spreadRadius: 5,
+            color: hasPhoto
+                ? Colors.black.withValues(alpha: 0.25)
+                : AppColors.accent.withValues(alpha: 0.3),
+            blurRadius: hasPhoto ? 16 : 20,
+            spreadRadius: hasPhoto ? 0 : 5,
           ),
         ],
       ),

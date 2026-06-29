@@ -1541,19 +1541,37 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
       // the old behaviour (open the pre-filled page) as a manual fallback.
       if (isNewBooking) {
         final autoSync = await CalendarSyncService.isAutoSyncEnabled();
-        await CalendarSyncService.openGoogleCalendar(
+        final description = [
+          if (saved.clientName != null) 'Client: ${saved.clientName}',
+          if (saved.clientPhone != null) 'Phone: ${saved.clientPhone}',
+          'Booked via CLICKER PRO',
+        ].join('\n');
+        // With auto-sync ON we first try the SILENT device-calendar write
+        // (which is what syncs to the phone's Google account). If that
+        // fails — most often because calendar permission was denied or no
+        // writable calendar exists — we don't give up silently anymore;
+        // we fall back to the pre-filled Google Calendar page so the event
+        // still lands. This is the "auto-sync doesn't work" fix.
+        final added = await CalendarSyncService.openGoogleCalendar(
           title: saved.title,
           date: saved.date,
           startTime: saved.startTime,
           endTime: saved.endTime,
           venue: saved.venue,
-          description: [
-            if (saved.clientName != null) 'Client: ${saved.clientName}',
-            if (saved.clientPhone != null) 'Phone: ${saved.clientPhone}',
-            'Booked via CLICKER PRO',
-          ].join('\n'),
+          description: description,
           allowWebFallback: !autoSync,
         );
+        if (autoSync && !added) {
+          await CalendarSyncService.openGoogleCalendar(
+            title: saved.title,
+            date: saved.date,
+            startTime: saved.startTime,
+            endTime: saved.endTime,
+            venue: saved.venue,
+            description: description,
+            allowWebFallback: true,
+          );
+        }
       }
       if (!mounted) return;
       Navigator.of(context).pop<Booking>(saved);

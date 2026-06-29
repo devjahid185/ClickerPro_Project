@@ -22,12 +22,15 @@ class AppColorsLight {
   static const Color voidElevated = creamDeep;
 
   // ============================================================
-  // 🔶 TERRACOTTA (Primary Accent)
+  // 🔶 PRIMARY ACCENT — Signal Orange
+  // Heaven: primary colour must be orange everywhere. The base used to be
+  // clay terracotta (#C75A3C); it is now true Signal Orange so every alias
+  // (orange / accent / signalOrange / gradients / topbar) reads orange.
   // ============================================================
-  static const Color terracotta = Color(0xFFC75A3C);
-  static const Color terracottaLight = Color(0xFFE07A5F);
-  static const Color terracottaSoft = Color(0x1FC75A3C); // 12% opacity
-  static const Color terracottaGlow = Color(0x33C75A3C); // 20% opacity
+  static const Color terracotta = Color(0xFFFF6200); // Signal Orange
+  static const Color terracottaLight = Color(0xFFFF8534);
+  static const Color terracottaSoft = Color(0x1FFF6200); // 12% opacity
+  static const Color terracottaGlow = Color(0x33FF6200); // 20% opacity
 
   // Backward-compat aliases
   static const Color teal = terracotta;
@@ -122,7 +125,7 @@ class AppColorsLight {
 
   // Topbar surface
   static const Color topbarBg = Color(0xFFF4EBDD); // cream
-  static const Color topbarBorder = Color(0x33C75A3C); // 20% terracotta
+  static const Color topbarBorder = Color(0x33FF6200); // 20% orange
 
   // Bottom nav surface
   static const Color bottomNavBg = Color(0xFFFAF6EF); // lighter cream

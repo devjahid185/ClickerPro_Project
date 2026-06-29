@@ -877,7 +877,20 @@ class _InvoiceAction extends ConsumerWidget {
     final teamLines = envelope.assignments
         .map((a) => memberLine(a.userId, _titleCase(a.role.name)))
         .toList(growable: false);
-    final teamNo = envelope.assignments.length.toString();
+    // Team names only (no role suffix) for the simple shared text spec.
+    final teamNamesOnly = envelope.assignments
+        .map((a) {
+          final m = members.where((x) => x.userId == a.userId).firstOrNull;
+          return m?.fullName ?? _titleCase(a.role.name);
+        })
+        .where((s) => s.trim().isNotEmpty)
+        .toList(growable: false);
+    // "Team num" per Heaven's spec = ONE number (the senior/chief
+    // photographer). Fall back to the first team member with a phone.
+    final chiefPhone = _resolveChiefPhone(members);
+    final teamNo = chiefPhone.isNotEmpty
+        ? chiefPhone
+        : envelope.assignments.length.toString();
 
     final clientName =
         envelope.client?.name ?? booking.clientName ?? '—';
@@ -928,30 +941,47 @@ class _InvoiceAction extends ConsumerWidget {
         ? [brideName, groomName].where((s) => s?.isNotEmpty ?? false).join(' & ')
         : clientName;
 
-    // Shared text body — exact field order requested. Team + Team No only
-    // appear on the SHARED event details (team/freelancers), never on the
-    // client invoice.
-    final lines = <String>[
-      'Invoice: $invoiceNo',
-      'Date: $dateStr',
-      'Shift: $shiftLabel',
-      'Time: ${booking.startTime} – ${booking.endTime}',
-      'Event: ${_titleCase(booking.eventType.name)}',
-      'Client: $clientLine',
-      'Client no: $clientPhone',
-      'Venue: ${booking.venue ?? '—'}',
-      if (chiefName != '—') 'Chief: $chiefName',
-      if (!forClient) ...[
-        if (teamLines.isEmpty)
+    // Package name — shown only when set AND not a custom package.
+    final pkgName = envelope.package?.name.trim() ?? '';
+    final isCustomPackage =
+        pkgName.isEmpty || pkgName.toLowerCase() == 'custom';
+
+    final List<String> lines;
+    if (forClient) {
+      // Client invoice keeps the full professional layout.
+      lines = <String>[
+        'Invoice: $invoiceNo',
+        'Date: $dateStr',
+        'Shift: $shiftLabel',
+        'Time: ${booking.startTime} – ${booking.endTime}',
+        'Event: ${_titleCase(booking.eventType.name)}',
+        'Client: $clientLine',
+        'Client no: $clientPhone',
+        'Venue: ${booking.venue ?? '—'}',
+        if (chiefName != '—') 'Chief: $chiefName',
+        if (showPayment) 'Due: ${money(due)}',
+      ];
+    } else {
+      // SHARE EVENT DETAILS — text-only, exact field order Heaven specified.
+      // Conditional lines (Outdoor, Package, Payment due) are omitted when
+      // they don't apply rather than printed empty.
+      lines = <String>[
+        'Date: $dateStr',
+        'Shift: $shiftLabel',
+        'Time: ${booking.startTime} – ${booking.endTime}',
+        'Client: $clientLine',
+        'Client num: $clientPhone',
+        'Location: ${booking.venue ?? '—'}',
+        if (booking.outdoor) 'Outdoor: Yes',
+        if (!isCustomPackage) 'Package name: $pkgName',
+        if (teamNamesOnly.isEmpty)
           'Team: —'
-        else ...[
-          'Team:',
-          for (final line in teamLines) '  • $line',
-        ],
-        'Team no: $teamNo',
-      ],
-      if (showPayment) 'Due: ${money(due)}',
-    ];
+        else
+          'Team: ${teamNamesOnly.join(', ')}',
+        if (teamNo.isNotEmpty) 'Team num: $teamNo',
+        if (showPayment) 'Payment due: ${money(due)}',
+      ];
+    }
     // Footer carries the studio identity (company name + contact).
     final footer = <String>[
       'Company name: $studioName',
@@ -1011,6 +1041,24 @@ class _InvoiceAction extends ConsumerWidget {
     }
     // The chief field stores a free-typed name when not picked from team.
     return chiefId;
+  }
+
+  /// The single "team number" for shared event details — the senior/chief
+  /// photographer's phone, falling back to the first assigned member who has
+  /// one. Empty string when no number is available.
+  String _resolveChiefPhone(List<TeamMember> members) {
+    final chiefId = booking.chiefPhotographerUserId;
+    if (chiefId != null) {
+      final chief = members.where((m) => m.userId == chiefId).firstOrNull;
+      final phone = (chief?.phone ?? '').trim();
+      if (phone.isNotEmpty) return phone;
+    }
+    for (final a in envelope.assignments) {
+      final m = members.where((x) => x.userId == a.userId).firstOrNull;
+      final phone = (m?.phone ?? '').trim();
+      if (phone.isNotEmpty) return phone;
+    }
+    return '';
   }
 }
 
@@ -1181,6 +1229,10 @@ class _InvoiceSheet extends StatelessWidget {
                           const SizedBox(height: 18),
                           _totalsBox(),
                         ],
+                        const SizedBox(height: 26),
+                        // Signature block — matches the reference invoices'
+                        // "YOUR SIGNATURE" line at the bottom-right.
+                        _signatureBlock(),
                         const SizedBox(height: 18),
                         Center(
                           child: Text(
@@ -1346,6 +1398,52 @@ class _InvoiceSheet extends StatelessWidget {
       letterSpacing: 1.6,
     ),
   );
+
+  /// Bottom-right signature block — uses the studio's saved signature image
+  /// when present, otherwise a blank signature line, with the studio name.
+  Widget _signatureBlock() {
+    final hasSig = data.signatureUrl != null && data.signatureUrl!.isNotEmpty;
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          if (hasSig)
+            SizedBox(
+              width: 140,
+              height: 48,
+              child: Image.network(
+                data.signatureUrl!,
+                fit: BoxFit.contain,
+                errorBuilder: (_, _, _) => const SizedBox(height: 48),
+              ),
+            )
+          else
+            const SizedBox(height: 30),
+          Container(width: 150, height: 1, color: AppColors.line(0.25)),
+          const SizedBox(height: 6),
+          Text(
+            'Authorized Signature',
+            style: TextStyle(
+              color: AppColors.filmDim.withValues(alpha: 0.8),
+              fontFamily: 'Montserrat',
+              fontSize: 10,
+              letterSpacing: 0.8,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Text(
+            data.studioName,
+            style: TextStyle(
+              color: AppColors.film,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _kv(String key, String value) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 4),

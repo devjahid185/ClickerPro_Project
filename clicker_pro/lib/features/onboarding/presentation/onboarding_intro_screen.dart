@@ -50,9 +50,11 @@ class _OnboardingIntroScreenState extends ConsumerState<OnboardingIntroScreen> {
           'Owner, Freelancer or Both — Clicker Pro adapts to how you work.',
     ),
     _SlideData(
-      icon: Icons.translate_rounded,
+      // NOTE: Icons.translate_rounded renders a CJK "文"-style glyph that
+      // reads as Chinese text on the slide — swapped for a camera mark.
+      icon: Icons.camera_alt_rounded,
       headlineEn: 'Built for studios',
-      bodyEn: 'Switch language any time. Bengali numerals optional.',
+      bodyEn: 'Fast, modern, and made for photography teams.',
       headlineBn: 'Built for studios',
       bodyBn: 'Fast, modern, and made for photography teams.',
     ),

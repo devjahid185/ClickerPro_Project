@@ -265,7 +265,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontFamily: AppText.brand.fontFamily,
-                          fontSize: 32,
+                          fontSize: 36,
                           fontWeight: FontWeight.w700,
                           color: AppColors.film,
                           height: 1.1,
@@ -277,8 +277,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontFamily: 'Montserrat',
-                          fontSize: 10.5,
-                          letterSpacing: 2.5,
+                          fontSize: 11.5,
+                          letterSpacing: 2.2,
                           color: AppColors.filmDim.withValues(alpha: 0.7),
                         ),
                       ),
@@ -411,7 +411,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             ),
                             child: RichText(
                               text: TextSpan(
-                                style: TextStyle(fontSize: 13),
+                                style: TextStyle(fontSize: 14),
                                 children: [
                                   TextSpan(
                                     text: 'Already have an account? ',
@@ -527,18 +527,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         autovalidateMode: AutovalidateMode.onUserInteraction,
         style: TextStyle(
           color: AppColors.film,
-          fontSize: 14.5,
+          fontSize: 16.5,
           fontWeight: FontWeight.w400,
         ),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(
             color: AppColors.filmDim.withValues(alpha: 0.7),
-            fontSize: 13.5,
+            fontSize: 15,
           ),
           floatingLabelStyle: TextStyle(
             color: AppColors.orange,
-            fontSize: 13,
+            fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
           prefixIcon: Padding(
@@ -737,7 +737,7 @@ class _RolePill extends StatelessWidget {
                             duration: const Duration(milliseconds: 220),
                             curve: Curves.easeOutCubic,
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: 14,
                               fontWeight: r == selected
                                   ? FontWeight.w600
                                   : FontWeight.w500,
@@ -809,7 +809,7 @@ class _ConsentRow extends StatelessWidget {
           child: RichText(
             text: TextSpan(
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: 13.5,
                 color: AppColors.filmDim.withValues(alpha: 0.85),
                 height: 1.4,
               ),

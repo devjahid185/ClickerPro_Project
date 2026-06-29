@@ -319,7 +319,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           height: 36,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: AppColors.accent,
+            // Accent fill is only the backdrop for the initials; with a photo
+            // it would show as an orange ring behind the image.
+            color: image == null ? AppColors.accent : null,
             border: Border.all(
               color: AppColors.line(0.12),
               width: 2,
@@ -1817,7 +1819,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                           height: 44,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppColors.accent,
+                            color: image == null ? AppColors.accent : null,
                             border: Border.all(
                               color: AppColors.line(0.15),
                               width: 2,

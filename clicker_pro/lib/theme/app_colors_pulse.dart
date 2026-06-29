@@ -26,12 +26,14 @@ class AppColorsPulse {
   static const Color void3 = surfaceAlt;
 
   // ============================================================
-  // 🔴 SUNRISE RED-ORANGE (Primary CTA — punchy, saturated)
+  // 🔶 SUNRISE ORANGE (Primary CTA — punchy, saturated)
+  // Heaven: primary must read orange (not red) everywhere. Pulse keeps a
+  // brighter orange than Sunset but stays in the orange family.
   // ============================================================
-  static const Color primary = Color(0xFFFF3B1F); // vivid sunrise red-orange
-  static const Color primaryLight = Color(0xFFFF6347); // lighter variant
-  static const Color primarySoft = Color(0x26FF3B1F); // 15% opacity
-  static const Color primaryGlow = Color(0x40FF3B1F); // 25% opacity
+  static const Color primary = Color(0xFFFF6A00); // vivid sunrise orange
+  static const Color primaryLight = Color(0xFFFF8C3A); // lighter variant
+  static const Color primarySoft = Color(0x26FF6A00); // 15% opacity
+  static const Color primaryGlow = Color(0x40FF6A00); // 25% opacity
 
   // Backward-compat aliases
   static const Color orange = primary;
@@ -143,8 +145,8 @@ class AppColorsPulse {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0x0AFF3B1F), // 4% red-orange
-      Color(0x00FF3B1F), // 0%
+      Color(0x0AFF6A00), // 4% orange
+      Color(0x00FF6A00), // 0%
     ],
   );
 

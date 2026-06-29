@@ -560,9 +560,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       orElse: () => AppThemeMode.sunsetStudio,
     );
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
@@ -574,35 +574,109 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ],
           ),
-          SizedBox(
-            width: 220,
-            child: SegmentedButton<AppThemeMode>(
-              showSelectedIcon: false,
-              style: ButtonStyle(
-                padding: WidgetStateProperty.all(
-                  const EdgeInsets.symmetric(horizontal: 6),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _themeCard(
+                  title: 'Sunset',
+                  subtitle: 'Warm · light',
+                  selected: currentMode == AppThemeMode.sunsetStudio,
+                  swatch: const [
+                    Color(0xFFF4EBDD),
+                    Color(0xFFFF6200),
+                    Color(0xFFB8893A),
+                  ],
+                  onTap: () => ref
+                      .read(themeModeControllerProvider.notifier)
+                      .setThemeMode(AppThemeMode.sunsetStudio),
                 ),
-                visualDensity: VisualDensity.compact,
               ),
-              segments: const [
-                ButtonSegment(
-                  value: AppThemeMode.sunsetStudio,
-                  label: Text('Sunset', overflow: TextOverflow.ellipsis),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _themeCard(
+                  title: 'Sunrise',
+                  subtitle: 'Bold · punchy',
+                  selected: currentMode == AppThemeMode.sunrisePulse,
+                  swatch: const [
+                    Color(0xFF0D0D0D),
+                    Color(0xFFFF6A00),
+                    Color(0xFFFFB800),
+                  ],
+                  onTap: () => ref
+                      .read(themeModeControllerProvider.notifier)
+                      .setThemeMode(AppThemeMode.sunrisePulse),
                 ),
-                ButtonSegment(
-                  value: AppThemeMode.sunrisePulse,
-                  label: Text('Sunrise', overflow: TextOverflow.ellipsis),
-                ),
-              ],
-              selected: {currentMode},
-              onSelectionChanged: (val) async {
-                await ref
-                    .read(themeModeControllerProvider.notifier)
-                    .setThemeMode(val.first);
-              },
-            ),
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+
+  /// A tappable theme preview card: name + a 3-swatch colour strip, with an
+  /// orange ring when selected.
+  Widget _themeCard({
+    required String title,
+    required String subtitle,
+    required bool selected,
+    required List<Color> swatch,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selected ? AppColors.orange : AppColors.glassBorder,
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                for (final c in swatch)
+                  Container(
+                    width: 22,
+                    height: 22,
+                    margin: const EdgeInsets.only(right: 6),
+                    decoration: BoxDecoration(
+                      color: c,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.hairline),
+                    ),
+                  ),
+                const Spacer(),
+                if (selected)
+                  Icon(Icons.check_circle, color: AppColors.orange, size: 18),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              style: TextStyle(
+                color: AppColors.film,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: TextStyle(
+                color: AppColors.filmDim.withValues(alpha: 0.75),
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

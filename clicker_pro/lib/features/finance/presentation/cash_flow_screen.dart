@@ -9,20 +9,33 @@ import '../../../theme/app_colors.dart';
 import '../../bookings/application/booking_providers.dart';
 import '../../bookings/domain/booking_filter.dart';
 import '../../expenses/application/expense_providers.dart';
+import '../../petty_cash/domain/petty_cash_entry.dart';
+import '../../petty_cash/presentation/petty_cash_screen.dart';
 
 /// One month's cash-flow figures derived from real booking data.
 class _MonthFlow {
-  const _MonthFlow(this.month, this.solid, this.hatched, this.pending);
+  const _MonthFlow(
+    this.month,
+    this.solid,
+    this.hatched,
+    this.pending,
+    this.pettyCashOut,
+  );
   final String month;
   final double solid;   // completed / delivered bookings
   final double hatched; // confirmed / inProgress
   final double pending; // pending bookings
+  final double pettyCashOut; // petty cash spent this month (cash out)
   double get total => solid + hatched + pending;
 }
 
-/// Derives the last 6 months of cash-flow from the live booking stream.
+/// Derives the last 6 months of cash-flow from the live booking stream,
+/// overlaying petty-cash spending so added cash is visible on the timeline.
 final _cashFlowProvider = StreamProvider<List<_MonthFlow>>((ref) {
   final bookingsAsync = ref.watch(bookingListProvider(const BookingFilter()));
+  final pettyCash =
+      ref.watch(pettyCashListProvider).valueOrNull ??
+      const <PettyCashEntry>[];
   return bookingsAsync.when(
     loading: () => Stream.value(<_MonthFlow>[]),
     error: (_, _) => Stream.value(<_MonthFlow>[]),
@@ -41,6 +54,9 @@ final _cashFlowProvider = StreamProvider<List<_MonthFlow>>((ref) {
         double solid = 0;
         double hatched = 0;
         double pending = 0;
+        final pettyOut = pettyCash
+            .where((p) => p.date.year == m.year && p.date.month == m.month)
+            .fold<double>(0, (s, p) => s + p.amount);
         for (final b in bookings) {
           if (b.date.year != m.year || b.date.month != m.month) continue;
           final price = (b.customPrice ?? 0).toDouble();
@@ -59,7 +75,7 @@ final _cashFlowProvider = StreamProvider<List<_MonthFlow>>((ref) {
               break;
           }
         }
-        return _MonthFlow(label, solid, hatched, pending);
+        return _MonthFlow(label, solid, hatched, pending, pettyOut);
       }).toList();
       return Stream.value(flows);
     },
@@ -113,7 +129,9 @@ class CashFlowScreen extends ConsumerWidget {
           ),
         ),
         data: (months) {
-          final nonEmpty = months.where((m) => m.total > 0).toList();
+          final nonEmpty = months
+              .where((m) => m.total > 0 || m.pettyCashOut > 0)
+              .toList();
           return ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16),
@@ -172,8 +190,13 @@ class CashFlowScreen extends ConsumerWidget {
   }
 
   /// Real income / expense / net-profit band from the live profit-loss API.
+  /// Petty cash counts as expense (per product decision), so it is folded
+  /// into the Expenses figure and subtracted from Net Profit here.
   Widget _buildProfitSummary(WidgetRef ref) {
     final async = ref.watch(profitLossProvider);
+    final pettyTotal = (ref.watch(pettyCashListProvider).valueOrNull ??
+            const <PettyCashEntry>[])
+        .fold<double>(0, (s, p) => s + p.amount);
     return async.when(
       loading: () => Container(
         height: 96,
@@ -182,6 +205,8 @@ class CashFlowScreen extends ConsumerWidget {
       ),
       error: (_, _) => const SizedBox.shrink(),
       data: (pl) {
+        final totalExpense = pl.totalExpense + pettyTotal;
+        final netProfit = pl.totalIncome - totalExpense;
         String f(double v) => '৳ ${v.toStringAsFixed(0)}';
         Widget cell(String label, double value, Color color) => Expanded(
           child: Column(
@@ -212,9 +237,9 @@ class CashFlowScreen extends ConsumerWidget {
           child: Row(
             children: [
               cell('Income', pl.totalIncome, AppColors.green),
-              cell('Expenses', pl.totalExpense, AppColors.red),
-              cell('Net Profit', pl.netProfit,
-                  pl.netProfit >= 0 ? AppColors.orange : AppColors.red),
+              cell('Expenses', totalExpense, AppColors.red),
+              cell('Net Profit', netProfit,
+                  netProfit >= 0 ? AppColors.orange : AppColors.red),
             ],
           ),
         );
@@ -250,6 +275,33 @@ class CashFlowScreen extends ConsumerWidget {
               _buildStat('Pending', m.pending, AppColors.filmMuted),
             ],
           ),
+          if (m.pettyCashOut > 0) ...[
+            const SizedBox(height: 12),
+            Divider(height: 1, color: AppColors.glassBorder),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Icon(Icons.savings_outlined, color: AppColors.coral, size: 16),
+                const SizedBox(width: 8),
+                Text(
+                  'Petty Cash Out',
+                  style: TextStyle(
+                    color: AppColors.filmDim.withValues(alpha: 0.85),
+                    fontSize: 12,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '-৳ ${m.pettyCashOut.toStringAsFixed(0)}',
+                  style: TextStyle(
+                    color: AppColors.coral,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

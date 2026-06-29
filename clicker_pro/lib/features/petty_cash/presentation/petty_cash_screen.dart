@@ -26,7 +26,16 @@ class _PettyCashNotifier extends AsyncNotifier<List<PettyCashEntry>> {
   Future<List<PettyCashEntry>> build() => _repo.list();
 
   Future<void> add(PettyCashEntry entry) async {
-    final created = await _repo.create(entry);
+    // Offline-first: try the server, but if it's unreachable keep the
+    // locally-built entry (it already carries a generated id) so the money
+    // is still recorded and cached. Without this fallback an offline backend
+    // made every "Save" silently lose the entry.
+    PettyCashEntry created;
+    try {
+      created = await _repo.create(entry);
+    } catch (_) {
+      created = entry;
+    }
     final current = state.valueOrNull ?? <PettyCashEntry>[];
     final next = <PettyCashEntry>[created, ...current];
     state = AsyncData(next);
@@ -34,7 +43,13 @@ class _PettyCashNotifier extends AsyncNotifier<List<PettyCashEntry>> {
   }
 
   Future<void> remove(String id) async {
-    await _repo.delete(id);
+    // Same offline-first stance as add(): a failed server delete must not
+    // block removing the row locally.
+    try {
+      await _repo.delete(id);
+    } catch (_) {
+      // Offline — drop it locally; the cache below becomes the source of truth.
+    }
     final current = state.valueOrNull ?? <PettyCashEntry>[];
     final next = <PettyCashEntry>[for (final e in current) if (e.id != id) e];
     state = AsyncData(next);

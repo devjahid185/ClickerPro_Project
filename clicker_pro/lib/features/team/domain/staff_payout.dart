@@ -41,6 +41,12 @@ class StaffPayoutSheet {
     totalPaid: 0,
     members: <StaffPayout>[],
   );
+
+  Map<String, dynamic> toJson() => {
+    'totalEarned': totalEarned,
+    'totalPaid': totalPaid,
+    'members': members.map((m) => m.toJson()).toList(),
+  };
 }
 
 class StaffPayout {
@@ -83,6 +89,32 @@ class StaffPayout {
           const <PayoutItem>[],
     );
   }
+
+  StaffPayout copyWith({
+    double? paid,
+    double? due,
+    List<PayoutItem>? items,
+  }) => StaffPayout(
+    userId: userId,
+    name: name,
+    avatar: avatar,
+    events: events,
+    earned: earned,
+    paid: paid ?? this.paid,
+    due: due ?? this.due,
+    items: items ?? this.items,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'userId': userId,
+    'name': name,
+    'avatar': avatar,
+    'events': events,
+    'earned': earned,
+    'paid': paid,
+    'due': due,
+    'items': items.map((i) => i.toJson()).toList(),
+  };
 }
 
 class PayoutItem {
@@ -117,4 +149,24 @@ class PayoutItem {
       paid: json['paid'] as bool? ?? false,
     );
   }
+
+  PayoutItem copyWith({bool? paid}) => PayoutItem(
+    assignmentId: assignmentId,
+    eventId: eventId,
+    eventTitle: eventTitle,
+    date: date,
+    role: role,
+    amount: amount,
+    paid: paid ?? this.paid,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'assignmentId': assignmentId,
+    'eventId': eventId,
+    'eventTitle': eventTitle,
+    'date': date?.toIso8601String(),
+    'role': role,
+    'amount': amount,
+    'paid': paid,
+  };
 }

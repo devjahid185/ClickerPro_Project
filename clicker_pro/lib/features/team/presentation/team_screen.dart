@@ -69,12 +69,18 @@ class TeamScreen extends ConsumerWidget {
                     onAction: () => _showInviteSheet(context, ref),
                   );
                 }
-                return ListView.separated(
+                return ListView(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
-                  itemCount: members.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) =>
-                      _TeamMemberTile(member: members[index]),
+                  children: [
+                    _TeamStatsStrip(members: members),
+                    const SizedBox(height: 16),
+                    _sectionLabel('ALL MEMBERS', members.length),
+                    const SizedBox(height: 10),
+                    for (var i = 0; i < members.length; i++) ...[
+                      _TeamMemberTile(member: members[i]),
+                      if (i != members.length - 1) const SizedBox(height: 8),
+                    ],
+                  ],
                 );
               },
             ),
@@ -106,6 +112,108 @@ class TeamScreen extends ConsumerWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => _InviteSheet(loc: loc, ref: ref),
+    );
+  }
+}
+
+/// Small uppercase section label with a count chip, matching the
+/// Clicker Team layout.
+Widget _sectionLabel(String text, int count) {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Text(
+        text,
+        style: TextStyle(
+          fontFamily: 'Montserrat',
+          fontSize: 11,
+          letterSpacing: 1.6,
+          fontWeight: FontWeight.w700,
+          color: AppColors.filmDim.withValues(alpha: 0.85),
+        ),
+      ),
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+        decoration: BoxDecoration(
+          color: AppColors.orange.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          '$count',
+          style: TextStyle(
+            color: AppColors.orange,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+/// Stats strip — total members + role breakdown, themed in orange.
+class _TeamStatsStrip extends StatelessWidget {
+  const _TeamStatsStrip({required this.members});
+  final List<TeamMember> members;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = members.length;
+    final photographers = members
+        .where((m) => m.role.toUpperCase().contains('PHOTO'))
+        .length;
+    final others = total - photographers;
+
+    Widget cell(String value, String label, Color tint) => Expanded(
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 26,
+              fontWeight: FontWeight.w700,
+              color: tint,
+              height: 1,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Montserrat',
+              fontSize: 9.5,
+              letterSpacing: 1.2,
+              fontWeight: FontWeight.w600,
+              color: AppColors.filmMuted,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    Widget divider() => Container(
+      width: 1,
+      height: 34,
+      color: AppColors.hairline,
+    );
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 18),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.glassBorder),
+      ),
+      child: Row(
+        children: [
+          cell('$total'.padLeft(2, '0'), 'MEMBERS', AppColors.orange),
+          divider(),
+          cell('$photographers'.padLeft(2, '0'), 'PHOTO', AppColors.film),
+          divider(),
+          cell('$others'.padLeft(2, '0'), 'OTHERS', AppColors.gold),
+        ],
+      ),
     );
   }
 }
@@ -391,17 +499,30 @@ class _TeamMemberTile extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 22,
-            backgroundColor: AppColors.teal.withValues(alpha: 0.15),
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.orange,
+                  AppColors.orangeLight,
+                ],
+              ),
+              border: Border.all(color: AppColors.glassBorder, width: 1.5),
+            ),
+            alignment: Alignment.center,
             child: Text(
               member.fullName.isNotEmpty
                   ? member.fullName[0].toUpperCase()
                   : '?',
-              style: TextStyle(
-                color: AppColors.teal,
+              style: const TextStyle(
+                color: Colors.white,
                 fontWeight: FontWeight.w700,
-                fontSize: 16,
+                fontSize: 17,
               ),
             ),
           ),

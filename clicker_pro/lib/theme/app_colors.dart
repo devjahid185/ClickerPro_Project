@@ -43,17 +43,19 @@ class AppColors {
   // Sunset Studio = terracotta · Sunrise Pulse = sunrise red-orange
   // ============================================================
 
-  // Static constants (used in const contexts — Sunset Studio values)
-  static const Color primary50 = Color(0xFFFFF1ED);
-  static const Color primary100 = Color(0xFFFFDDD5);
-  static const Color primary200 = Color(0xFFFFBCAE);
-  static const Color primary300 = Color(0xFFFF9580);
-  static const Color primary400 = Color(0xFFE07A5F); // terracotta light
-  static const Color primary500 = Color(0xFFC75A3C); // terracotta (SS default)
-  static const Color primary600 = Color(0xFFB04E35);
-  static const Color primary700 = Color(0xFF8B3A2E);
-  static const Color primary800 = Color(0xFF6B2B22);
-  static const Color primary900 = Color(0xFF4A1D18);
+  // Static constants (used in const contexts — Signal Orange ramp).
+  // Heaven: primary must be orange everywhere — this swatch drives the
+  // finance hero gradient and other const usages.
+  static const Color primary50 = Color(0xFFFFF3E8);
+  static const Color primary100 = Color(0xFFFFE0C2);
+  static const Color primary200 = Color(0xFFFFC089);
+  static const Color primary300 = Color(0xFFFF9F50);
+  static const Color primary400 = Color(0xFFFF8534); // orange light
+  static const Color primary500 = Color(0xFFFF6200); // Signal Orange (default)
+  static const Color primary600 = Color(0xFFE85700);
+  static const Color primary700 = Color(0xFFC44900);
+  static const Color primary800 = Color(0xFF9C3A00);
+  static const Color primary900 = Color(0xFF6B2800);
 
   // Theme-aware getters (use these in non-const contexts)
   static Color get orange =>
@@ -194,7 +196,7 @@ class AppColors {
   static const LinearGradient cardGlow = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0x0AC75A3C), Color(0x00C75A3C)],
+    colors: [Color(0x0AFF6200), Color(0x00FF6200)],
   );
 
   // ============================================================

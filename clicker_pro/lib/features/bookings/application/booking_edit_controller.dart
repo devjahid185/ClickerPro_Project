@@ -349,6 +349,11 @@ class BookingEditController
     final studioId = (user.role == UserRole.owner || user.role == UserRole.both)
         ? user.id
         : (user.ownerId ?? user.id);
+    // A pure Freelancer can only log their OWN short-form bookings (FL-12),
+    // so a fresh draft must start in freelancer mode — otherwise the editor
+    // shows the freelancer form but validates/saves against the full studio
+    // form and the "+ Add Booking" action appears to do nothing.
+    final isFreelancer = user.role == UserRole.freelancer;
     return BookingDraft(
       localId: newId,
       studioId: studioId,
@@ -360,6 +365,7 @@ class BookingEditController
       // user touches the shift pills.
       startTime: Shift.day.defaultStartTime,
       endTime: Shift.day.defaultEndTime,
+      freelancerMode: isFreelancer,
     );
   }
 

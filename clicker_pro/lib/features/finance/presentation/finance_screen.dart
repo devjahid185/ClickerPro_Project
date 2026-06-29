@@ -28,6 +28,8 @@ import '../../bookings/domain/booking_filter.dart';
 import '../../dashboard/application/dashboard_providers.dart';
 import '../../expenses/application/expense_providers.dart';
 import '../../expenses/domain/expense.dart';
+import '../../petty_cash/domain/petty_cash_entry.dart';
+import '../../petty_cash/presentation/petty_cash_screen.dart';
 import '../../profile/application/profile_controllers.dart';
 
 class FinanceScreen extends ConsumerStatefulWidget {
@@ -39,11 +41,14 @@ class FinanceScreen extends ConsumerStatefulWidget {
 
 class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   bool _isYearly = false;
+  // For "Both" role only: which side of finance is showing.
+  bool _showFreelancerSide = false;
 
   @override
   Widget build(BuildContext context) {
     final policy = ref.watch(bookingsPolicyProvider);
     final isManager = policy.role == UserRole.manager;
+    final isBoth = policy.role == UserRole.both;
     final firstName = ref
             .watch(currentUserProvider)
             .valueOrNull
@@ -59,6 +64,11 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     final expenses =
         ref.watch(expenseListControllerProvider).valueOrNull ??
         const <Expense>[];
+    // Petty cash counts as expense (per product decision) — it reduces net
+    // profit and feeds the same monthly bars as regular expenses.
+    final pettyCash =
+        ref.watch(pettyCashListProvider).valueOrNull ??
+        const <PettyCashEntry>[];
     final dueEntries = ref.watch(dueBreakdownProvider).valueOrNull;
 
     final now = DateTime.now();
@@ -83,9 +93,13 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     );
     final collected = booked - periodDue;
 
-    final periodExpense = expenses
-        .where((e) => inPeriod(e.incurredAt))
-        .fold<double>(0, (s, e) => s + e.amount);
+    final periodExpense =
+        expenses
+            .where((e) => inPeriod(e.incurredAt))
+            .fold<double>(0, (s, e) => s + e.amount) +
+        pettyCash
+            .where((p) => inPeriod(p.date))
+            .fold<double>(0, (s, p) => s + p.amount);
     final net = collected - periodExpense;
 
     final periodDueEntries = (dueEntries ?? const <DueEntry>[])
@@ -135,6 +149,15 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
           children: [
+            // Both-role users get a Studio | Freelancer switch so they can
+            // see either side of their finances from one screen.
+            if (isBoth) ...[
+              _FadeUp(order: 0, child: _buildBothRoleTabs()),
+              const SizedBox(height: 14),
+            ],
+            if (isBoth && _showFreelancerSide) ...[
+              _FadeUp(order: 1, child: _buildFreelancerSide()),
+            ] else ...[
             _FadeUp(order: 0, child: _buildPeriodToggle()),
             const SizedBox(height: 14),
             if (isManager) ...[
@@ -165,13 +188,146 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                 ),
               ),
               const SizedBox(height: 14),
-              _FadeUp(order: 5, child: _buildBarChart(bookings, expenses)),
+              _FadeUp(
+                order: 5,
+                child: _buildBarChart(bookings, expenses, pettyCash),
+              ),
               const SizedBox(height: 22),
             ],
             _FadeUp(order: 6, child: _buildActivityLog(periodDueEntries)),
+            ], // end studio-side (both-role) branch
           ],
         ),
       ),
+    );
+  }
+
+  // ── Both-role Studio | Freelancer tab bar ───────────────────────────
+  Widget _buildBothRoleTabs() {
+    Widget tab(String label, IconData icon, bool freelancer) {
+      final selected = _showFreelancerSide == freelancer;
+      return Expanded(
+        child: GestureDetector(
+          onTap: () => setState(() => _showFreelancerSide = freelancer),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(vertical: 11),
+            decoration: BoxDecoration(
+              color: selected ? AppColors.orange : Colors.transparent,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 16,
+                  color: selected ? Colors.white : AppColors.filmDim,
+                ),
+                const SizedBox(width: 7),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: selected ? Colors.white : AppColors.filmDim,
+                    fontSize: 13,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.glassBorder),
+      ),
+      child: Row(
+        children: [
+          tab('Studio', Icons.business_rounded, false),
+          tab('Freelancer', Icons.camera_alt_rounded, true),
+        ],
+      ),
+    );
+  }
+
+  // ── Both-role: Freelancer side — entry to the full earnings dashboard ─
+  Widget _buildFreelancerSide() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: AppColors.drawerHeaderGradient,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.camera_alt_rounded, color: Colors.white, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Freelancer Earnings',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Your payouts across every studio you work with — '
+                'received, pending, and per-owner breakdown.',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontSize: 12.5,
+                  height: 1.45,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        FilledButton.icon(
+          onPressed: () =>
+              Navigator.of(context).pushNamed(RouteNames.freelancerEarnings),
+          icon: const Icon(Icons.open_in_new_rounded, size: 18),
+          label: const Text('Open Earnings Dashboard'),
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.orange,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 15),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        OutlinedButton.icon(
+          onPressed: () =>
+              Navigator.of(context).pushNamed(RouteNames.freelancerCompanies),
+          icon: const Icon(Icons.business_outlined, size: 18),
+          label: const Text('My Companies'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.orange,
+            side: BorderSide(color: AppColors.orange.withValues(alpha: 0.5)),
+            padding: const EdgeInsets.symmetric(vertical: 15),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -621,7 +777,11 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   }
 
   // ── 6-month Income vs Expense bars ─────────────────────────────────
-  Widget _buildBarChart(List<Booking> bookings, List<Expense> expenses) {
+  Widget _buildBarChart(
+    List<Booking> bookings,
+    List<Expense> expenses,
+    List<PettyCashEntry> pettyCash,
+  ) {
     final now = DateTime.now();
     final months = List.generate(6, (i) {
       final m = DateTime(now.year, now.month - (5 - i), 1);
@@ -642,6 +802,12 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
       final key = DateTime(e.incurredAt.year, e.incurredAt.month, 1);
       if (expenseByMonth.containsKey(key)) {
         expenseByMonth[key] = expenseByMonth[key]! + e.amount;
+      }
+    }
+    for (final p in pettyCash) {
+      final key = DateTime(p.date.year, p.date.month, 1);
+      if (expenseByMonth.containsKey(key)) {
+        expenseByMonth[key] = expenseByMonth[key]! + p.amount;
       }
     }
 

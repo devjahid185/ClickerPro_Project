@@ -21,7 +21,6 @@ import 'package:flutter/foundation.dart'
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../../core/env/app_config.dart';
@@ -87,7 +86,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
-  bool _googleLoading = false;
   bool _appleLoading = false;
   DateTime? _pendingDeleteUntil;
 
@@ -189,89 +187,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     Navigator.of(context).push(slideFromRightRoute(const RegisterScreen()));
   }
 
-
-  Future<void> _handleGoogleSignIn() async {
-    setState(() => _googleLoading = true);
-    try {
-      // serverClientId is passed explicitly — on some OEM ROMs the
-      // plugin fails to read the default_web_client_id resource from
-      // google-services.json and dies with DEVELOPER_ERROR (status 10).
-      // This is the project's PUBLIC web OAuth client id, not a secret.
-      final google = GoogleSignIn(
-        serverClientId:
-            '113528221350-ulop3128toa364k8n4uo109mq7ag9cog.apps.googleusercontent.com',
-      );
-      // Clear any cached Google session first — otherwise the plugin
-      // silently reuses the last account and the user never gets to
-      // pick which Gmail to sign in with.
-      try {
-        await google.signOut();
-      } catch (_) {
-        // Ignore — a failed signOut just means no cached session.
-      }
-      final googleUser = await google.signIn();
-      if (googleUser == null) {
-        setState(() => _googleLoading = false);
-        return;
-      }
-      final auth = await googleUser.authentication;
-      final idToken = auth.idToken;
-      if (idToken == null) {
-        // No ID token = the OAuth client is missing from
-        // google-services.json (SHA fingerprint not registered in
-        // Firebase). See GOOGLE_SIGNIN_SETUP.md at the repo root.
-        _showError(
-          'Google sign-in is not configured in this build yet — '
-          'please log in with email for now.',
-        );
-        return;
-      }
-
-      await ref
-          .read(sessionControllerProvider.notifier)
-          .loginWithGoogle(idToken);
-
-      if (!mounted) return;
-      final session = ref.read(sessionControllerProvider);
-      if (session.hasValue && session.value != null) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const DashboardScreen()),
-          (route) => false,
-        );
-        return;
-      }
-      // Surface why the backend rejected the token — honest messages
-      // beat a generic "failed".
-      final error = session.error;
-      if (error is ApiException && error.isNetwork) {
-        _showError('Cannot reach the server. Check your internet.');
-      } else if (error is ApiException && error.statusCode == 403) {
-        _showError('This account is disabled. Please contact support.');
-      } else {
-        _showError('Google sign-in failed. Please try again.');
-      }
-    } catch (e) {
-      if (!mounted) return;
-      // ApiException: 10 (DEVELOPER_ERROR) = SHA-1 fingerprint not
-      // registered in Firebase for this package — a config problem,
-      // not the user's fault. Say so instead of a generic failure.
-      final text = e.toString();
-      if (text.contains('ApiException: 10') ||
-          text.contains('DEVELOPER_ERROR')) {
-        _showError(
-          'Google sign-in is not configured in this build yet — '
-          'please log in with email for now.',
-        );
-      } else if (text.contains('network_error') ||
-          text.contains('ApiException: 7')) {
-        _showError('No internet connection. Check your network.');
-      } else {
-        _showError('Google sign-in failed. Please try again.');
-      }
-    } finally {
-      if (mounted) setState(() => _googleLoading = false);
-    }
-  }
 
   Future<void> _handleAppleSignIn() async {
     setState(() => _appleLoading = true);
@@ -504,9 +419,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         const SizedBox(height: 24),
 
                         // ── DIVIDER + SOCIAL LOGIN ────────────────
-                        // Hidden while kSocialLoginEnabled is false (no
-                        // backend routes yet — see the constant's doc).
-                        if (kSocialLoginEnabled) ...[
+                        // Google sign-in removed per product decision. The
+                        // only remaining social option is Apple, which exists
+                        // on iOS alone — so on Android this whole block is
+                        // hidden (no lonely "OR" divider).
+                        if (kSocialLoginEnabled &&
+                            defaultTargetPlatform == TargetPlatform.iOS) ...[
                           Row(
                             children: [
                               Expanded(
@@ -541,21 +459,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           ),
                           const SizedBox(height: 18),
                           _SocialButton(
-                            label: 'Continue with Google',
-                            icon: _kGoogleIcon,
-                            loading: _googleLoading,
-                            onTap: _handleGoogleSignIn,
+                            label: 'Continue with Apple',
+                            icon: _kAppleIcon,
+                            loading: _appleLoading,
+                            onTap: _handleAppleSignIn,
                           ),
-                          // Apple sign-in only exists on iOS devices.
-                          if (defaultTargetPlatform == TargetPlatform.iOS) ...[
-                            const SizedBox(height: 10),
-                            _SocialButton(
-                              label: 'Continue with Apple',
-                              icon: _kAppleIcon,
-                              loading: _appleLoading,
-                              onTap: _handleAppleSignIn,
-                            ),
-                          ],
                         ],
 
                         const SizedBox(height: 20),
@@ -821,86 +729,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   }
 }
 
-// ─── Google SVG path (G mark) ─────────────────────────────────────────────
-const _kGoogleIcon = _GoogleIcon();
+// ─── Apple icon ───────────────────────────────────────────────────────────
 const _kAppleIcon = _AppleIcon();
-
-class _GoogleIcon extends StatelessWidget {
-  const _GoogleIcon();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 20,
-      height: 20,
-      child: CustomPaint(painter: _GooglePainter()),
-    );
-  }
-}
-
-class _GooglePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final s = size.width;
-    // Blue
-    canvas.drawArc(
-      Rect.fromLTWH(0, 0, s, s),
-      -1.05,
-      2.1,
-      false,
-      Paint()
-        ..color = const Color(0xFF4285F4)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = s * 0.18,
-    );
-    // Red
-    canvas.drawArc(
-      Rect.fromLTWH(0, 0, s, s),
-      1.05,
-      2.3,
-      false,
-      Paint()
-        ..color = const Color(0xFFEA4335)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = s * 0.18,
-    );
-    // Yellow
-    canvas.drawArc(
-      Rect.fromLTWH(0, 0, s, s),
-      3.35,
-      0.75,
-      false,
-      Paint()
-        ..color = const Color(0xFFFBBC05)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = s * 0.18,
-    );
-    // Green
-    canvas.drawArc(
-      Rect.fromLTWH(0, 0, s, s),
-      4.1,
-      0.9,
-      false,
-      Paint()
-        ..color = const Color(0xFF34A853)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = s * 0.18,
-    );
-    // Horizontal bar
-    final paint = Paint()
-      ..color = const Color(0xFF4285F4)
-      ..strokeWidth = s * 0.18
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(
-      Offset(s * 0.5, s * 0.5),
-      Offset(s * 0.95, s * 0.5),
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
 
 class _AppleIcon extends StatelessWidget {
   const _AppleIcon();

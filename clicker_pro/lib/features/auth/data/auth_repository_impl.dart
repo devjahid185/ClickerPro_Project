@@ -3,6 +3,7 @@
 import 'dart:async';
 
 import 'package:drift/drift.dart' show Value;
+import 'package:flutter/foundation.dart' show kReleaseMode;
 
 import '../../../core/db/app_database.dart';
 import '../../../core/db/daos/users_dao.dart';
@@ -109,12 +110,17 @@ class AuthRepositoryImpl implements AuthRepository {
     throw error;
   }
 
-  /// The offline "demo mode" (accept-any-credentials fallback + demo OTP)
-  /// is a development convenience ONLY. In production builds it would be
-  /// a login bypass — anyone with the device could enter the app with
-  /// made-up credentials in airplane mode — so it is hard-gated off.
+  /// The offline "demo mode" (accept-any-credentials fallback + demo OTP
+  /// 123456) is a development convenience ONLY. In a shipped build it would
+  /// be a login bypass — anyone with the device could enter the app with
+  /// made-up credentials in airplane mode and the OTP "123456" would pass.
+  ///
+  /// It is hard-gated TWO ways: it never runs in a release build
+  /// (`kReleaseMode`), AND it requires a non-production ENVIRONMENT. The
+  /// release-mode guard is the safety net — even if .env is missing or
+  /// misconfigured, the demo path stays off in every APK/AAB Heaven ships.
   bool get _allowOfflineDemo =>
-      AppConfig.environment.toLowerCase() != 'production';
+      !kReleaseMode && AppConfig.environment.toLowerCase() != 'production';
 
   /// Wraps a non-API failure (transport, parsing) into a clean
   /// [ApiException] for the UI instead of leaking raw error text.

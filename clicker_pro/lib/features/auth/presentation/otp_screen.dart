@@ -27,7 +27,7 @@ import '../../../screens/dashboard_screen.dart';
 import '../../../theme/app_colors.dart';
 import '../application/session_controller.dart';
 import '../domain/otp_purpose.dart';
-import 'login_screen.dart' show slideFromRightRoute;
+import 'login_screen.dart' show LoginScreen, slideFromRightRoute;
 import 'reset_password_screen.dart';
 
 class OtpScreen extends ConsumerStatefulWidget {
@@ -261,6 +261,22 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
     }
   }
 
+  /// Back navigation. Registration reaches this screen via
+  /// pushAndRemoveUntil (the whole stack is cleared), so there is nothing to
+  /// pop back to and a plain maybePop() would do nothing. Fall back to the
+  /// Login screen in that case so the button always responds.
+  void _handleBack() {
+    final nav = Navigator.of(context);
+    if (nav.canPop()) {
+      nav.pop();
+    } else {
+      nav.pushAndRemoveUntil(
+        slideFromRightRoute(const LoginScreen()),
+        (route) => false,
+      );
+    }
+  }
+
   void _onApiError(Object? err) {
     String message;
     if (err is ApiException &&
@@ -291,9 +307,16 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.voidBlack,
-      body: Stack(
+    return PopScope(
+      // The stack is usually cleared before this screen, so the framework
+      // can't pop it. Intercept the system back and route to Login ourselves.
+      canPop: Navigator.of(context).canPop(),
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _handleBack();
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.voidBlack,
+        body: Stack(
         children: [
           Positioned(
             top: -100,
@@ -490,11 +513,12 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                   size: 18,
                   color: AppColors.film,
                 ),
-                onPressed: () => Navigator.of(context).maybePop(),
+                onPressed: _handleBack,
               ),
             ),
           ),
         ],
+        ),
       ),
     );
   }
