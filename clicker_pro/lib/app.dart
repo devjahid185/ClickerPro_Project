@@ -51,6 +51,9 @@ class ClickerProApp extends ConsumerWidget {
         return MediaQuery(
           data: media.copyWith(
             disableAnimations: media.disableAnimations || reduceMotion,
+            // Force 24-hour time everywhere (pickers + Material time rendering)
+            // regardless of the device's 12h/24h locale setting.
+            alwaysUse24HourFormat: true,
           ),
           child: KeyedSubtree(
             key: ValueKey(isDark ? 'pulse' : 'sunset'),

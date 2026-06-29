@@ -512,7 +512,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
           LensTextField(
             label: 'Reporting Time',
             controller: _reportingTimeCtrl,
-            hint: 'e.g. 07:00 AM',
+            hint: 'e.g. 07:00',
             onChanged: (_) => _markDirty(),
           ),
         ],
@@ -659,7 +659,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
           LensTextField(
             label: 'Reporting Time',
             controller: _reportingTimeCtrl,
-            hint: 'e.g. 08:00 AM',
+            hint: 'e.g. 08:00',
             onChanged: (_) => _markDirty(),
           ),
         ],
