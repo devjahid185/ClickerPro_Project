@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,6 +10,7 @@ import 'features/bookings/application/booking_providers.dart';
 import 'features/onboarding/presentation/splash_screen.dart';
 import 'features/settings/application/language_controller.dart';
 import 'l10n/app_localizations.dart';
+import 'shared/widgets/web_shell.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_colors_pulse.dart';
 import 'theme/app_theme.dart';
@@ -38,8 +40,18 @@ class ClickerProApp extends ConsumerWidget {
       title: 'Clicker Pro',
       debugShowCheckedModeBanner: false,
       // Sunset Studio = light ThemeData · Sunrise Pulse = dark ThemeData.
-      theme: AppTheme.sunsetStudio(),
-      darkTheme: AppTheme.sunrisePulse(),
+      // On web the Scaffold is made transparent so the WebShell's orange
+      // glass backdrop shows through; mobile keeps its solid surface.
+      theme: kIsWeb
+          ? AppTheme.sunsetStudio().copyWith(
+              scaffoldBackgroundColor: Colors.transparent,
+            )
+          : AppTheme.sunsetStudio(),
+      darkTheme: kIsWeb
+          ? AppTheme.sunrisePulse().copyWith(
+              scaffoldBackgroundColor: Colors.transparent,
+            )
+          : AppTheme.sunrisePulse(),
       themeMode: themeMode,
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -57,7 +69,8 @@ class ClickerProApp extends ConsumerWidget {
           ),
           child: KeyedSubtree(
             key: ValueKey(isDark ? 'pulse' : 'sunset'),
-            child: child ?? const SizedBox.shrink(),
+            // Web-only glassmorphism shell; a pure pass-through on mobile.
+            child: WebShell(child: child ?? const SizedBox.shrink()),
           ),
         );
       },
