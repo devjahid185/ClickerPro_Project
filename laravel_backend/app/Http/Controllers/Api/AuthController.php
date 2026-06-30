@@ -39,15 +39,29 @@ class AuthController extends Controller
             'password' => $data['password'],
             'public_booking_token' => Str::uuid(),
         ]);
+        // SECURITY / OTP GATE: a freshly registered account is created but NOT
+        // logged in. We intentionally do NOT issue an auth token here — the
+        // account is "unverified" until the email OTP is confirmed. Only
+        // verifyOtp() (purpose=signup) issues the token. This closes the hole
+        // where registering returned a token immediately, so OTP was optional
+        // and reopening the app logged the user in without ever verifying.
         $user->forceFill([
             'role' => $data['role'] ?? 'OWNER',
             'plan' => 'FREE',
             'is_active' => true,
+            'email_verified_at' => null, // verified on OTP success
         ])->save();
 
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json(['data' => ['token' => $token, 'user' => new UserResource($user)]], 201);
+        // No token — the client must complete OTP, then receive the token from
+        // verifyOtp. The user object is returned only so the app can show the
+        // email on the OTP screen.
+        return response()->json([
+            'data' => [
+                'token' => null,
+                'requiresOtp' => true,
+                'user' => new UserResource($user),
+            ],
+        ], 201);
     }
 
     public function login(Request $request)
@@ -258,6 +272,24 @@ class AuthController extends Controller
         }
 
         $otp->update(['used' => true]);
+
+        // For a signup verification, THIS is the moment the account becomes
+        // usable: mark the email verified and issue the auth token. Returning
+        // the token here (and nowhere earlier) is what makes OTP mandatory —
+        // without completing this step the user has no session at all.
+        if (strtolower((string) $data['purpose']) === 'signup') {
+            if ($user->email_verified_at === null) {
+                $user->forceFill(['email_verified_at' => now()])->save();
+            }
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            return response()->json([
+                'data' => [
+                    'token' => $token,
+                    'user' => new UserResource($user),
+                ],
+            ]);
+        }
 
         return response()->json(['message' => 'ok']);
     }

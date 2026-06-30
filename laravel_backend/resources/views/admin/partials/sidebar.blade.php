@@ -9,10 +9,9 @@
             ['route' => 'admin.users',   'label' => 'All Users',  'icon' => '⊙'],
             ['route' => 'admin.studios', 'label' => 'Businesses', 'icon' => '⬡'],
         ]],
+        // NOTE: Bookings / Finance / Payments were intentionally removed —
+        // the admin console must not expose any user's booking or finance data.
         ['label' => 'Operations', 'items' => [
-            ['route' => 'admin.bookings',      'label' => 'Bookings',      'icon' => '▦'],
-            ['route' => 'admin.finance',       'label' => 'Finance',       'icon' => '◎'],
-            ['route' => 'admin.payments',      'label' => 'Payments',      'icon' => '◇'],
             ['route' => 'admin.subscriptions', 'label' => 'Subscriptions', 'icon' => '◈'],
             ['route' => 'admin.coupons',       'label' => 'Coupons',       'icon' => '⊕'],
         ]],

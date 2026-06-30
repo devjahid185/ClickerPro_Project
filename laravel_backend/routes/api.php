@@ -275,15 +275,13 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
         Route::patch('users/{id}/role', [AdminController::class, 'setRole']);
         Route::patch('users/{id}/plan', [AdminController::class, 'setPlan']);
         Route::patch('users/{id}/suspend', [AdminController::class, 'setSuspend']);
-        Route::get('export', [AdminController::class, 'exportCsv']);
-        // Frontend uses /export/<type>.csv — map to the same handler.
-        Route::get('export/{file}', [AdminController::class, 'exportCsv']);
         // OTA app-version control (set latest version + APK url).
         Route::patch('app/version', [\App\Http\Controllers\Api\AppVersionController::class, 'update']);
 
-        // All-studio bookings & payments
-        Route::get('bookings', [AdminController::class, 'bookings']);
-        Route::get('payments', [AdminController::class, 'payments']);
+        // REMOVED by request: admin must NOT see any user's bookings, payments,
+        // income, or expenses — not via the panel, not via the API, not via CSV
+        // export. The all-studio bookings/payments endpoints and the finance CSV
+        // export are intentionally disabled.
 
         // Files
         Route::get('files', [FileController::class, 'adminIndex']);

@@ -4,15 +4,14 @@
 
 @section('content')
     @php
-        // Revenue arrives in minor units (paisa); show as Taka.
-        $revenue = ($stats['totalRevenueMinor'] ?? 0) / 100;
+        // NOTE: Revenue and Total Bookings cards were intentionally removed —
+        // the admin console must not surface any user's finance or booking data,
+        // not even aggregated. Only non-financial platform counts remain.
         $cards = [
             ['label' => 'Total Users',    'value' => number_format($stats['totalUsers'] ?? 0),     'icon' => '⊙', 'tint' => 'var(--primary-soft)', 'color' => 'var(--primary)'],
             ['label' => 'Owners',         'value' => number_format($stats['owners'] ?? 0),         'icon' => '⬡', 'tint' => 'var(--info-soft)',    'color' => 'var(--info)'],
             ['label' => 'Freelancers',    'value' => number_format($stats['freelancers'] ?? 0),    'icon' => '◇', 'tint' => 'var(--success-soft)', 'color' => 'var(--success)'],
-            ['label' => 'Total Bookings', 'value' => number_format($stats['totalBookings'] ?? 0),  'icon' => '▦', 'tint' => 'var(--warning-soft)', 'color' => 'var(--warning)'],
             ['label' => 'Total Clients',  'value' => number_format($stats['totalClients'] ?? 0),   'icon' => '◌', 'tint' => 'var(--primary-soft)', 'color' => 'var(--primary)'],
-            ['label' => 'Revenue',        'value' => '৳' . number_format($revenue),                'icon' => '◎', 'tint' => 'var(--success-soft)', 'color' => 'var(--success)'],
             ['label' => 'Active Broadcasts', 'value' => number_format($stats['activeBroadcasts'] ?? 0), 'icon' => '◉', 'tint' => 'var(--info-soft)',   'color' => 'var(--info)'],
             ['label' => 'Open Tickets',   'value' => number_format($stats['openTickets'] ?? 0),    'icon' => '⊛', 'tint' => 'var(--danger-soft)',  'color' => 'var(--danger)'],
         ];

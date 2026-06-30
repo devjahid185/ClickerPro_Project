@@ -4,9 +4,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\UsersController;
-use App\Http\Controllers\Admin\BookingsController;
-use App\Http\Controllers\Admin\PaymentsController;
-use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\StudiosController;
 use App\Http\Controllers\Admin\CouponsController;
@@ -51,18 +48,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::patch('users/{id}/plan', [UsersController::class, 'setPlan'])->name('users.plan');
         Route::patch('users/{id}/suspend', [UsersController::class, 'suspend'])->name('users.suspend');
 
-        // --- Bookings (read-only) ---
-        Route::get('bookings', [BookingsController::class, 'index'])->name('bookings');
-
-        // --- Payments (read-only) ---
-        Route::get('payments', [PaymentsController::class, 'index'])->name('payments');
-
-        // --- Finance ---
-        Route::get('finance', [FinanceController::class, 'index'])->name('finance');
-        Route::get('finance/export', function (\Illuminate\Http\Request $r, \App\Http\Controllers\Api\AdminController $api) {
-            $r->merge(['type' => 'bookings']); // payments CSV via bookings export
-            return $api->exportCsv($r);
-        })->name('finance.export');
+        // --- Bookings / Payments / Finance ---
+        // REMOVED by request: the admin console must NOT expose any user's
+        // bookings, payments, income, or expenses. These routes (and their
+        // sidebar links, dashboard cards, and API endpoints) are intentionally
+        // disabled so studio finance/booking data stays private to the owner.
 
         // --- Analytics ---
         Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics');

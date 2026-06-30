@@ -35,4 +35,16 @@ return [
         ],
     ],
 
+    // Google Sheets auto-sync for new bookings. Disabled until both values
+    // are set (see GOOGLE_SHEETS_SETUP.md). When unset the app behaves exactly
+    // as before — booking saves are never blocked by Sheets.
+    'google_sheets' => [
+        // Absolute path to the service-account JSON key on the server.
+        'credentials' => env('GOOGLE_SHEETS_CREDENTIALS'),
+        // The target spreadsheet id (from its URL).
+        'sheet_id' => env('GOOGLE_SHEETS_ID'),
+        // Tab/sheet name to append rows to.
+        'tab' => env('GOOGLE_SHEETS_TAB', 'Bookings'),
+    ],
+
 ];

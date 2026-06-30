@@ -23,20 +23,17 @@ class AdminController extends Controller
     public function stats()
     {
         $data = Cache::remember('admin.stats', self::DASHBOARD_TTL, function () {
-            // Revenue is stored in major units (Taka); admin UI divides by 100,
-            // so report it in minor units (paisa) to match its expectation.
-            $revenue = (float) Payment::where('kind', '!=', 'PAYOUT')->sum('amount');
-
+            // PRIVACY: admin must NOT see any user's finance or booking data.
+            // Revenue (totalRevenueMinor) and totalBookings were intentionally
+            // removed — only non-financial platform counts are reported.
             return [
                 'totalUsers'        => User::count(),
                 'owners'            => User::whereIn('role', ['OWNER', 'BOTH'])->count(),
                 'freelancers'       => User::whereIn('role', ['FREELANCER', 'BOTH'])->count(),
                 'admins'            => User::where('role', 'ADMIN')->count(),
-                'totalBookings'     => Event::count(),
                 'totalClients'      => Client::count(),
                 'activeBroadcasts'  => Broadcast::where('is_active', true)->count(),
                 'openTickets'       => SupportTicket::whereIn('status', ['OPEN', 'IN_PROGRESS'])->count(),
-                'totalRevenueMinor' => (int) round($revenue * 100),
             ];
         });
 
@@ -46,44 +43,18 @@ class AdminController extends Controller
     public function analytics()
     {
         $data = Cache::remember('admin.analytics', self::DASHBOARD_TTL, function () {
+            // PRIVACY: booking-derived analytics (monthly bookings, status
+            // breakdown, top studios by bookings) were intentionally removed —
+            // the admin must not see any user's booking activity. Only the
+            // non-financial signups trend remains.
             $signups = User::select(
                     DB::raw("TO_CHAR(created_at, 'YYYY-MM') as month"),
                     DB::raw('COUNT(*) as count')
                 )
                 ->groupBy('month')->orderBy('month')->limit(12)->get();
 
-            $bookings = Event::select(
-                    DB::raw("TO_CHAR(created_at, 'YYYY-MM') as month"),
-                    DB::raw('COUNT(*) as count')
-                )
-                ->groupBy('month')->orderBy('month')->limit(12)->get();
-
-            $statusBreakdown = Event::select('status', DB::raw('COUNT(*) as count'))
-                ->groupBy('status')->get();
-
-            $topRows = Event::select('owner_id', DB::raw('COUNT(*) as bookings'))
-                ->groupBy('owner_id')->orderByDesc('bookings')->limit(5)->get();
-
-            // Batch-load the owners in a single query (was N+1: one find() per
-            // row) and resolve names from the in-memory map — identical output.
-            $owners = User::whereIn('id', $topRows->pluck('owner_id'))
-                ->get(['id', 'name', 'business_name'])
-                ->keyBy('id');
-
-            $topStudios = $topRows->map(function ($row) use ($owners) {
-                $owner = $owners->get($row->owner_id);
-                return [
-                    'ownerId'  => (string) $row->owner_id,
-                    'name'     => $owner?->business_name ?: ($owner?->name ?? 'Unknown'),
-                    'bookings' => (int) $row->bookings,
-                ];
-            });
-
             return [
-                'signups'         => $signups,
-                'bookings'        => $bookings,
-                'statusBreakdown' => $statusBreakdown,
-                'topStudios'      => $topStudios,
+                'signups' => $signups,
             ];
         });
 
@@ -92,7 +63,8 @@ class AdminController extends Controller
 
     public function users(Request $request)
     {
-        $query = User::withCount('events')->orderBy('created_at', 'desc');
+        // PRIVACY: no event/booking counts — admin must not see user activity.
+        $query = User::orderBy('created_at', 'desc');
 
         if ($request->has('search') && $request->search) {
             $search = $request->search;
@@ -132,45 +104,25 @@ class AdminController extends Controller
 
     public function userDetail($id)
     {
-        $user = User::withCount(['events', 'clients'])->find($id);
+        $user = User::withCount(['clients'])->find($id);
 
         if (!$user) {
             return response()->json(['message' => 'Not found'], 404);
         }
 
-        // The admin UI renders {user, stats, bookings} — returning the raw
-        // row made every field read crash client-side (data.user.fullName).
-        $eventIds = Event::where('owner_id', $user->id)->pluck('id');
-        $paymentsCount = Payment::whereIn('event_id', $eventIds)->count();
-        $paymentsTotal = (float) Payment::whereIn('event_id', $eventIds)->sum('amount');
-
-        $bookings = Event::where('owner_id', $user->id)
-            ->with('client:id,name')
-            ->orderBy('date', 'desc')
-            ->limit(15)
-            ->get()
-            ->map(fn ($e) => [
-                'id' => (string) $e->id,
-                'title' => $e->title,
-                'type' => $e->event_type,
-                'date' => $e->date,
-                'status' => $e->status,
-                'venue' => $e->venue,
-                'client' => $e->client ? ['name' => $e->client->name] : null,
-            ]);
-
+        // PRIVACY: the admin must NOT see this user's bookings, payments,
+        // income, or expenses. The booking list and all payment/revenue stats
+        // were intentionally removed — only the profile and a non-financial
+        // client count remain.
         return response()->json(['data' => [
             'user' => array_merge($this->userRow($user), [
                 'whatsapp' => $user->whatsapp ?? null,
                 'businessAddress' => $user->business_address ?? null,
             ]),
             'stats' => [
-                'bookings' => $user->events_count ?? 0,
                 'clients' => $user->clients_count ?? 0,
-                'paymentsCount' => $paymentsCount,
-                'paymentsTotal' => $paymentsTotal,
             ],
-            'bookings' => $bookings,
+            'bookings' => [],
         ]]);
     }
 
@@ -300,22 +252,22 @@ class AdminController extends Controller
 
     public function exportCsv(Request $request, $file = null)
     {
-        // Accept either ?type=bookings or /export/bookings.csv
+        // PRIVACY: only the non-financial USERS export is allowed. The old
+        // bookings/payments CSV (price, advance_paid, due_amount…) exposed
+        // every studio's finance data and is intentionally disabled — any
+        // non-"users" type is rejected rather than served.
         $type = $request->get('type');
         if (!$type && $file) {
             $type = pathinfo($file, PATHINFO_FILENAME); // "bookings.csv" → "bookings"
         }
         $type = $type ?: 'users';
 
-        if ($type === 'users') {
-            $rows = User::select('id', 'name', 'email', 'phone', 'role', 'plan', 'business_name', 'is_active', 'created_at')->get();
-            $headers = ['id', 'name', 'email', 'phone', 'role', 'plan', 'business_name', 'is_active', 'created_at'];
-        } else {
-            $rows = Event::with('client', 'owner')
-                ->select('id', 'title', 'date', 'status', 'price', 'advance_paid', 'due_amount', 'owner_id', 'client_id', 'created_at')
-                ->get();
-            $headers = ['id', 'title', 'date', 'status', 'price', 'advance_paid', 'due_amount', 'owner_id', 'client_id', 'created_at'];
+        if ($type !== 'users') {
+            abort(403, 'Export disabled: admin cannot export booking or finance data.');
         }
+
+        $rows = User::select('id', 'name', 'email', 'phone', 'role', 'plan', 'business_name', 'is_active', 'created_at')->get();
+        $headers = ['id', 'name', 'email', 'phone', 'role', 'plan', 'business_name', 'is_active', 'created_at'];
 
         $csv = implode(',', $headers) . "\n";
 

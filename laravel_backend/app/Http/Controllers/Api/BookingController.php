@@ -8,6 +8,7 @@ use App\Http\Resources\BookingResource;
 use App\Models\Event;
 use App\Models\Client;
 use App\Models\StatusHistory;
+use App\Services\GoogleSheetsService;
 use Illuminate\Http\Request;
 
 class BookingController extends Controller
@@ -102,7 +103,41 @@ class BookingController extends Controller
 
         $event = Event::create($data);
 
+        // Auto-append the new booking to the owner's Google Sheet (if the
+        // integration is configured). Fail-safe: any Sheets error is swallowed
+        // inside the service so it can never block the booking from saving.
+        $this->syncBookingToSheet($event->load('client'));
+
         return response()->json(['data' => $this->flatten($event->load('client'))], 201);
+    }
+
+    /**
+     * Append a flat row for [$event] to the configured Google Sheet. No-op when
+     * the integration is disabled. Column order is documented in
+     * GOOGLE_SHEETS_SETUP.md so the sheet header can match.
+     */
+    private function syncBookingToSheet(Event $event): void
+    {
+        $sheets = app(GoogleSheetsService::class);
+        if (!$sheets->isEnabled()) {
+            return;
+        }
+
+        $sheets->appendRow([
+            $event->id,
+            optional($event->created_at)->toDateTimeString(),
+            $event->title,
+            $event->event_type,
+            optional($event->client)->name,
+            optional($event->client)->phone,
+            $event->date,
+            $event->shift,
+            $event->venue,
+            $event->status,
+            $event->price,
+            $event->advance_paid,
+            $event->due_amount,
+        ], (string) config('services.google_sheets.tab', 'Bookings'));
     }
 
     public function show(Request $request, $id)
