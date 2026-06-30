@@ -73,6 +73,53 @@ class _FadeUpInState extends State<FadeUpIn> {
   }
 }
 
+/// Wraps each child in a [FadeUpIn] with an automatically increasing [order],
+/// producing a staggered "develop" cascade with zero per-call bookkeeping.
+///
+/// Drop-in for the children of a Column / ListView:
+///
+/// ```dart
+/// Column(children: StaggeredList.wrap([
+///   HeaderCard(),
+///   StatRow(),
+///   RecentList(),
+/// ]));
+/// ```
+///
+/// The stagger is capped at [maxOrder] so long lists don't get a sluggish
+/// tail, and the whole thing collapses to plain children under reduce-motion
+/// (FadeUpIn already honours that).
+class StaggeredList {
+  StaggeredList._();
+
+  static List<Widget> wrap(
+    List<Widget> children, {
+    int startOrder = 0,
+    int maxOrder = 8,
+    double offset = 0.06,
+  }) {
+    return [
+      for (var i = 0; i < children.length; i++)
+        FadeUpIn(
+          order: (startOrder + i).clamp(0, maxOrder),
+          offset: offset,
+          child: children[i],
+        ),
+    ];
+  }
+
+  /// Builder variant for `ListView.builder` / `SliverChildBuilderDelegate`:
+  /// wraps the item at [index] with the right stagger order.
+  static Widget item(int index, Widget child,
+      {int maxOrder = 8, double offset = 0.06}) {
+    return FadeUpIn(
+      order: index.clamp(0, maxOrder),
+      offset: offset,
+      child: child,
+    );
+  }
+}
+
 /// Wraps a tappable surface so it gently shrinks while pressed — the
 /// tactile "shutter press" feel on cards and primary buttons.
 class TapScale extends StatefulWidget {

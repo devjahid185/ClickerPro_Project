@@ -6,6 +6,7 @@ import '../../../core/role/role_policy.dart';
 import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
+import '../../../shared/widgets/motion.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_strings.dart';
 import '../../../theme/app_theme.dart';
@@ -143,18 +144,21 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
                 }
                 return SliverList.builder(
                   itemCount: items.length,
-                  itemBuilder: (_, i) => _AnnouncementCard(
-                    announcement: items[i],
-                    canManage: canManage,
-                    onTogglePin: () => ref
-                        .read(announcementListControllerProvider.notifier)
-                        .togglePin(items[i].id, items[i].pinned),
-                    onDelete: () =>
-                        _confirmAndDelete(context, ref, items[i].id),
-                    onMarkRead: () => ref
-                        .read(announcementListControllerProvider.notifier)
-                        .markRead(items[i].id),
-                    teamSize: teamSize,
+                  itemBuilder: (_, i) => StaggeredList.item(
+                    i,
+                    _AnnouncementCard(
+                      announcement: items[i],
+                      canManage: canManage,
+                      onTogglePin: () => ref
+                          .read(announcementListControllerProvider.notifier)
+                          .togglePin(items[i].id, items[i].pinned),
+                      onDelete: () =>
+                          _confirmAndDelete(context, ref, items[i].id),
+                      onMarkRead: () => ref
+                          .read(announcementListControllerProvider.notifier)
+                          .markRead(items[i].id),
+                      teamSize: teamSize,
+                    ),
                   ),
                 );
               },

@@ -77,16 +77,40 @@ const Map<int, Map<int, Map<int, String>>> _bdHolidayNames = {
   },
 };
 
-/// Number of public holidays in [when]'s month. Unknown years return 0
-/// rather than guessing.
-int bdHolidaysInMonth(DateTime when) {
-  return _bdHolidays[when.year]?[when.month]?.length ?? 0;
+/// Government weekly holidays in Bangladesh: Friday + Saturday. These apply
+/// every week regardless of year, so the holiday list is never empty even in
+/// months with no gazetted national day.
+const Set<int> _weeklyHolidayWeekdays = {DateTime.friday, DateTime.saturday};
+
+/// Every weekly-holiday day-number (Fri/Sat) in [when]'s month.
+List<int> _weeklyHolidayDays(DateTime when) {
+  final daysInMonth = DateTime(when.year, when.month + 1, 0).day;
+  final out = <int>[];
+  for (var day = 1; day <= daysInMonth; day++) {
+    final wd = DateTime(when.year, when.month, day).weekday;
+    if (_weeklyHolidayWeekdays.contains(wd)) out.add(day);
+  }
+  return out;
 }
 
-/// The holiday day-numbers of [when]'s month (for calendar dots etc.).
-List<int> bdHolidayDays(DateTime when) {
-  return List.unmodifiable(_bdHolidays[when.year]?[when.month] ?? const []);
+/// All holiday day-numbers (national + weekly Fri/Sat) in [when]'s month,
+/// de-duplicated and sorted.
+List<int> _allHolidayDays(DateTime when) {
+  final national = _bdHolidays[when.year]?[when.month] ?? const <int>[];
+  final set = <int>{...national, ..._weeklyHolidayDays(when)};
+  final sorted = set.toList()..sort();
+  return sorted;
 }
+
+/// Number of holidays in [when]'s month — national gazetted days plus the
+/// weekly Friday/Saturday holidays. Unknown years still return the weekly
+/// count (which is independent of the gazetted-date table).
+int bdHolidaysInMonth(DateTime when) => _allHolidayDays(when).length;
+
+/// The holiday day-numbers of [when]'s month (national + weekly), for
+/// calendar dots etc.
+List<int> bdHolidayDays(DateTime when) =>
+    List.unmodifiable(_allHolidayDays(when));
 
 /// A single dated holiday entry for list display.
 class BdHoliday {
@@ -95,17 +119,34 @@ class BdHoliday {
   final String name;
 }
 
-/// All holidays of [when]'s month with names, sorted by day. Days
-/// without a mapped name fall back to a generic label.
+/// All holidays of [when]'s month with names, sorted by day. National days use
+/// their gazetted name; the weekly Friday/Saturday holidays are labelled by
+/// weekday. National names win when a date is both (rare, e.g. Eid on a
+/// Friday).
 List<BdHoliday> bdHolidaysOfMonth(DateTime when) {
   final names = _bdHolidayNames[when.year]?[when.month] ?? const <int, String>{};
-  final days = _bdHolidays[when.year]?[when.month] ?? const <int>[];
-  final sorted = [...days]..sort();
+  final national = (_bdHolidays[when.year]?[when.month] ?? const <int>[]).toSet();
+  final weekly = _weeklyHolidayDays(when).toSet();
+  final allDays = (<int>{...national, ...weekly}).toList()..sort();
+
   return List.unmodifiable([
-    for (final day in sorted)
+    for (final day in allDays)
       BdHoliday(
         date: DateTime(when.year, when.month, day),
-        name: names[day] ?? 'Public Holiday',
+        name: national.contains(day)
+            ? (names[day] ?? 'Public Holiday')
+            : 'Weekly Holiday (${_weekdayName(DateTime(when.year, when.month, day).weekday)})',
       ),
   ]);
+}
+
+String _weekdayName(int weekday) {
+  switch (weekday) {
+    case DateTime.friday:
+      return 'Friday';
+    case DateTime.saturday:
+      return 'Saturday';
+    default:
+      return 'Weekend';
+  }
 }

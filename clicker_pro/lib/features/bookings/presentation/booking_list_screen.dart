@@ -10,6 +10,7 @@
 // "Booking List" + "Visual Design Notes". Validates Requirements
 // 1.1, 1.2, 1.9, 1.10, 1.12, 1.13, 1.14, 11.3.
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -76,8 +77,12 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
     final statuses = ref.read(bookingFilterProvider).statuses;
     if (statuses.isEmpty) return _StatusChip.all;
     if (statuses.length == 1) {
-      if (statuses.contains(BookingStatus.confirmed)) {
-        return _StatusChip.confirmed;
+      // "Confirmed" is no longer a selectable chip; a confirmed/pending-only
+      // filter falls back to highlighting "All" so the strip never shows a
+      // ghost (no-chip) selection.
+      if (statuses.contains(BookingStatus.confirmed) ||
+          statuses.contains(BookingStatus.pending)) {
+        return _StatusChip.all;
       }
       if (statuses.contains(BookingStatus.delivered)) {
         return _StatusChip.delivered;
@@ -167,7 +172,12 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
     final totalCount = bookings?.length ?? 0;
 
     return Scaffold(
-      backgroundColor: AppColors.voidBlack,
+      // WEB readability fix: the screen previously used `voidBlack` which on
+      // web resolves to a dark-cream (#F4EBDD) — combined with the glass cards
+      // it made text hard to read ("লেখা বুঝা যায় না"). On web we use a clean
+      // transparent scaffold so the WebShell's light backdrop shows through and
+      // the dark `film` text sits on a bright surface. Mobile is untouched.
+      backgroundColor: kIsWeb ? Colors.transparent : AppColors.voidBlack,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -329,13 +339,22 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                     ),
                   ),
                   data: (bookings) {
+                    // The "All" tab shows only active bookings — cancelled ones
+                    // live exclusively on the Cancelled tab so a cancelled
+                    // booking disappears from the main list once cancelled.
+                    final base = _activeChip == _StatusChip.all
+                        ? bookings
+                              .where((b) => b.status != BookingStatus.cancelled)
+                              .toList()
+                        : bookings;
+
                     // Shift filter is applied in-memory: a Day (or Night)
                     // filter also keeps Both bookings, because a full-day
                     // shoot covers that shift. `null` = no shift restriction.
                     final shiftFilter = filter.shift;
                     final filtered = shiftFilter == null
-                        ? bookings
-                        : bookings
+                        ? base
+                        : base
                               .where(
                                 (b) =>
                                     b.shift == shiftFilter ||
@@ -435,9 +454,11 @@ class _StatusChips extends StatelessWidget {
   final _StatusChip selected;
   final ValueChanged<_StatusChip> onSelected;
 
+  // "Confirmed" removed per feedback — its filter overlapped with the default
+  // working set and the chip strip read cleaner without it. The remaining
+  // chips cover the states users actually filter by.
   static const _chips = [
     (_StatusChip.all, 'All'),
-    (_StatusChip.confirmed, 'Confirmed'),
     (_StatusChip.successful, 'Successful'),
     (_StatusChip.delivered, 'Delivered'),
     (_StatusChip.cancelled, 'Cancelled'),
@@ -445,11 +466,14 @@ class _StatusChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Taller strip + centred labels so "Successful"/"Delivered" are never
+    // vertically clipped (the old 44px strip with vertical:8 list padding +
+    // vertical:6 chip padding left too little room and cut the glyph bottoms).
     return SizedBox(
-      height: 44,
+      height: 50,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
         itemCount: _chips.length,
         separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
@@ -459,7 +483,8 @@ class _StatusChips extends StatelessWidget {
             onTap: () => onSelected(chip),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
               decoration: BoxDecoration(
                 color: isSelected
                     ? AppColors.teal.withValues(alpha: 0.15)
@@ -472,9 +497,13 @@ class _StatusChips extends StatelessWidget {
               ),
               child: Text(
                 label,
+                maxLines: 1,
+                overflow: TextOverflow.visible,
+                softWrap: false,
                 style: TextStyle(
                   color: isSelected ? AppColors.teal : AppColors.filmDim,
                   fontSize: 13,
+                  height: 1.0,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 ),
               ),

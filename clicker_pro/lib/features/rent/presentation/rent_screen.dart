@@ -7,6 +7,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
+import '../../../shared/widgets/motion.dart';
 import '../../../theme/app_colors.dart';
 import '../application/rent_providers.dart';
 import 'dialogs/add_rent_sheet.dart';
@@ -106,21 +107,24 @@ class RentScreen extends ConsumerWidget {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.only(top: 8, bottom: 24),
               itemCount: items.length,
-              itemBuilder: (_, i) => RentRow(
-                record: items[i],
-                lang: lang,
-                onMarkReturned: () async {
-                  try {
-                    await ref
-                        .read(rentHistoryControllerProvider.notifier)
-                        .markReturned(items[i].id, DateTime.now());
-                  } catch (_) {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(loc.rent_save_failed)),
-                    );
-                  }
-                },
+              itemBuilder: (_, i) => StaggeredList.item(
+                i,
+                RentRow(
+                  record: items[i],
+                  lang: lang,
+                  onMarkReturned: () async {
+                    try {
+                      await ref
+                          .read(rentHistoryControllerProvider.notifier)
+                          .markReturned(items[i].id, DateTime.now());
+                    } catch (_) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(loc.rent_save_failed)),
+                      );
+                    }
+                  },
+                ),
               ),
             );
           },

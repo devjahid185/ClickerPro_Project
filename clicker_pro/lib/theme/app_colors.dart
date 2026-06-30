@@ -10,6 +10,7 @@
 // New code should prefer ThemeAwareColors.of(context) or import the
 // specific palette (AppColorsLight / AppColorsPulse) directly.
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'app_colors_light.dart';
 import 'app_colors_pulse.dart';
@@ -25,11 +26,22 @@ class AppColors {
   // ============================================================
   // ☀️ SURFACES
   // ============================================================
+  // On web the page background is the WebShell's ambient backdrop, so the
+  // scaffold/app background is transparent (handled per-screen). appBg itself
+  // is kept for any explicit fills.
   static Color get appBg => isDark ? AppColorsPulse.bg : AppColorsLight.cream;
-  static Color get surface =>
-      isDark ? AppColorsPulse.surface : AppColorsLight.glass;
-  static Color get surfaceAlt =>
-      isDark ? AppColorsPulse.surfaceAlt : AppColorsLight.creamDark;
+
+  // Card / elevated surfaces. v16: web uses solid (no glass) — clean white
+  // cards on the neutral page canvas. Mobile keeps its palette surface.
+  static Color get surface {
+    if (kIsWeb) return Colors.white;
+    return isDark ? AppColorsPulse.surface : AppColorsLight.glass;
+  }
+
+  static Color get surfaceAlt {
+    if (kIsWeb) return const Color(0xFFF7F8FA);
+    return isDark ? AppColorsPulse.surfaceAlt : AppColorsLight.creamDark;
+  }
 
   // Backward-compat aliases
   static Color get voidBlack => appBg;
@@ -158,8 +170,15 @@ class AppColors {
       ? Colors.white.withValues(alpha: (alpha * 1.5).clamp(0.0, 1.0))
       : Colors.black.withValues(alpha: alpha);
 
-  static Color get glass =>
-      isDark ? AppColorsPulse.surface : AppColorsLight.glass;
+  // On web we make the card surface translucent so the WebShell's rich
+  // ambient backdrop shows through — that's what turns flat white cards into
+  // real frosted glass. On mobile the surface stays fully opaque (phone UI
+  // unchanged). The BackdropFilter blur lives in the GlassCard / WebShell;
+  // here we only relax the fill opacity.
+  static Color get glass {
+    if (kIsWeb) return Colors.white;
+    return isDark ? AppColorsPulse.surface : AppColorsLight.glass;
+  }
   static Color get glassBorder =>
       isDark ? AppColorsPulse.border : AppColorsLight.glassBorder;
   static Color get glassHover =>

@@ -41,11 +41,15 @@ class BookingStatusBadge extends StatelessWidget {
       ),
       child: Text(
         _labelFor(status),
+        maxLines: 1,
+        softWrap: false,
+        overflow: TextOverflow.visible,
         style: TextStyle(
           color: tone.foreground,
           fontSize: isLarge ? 12 : 10.5,
           letterSpacing: 0.6,
           fontWeight: FontWeight.w600,
+          height: 1.0,
         ),
       ),
     );

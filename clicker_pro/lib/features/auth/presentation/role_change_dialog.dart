@@ -101,6 +101,8 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
         return 'View own bookings';
       case Capability.createBooking:
         return 'Create bookings';
+      case Capability.createOwnBooking:
+        return 'Log own bookings';
       case Capability.editBooking:
         return 'Edit bookings';
       case Capability.deleteBooking:

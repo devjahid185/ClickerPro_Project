@@ -5,11 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/navigation/app_router.dart';
+import 'core/navigation/route_names.dart';
+import 'core/navigation/route_observer.dart';
 import 'core/providers.dart';
 import 'features/bookings/application/booking_providers.dart';
 import 'features/onboarding/presentation/splash_screen.dart';
 import 'features/settings/application/language_controller.dart';
 import 'l10n/app_localizations.dart';
+import 'shared/widgets/web_nav_shell.dart';
 import 'shared/widgets/web_shell.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_colors_pulse.dart';
@@ -30,8 +33,10 @@ class ClickerProApp extends ConsumerWidget {
       orElse: () => AppThemeMode.sunsetStudio,
     );
 
-    // Sync AppColors.isDark so every custom-painted surface reads the
-    // correct palette without needing a BuildContext.
+    // Sync AppColors.isDark so every custom-painted surface reads the correct
+    // palette without needing a BuildContext. `isDark` here means "use the
+    // Sunrise Pulse palette" — despite the name, v15 has no dark mode; both
+    // themes are light. The flag still selects which palette getters resolve to.
     final isDark = activeAppTheme == AppThemeMode.sunrisePulse;
     AppColors.isDark = isDark;
     AppColorsPulse; // ensure the palette class is loaded
@@ -53,6 +58,11 @@ class ClickerProApp extends ConsumerWidget {
             )
           : AppTheme.sunrisePulse(),
       themeMode: themeMode,
+      // Root navigator key lets the web sidebar (mounted in `builder`, above
+      // the Navigator) push routes.
+      navigatorKey: rootNavigatorKey,
+      // Tracks the active route so the web sidebar can highlight + gate chrome.
+      navigatorObservers: [AppRouteObserver()],
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -70,7 +80,19 @@ class ClickerProApp extends ConsumerWidget {
           child: KeyedSubtree(
             key: ValueKey(isDark ? 'pulse' : 'sunset'),
             // Web-only glassmorphism shell; a pure pass-through on mobile.
-            child: WebShell(child: child ?? const SizedBox.shrink()),
+            // On web the WebNavShell adds the permanent sidebar + content
+            // panel around the routed screen, driven by the current route.
+            child: WebShell(
+              child: kIsWeb
+                  ? ValueListenableBuilder<String>(
+                      valueListenable: currentRouteName,
+                      builder: (context, route, _) => WebNavShell(
+                        currentRoute: route,
+                        child: child ?? const SizedBox.shrink(),
+                      ),
+                    )
+                  : (child ?? const SizedBox.shrink()),
+            ),
           ),
         );
       },
@@ -85,6 +107,9 @@ class ClickerProApp extends ConsumerWidget {
         }
         return [
           MaterialPageRoute<void>(
+            // Name the boot route so the route observer tracks it (and the web
+            // shell treats splash as fullscreen — no sidebar over the splash).
+            settings: const RouteSettings(name: RouteNames.splash),
             builder: (_) => const _OutboxAutoStart(child: SplashScreen()),
           ),
         ];

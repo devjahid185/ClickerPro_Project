@@ -93,5 +93,22 @@ void main() {
       expect(policy.can(Capability.deleteBooking), isFalse);
       expect(policy.can(Capability.toggleHidePayment), isFalse);
     });
+
+    test('FL-12: every working role can log their own booking', () {
+      // createOwnBooking is the gate the repository uses on create, so a
+      // Freelancer must hold it to save their short-form freelance booking.
+      for (final role in const [
+        UserRole.owner,
+        UserRole.both,
+        UserRole.manager,
+        UserRole.freelancer,
+      ]) {
+        expect(
+          RolePolicy(role).can(Capability.createOwnBooking),
+          isTrue,
+          reason: '$role should be able to log their own booking',
+        );
+      }
+    });
   });
 }

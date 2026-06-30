@@ -163,7 +163,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Session> register({
+  Future<void> register({
     required String name,
     required String email,
     required String phone,
@@ -178,8 +178,13 @@ class AuthRepositoryImpl implements AuthRepository {
             'Manager role cannot self-register; use the Accept Invite flow.',
       );
     }
+    // Create the account but DO NOT persist a session — the backend issues no
+    // token here. The user must complete the email OTP (verifyOtp, signup),
+    // which is what mints the token and logs them in. This is the fix for
+    // "registering logged me in without OTP, and reopening the app stayed
+    // logged in": no token is ever stored until OTP succeeds.
     try {
-      final r = await _api.register(
+      await _api.register(
         name: name,
         email: email,
         phone: phone,
@@ -187,21 +192,12 @@ class AuthRepositoryImpl implements AuthRepository {
         role: role,
         companyName: companyName,
       );
-      return _persistSession(r.token, r.user);
     } on ApiException {
       rethrow;
     } catch (e) {
-      // Network unreachable — dev builds fall back to a local demo account.
       if (!_allowOfflineDemo) _raiseUnreachable(e);
-      return _persistSession(_demoToken, {
-        'id': 'demo_${email.hashCode.abs()}',
-        'name': name,
-        'email': email,
-        'role': role.wireName,
-        'remoteId': null,
-        'phone': phone,
-        'companyName': companyName,
-      });
+      // Dev-only offline: nothing to persist; the OTP screen's demo path
+      // (code 123456) will create the local session on verify.
     }
   }
 

@@ -123,6 +123,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     setState(() => _isLoading = true);
     try {
+      // Registration NO LONGER logs the user in — it just creates the
+      // unverified account. The session is minted only after the email OTP
+      // is confirmed on the OTP screen. So on success we go straight to OTP.
       await ref
           .read(sessionControllerProvider.notifier)
           .register(
@@ -137,44 +140,26 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           );
 
       if (!mounted) return;
-      final state = ref.read(sessionControllerProvider);
-      final session = state.value;
 
-      if (state.hasError) {
-        final err = state.error;
-        if (err is ApiException && err.statusCode == 409) {
-          setState(() => _emailError = 'This email is already registered');
-        } else {
-          _showError(
-            err is ApiException
-                ? err.message
-                : 'Could not complete registration.',
-          );
-        }
-        return;
+      // Fire the 6-digit code (fail-soft — a mail hiccup must not strand the
+      // user; they can resend on the OTP screen) and route to OTP. The OTP
+      // screen completes the signup and lands on the Dashboard after verify.
+      final email = _emailController.text.trim();
+      try {
+        await ref
+            .read(authRepositoryProvider)
+            .requestOtp(identifier: email, purpose: OtpPurpose.signup);
+      } catch (_) {
+        // Code email failed — continue; user can resend from the screen.
       }
-
-      if (session != null) {
-        // Email verification: fire the 6-digit code (fail-soft — a mail
-        // hiccup must not strand a freshly registered user) and route
-        // through the OTP screen; it lands on the Dashboard after verify.
-        final email = _emailController.text.trim();
-        try {
-          await ref
-              .read(authRepositoryProvider)
-              .requestOtp(identifier: email, purpose: OtpPurpose.signup);
-        } catch (_) {
-          // Code email failed — continue; user can resend from the screen.
-        }
-        if (!mounted) return;
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (_) =>
-                OtpScreen(identifier: email, purpose: OtpPurpose.signup),
-          ),
-          (route) => false,
-        );
-      }
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (_) =>
+              OtpScreen(identifier: email, purpose: OtpPurpose.signup),
+        ),
+        (route) => false,
+      );
     } catch (e) {
       if (!mounted) return;
       if (e is ApiException && e.statusCode == 409) {

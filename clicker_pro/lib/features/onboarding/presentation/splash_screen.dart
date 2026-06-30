@@ -20,6 +20,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/navigation/route_names.dart';
 import '../../../core/providers.dart';
 import '../../../screens/dashboard_screen.dart';
 import '../../../screens/login_screen.dart';
@@ -101,9 +102,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     if (session != null) {
       await dwell.future;
       if (_disposed || !mounted) return;
-      Navigator.of(
-        context,
-      ).pushReplacement(_fadeRoute(const DashboardScreen()));
+      Navigator.of(context).pushReplacement(
+        _fadeRoute(const DashboardScreen(), name: RouteNames.dashboard),
+      );
       return;
     }
 
@@ -125,18 +126,25 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     // Language is no longer chosen up-front — it defaults and can be changed
     // anytime in Settings. First launch goes straight to the intro.
     final Widget next;
+    final String nextName;
     if (!isDone) {
       next = const OnboardingIntroScreen();
+      nextName = RouteNames.onboarding;
     } else {
       next = const LoginScreen();
+      nextName = RouteNames.login;
     }
 
     if (_disposed || !mounted) return;
-    Navigator.of(context).pushReplacement(_fadeRoute(next));
+    Navigator.of(context)
+        .pushReplacement(_fadeRoute(next, name: nextName));
   }
 
-  PageRouteBuilder<void> _fadeRoute(Widget page) {
+  PageRouteBuilder<void> _fadeRoute(Widget page, {String? name}) {
     return PageRouteBuilder(
+      // Naming the route lets the web route observer track it, so the web shell
+      // correctly shows the sidebar on /dashboard and hides it on /login.
+      settings: RouteSettings(name: name),
       transitionDuration: const Duration(milliseconds: 320),
       pageBuilder: (_, _, _) => page,
       transitionsBuilder: (_, anim, _, child) =>
@@ -159,6 +167,30 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       backgroundColor: AppColors.voidBlack,
       body: Stack(
         children: [
+          // Full-screen brand photo backdrop (orange Fujifilm camera). A dark
+          // scrim over it keeps the logo + tagline legible.
+          Positioned.fill(
+            child: Image.asset(
+              'assets/brand/web_bg.jpg',
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stack) =>
+                  const SizedBox.shrink(),
+            ),
+          ),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.45),
+                    Colors.black.withValues(alpha: 0.65),
+                  ],
+                ),
+              ),
+            ),
+          ),
           // Ambient orange glow blob top-right.
           Positioned(
             top: -80,

@@ -25,6 +25,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../../core/env/app_config.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/navigation/route_names.dart';
 import '../../../core/providers.dart';
 import '../../../core/storage/kv_store.dart';
 import '../../../screens/dashboard_screen.dart';
@@ -149,7 +150,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     // Success only when we actually have a session value.
     if (session.hasValue && session.value != null) {
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        MaterialPageRoute(
+          settings: const RouteSettings(name: RouteNames.dashboard),
+          builder: (_) => const DashboardScreen(),
+        ),
         (route) => false,
       );
       return;

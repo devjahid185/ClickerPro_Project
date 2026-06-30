@@ -69,7 +69,11 @@ class AuthApi {
     return _session(r);
   }
 
-  Future<({String token, Map<String, dynamic> user})> register({
+  /// Registers a new account. The backend intentionally returns NO token here
+  /// (`token: null`, `requiresOtp: true`) — the account is unverified until the
+  /// email OTP is confirmed via [verifyOtp] (purpose=signup), which issues the
+  /// token. So this returns only the user; there is no session yet.
+  Future<Map<String, dynamic>> register({
     required String name,
     required String email,
     required String phone,
@@ -92,7 +96,7 @@ class AuthApi {
       },
       authenticated: false,
     );
-    return _session(r);
+    return _user(r);
   }
 
   Future<Map<String, dynamic>> getProfile() async {

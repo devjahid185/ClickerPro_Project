@@ -1,9 +1,10 @@
 // lib/theme/app_colors_pulse.dart
 //
-// Clicker Pro v15 — Sunrise Pulse dark theme colors
-// Bold, high-contrast, punchy consumer-app energy.
-// No serif. Outfit for both headlines and body.
-// Tighter corners (10–14 px), flat fills, 2 px high-contrast borders.
+// Clicker Pro v15 — Sunrise Pulse LIGHT theme colors
+// Bright, crisp, high-energy: near-white surfaces + bold saturated orange.
+// This is a LIGHT theme (v15 has no dark mode). It contrasts with Sunset
+// Studio's warm cream by being cooler/whiter with punchier orange.
+// Tighter corners (10–14 px), flat fills, crisp borders.
 
 import 'package:flutter/material.dart';
 
@@ -11,12 +12,12 @@ class AppColorsPulse {
   AppColorsPulse._();
 
   // ============================================================
-  // 🌑 SURFACES (deep graphite, not navy)
+  // ⬜ SURFACES (bright, near-white with a faint cool tint)
   // ============================================================
-  static const Color bg = Color(0xFF0D0D0D); // true dark background
-  static const Color surface = Color(0xFF1A1A1A); // card / sheet
-  static const Color surfaceAlt = Color(0xFF242424); // elevated
-  static const Color surfaceHigh = Color(0xFF2E2E2E); // highest elevation
+  static const Color bg = Color(0xFFFFFFFF); // pure white background
+  static const Color surface = Color(0xFFF7F8FA); // card / sheet (off-white)
+  static const Color surfaceAlt = Color(0xFFEEF1F5); // elevated
+  static const Color surfaceHigh = Color(0xFFE4E8EE); // highest elevation
 
   // Backward-compat aliases
   static const Color voidBlack = bg;
@@ -57,11 +58,11 @@ class AppColorsPulse {
   static const Color goldSoft = amberSoft;
 
   // ============================================================
-  // 📝 TEXT (High-contrast on dark)
+  // 📝 TEXT (High-contrast on light)
   // ============================================================
-  static const Color textPrimary = Color(0xFFF5F5F5); // near-white
-  static const Color textSecondary = Color(0xFFAAAAAA); // medium gray
-  static const Color textMuted = Color(0xFF666666); // muted
+  static const Color textPrimary = Color(0xFF14181F); // near-black ink
+  static const Color textSecondary = Color(0xFF5A626E); // slate gray
+  static const Color textMuted = Color(0xFF9AA1AC); // muted gray
 
   // Backward-compat aliases
   static const Color film = textPrimary;
@@ -69,14 +70,14 @@ class AppColorsPulse {
   static const Color filmMuted = textMuted;
 
   // ============================================================
-  // 🔲 BORDERS (2px high-contrast — v15 Sunrise Pulse spec)
+  // 🔲 BORDERS (crisp on light — v15 Sunrise Pulse spec)
   // ============================================================
-  static const Color border = Color(0xFF333333); // visible card border
-  static const Color borderHighlight = Color(0xFF444444);
-  static const Color hairline = Color(0x33FFFFFF); // white 20%
-  static const Color glassBorder = Color(0xFF333333);
+  static const Color border = Color(0xFFE0E4EA); // visible card border
+  static const Color borderHighlight = Color(0xFFD0D5DD);
+  static const Color hairline = Color(0x14000000); // black 8%
+  static const Color glassBorder = Color(0xFFE0E4EA);
 
-  // Glass (flat in Sunrise Pulse — no transparency)
+  // Glass (flat in Sunrise Pulse)
   static const Color glass = surface;
   static const Color glassHover = surfaceAlt;
 
@@ -111,9 +112,9 @@ class AppColorsPulse {
   // ============================================================
   // 🏠 NAV / TOPBAR
   // ============================================================
-  static const Color topbarBg = bg;
+  static const Color topbarBg = bg; // white
   static const Color topbarBorder = border;
-  static const Color bottomNavBg = surface;
+  static const Color bottomNavBg = Color(0xFFFFFFFF); // white nav
   static const Color bottomNavBorder = border;
 
   // ============================================================
@@ -132,7 +133,7 @@ class AppColorsPulse {
   static const LinearGradient drawerHeaderGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF1A1A1A), Color(0xFF0D0D0D)],
+    colors: [primaryLight, primary],
   );
 
   static const LinearGradient goldGradient = LinearGradient(

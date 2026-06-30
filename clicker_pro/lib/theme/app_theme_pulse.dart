@@ -219,15 +219,17 @@ class AppThemePulse {
   AppThemePulse._();
 
   static ThemeData dark() {
-    final base = ThemeData.dark();
+    // NOTE: named `dark()` only because it fills MaterialApp's darkTheme slot;
+    // Sunrise Pulse is a LIGHT theme in v15.
+    final base = ThemeData.light();
     final outfitTextTheme = GoogleFonts.outfitTextTheme(base.textTheme);
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
+      brightness: Brightness.light,
       scaffoldBackgroundColor: AppColorsPulse.bg,
       canvasColor: AppColorsPulse.bg,
       primaryColor: AppColorsPulse.primary,
-      colorScheme: const ColorScheme.dark(
+      colorScheme: const ColorScheme.light(
         primary: AppColorsPulse.primary,
         secondary: AppColorsPulse.amber,
         tertiary: AppColorsPulse.indigo,
@@ -279,8 +281,8 @@ class AppThemePulse {
         scrolledUnderElevation: 1,
         systemOverlayStyle: SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.light,
-          statusBarBrightness: Brightness.dark,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
         ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(

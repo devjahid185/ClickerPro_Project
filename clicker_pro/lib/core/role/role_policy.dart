@@ -51,6 +51,14 @@ class RolePolicy {
       UserRole.manager,
     },
     Capability.createBooking: {UserRole.owner, UserRole.both, UserRole.manager},
+    // FL-12: every working role can log their own booking (Freelancer uses the
+    // short freelance form; Owner/Manager/Both use the full studio form).
+    Capability.createOwnBooking: {
+      UserRole.owner,
+      UserRole.both,
+      UserRole.manager,
+      UserRole.freelancer,
+    },
     Capability.editBooking: {UserRole.owner, UserRole.both, UserRole.manager},
     Capability.deleteBooking: {UserRole.owner, UserRole.both},
     Capability.advanceBookingStatus: {

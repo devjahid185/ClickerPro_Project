@@ -270,8 +270,13 @@ class BookingRepositoryImpl implements BookingRepository {
 
   @override
   Future<Booking> save(Booking booking, {required RolePolicy policy}) async {
+    // Create gates on `createOwnBooking` (held by every working role, incl.
+    // Freelancer per FL-12) rather than the studio-only `createBooking`, so a
+    // Freelancer can save the short freelance booking the edit screen lets them
+    // fill in. Owner/Manager/Both also hold it, so their full-form create is
+    // unaffected. Edits still require the stricter `editBooking`.
     final required = booking.remoteId == null
-        ? Capability.createBooking
+        ? Capability.createOwnBooking
         : Capability.editBooking;
     if (!policy.can(required)) {
       throw RolePolicyDeniedException(capability: required, role: policy.role);

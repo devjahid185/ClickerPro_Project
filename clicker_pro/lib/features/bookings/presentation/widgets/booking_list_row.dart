@@ -13,6 +13,7 @@
 // "Components and Interfaces" section. Validates Requirements 1.10,
 // 1.11, 1.13, 5.3, 5.4, 11.3.
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -20,8 +21,24 @@ import 'package:intl/intl.dart';
 import '../../../../core/format/booking_format.dart';
 import '../../../../features/settings/application/language_controller.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../../theme/web_theme.dart';
 import '../../domain/booking.dart';
 import 'booking_status_badge.dart';
+
+/// Card surface for a booking row. On web we use a crisp white card with a
+/// soft warm shadow (so the dark title/body text is fully legible — the
+/// "booking page unreadable" fix). On mobile we keep the existing glass look.
+BoxDecoration _rowDecoration() {
+  if (kIsWeb) {
+    return BoxDecoration(
+      color: WebTheme.surface,
+      borderRadius: BorderRadius.circular(WebTheme.rCard),
+      border: Border.all(color: WebTheme.hairline, width: 1),
+      boxShadow: WebTheme.cardShadow,
+    );
+  }
+  return AppColors.glassCardDecoration();
+}
 
 class BookingListRow extends ConsumerWidget {
   const BookingListRow({
@@ -63,7 +80,7 @@ class BookingListRow extends ConsumerWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           margin: const EdgeInsets.only(bottom: 8),
-          decoration: AppColors.glassCardDecoration(),
+          decoration: _rowDecoration(),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

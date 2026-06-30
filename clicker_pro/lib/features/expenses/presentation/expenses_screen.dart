@@ -27,6 +27,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
+import '../../../shared/widgets/motion.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
 import '../application/expense_providers.dart';
@@ -105,8 +106,10 @@ class ExpensesScreen extends ConsumerWidget {
                 }
                 return SliverList.builder(
                   itemCount: items.length,
-                  itemBuilder: (_, i) =>
-                      ExpenseRow(expense: items[i], lang: lang),
+                  itemBuilder: (_, i) => StaggeredList.item(
+                    i,
+                    ExpenseRow(expense: items[i], lang: lang),
+                  ),
                 );
               },
             ),

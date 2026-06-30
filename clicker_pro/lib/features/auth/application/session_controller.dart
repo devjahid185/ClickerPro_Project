@@ -41,6 +41,10 @@ class SessionController extends AsyncNotifier<Session?> {
     );
   }
 
+  /// Registers a new account. Does NOT log the user in — registration no longer
+  /// yields a session; the email OTP (verifyOtp, signup) does. So this leaves
+  /// the session state untouched (still null/unauthenticated) and simply
+  /// surfaces any error to the caller, which then routes to the OTP screen.
   Future<void> register({
     required String name,
     required String email,
@@ -49,19 +53,14 @@ class SessionController extends AsyncNotifier<Session?> {
     required UserRole role,
     String? companyName,
   }) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(
-      () => ref
-          .read(authRepositoryProvider)
-          .register(
-            name: name,
-            email: email,
-            phone: phone,
-            password: password,
-            role: role,
-            companyName: companyName,
-          ),
-    );
+    await ref.read(authRepositoryProvider).register(
+          name: name,
+          email: email,
+          phone: phone,
+          password: password,
+          role: role,
+          companyName: companyName,
+        );
   }
 
   Future<void> verifyOtp({

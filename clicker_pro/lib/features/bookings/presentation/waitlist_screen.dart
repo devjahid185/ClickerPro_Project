@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers.dart';
 import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
+import '../../../shared/widgets/motion.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
 import '../../auth/application/session_controller.dart';
@@ -75,7 +76,8 @@ class WaitlistScreen extends ConsumerWidget {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
               itemCount: items.length,
-              itemBuilder: (_, i) => _WaitlistRow(entry: items[i]),
+              itemBuilder: (_, i) =>
+                  StaggeredList.item(i, _WaitlistRow(entry: items[i])),
             );
           },
         ),

@@ -34,6 +34,7 @@
 
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -57,6 +58,7 @@ import '../../../core/role/capability.dart';
 import '../../../core/role/role_policy.dart';
 import '../../../core/booking_status/booking_status.dart';
 import '../../bookings/application/booking_providers.dart';
+import '../../bookings/domain/event_type_vibe.dart';
 import '../../broadcasts/presentation/broadcast_popup.dart';
 import '../../push/application/fcm_bootstrap.dart';
 import '../../announcements/application/announcement_providers.dart';
@@ -68,6 +70,7 @@ import '../../settings/application/language_controller.dart';
 import '../application/dashboard_preferences.dart';
 import '../application/dashboard_providers.dart';
 import '../domain/dashboard_section.dart';
+import 'web_dashboard.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -199,10 +202,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final userAsync = ref.watch(currentUserProvider);
     final user = userAsync.value;
 
+    // On wide web the WebNavShell supplies the permanent sidebar + chrome, so
+    // the dashboard's own drawer and bottom nav would be redundant — hide them.
+    final webWide = kIsWeb && MediaQuery.sizeOf(context).width >= 900;
+
     return Scaffold(
       extendBody: true,
-      appBar: _buildAppBar(user),
-      drawer: _buildSidebar(user),
+      // On web the WebShell paints a rich ambient backdrop behind the app; a
+      // transparent scaffold lets that colour show through so the glass cards
+      // actually read as glass. On mobile this is a no-op (WebShell is a
+      // pass-through there) and the theme background still applies.
+      backgroundColor: kIsWeb ? Colors.transparent : null,
+      appBar: webWide ? null : _buildAppBar(user),
+      drawer: webWide ? null : _buildSidebar(user),
       body: Column(
         children: [
           // Network indicator — invisible when online (zero-height).
@@ -210,18 +222,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           Expanded(
             child: FadeTransition(
               opacity: _fadeAnim,
-              child: RefreshIndicator(
-                color: AppColors.orange,
-                backgroundColor: AppColors.voidElevated,
-                strokeWidth: 2.8,
-                onRefresh: _onRefresh,
-                child: _buildBody(user),
-              ),
+              // On wide web the WebNavShell owns the chrome; render the
+              // dedicated desktop dashboard (Studio Sage) instead of the
+              // mobile body. Mobile + narrow web keep the original layout
+              // 100% unchanged.
+              child: webWide
+                  ? WebDashboard(user: user)
+                  : RefreshIndicator(
+                      color: AppColors.orange,
+                      backgroundColor: AppColors.voidElevated,
+                      strokeWidth: 2.8,
+                      onRefresh: _onRefresh,
+                      child: _buildBody(user),
+                    ),
             ),
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomNav(),
+      bottomNavigationBar: webWide ? null : _buildBottomNav(),
     );
   }
 
@@ -394,6 +412,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 96),
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
+        // Today's occasion vibe — a coloured chip showing the type of the
+        // shoot happening today (Wedding / Birthday / …). Hidden when there is
+        // no booking today.
+        _buildTodayVibe(),
         // Platform broadcasts now arrive as the 10s popup + the drawer's
         // "Platform Updates" screen — the persistent welcome banner was
         // removed per design feedback.
@@ -402,6 +424,84 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           _stagger(i, _buildSection(enabled[i].type, user)),
         ],
       ],
+    );
+  }
+
+  /// A coloured "occasion vibe" chip for today's shoot, shown at the top of the
+  /// dashboard. Resolves today's bookings from the current-month calendar
+  /// stream and renders the vibe of the first one. Renders nothing when there
+  /// is no booking today.
+  Widget _buildTodayVibe() {
+    final now = DateTime.now();
+    final monthAsync = ref.watch(
+      calendarBookingsProvider((year: now.year, month: now.month)),
+    );
+    final bookings = monthAsync.value;
+    if (bookings == null || bookings.isEmpty) return const SizedBox.shrink();
+
+    final todays = bookings
+        .where((b) =>
+            b.date.year == now.year &&
+            b.date.month == now.month &&
+            b.date.day == now.day)
+        .toList();
+    if (todays.isEmpty) return const SizedBox.shrink();
+
+    final vibe = todays.first.eventType.vibe;
+    final extra = todays.length > 1 ? '  +${todays.length - 1} more' : '';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            vibe.color.withValues(alpha: 0.22),
+            vibe.color.withValues(alpha: 0.08),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: vibe.color.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: vibe.color,
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Icon(vibe.icon, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Today's vibe",
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.4,
+                    color: AppColors.filmMuted,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${vibe.emoji}  ${vibe.label}$extra',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.film,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -476,7 +576,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.line(0.07)),
+        border: Border.all(color: AppColors.line(0.14)),
       ),
       child: Row(
         children: List.generate(days.length, (int i) {
@@ -769,7 +869,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.line(0.08)),
+          border: Border.all(color: AppColors.line(0.14)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1022,7 +1122,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.line(0.08)),
+            border: Border.all(color: AppColors.line(0.14)),
           ),
           child: Column(
             children: [
@@ -1073,7 +1173,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.line(0.08)),
+            border: Border.all(color: AppColors.line(0.14)),
           ),
           child: Row(
             children: [
@@ -1394,7 +1494,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.line(0.08)),
+        border: Border.all(color: AppColors.line(0.14)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1665,7 +1765,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.line(0.08)),
+        border: Border.all(color: AppColors.line(0.14)),
       ),
       child: Row(
         children: [
@@ -1958,10 +2058,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     Navigator.pop(context);
                     _pushNamed(RouteNames.cashFlow);
                   }),
-                  _sbItem(Icons.receipt_long_outlined, 'Petty Cash Book', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.pettyCash);
-                  }),
+                  // Petty Cash entry removed per feedback — it overlapped with
+                  // Expenses (petty cash is treated as an expense in profit +
+                  // cash flow). Expenses above is the single entry point.
                   _sbGroup('OPERATIONS'),
                   if (policy.can(Capability.accessDailyTasks))
                     _sbItem(Icons.task_alt, 'Daily Tasks', () {
@@ -2361,44 +2460,80 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Active pill is drawn ONLY when active to keep inactive lean.
+            // 3D-realistic icon chip: a gradient-filled rounded square with a
+            // top highlight, a coloured outer glow and a soft drop shadow.
+            // Active = full glossy chip; inactive = a flatter, dimmer tint so
+            // the bar still reads colourful but the current tab clearly pops.
             AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
-              width: isActive ? 32 : 24,
-              height: 22,
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              width: 34,
+              height: 30,
               decoration: BoxDecoration(
-                color: isActive
-                    ? tint.withValues(alpha: 0.16)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(11),
+                borderRadius: BorderRadius.circular(10),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isActive
+                      ? [
+                          Color.lerp(tint, Colors.white, 0.30)!,
+                          tint,
+                          Color.lerp(tint, Colors.black, 0.18)!,
+                        ]
+                      : [
+                          tint.withValues(alpha: 0.20),
+                          tint.withValues(alpha: 0.12),
+                        ],
+                ),
+                border: Border.all(
+                  color: isActive
+                      ? Color.lerp(tint, Colors.white, 0.35)!
+                          .withValues(alpha: 0.55)
+                      : tint.withValues(alpha: 0.22),
+                  width: 0.8,
+                ),
+                boxShadow: isActive
+                    ? [
+                        // Coloured outer glow — the "realistic" lift.
+                        BoxShadow(
+                          color: tint.withValues(alpha: 0.45),
+                          blurRadius: 12,
+                          spreadRadius: -1,
+                          offset: const Offset(0, 4),
+                        ),
+                        // Inner top highlight (gloss) faked with a light shadow.
+                        BoxShadow(
+                          color: Colors.white.withValues(alpha: 0.25),
+                          blurRadius: 1,
+                          spreadRadius: -2,
+                          offset: const Offset(0, -1),
+                        ),
+                      ]
+                    : null,
               ),
               child: Center(
-                // A small spring-scale on the active icon gives the tab a
-                // lively tap response without any repeating animation.
                 child: AnimatedScale(
-                  scale: isActive ? 1.15 : 1.0,
+                  scale: isActive ? 1.12 : 1.0,
                   duration: const Duration(milliseconds: 220),
                   curve: Curves.easeOutBack,
-                  // Always-colourful tabs: filled icons in each module's
-                  // own colour (inactive just slightly softened) — the old
-                  // grey-washed inactive state read as monochrome.
+                  // Active icon is white-on-gradient (reads as a glossy 3D
+                  // button); inactive keeps the module colour on a soft tint.
                   child: Icon(
                     filledIcon,
-                    color: isActive ? tint : tint.withValues(alpha: 0.75),
-                    size: 19,
+                    color: isActive ? Colors.white : tint,
+                    size: 18,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 3),
             Text(
               label,
               style: TextStyle(
                 fontFamily: AppText.body.fontFamily,
                 fontSize: 10,
                 letterSpacing: 0.1,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                 color: isActive ? tint : AppColors.filmDim,
               ),
             ),
@@ -2416,21 +2551,41 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         onTap: _openNewBooking,
         child: Center(
           child: Container(
-            width: 42,
-            height: 42,
+            width: 44,
+            height: 44,
             margin: const EdgeInsets.only(bottom: 4),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.accent,
+              // Glossy 3D orange button: light top-left → deep bottom-right.
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color.lerp(AppColors.accent, Colors.white, 0.30)!,
+                  AppColors.accent,
+                  Color.lerp(AppColors.accent, Colors.black, 0.20)!,
+                ],
+              ),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.30),
+                width: 1,
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.accent.withValues(alpha: 0.4),
-                  blurRadius: 14,
+                  color: AppColors.accent.withValues(alpha: 0.45),
+                  blurRadius: 16,
                   spreadRadius: 1,
+                  offset: const Offset(0, 4),
+                ),
+                BoxShadow(
+                  color: Colors.white.withValues(alpha: 0.25),
+                  blurRadius: 2,
+                  spreadRadius: -2,
+                  offset: const Offset(0, -1),
                 ),
               ],
             ),
-            child: const Icon(Icons.add, color: Colors.white, size: 24),
+            child: const Icon(Icons.add_rounded, color: Colors.white, size: 26),
           ),
         ),
       ),

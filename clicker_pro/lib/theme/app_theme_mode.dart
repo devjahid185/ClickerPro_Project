@@ -36,8 +36,12 @@ final themeModeControllerProvider =
       ThemeModeController.new,
     );
 
-/// Resolves to a Flutter ThemeMode. Sunset Studio = light surfaces,
-/// Sunrise Pulse = dark surfaces. Both are always explicit — no system follow.
+/// Resolves to a Flutter ThemeMode. Both Sunset Studio (warm cream) and
+/// Sunrise Pulse (bright white) are LIGHT themes — there is no dark mode in
+/// v15. Sunset Studio uses MaterialApp.theme; Sunrise Pulse is selected via
+/// ThemeMode.dark only as the slot that maps to AppTheme.sunrisePulse(), which
+/// is itself a light theme. Keeping the two distinct slots lets the app switch
+/// between the two palettes through Flutter's theme/darkTheme channels.
 final resolvedThemeModeProvider = Provider<ThemeMode>((ref) {
   final mode = ref
       .watch(themeModeControllerProvider)
@@ -46,6 +50,8 @@ final resolvedThemeModeProvider = Provider<ThemeMode>((ref) {
     case AppThemeMode.sunsetStudio:
       return ThemeMode.light;
     case AppThemeMode.sunrisePulse:
+      // Routed through the darkTheme slot, but AppTheme.sunrisePulse() is a
+      // light theme — see app.dart.
       return ThemeMode.dark;
   }
 });

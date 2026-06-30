@@ -8,7 +8,10 @@ import 'user_role.dart';
 abstract class AuthRepository {
   Future<Session> login({required String email, required String password});
 
-  Future<Session> register({
+  /// Registers a new account. Returns NO session — the account is unverified
+  /// until the email OTP is confirmed via [verifyOtp] (purpose=signup), which
+  /// is what issues the token. The caller routes the user to the OTP screen.
+  Future<void> register({
     required String name,
     required String email,
     required String phone,

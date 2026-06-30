@@ -23,6 +23,10 @@ enum Capability {
   viewAssignedBookings,
   viewOwnBookings,
   createBooking,
+  // FL-12: a Freelancer can log their OWN short-form bookings even though they
+  // don't hold the full studio `createBooking`. Owner/Manager/Both also hold
+  // this (a superset action), so the booking-create path can gate on it.
+  createOwnBooking,
   editBooking,
   deleteBooking,
   advanceBookingStatus,

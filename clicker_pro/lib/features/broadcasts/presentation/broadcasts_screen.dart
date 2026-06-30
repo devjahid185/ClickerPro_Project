@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
+import '../../../shared/widgets/motion.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_theme.dart';
 import '../application/broadcast_providers.dart';
@@ -67,7 +68,10 @@ class BroadcastsScreen extends ConsumerWidget {
                 }
                 return SliverList.builder(
                   itemCount: items.length,
-                  itemBuilder: (_, i) => _BroadcastCard(broadcast: items[i]),
+                  itemBuilder: (_, i) => StaggeredList.item(
+                    i,
+                    _BroadcastCard(broadcast: items[i]),
+                  ),
                 );
               },
             ),

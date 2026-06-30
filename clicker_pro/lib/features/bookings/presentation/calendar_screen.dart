@@ -9,6 +9,7 @@
 // Source of truth: `.kiro/specs/bookings-module/design.md` →
 // "Calendar Screen". Validates Requirements 4.1–4.10.
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -35,7 +36,9 @@ class CalendarScreen extends ConsumerWidget {
     final loc = AppLocalizations.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.voidBlack,
+      // WEB: transparent so the WebShell's light backdrop shows through and the
+      // dark `film` text/cells stay legible. Mobile keeps its cream surface.
+      backgroundColor: kIsWeb ? Colors.transparent : AppColors.voidBlack,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -75,35 +78,40 @@ class CalendarScreen extends ConsumerWidget {
             )
           : null,
       body: SafeArea(
-        child: Column(
-          children: [
-            const OfflineBanner(),
-            _MonthHeader(
-              cursor: cursor,
-              prevTooltip: loc.bookings_prev_month,
-              nextTooltip: loc.bookings_next_month,
-              onPrev: () => _shift(ref, cursor, -1),
-              onNext: () => _shift(ref, cursor, 1),
-            ),
-            const _WeekdayHeader(),
-            Expanded(
-              child: bookingsAsync.when(
-                loading: () => const Center(child: LensLoader()),
-                error: (err, _) => Center(
-                  child: ErrorState(
-                    message: loc.bookings_calendar_could_not_load,
-                    onRetry: () =>
-                        ref.invalidate(calendarBookingsProvider(cursor)),
+        // WEB: cap the calendar to a comfortable max width and centre it.
+        // Without this, the wide content panel stretched each day cell to a
+        // huge ~165px tall block (the "oversize" bug). Mobile keeps full width.
+        child: _CalendarWidthLimit(
+          child: Column(
+            children: [
+              const OfflineBanner(),
+              _MonthHeader(
+                cursor: cursor,
+                prevTooltip: loc.bookings_prev_month,
+                nextTooltip: loc.bookings_next_month,
+                onPrev: () => _shift(ref, cursor, -1),
+                onNext: () => _shift(ref, cursor, 1),
+              ),
+              const _WeekdayHeader(),
+              Expanded(
+                child: bookingsAsync.when(
+                  loading: () => const Center(child: LensLoader()),
+                  error: (err, _) => Center(
+                    child: ErrorState(
+                      message: loc.bookings_calendar_could_not_load,
+                      onRetry: () =>
+                          ref.invalidate(calendarBookingsProvider(cursor)),
+                    ),
+                  ),
+                  data: (bookings) => _MonthGrid(
+                    cursor: cursor,
+                    bookings: bookings,
+                    onDayTap: (day) => _showDaySheet(context, day, bookings),
                   ),
                 ),
-                data: (bookings) => _MonthGrid(
-                  cursor: cursor,
-                  bookings: bookings,
-                  onDayTap: (day) => _showDaySheet(context, day, bookings),
-                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -140,6 +148,29 @@ class CalendarScreen extends ConsumerWidget {
 
 bool _sameYmd(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
+
+/// WEB-only width cap for the calendar. On web the content panel can be very
+/// wide; an unconstrained 7-column grid then makes each day cell enormous.
+/// This centres the calendar inside a sensible max width. On mobile it is a
+/// pure pass-through, so the phone layout is unchanged.
+class _CalendarWidthLimit extends StatelessWidget {
+  const _CalendarWidthLimit({required this.child});
+  final Widget child;
+
+  static const double _maxWidth = 760;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!kIsWeb) return child;
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: _maxWidth),
+        child: child,
+      ),
+    );
+  }
+}
 
 class _MonthHeader extends StatelessWidget {
   const _MonthHeader({
@@ -251,11 +282,13 @@ class _MonthGrid extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
       child: GridView.builder(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 7,
           mainAxisSpacing: 4,
           crossAxisSpacing: 4,
-          childAspectRatio: 0.85,
+          // Web cells read better slightly wider-than-tall; mobile keeps the
+          // taller ratio so dots + day number fit on a narrow screen.
+          childAspectRatio: kIsWeb ? 1.0 : 0.85,
         ),
         itemCount: cellCount,
         itemBuilder: (_, idx) {

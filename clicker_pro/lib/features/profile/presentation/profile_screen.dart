@@ -35,10 +35,9 @@ import '../../../shared/states/offline_banner.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_strings.dart';
 import '../../auth/application/session_controller.dart';
-import '../../auth/presentation/login_screen.dart' show slideFromRightRoute;
-import '../../auth/presentation/manager_invite_screen.dart';
 import '../../auth/presentation/role_change_dialog.dart';
 import '../../settings/application/language_controller.dart';
+import '../../team/application/team_providers.dart';
 import '../application/profile_controllers.dart';
 import '../domain/gear_item.dart';
 import '../domain/user_model.dart';
@@ -1102,10 +1101,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  /// Join a team. Per Heaven's requirement, joining needs ONLY the owner's
+  /// 6-digit passcode — no name/email/password (the user is already logged in,
+  /// so their identity is known). This opens a minimal passcode sheet that
+  /// calls the team/join endpoint.
   void _openManagerInvite() {
-    Navigator.of(
-      context,
-    ).push(slideFromRightRoute(const ManagerInviteScreen()));
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.voidElevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (_) => const _JoinByPasscodeSheet(),
+    );
   }
 
   // ── Team invite card (visible for Owner / Both) ───────────────
@@ -1717,6 +1726,184 @@ class _MenuRow extends StatelessWidget {
         const SizedBox(width: 10),
         Text(label, style: TextStyle(color: color, fontSize: 13.5)),
       ],
+    );
+  }
+}
+
+/// Minimal "join a team" sheet: the user (already logged in) enters ONLY the
+/// owner's 6-digit passcode. No name/email/password — their account already
+/// exists. Calls the team/join endpoint via [teamControllerProvider].
+class _JoinByPasscodeSheet extends ConsumerStatefulWidget {
+  const _JoinByPasscodeSheet();
+
+  @override
+  ConsumerState<_JoinByPasscodeSheet> createState() =>
+      _JoinByPasscodeSheetState();
+}
+
+class _JoinByPasscodeSheetState extends ConsumerState<_JoinByPasscodeSheet> {
+  final _codeCtrl = TextEditingController();
+  bool _loading = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _codeCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _join() async {
+    final code = _codeCtrl.text.trim();
+    if (code.length != 6) {
+      setState(() => _error = 'Enter the 6-digit passcode.');
+      return;
+    }
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      await ref.read(teamControllerProvider.notifier).joinWithCode(code);
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Joined the team ✓')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = 'Passcode is wrong or expired.';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        24,
+        22,
+        24,
+        22 + MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 18),
+              decoration: BoxDecoration(
+                color: AppColors.filmMuted.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          Text(
+            'Join a team',
+            style: TextStyle(
+              color: AppColors.film,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Enter the 6-digit passcode your studio owner shared with you.',
+            style: TextStyle(
+              color: AppColors.filmDim.withValues(alpha: 0.85),
+              fontSize: 13.5,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 18),
+          TextField(
+            controller: _codeCtrl,
+            keyboardType: TextInputType.number,
+            maxLength: 6,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppColors.film,
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 8,
+            ),
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(6),
+            ],
+            onChanged: (_) {
+              if (_error != null) setState(() => _error = null);
+            },
+            decoration: InputDecoration(
+              counterText: '',
+              hintText: '------',
+              hintStyle: TextStyle(
+                color: AppColors.filmMuted.withValues(alpha: 0.5),
+                letterSpacing: 8,
+              ),
+              filled: true,
+              fillColor: AppColors.surfaceAlt,
+              contentPadding: const EdgeInsets.symmetric(vertical: 16),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: AppColors.glassBorder),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: AppColors.glassBorder),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: AppColors.orange.withValues(alpha: 0.6),
+                  width: 1.5,
+                ),
+              ),
+            ),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              _error!,
+              style: const TextStyle(color: Colors.redAccent, fontSize: 12.5),
+            ),
+          ],
+          const SizedBox(height: 18),
+          SizedBox(
+            height: 52,
+            child: ElevatedButton(
+              onPressed: _loading ? null : _join,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.orange,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: _loading
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2.5,
+                      ),
+                    )
+                  : const Text(
+                      'Join Team',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

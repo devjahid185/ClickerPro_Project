@@ -5,6 +5,7 @@ import '../../../core/pdf/pdf_export.dart';
 import '../../../core/providers.dart';
 import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/lens_loader.dart';
+import '../../../shared/widgets/motion.dart';
 import '../../../theme/app_colors.dart';
 import '../data/petty_cash_repository.dart';
 import '../domain/petty_cash_entry.dart';
@@ -173,11 +174,14 @@ class PettyCashScreen extends ConsumerWidget {
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
                       itemCount: items.length,
-                      itemBuilder: (_, i) => _PettyCashRow(
-                        entry: items[i],
-                        onDelete: () => ref
-                            .read(pettyCashListProvider.notifier)
-                            .remove(items[i].id),
+                      itemBuilder: (_, i) => StaggeredList.item(
+                        i,
+                        _PettyCashRow(
+                          entry: items[i],
+                          onDelete: () => ref
+                              .read(pettyCashListProvider.notifier)
+                              .remove(items[i].id),
+                        ),
                       ),
                     ),
             ),

@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/role/capability.dart';
 import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
+import '../../../shared/widgets/motion.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
 
@@ -147,10 +148,13 @@ class _PackageList extends ConsumerWidget {
         return ListView.builder(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
           itemCount: packages.length,
-          itemBuilder: (context, index) => _PackageCard(
-            package: packages[index],
-            accentColor: _cardColors[index % _cardColors.length],
-            canManage: canManage,
+          itemBuilder: (context, index) => StaggeredList.item(
+            index,
+            _PackageCard(
+              package: packages[index],
+              accentColor: _cardColors[index % _cardColors.length],
+              canManage: canManage,
+            ),
           ),
         );
       },

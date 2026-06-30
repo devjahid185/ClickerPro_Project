@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
+import '../../../shared/widgets/motion.dart';
 import '../../../theme/app_colors.dart';
 import '../application/reminder_providers.dart';
 import '../domain/reminder.dart';
@@ -88,13 +89,16 @@ class RemindersScreen extends ConsumerWidget {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
               itemCount: items.length,
-              itemBuilder: (_, i) => _ReminderRow(
-                reminder: items[i],
-                onDelete: () {
-                  ref
-                      .read(reminderListControllerProvider.notifier)
-                      .remove(items[i].id);
-                },
+              itemBuilder: (_, i) => StaggeredList.item(
+                i,
+                _ReminderRow(
+                  reminder: items[i],
+                  onDelete: () {
+                    ref
+                        .read(reminderListControllerProvider.notifier)
+                        .remove(items[i].id);
+                  },
+                ),
               ),
             );
           },
