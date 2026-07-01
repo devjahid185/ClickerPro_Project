@@ -15,7 +15,6 @@ import 'l10n/app_localizations.dart';
 import 'shared/widgets/web_nav_shell.dart';
 import 'shared/widgets/web_shell.dart';
 import 'theme/app_colors.dart';
-import 'theme/app_colors_pulse.dart';
 import 'theme/app_theme.dart';
 import 'theme/app_theme_mode.dart';
 import 'theme/reduce_motion.dart';
@@ -26,38 +25,32 @@ class ClickerProApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(activeLocaleProvider);
-    final themeMode = ref.watch(resolvedThemeModeProvider);
+    final activeTheme = ref.watch(activeThemeModeProvider);
     final reduceMotion = ref.watch(reduceMotionProvider);
-    final activeAppTheme = ref.watch(themeModeControllerProvider).maybeWhen(
-      data: (m) => m,
-      orElse: () => AppThemeMode.sunsetStudio,
-    );
 
-    // Sync AppColors.isDark so every custom-painted surface reads the correct
-    // palette without needing a BuildContext. `isDark` here means "use the
-    // Sunrise Pulse palette" — despite the name, v15 has no dark mode; both
-    // themes are light. The flag still selects which palette getters resolve to.
-    final isDark = activeAppTheme == AppThemeMode.sunrisePulse;
-    AppColors.isDark = isDark;
-    AppColorsPulse; // ensure the palette class is loaded
+    // Sync the static palette so every custom-painted surface reads the active
+    // theme's colours without needing a BuildContext. Both mobile themes are
+    // light; web has its own theme and ignores this flag.
+    AppColors.active = activeTheme == AppThemeMode.sunsetStudio
+        ? ActivePalette.sunsetStudio
+        : ActivePalette.clickerPro;
+
+    // Mobile ThemeData for the active theme (ClickerPro default or Sunset).
+    final mobileTheme = activeTheme == AppThemeMode.sunsetStudio
+        ? AppTheme.sunsetStudio()
+        : AppTheme.clickerPro();
 
     return MaterialApp(
       title: 'Clicker Pro',
       debugShowCheckedModeBanner: false,
-      // Sunset Studio = light ThemeData · Sunrise Pulse = dark ThemeData.
-      // On web the Scaffold is made transparent so the WebShell's orange
-      // glass backdrop shows through; mobile keeps its solid surface.
+      // Web uses its own neutral base theme (AppThemeWeb via WebTheme tokens);
+      // mobile uses the selected theme. On web the Scaffold is made transparent
+      // so the WebShell's page backdrop shows through; mobile keeps a solid one.
       theme: kIsWeb
-          ? AppTheme.sunsetStudio().copyWith(
+          ? AppTheme.web().copyWith(
               scaffoldBackgroundColor: Colors.transparent,
             )
-          : AppTheme.sunsetStudio(),
-      darkTheme: kIsWeb
-          ? AppTheme.sunrisePulse().copyWith(
-              scaffoldBackgroundColor: Colors.transparent,
-            )
-          : AppTheme.sunrisePulse(),
-      themeMode: themeMode,
+          : mobileTheme,
       // Root navigator key lets the web sidebar (mounted in `builder`, above
       // the Navigator) push routes.
       navigatorKey: rootNavigatorKey,
@@ -67,7 +60,7 @@ class ClickerProApp extends ConsumerWidget {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       // Key the routed subtree on the active theme so custom-painted widgets
-      // (which read AppColors.isDark directly) rebuild on every theme switch.
+      // (which read AppColors.active directly) rebuild on every theme switch.
       builder: (context, child) {
         final media = MediaQuery.of(context);
         return MediaQuery(
@@ -78,7 +71,7 @@ class ClickerProApp extends ConsumerWidget {
             alwaysUse24HourFormat: true,
           ),
           child: KeyedSubtree(
-            key: ValueKey(isDark ? 'pulse' : 'sunset'),
+            key: ValueKey(activeTheme.name),
             // Web-only glassmorphism shell; a pure pass-through on mobile.
             // On web the WebNavShell adds the permanent sidebar + content
             // panel around the routed screen, driven by the current route.

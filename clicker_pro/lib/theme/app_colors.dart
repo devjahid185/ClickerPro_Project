@@ -1,46 +1,57 @@
 // lib/theme/app_colors.dart
 //
-// Clicker Pro v15 — AppColors (Sunset Studio + Sunrise Pulse compat layer)
+// Clicker Pro — AppColors (two-theme static accessor).
 //
-// This class serves as the single static accessor used throughout the
-// existing codebase. When `isDark` is true (Sunrise Pulse), all getters
-// delegate to AppColorsPulse. When false (Sunset Studio), they delegate
-// to AppColorsLight.
+// This class is the single static colour accessor used across the mobile
+// codebase (custom-painted widgets read it without a BuildContext). It
+// delegates to one of two palettes based on the active theme:
+//   • AppColorsClicker — the DEFAULT ClickerPro theme (#E2620E, per spec)
+//   • AppColorsLight   — the legacy Sunset Studio theme (#FF6200)
 //
-// New code should prefer ThemeAwareColors.of(context) or import the
-// specific palette (AppColorsLight / AppColorsPulse) directly.
+// app.dart sets `AppColors.active` whenever the theme changes so every getter
+// resolves to the right palette. `const` fields cannot switch at runtime, so
+// those keep the ClickerPro (default) values for legacy const call sites;
+// prefer the getters below in new code.
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'app_colors_clicker.dart';
 import 'app_colors_light.dart';
-import 'app_colors_pulse.dart';
+
+/// Which palette AppColors resolves to. Mirrors AppThemeMode (mobile).
+enum ActivePalette { clickerPro, sunsetStudio }
 
 class AppColors {
   AppColors._();
 
   // ============================================================
-  // 🌗 THEME SWITCH — flipped by app.dart
+  // 🌗 THEME SWITCH — flipped by app.dart on every theme change.
   // ============================================================
-  static bool isDark = false; // false = Sunset Studio, true = Sunrise Pulse
+  static ActivePalette active = ActivePalette.clickerPro;
+
+  static bool get _sunset => active == ActivePalette.sunsetStudio;
+
+  /// Backward-compat: some old code toggled `isDark`. It now selects Sunset.
+  /// (Neither theme is actually dark — both are light.)
+  static bool get isDark => _sunset;
+  static set isDark(bool v) =>
+      active = v ? ActivePalette.sunsetStudio : ActivePalette.clickerPro;
 
   // ============================================================
   // ☀️ SURFACES
   // ============================================================
-  // On web the page background is the WebShell's ambient backdrop, so the
-  // scaffold/app background is transparent (handled per-screen). appBg itself
-  // is kept for any explicit fills.
-  static Color get appBg => isDark ? AppColorsPulse.bg : AppColorsLight.cream;
+  static Color get appBg =>
+      _sunset ? AppColorsLight.cream : AppColorsClicker.background;
 
-  // Card / elevated surfaces. v16: web uses solid (no glass) — clean white
-  // cards on the neutral page canvas. Mobile keeps its palette surface.
+  // On web, cards are solid clean white on the neutral page canvas.
   static Color get surface {
     if (kIsWeb) return Colors.white;
-    return isDark ? AppColorsPulse.surface : AppColorsLight.glass;
+    return _sunset ? AppColorsLight.glass : AppColorsClicker.surface;
   }
 
   static Color get surfaceAlt {
     if (kIsWeb) return const Color(0xFFF7F8FA);
-    return isDark ? AppColorsPulse.surfaceAlt : AppColorsLight.creamDark;
+    return _sunset ? AppColorsLight.creamDark : AppColorsClicker.surfaceAlt;
   }
 
   // Backward-compat aliases
@@ -52,41 +63,37 @@ class AppColors {
 
   // ============================================================
   // 🎨 PRIMARY ACCENT
-  // Sunset Studio = terracotta · Sunrise Pulse = sunrise red-orange
+  // ClickerPro = #E2620E · Sunset Studio = #FF6200
   // ============================================================
 
-  // Static constants (used in const contexts — Signal Orange ramp).
-  // Heaven: primary must be orange everywhere — this swatch drives the
-  // finance hero gradient and other const usages.
-  static const Color primary50 = Color(0xFFFFF3E8);
-  static const Color primary100 = Color(0xFFFFE0C2);
-  static const Color primary200 = Color(0xFFFFC089);
-  static const Color primary300 = Color(0xFFFF9F50);
-  static const Color primary400 = Color(0xFFFF8534); // orange light
-  static const Color primary500 = Color(0xFFFF6200); // Signal Orange (default)
-  static const Color primary600 = Color(0xFFE85700);
-  static const Color primary700 = Color(0xFFC44900);
-  static const Color primary800 = Color(0xFF9C3A00);
-  static const Color primary900 = Color(0xFF6B2800);
+  // Static const ramp — ClickerPro brand orange (used in const contexts).
+  static const Color primary50 = Color(0xFFFDF0E7);
+  static const Color primary100 = Color(0xFFFAD9C2);
+  static const Color primary200 = Color(0xFFF3B98C);
+  static const Color primary300 = Color(0xFFEE9A56);
+  static const Color primary400 = Color(0xFFF89A2B); // primary light
+  static const Color primary500 = Color(0xFFE2620E); // ClickerPro brand orange
+  static const Color primary600 = Color(0xFFC9560C);
+  static const Color primary700 = Color(0xFFB84E0A); // primary dark
+  static const Color primary800 = Color(0xFF8F3D08);
+  static const Color primary900 = Color(0xFF662B06);
 
   // Theme-aware getters (use these in non-const contexts)
   static Color get orange =>
-      isDark ? AppColorsPulse.primary : AppColorsLight.terracotta;
+      _sunset ? AppColorsLight.terracotta : AppColorsClicker.primary;
   static Color get orangeLight =>
-      isDark ? AppColorsPulse.primaryLight : AppColorsLight.terracottaLight;
+      _sunset ? AppColorsLight.terracottaLight : AppColorsClicker.primaryLight;
   static Color get orangeSoft =>
-      isDark ? AppColorsPulse.primarySoft : AppColorsLight.terracottaSoft;
+      _sunset ? AppColorsLight.terracottaSoft : AppColorsClicker.primarySoft;
   static Color get orangeGlow =>
-      isDark ? AppColorsPulse.primaryGlow : AppColorsLight.terracottaGlow;
+      _sunset ? AppColorsLight.terracottaGlow : AppColorsClicker.primaryGlow;
 
-  // Static const fallbacks — compile-time safe for const constructors.
-  // These resolve to Sunset Studio values and are for legacy const usage only.
-  // Prefer the theme-aware getters above in new code.
-  static const Color orangeConst = AppColorsLight.terracotta;
-  static const Color redConst = AppColorsLight.rust;
-  static const Color greenConst = AppColorsLight.sage;
-  static const Color goldConst = AppColorsLight.gold;
-  static const Color indigoConst = Color(0xFF2563EB);
+  // Static const fallbacks — ClickerPro (default) values for const call sites.
+  static const Color orangeConst = AppColorsClicker.primary;
+  static const Color redConst = AppColorsClicker.danger;
+  static const Color greenConst = AppColorsClicker.success;
+  static const Color goldConst = AppColorsClicker.warning;
+  static const Color indigoConst = AppColorsClicker.infoBlue;
 
   // Backward-compat aliases
   static Color get teal => orange;
@@ -100,34 +107,39 @@ class AppColors {
   // ============================================================
   // 🟡 GOLD / AMBER
   // ============================================================
-  static const Color gold = AppColorsLight.gold; // Sunset Studio gold
-  static const Color goldSoft = AppColorsLight.goldSoft;
+  static Color get gold =>
+      _sunset ? AppColorsLight.gold : AppColorsClicker.warning;
+  static Color get goldSoft =>
+      _sunset ? AppColorsLight.goldSoft : AppColorsClicker.goldSoft;
 
   // ============================================================
   // 💜 PURPLE / INFO
   // ============================================================
-  static const Color purple = AppColorsLight.plum;
-  static const Color purpleSoft = AppColorsLight.plumSoft;
-  static const Color indigo = Color(0xFF2563EB);
-  static const Color indigoSoft = Color(0x262563EB);
-  static const Color info = indigo;
+  static Color get purple =>
+      _sunset ? AppColorsLight.plum : AppColorsClicker.accentViolet;
+  static Color get purpleSoft =>
+      _sunset ? AppColorsLight.plumSoft : AppColorsClicker.plumSoft;
+  static Color get indigo =>
+      _sunset ? const Color(0xFF2563EB) : AppColorsClicker.infoBlue;
+  static const Color indigoSoft = Color(0x263541AF);
+  static Color get info => indigo;
   static const Color infoSoft = indigoSoft;
 
   // ============================================================
   // 📝 TEXT
   // ============================================================
   static Color get film =>
-      isDark ? AppColorsPulse.textPrimary : AppColorsLight.textPrimary;
+      _sunset ? AppColorsLight.textPrimary : AppColorsClicker.textPrimary;
   static Color get filmDim =>
-      isDark ? AppColorsPulse.textSecondary : AppColorsLight.textSecondary;
+      _sunset ? AppColorsLight.textSecondary : AppColorsClicker.textSecondary;
   static Color get filmMuted =>
-      isDark ? AppColorsPulse.textMuted : AppColorsLight.textMuted;
+      _sunset ? AppColorsLight.textMuted : AppColorsClicker.textMuted;
 
   static Color get textPrimary => film;
   static Color get textSecondary => filmDim;
   static Color get textMuted => filmMuted;
 
-  // Gray scale (Sunset Studio — used in light mode only)
+  // Gray scale (neutral — theme-independent)
   static const Color gray50 = Color(0xFFFAFAF9);
   static const Color gray100 = Color(0xFFF5F5F4);
   static const Color gray200 = Color(0xFFE7E5E4);
@@ -143,89 +155,92 @@ class AppColors {
   // 🟢🔴 SEMANTIC / STATUS
   // ============================================================
   static Color get green =>
-      isDark ? AppColorsPulse.green : AppColorsLight.sage;
+      _sunset ? AppColorsLight.sage : AppColorsClicker.success;
   static Color get greenSoft =>
-      isDark ? AppColorsPulse.greenSoft : AppColorsLight.sageSoft;
-  static const Color success = AppColorsLight.sage;
-  static const Color mint = AppColorsLight.sage;
+      _sunset ? AppColorsLight.sageSoft : AppColorsClicker.greenSoft;
+  static const Color success = AppColorsClicker.success;
+  static const Color mint = AppColorsClicker.success;
 
   static Color get yellow =>
-      isDark ? AppColorsPulse.yellow : AppColorsLight.yellow;
+      _sunset ? AppColorsLight.yellow : AppColorsClicker.warning;
   static Color get yellowSoft =>
-      isDark ? AppColorsPulse.yellowSoft : AppColorsLight.yellowSoft;
-  static const Color warning = AppColorsLight.yellow;
+      _sunset ? AppColorsLight.yellowSoft : AppColorsClicker.yellowSoft;
+  static const Color warning = AppColorsClicker.warning;
 
   static Color get red =>
-      isDark ? AppColorsPulse.red : AppColorsLight.rust;
+      _sunset ? AppColorsLight.rust : AppColorsClicker.danger;
   static Color get redSoft =>
-      isDark ? AppColorsPulse.redSoft : AppColorsLight.rustSoft;
+      _sunset ? AppColorsLight.rustSoft : AppColorsClicker.redSoft;
   static Color get error => red;
   static Color get danger => red;
   static Color get coral => red;
 
   // ============================================================
+  // 🎨 DATA / STAT CARD COLOURS (ClickerPro dashboard — multi-colour)
+  // Spec §1: intentional data cards, kept as-is on both themes.
+  // ============================================================
+  static const Color infoTeal = AppColorsClicker.infoTeal;
+  static const Color infoBlue = AppColorsClicker.infoBlue;
+  static const Color accentViolet = AppColorsClicker.accentViolet;
+
+  // ============================================================
   // 🪟 CARD SURFACES
   // ============================================================
-  static Color line([double alpha = 0.08]) => isDark
-      ? Colors.white.withValues(alpha: (alpha * 1.5).clamp(0.0, 1.0))
-      : Colors.black.withValues(alpha: alpha);
+  static Color line([double alpha = 0.08]) =>
+      Colors.black.withValues(alpha: alpha);
 
-  // On web we make the card surface translucent so the WebShell's rich
-  // ambient backdrop shows through — that's what turns flat white cards into
-  // real frosted glass. On mobile the surface stays fully opaque (phone UI
-  // unchanged). The BackdropFilter blur lives in the GlassCard / WebShell;
-  // here we only relax the fill opacity.
   static Color get glass {
     if (kIsWeb) return Colors.white;
-    return isDark ? AppColorsPulse.surface : AppColorsLight.glass;
+    return _sunset ? AppColorsLight.glass : AppColorsClicker.surface;
   }
   static Color get glassBorder =>
-      isDark ? AppColorsPulse.border : AppColorsLight.glassBorder;
+      _sunset ? AppColorsLight.glassBorder : AppColorsClicker.glassBorder;
   static Color get glassHover =>
-      isDark ? AppColorsPulse.surfaceAlt : AppColorsLight.glassHover;
+      _sunset ? AppColorsLight.glassHover : AppColorsClicker.glassHover;
   static Color get hairline =>
-      isDark ? AppColorsPulse.hairline : AppColorsLight.hairline;
+      _sunset ? AppColorsLight.hairline : AppColorsClicker.hairline;
 
   static Color get topbarBg =>
-      isDark ? AppColorsPulse.topbarBg : AppColorsLight.topbarBg;
+      _sunset ? AppColorsLight.topbarBg : AppColorsClicker.topbarBg;
   static Color get topbarBorder =>
-      isDark ? AppColorsPulse.topbarBorder : AppColorsLight.topbarBorder;
+      _sunset ? AppColorsLight.topbarBorder : AppColorsClicker.topbarBorder;
   static Color get bottomNavBg =>
-      isDark ? AppColorsPulse.bottomNavBg : AppColorsLight.bottomNavBg;
+      _sunset ? AppColorsLight.bottomNavBg : AppColorsClicker.bottomNavBg;
   static Color get bottomNavBorder =>
-      isDark ? AppColorsPulse.bottomNavBorder : AppColorsLight.bottomNavBorder;
+      _sunset ? AppColorsLight.bottomNavBorder : AppColorsClicker.bottomNavBorder;
 
   // ============================================================
   // 🌈 GRADIENTS
   // ============================================================
-  static LinearGradient get orangeGradient =>
-      isDark ? AppColorsPulse.primaryGradient : AppColorsLight.terracottaGradient;
-  static const LinearGradient tealGradient = AppColorsLight.terracottaGradient;
+  static LinearGradient get orangeGradient => _sunset
+      ? AppColorsLight.terracottaGradient
+      : AppColorsClicker.orangeGradient;
+  static const LinearGradient tealGradient = AppColorsClicker.orangeGradient;
 
-  static LinearGradient get drawerHeaderGradient => isDark
-      ? AppColorsPulse.drawerHeaderGradient
-      : AppColorsLight.drawerHeaderGradient;
+  static LinearGradient get drawerHeaderGradient => _sunset
+      ? AppColorsLight.drawerHeaderGradient
+      : AppColorsClicker.drawerHeaderGradient;
 
   static const LinearGradient goldGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFFD9B45C), AppColorsLight.gold, Color(0xFF96702D)],
+    colors: [Color(0xFFDDB35A), AppColorsClicker.warning, Color(0xFF8A6A1E)],
   );
 
   static const LinearGradient cardGlow = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0x0AFF6200), Color(0x00FF6200)],
+    colors: [Color(0x0AE2620E), Color(0x00E2620E)],
   );
 
   // ============================================================
   // 🎨 CARD DECORATION HELPERS
   // ============================================================
   static BoxDecoration glassCardDecoration({double radius = 18, Color? tint}) {
-    if (isDark) {
-      return AppColorsPulse.glassCardDecoration(radius: radius, tint: tint);
+    if (_sunset) {
+      return AppColorsLight.glassCardDecoration(radius: radius, tint: tint);
     }
-    return AppColorsLight.glassCardDecoration(radius: radius, tint: tint);
+    return AppColorsClicker.glassCardDecoration(radius: radius, tint: tint);
   }
 
   static BoxDecoration iconWrapDecoration(Color tint, {double radius = 12}) {
@@ -236,9 +251,9 @@ class AppColors {
   }
 
   static BoxDecoration pillChipDecoration({Color? tint}) {
-    if (isDark) {
-      return AppColorsPulse.pillChipDecoration(tint: tint);
+    if (_sunset) {
+      return AppColorsLight.pillChipDecoration(tint: tint);
     }
-    return AppColorsLight.pillChipDecoration(tint: tint);
+    return AppColorsClicker.pillChipDecoration(tint: tint);
   }
 }

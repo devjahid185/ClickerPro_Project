@@ -557,7 +557,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final asyncMode = ref.watch(themeModeControllerProvider);
     final currentMode = asyncMode.maybeWhen(
       data: (m) => m,
-      orElse: () => AppThemeMode.sunsetStudio,
+      orElse: () => AppThemeMode.clickerPro,
     );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -579,6 +579,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             children: [
               Expanded(
                 child: _themeCard(
+                  title: 'ClickerPro',
+                  subtitle: 'Editorial · default',
+                  selected: currentMode == AppThemeMode.clickerPro,
+                  swatch: const [
+                    Color(0xFFFBFAF7),
+                    Color(0xFFE2620E),
+                    Color(0xFF1A1A18),
+                  ],
+                  onTap: () => ref
+                      .read(themeModeControllerProvider.notifier)
+                      .setThemeMode(AppThemeMode.clickerPro),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _themeCard(
                   title: 'Sunset',
                   subtitle: 'Warm · light',
                   selected: currentMode == AppThemeMode.sunsetStudio,
@@ -590,22 +606,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   onTap: () => ref
                       .read(themeModeControllerProvider.notifier)
                       .setThemeMode(AppThemeMode.sunsetStudio),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _themeCard(
-                  title: 'Sunrise',
-                  subtitle: 'Bold · punchy',
-                  selected: currentMode == AppThemeMode.sunrisePulse,
-                  swatch: const [
-                    Color(0xFF0D0D0D),
-                    Color(0xFFFF6A00),
-                    Color(0xFFFFB800),
-                  ],
-                  onTap: () => ref
-                      .read(themeModeControllerProvider.notifier)
-                      .setThemeMode(AppThemeMode.sunrisePulse),
                 ),
               ),
             ],

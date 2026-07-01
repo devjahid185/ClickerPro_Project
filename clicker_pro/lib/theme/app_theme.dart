@@ -1,15 +1,16 @@
 // lib/theme/app_theme.dart
 //
 // Clicker Pro v15 — Theme entry point
-// Two themes: Sunset Studio (light, default) · Sunrise Pulse (dark, bold)
-// Deep Ocean retired in v15.
+// Single theme: Sunset Studio (light, default).
+// Sunrise Pulse and Deep Ocean retired in v15.
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
+import 'app_theme_clicker.dart';
 import 'app_theme_light.dart';
-import 'app_theme_pulse.dart';
+import 'app_theme_web.dart';
 
 /// ============================================================
 /// SPACING — 8px base scale (v15 spec)
@@ -43,8 +44,6 @@ class AppRadius {
 ///   display/brand: Mood Booster (dashboard only) → Playfair Display (serif)
 ///   body: Outfit
 ///   mono/labels: IBM Plex Mono
-///
-/// Typography — Sunrise Pulse → see AppTextPulse in app_theme_pulse.dart
 /// ============================================================
 class AppText {
   AppText._();
@@ -279,18 +278,24 @@ class AppFilters {
 class AppTheme {
   AppTheme._();
 
-  /// Sunset Studio — warm, editorial, romantic (v15 default).
-  /// Delegates to AppThemeLight which owns the full ThemeData.
+  /// ClickerPro — the DEFAULT mobile theme (Hanken Grotesk + #E2620E, per
+  /// CLICKERPRO_DESIGN_SPEC.md). Delegates to AppThemeClicker.
+  static ThemeData clickerPro() => AppThemeClicker.theme();
+
+  /// Sunset Studio — the earlier warm editorial theme (Playfair + #FF6200).
+  /// Kept as the secondary mobile theme. Delegates to AppThemeLight.
   static ThemeData sunsetStudio() => AppThemeLight.light();
 
-  /// Sunrise Pulse — bold, high-contrast, punchy (v15 alt).
-  /// Delegates to AppThemePulse which owns the full ThemeData.
-  static ThemeData sunrisePulse() => AppThemePulse.dark();
+  /// Web base theme — neutral placeholder scaffold driven by WebTheme tokens.
+  /// Used as MaterialApp.theme on the web build only (see app.dart). Awaiting
+  /// the new Claude Design theme; swap WebTheme's values to reskin.
+  static ThemeData web() => AppThemeWeb.theme();
 
   // ── Backward-compat shims ──────────────────────────────────────────
-  // `app.dart` was wired to these names. Point them at the v15 equivalents
-  // so nothing else needs to change until a full rename sweep.
-  static ThemeData dark() => sunrisePulse();
+  // Older callers referenced these names. Sunrise Pulse / Deep Ocean are
+  // retired, so they all resolve to the single Sunset Studio theme.
+  static ThemeData sunrisePulse() => sunsetStudio();
+  static ThemeData dark() => sunsetStudio();
   static ThemeData orangeHorizon() => sunsetStudio();
-  static ThemeData oceanDeep() => sunrisePulse(); // retired → maps to Pulse
+  static ThemeData oceanDeep() => sunsetStudio();
 }

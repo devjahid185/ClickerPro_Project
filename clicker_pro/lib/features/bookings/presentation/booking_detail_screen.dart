@@ -1209,7 +1209,7 @@ class _InvoiceSheet extends StatelessWidget {
                                     child: Icon(
                                       Icons.circle,
                                       size: 5,
-                                      color: AppColors.gold,
+                                      color: AppColors.goldConst,
                                     ),
                                   ),
                                   Expanded(

@@ -131,7 +131,7 @@ class _CoinPainter extends CustomPainter {
 
     final body = Paint()
       ..shader = const LinearGradient(
-        colors: [Color(0xFFE7C76A), AppColors.gold, Color(0xFF96702D)],
+        colors: [Color(0xFFE7C76A), AppColors.goldConst, Color(0xFF96702D)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ).createShader(Rect.fromCircle(center: Offset.zero, radius: r))

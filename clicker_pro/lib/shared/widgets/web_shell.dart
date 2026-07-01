@@ -3,11 +3,10 @@
 // Web-only presentation shell. On mobile it is a pass-through (returns the
 // child untouched) so the phone UI is NEVER affected.
 //
-// v18 "Studio Sage": the page canvas is a subtle sage-tinted gradient with a
-// faint sage glow top-left and a soft orange glow bottom-right — enough to feel
-// calm, premium and branded without competing with the white content surfaces.
-// The WebNavShell owns the sage sidebar + content layout on top of this
-// backdrop.
+// Neutral placeholder (awaiting the new Claude Design web theme): the page
+// canvas is a subtle neutral gradient with two faint glows for depth — calm and
+// un-branded until the new palette lands. The WebNavShell owns the sidebar +
+// content layout on top of this backdrop. All colours read from WebTheme.
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
