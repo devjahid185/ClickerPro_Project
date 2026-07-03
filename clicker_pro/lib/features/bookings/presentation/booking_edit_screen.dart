@@ -1385,6 +1385,22 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
       if (pkg.includesChief) {
         setState(() => _chiefEnabled = true);
       }
+      // Auto-fill the Client Requirements field with the package's print /
+      // album details so the deliverables carry over — but only when the
+      // field is empty, so we never clobber text the user already typed.
+      if (_requirementsCtrl.text.trim().isEmpty) {
+        final deliverables = <String>[
+          if ((pkg.printQuantity ?? 0) > 0)
+            '${pkg.printQuantity} print${pkg.printQuantity! > 1 ? 's' : ''}'
+                '${(pkg.printSize?.trim().isNotEmpty ?? false) ? ' (${pkg.printSize!.trim()})' : ''}',
+          if (pkg.albumText?.trim().isNotEmpty ?? false) pkg.albumText!.trim(),
+        ];
+        if (deliverables.isNotEmpty) {
+          final text = deliverables.join(', ');
+          _requirementsCtrl.text = text;
+          controller.setRequirementsNote(text);
+        }
+      }
       _triggerPackageFlash();
       // Surface the package's team composition so the user knows how many
       // photographers / cinematographers to add.
