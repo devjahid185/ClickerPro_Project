@@ -49,13 +49,27 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
   Future<List<Expense>> list() async {
     try {
       final remote = await _api.list();
-      // Cache the result locally.
+      // Locally-created expenses that haven't synced yet must survive the
+      // refresh — otherwise an added expense vanishes on pull-to-refresh.
+      final pending = await _dao.getPending();
       final rows = remote.map((e) => _modelToCompanion(e)).toList();
-      await _dao.clearAll();
+      // Only rewrite the synced cache when the server actually returned rows.
+      // A successful-but-empty response (fresh session, transient backend
+      // hiccup) must NOT wipe the local cache — that is exactly what made
+      // added expenses "disappear" on refresh.
       if (rows.isNotEmpty) {
+        await _dao.clearSynced();
         await _dao.upsertAll(rows);
       }
-      return remote;
+      // Show unsynced expenses first, then the server list. Drop any pending
+      // row the server already knows about (id match) so a just-synced expense
+      // doesn't appear twice.
+      final remoteIds = remote.map((e) => e.id).toSet();
+      final pendingModels = pending
+          .map(_rowToExpense)
+          .where((e) => !remoteIds.contains(e.id))
+          .toList();
+      return [...pendingModels, ...remote];
     } catch (_) {
       // Fallback to local cache if API is unreachable.
       final cached = await _dao.getAll();
@@ -67,29 +81,35 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
   Future<Expense> create(Expense draft) async {
     try {
       final saved = await _api.create(draft);
+      // The server assigns a new id; drop the local draft row (if the caller
+      // supplied a local id) so the synced row doesn't sit beside a stale
+      // pending duplicate, then cache the authoritative server row.
+      if (draft.id.isNotEmpty && draft.id != saved.id) {
+        await _dao.deleteById(draft.id);
+      }
       await _dao.upsert(_modelToCompanion(saved));
       return saved;
     } catch (_) {
-      // If we can't reach the API, save locally as pending.
-      final pending = draft;
-      await _dao.upsert(_modelToCompanion(pending, pending: true));
-      return pending;
+      // If we can't reach the API, save locally as pending under the draft's
+      // (unique, non-empty) local id so it survives a refresh and doesn't
+      // collide with other offline drafts.
+      await _dao.upsert(_modelToCompanion(draft, pending: true));
+      return draft;
     }
   }
 
   @override
   Future<ProfitLoss> profitLoss() async {
-    try {
-      return await _api.profit();
-    } catch (_) {
-      // Calculate from local cache when offline.
-      final cached = await _dao.getAll();
-      final totalExpense = cached.fold<double>(0, (sum, r) => sum + r.amount);
-      return ProfitLoss(
-        totalIncome: 0,
-        totalExpense: totalExpense,
-        netProfit: -totalExpense,
-      );
-    }
+    // The Laravel backend has no `/expenses/profit` endpoint, so the
+    // expense-side total is computed from the local cache (which `list()`
+    // keeps in sync with the server). Income is tracked by the payments
+    // module elsewhere.
+    final cached = await _dao.getAll();
+    final totalExpense = cached.fold<double>(0, (sum, r) => sum + r.amount);
+    return ProfitLoss(
+      totalIncome: 0,
+      totalExpense: totalExpense,
+      netProfit: -totalExpense,
+    );
   }
 }

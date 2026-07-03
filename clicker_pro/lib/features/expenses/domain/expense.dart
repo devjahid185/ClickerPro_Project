@@ -92,57 +92,90 @@ class Expense {
     );
   }
 
-  /// Wire-format payload sent to `POST /api/expenses`.  We deliberately
-  /// omit server-managed fields (`id`, `ownerId`, `createdAt`) on the way
-  /// up — the controller derives them server-side.
+  /// Wire-format payload sent to `POST /api/expenses`.
+  ///
+  /// The Laravel `ExpenseController@store` validates snake_case fields and
+  /// **requires** a non-null `title` and `date`. The Flutter UI collects a
+  /// category + note but no separate title, so we derive the title from the
+  /// note (falling back to the category) to satisfy the validator. Server
+  /// managed fields (`id`, `owner_id`, timestamps) are omitted — the
+  /// controller derives them from the authenticated user.
   Map<String, dynamic> toCreateJson() {
+    final title = (note != null && note!.trim().isNotEmpty)
+        ? note!.trim()
+        : category;
     return <String, dynamic>{
+      'title': title,
       'amount': amount,
       'category': category,
-      if (eventId != null) 'eventId': eventId,
+      if (eventId != null) 'event_id': eventId,
       if (note != null) 'note': note,
-      if (receiptUrl != null) 'receiptUrl': receiptUrl,
-      'date': incurredAt.toIso8601String(),
+      if (receiptUrl != null) 'receipt_url': receiptUrl,
+      // Laravel casts the column to `date`; send a plain yyyy-MM-dd so it
+      // parses cleanly regardless of timezone.
+      'date':
+          '${incurredAt.year.toString().padLeft(4, '0')}-'
+          '${incurredAt.month.toString().padLeft(2, '0')}-'
+          '${incurredAt.day.toString().padLeft(2, '0')}',
     };
   }
 
-  /// Full wire payload — used when updating or echoing back.  Includes
-  /// the server-managed fields so we can round-trip exactly the row we
-  /// fetched.
+  /// Full wire payload — used when updating or echoing back. Mirrors the
+  /// snake_case column names the Laravel backend persists.
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'id': id,
-      if (ownerId != null) 'ownerId': ownerId,
+      if (ownerId != null) 'owner_id': ownerId,
       'category': category,
       'amount': amount,
-      if (eventId != null) 'eventId': eventId,
+      if (eventId != null) 'event_id': eventId,
       if (note != null) 'note': note,
-      if (receiptUrl != null) 'receiptUrl': receiptUrl,
+      if (receiptUrl != null) 'receipt_url': receiptUrl,
       'date': incurredAt.toIso8601String(),
-      if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
+      if (createdAt != null) 'created_at': createdAt!.toIso8601String(),
     };
   }
 
-  /// Tolerant parser — accepts both the `POST` response shape and the
-  /// `GET /api/expenses` row shape.  Numeric fields may arrive as `int`
-  /// or `double` depending on JSON precision, so we coerce via `num`.
+  /// Tolerant parser for the Laravel row shape (and the older Node contract).
+  ///
+  /// Laravel returns **integer** ids, **string** decimals ("100.00"), and
+  /// snake_case columns; the legacy Node backend returned string ids,
+  /// numeric amounts, and camelCase. We accept both by coercing ids to
+  /// String, parsing amounts through `num`/`String`, and checking snake_case
+  /// keys first with a camelCase fallback.
   factory Expense.fromJson(Map<String, dynamic> json) {
-    final dateRaw = json['date'] ?? json['incurredAt'];
-    final createdRaw = json['createdAt'];
+    String? pick(List<String> keys) {
+      for (final k in keys) {
+        final v = json[k];
+        if (v != null) {
+          final s = v.toString();
+          if (s.isNotEmpty) return s;
+        }
+      }
+      return null;
+    }
+
+    final amountRaw = json['amount'];
+    final amount = amountRaw is num
+        ? amountRaw.toDouble()
+        : double.tryParse(amountRaw?.toString() ?? '') ?? 0;
+
+    final dateRaw = pick(['date', 'incurredAt']);
+    final createdRaw = pick(['created_at', 'createdAt']);
+
     return Expense(
-      id: json['id'] as String,
-      ownerId: json['ownerId'] as String?,
-      category: (json['category'] as String?) ?? 'Other',
-      amount: (json['amount'] as num).toDouble(),
-      eventId: json['eventId'] as String?,
-      note: json['note'] as String?,
-      receiptUrl: json['receiptUrl'] as String?,
+      // ids arrive as int (Laravel) or String (Node) — coerce to String.
+      id: json['id'].toString(),
+      ownerId: pick(['owner_id', 'ownerId']),
+      category: pick(['category']) ?? 'Other',
+      amount: amount,
+      eventId: pick(['event_id', 'eventId']),
+      note: pick(['note']),
+      receiptUrl: pick(['receipt_url', 'receiptUrl']),
       incurredAt: dateRaw == null
           ? DateTime.now()
-          : DateTime.parse(dateRaw as String),
-      createdAt: createdRaw == null
-          ? null
-          : DateTime.parse(createdRaw as String),
+          : (DateTime.tryParse(dateRaw) ?? DateTime.now()),
+      createdAt: createdRaw == null ? null : DateTime.tryParse(createdRaw),
     );
   }
 

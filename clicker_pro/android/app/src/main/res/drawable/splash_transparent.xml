@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fully transparent icon for the Android 12+ (API 31+) OS SplashScreen.
+     The platform forces a centered app-icon splash on cold start; we can't
+     remove that window, but pointing its icon at a transparent shape and its
+     background at black makes it effectively invisible, so the user goes
+     straight into the Dart SplashScreen (black top → sunset) with no visible
+     OS icon-screen in between. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@android:color/transparent" />
+    <size android:width="1dp" android:height="1dp" />
+</shape>

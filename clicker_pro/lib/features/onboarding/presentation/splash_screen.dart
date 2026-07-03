@@ -24,7 +24,10 @@ import '../../../core/navigation/route_names.dart';
 import '../../../core/providers.dart';
 import '../../../screens/dashboard_screen.dart';
 import '../../../screens/login_screen.dart';
+import '../../../shared/states/lens_loader.dart';
+import '../../../shared/widgets/clicker_logo.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_theme.dart';
 import '../../auth/domain/session.dart';
 import '../application/onboarding_controller.dart';
 import 'onboarding_intro_screen.dart';
@@ -164,19 +167,20 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.voidBlack,
+      // Full-screen brand splash image (dark→sunset gradient). Scaffold sits
+      // on black so there is no seam behind the cover-fitted image.
+      backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Full-screen brand photo backdrop (orange Fujifilm camera). A dark
-          // scrim over it keeps the logo + tagline legible.
+          // ─── FULL-SCREEN SPLASH IMAGE ────────────────────────────
           Positioned.fill(
             child: Image.asset(
-              'assets/brand/web_bg.jpg',
+              'assets/Sphlash/Sphlash.jpg',
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stack) =>
-                  const SizedBox.shrink(),
             ),
           ),
+          // Gentle scrim so the white wordmark stays crisp over the brightest
+          // part of the gradient.
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -184,36 +188,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withValues(alpha: 0.45),
-                    Colors.black.withValues(alpha: 0.65),
+                    Colors.black.withValues(alpha: 0.15),
+                    Colors.black.withValues(alpha: 0.05),
+                    Colors.black.withValues(alpha: 0.30),
                   ],
+                  stops: const [0.0, 0.5, 1.0],
                 ),
-              ),
-            ),
-          ),
-          // Ambient orange glow blob top-right.
-          Positioned(
-            top: -80,
-            right: -80,
-            child: Container(
-              width: 240,
-              height: 240,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Color(0x1AFF5A1F),
-              ),
-            ),
-          ),
-          // Ambient gold glow blob bottom-left.
-          Positioned(
-            bottom: -90,
-            left: -90,
-            child: Container(
-              width: 240,
-              height: 240,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Color(0x14C9A84C),
               ),
             ),
           ),
@@ -234,23 +214,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                           height: 130 * pulse,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppColors.orange.withValues(
-                              alpha: 0.1 * pulse,
-                            ),
+                            // Soft white halo reads over the sunset image.
+                            color: Colors.white.withValues(alpha: 0.12 * pulse),
                           ),
                         ),
                         Opacity(
                           opacity: _logoFade.value.clamp(0.0, 1.0),
                           child: Transform.scale(
                             scale: _logoScale.value,
-                            // The blade-fan brand mark — the first thing the
-                            // user sees, matching the launcher icon and the
-                            // landing page hero.
-                            child: Image.asset(
-                              'assets/brand/logo_flower.png',
-                              width: 104,
-                              height: 104,
-                            ),
+                            // The orange aperture brand mark (spec) — the first
+                            // thing the user sees, matching the launcher icon.
+                            child: const ClickerLogo(size: 104),
                           ),
                         ),
                       ],
@@ -262,21 +236,21 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   opacity: _brandFade,
                   child: Text.rich(
                     TextSpan(
+                      // Design wordmark: Hanken 800, "Pro" orange, NOT italic,
+                      // tight tracking (matches dashboard + login chrome).
                       style: TextStyle(
-                        fontFamily: 'Poppins',
+                        fontFamily: AppText.brandFontFamily,
                         fontSize: 30,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.film,
-                        letterSpacing: 0.4,
+                        fontWeight: FontWeight.w800,
+                        // White over the sunset image; "Pro" keeps brand orange.
+                        color: Colors.white,
+                        letterSpacing: -0.03 * 30,
                       ),
                       children: [
-                        TextSpan(text: 'Clicker '),
+                        TextSpan(text: 'Clicker'),
                         TextSpan(
                           text: 'Pro',
-                          style: TextStyle(
-                            color: AppColors.orange,
-                            fontStyle: FontStyle.italic,
-                          ),
+                          style: TextStyle(color: AppColors.orange),
                         ),
                       ],
                     ),
@@ -288,12 +262,20 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   child: Text(
                     'COMPANY MANAGEMENT',
                     style: TextStyle(
-                      fontFamily: 'Montserrat',
+                      fontFamily: AppText.bodyFontFamily,
                       fontSize: 9.5,
                       letterSpacing: 2.6,
-                      color: AppColors.filmDim.withValues(alpha: 0.65),
+                      color: Colors.white.withValues(alpha: 0.75),
                     ),
                   ),
+                ),
+                // Small brand loader so the splash reads as "opening", not
+                // frozen — fades in with the wordmark and spins the aperture
+                // iris until the route transitions away.
+                const SizedBox(height: 28),
+                FadeTransition(
+                  opacity: _brandFade,
+                  child: const LensLoader(size: 26),
                 ),
               ],
             ),
@@ -309,10 +291,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 child: Text(
                   'v1.0.0',
                   style: TextStyle(
-                    fontFamily: 'Montserrat',
+                    fontFamily: AppText.bodyFontFamily,
                     fontSize: 10,
                     letterSpacing: 1.4,
-                    color: AppColors.filmDim.withValues(alpha: 0.4),
+                    color: Colors.white.withValues(alpha: 0.45),
                   ),
                 ),
               ),
