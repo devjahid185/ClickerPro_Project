@@ -54,6 +54,21 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["appLabel"] = "CLICKER PRO"
+    }
+
+    flavorDimensions += "version"
+    productFlavors {
+        create("clickerPro") {
+            dimension = "version"
+            applicationId = "com.clickerpro.app"
+            manifestPlaceholders["appLabel"] = "CLICKER PRO"
+        }
+        create("proAdmin") {
+            dimension = "version"
+            applicationId = "com.clickerpro.proadmin"
+            manifestPlaceholders["appLabel"] = "PRO ADMIN"
+        }
     }
 
     signingConfigs {

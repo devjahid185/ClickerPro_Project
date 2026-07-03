@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\UsersController;
@@ -15,9 +16,7 @@ use App\Http\Controllers\Admin\SecurityController;
 use App\Http\Controllers\Admin\AuditController;
 use App\Http\Controllers\Admin\SettingsController;
 
-Route::get('/', function () {
-    return view('landing');
-})->name('landing');
+Route::get('/', [LandingController::class, 'index'])->name('landing');
 
 /*
 |--------------------------------------------------------------------------

@@ -52,6 +52,7 @@ class RouteNames {
   static const String teamSalarySheet = '/team/salary-sheet';
   static const String profile = '/profile';
   static const String settings = '/settings';
+  static const String adminPanel = '/admin-panel';
 
   // ─── Dashboard Customize module (MOD-62) ───
   static const String dashboardCustomize = '/dashboard/customize';

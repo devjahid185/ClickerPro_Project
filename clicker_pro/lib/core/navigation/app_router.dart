@@ -50,6 +50,7 @@ import '../../features/onboarding/presentation/onboarding_intro_screen.dart';
 import '../../features/onboarding/presentation/splash_screen.dart';
 import '../../features/profile/presentation/delete_account_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
+import '../../features/admin/presentation/admin_panel_screen.dart';
 import '../../features/public_booking/presentation/pending_public_bookings_screen.dart';
 import '../../features/public_booking/presentation/public_booking_form_screen.dart';
 import '../../features/public_booking/presentation/public_booking_success_screen.dart';
@@ -176,6 +177,14 @@ class AppRouter {
         return lensPageRoute<void>(const ProfileScreen());
       case RouteNames.settings:
         return lensPageRoute<void>(const SettingsScreen());
+      case RouteNames.adminPanel:
+        return lensPageRoute<void>(
+          const RoleGatedScreen(
+            capability: Capability.viewFinancials,
+            title: 'Admin Panel',
+            child: AdminPanelScreen(),
+          ),
+        );
       case RouteNames.privacy:
         return lensPageRoute<void>(const PrivacyScreen());
       case RouteNames.terms:

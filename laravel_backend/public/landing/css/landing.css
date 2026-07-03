@@ -100,7 +100,8 @@ img { max-width: 100%; display: block; }
   background: linear-gradient(135deg, var(--primary-light), var(--primary));
   -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
 }
-.hero__desc { font-size: clamp(16px, 2vw, 20px); color: var(--text-dim); max-width: 600px; margin: 0 auto 36px; }
+.hero__desc { font-size: clamp(16px, 2vw, 20px); color: var(--text-dim); max-width: 600px; margin: 0 auto 20px; }
+.hero__support { font-size: 18px; color: rgba(241, 245, 249, .82); max-width: 620px; margin: 0 auto 32px; line-height: 1.9; }
 .hero__actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
 
 .btn {
@@ -147,10 +148,69 @@ img { max-width: 100%; display: block; }
 .feature-card__name { font-family: var(--font-display); font-size: 20px; font-weight: 700; margin-bottom: 8px; }
 .feature-card__desc { color: var(--text-dim); font-size: 14.5px; }
 
+/* ---------- SCREEN PREVIEW ---------- */
+.section--light { background: #0f1a34; }
+.visual-grid { display: grid; grid-template-columns: 1.25fr .85fr; gap: 24px; align-items: center; margin-bottom: 44px; }
+.visual-card {
+  border-radius: 28px; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,.18);
+  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+}
+.visual-card__label {
+  font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: 2px; color: var(--text-dim);
+  padding: 18px 22px 0;
+}
+.visual-card img { width: 100%; height: auto; display: block; }
+.screens-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+.phone-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 26px;
+  padding: 28px; display: flex; flex-direction: column; gap: 18px;
+}
+.phone-card__header { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--text-dim); }
+.phone-card__badge {
+  padding: 6px 12px; border-radius: var(--r-pill); background: rgba(255,255,255,.08); color: var(--text);
+  font-size: 11px; font-weight: 700;
+}
+.phone-card__badge--soft { background: rgba(255,255,255,.05); color: var(--text-dim); }
+.phone-card__badge--muted { background: rgba(255,255,255,.07); color: var(--text-dim); }
+.phone-card__figure { font-family: var(--font-display); font-size: 24px; font-weight: 700; color: #fff; }
+.phone-card__text { color: var(--text-dim); font-size: 14px; line-height: 1.8; }
+.phone-card__footer { color: var(--text-muted); font-size: 13px; }
+
+.details-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; margin-top: 32px; }
+.detail-card {
+  background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+  border: 1px solid rgba(255,255,255,.06); border-radius: 24px; padding: 32px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+.detail-card__icon {
+  width: 56px; height: 56px; border-radius: 18px;
+  background: rgba(255,107,0,.15); display: grid; place-items: center;
+  font-size: 24px; color: var(--primary);
+}
+.detail-card__title { font-family: var(--font-display); font-size: 22px; margin: 0; }
+.detail-card__text { color: var(--text-dim); line-height: 1.8; }
+.btn--small { padding: 10px 18px; font-size: 13px; }
+
+.reviews-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; margin-top: 32px; }
+.review-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 24px;
+  padding: 30px; display: flex; flex-direction: column; gap: 18px;
+}
+.review-card__avatar {
+  width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: #fff; font-size: 22px; display: grid; place-items: center; font-weight: 700;
+}
+.review-card__name { font-size: 17px; font-weight: 700; }
+.review-card__role { color: var(--text-dim); font-size: 13px; margin-top: 4px; }
+.review-card__text { color: var(--text-muted); line-height: 1.9; }
+
 /* ---------- STATS ---------- */
-.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; text-align: center; }
-.stat__value { font-family: var(--font-display); font-size: clamp(32px, 5vw, 48px); font-weight: 700; color: var(--primary-light); }
-.stat__label { color: var(--text-dim); font-size: 14px; margin-top: 4px; }
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; text-align: center; }
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 28px;
+}
+.stat-card__value { font-family: var(--font-display); font-size: clamp(32px, 5vw, 48px); font-weight: 700; color: var(--primary-light); }
+.stat-card__label { color: var(--text-dim); font-size: 14px; margin-top: 4px; }
 
 /* ---------- CTA BAND ---------- */
 .cta-band {

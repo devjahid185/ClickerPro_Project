@@ -15,8 +15,11 @@ enum UserRole {
   }) {
     if (raw == null) return fallback;
     final lower = raw.toLowerCase();
+    if (lower == 'admin' || lower == 'webadmin' || lower == 'web_admin') {
+      return UserRole.webAdmin;
+    }
     for (final r in UserRole.values) {
-      if (r.name == lower) return r;
+      if (r.name.toLowerCase() == lower) return r;
     }
     return fallback;
   }

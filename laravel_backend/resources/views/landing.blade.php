@@ -21,7 +21,7 @@
             <a href="#features" class="nav__link">Features</a>
             <a href="#why" class="nav__link">Why Us</a>
             <a href="#download" class="nav__link">Download</a>
-            <a href="{{ route('admin.login') }}" class="nav__cta">Admin Console</a>
+            <a href="{{ $appAdminUrl }}" class="nav__cta">Admin Console</a>
         </div>
         <button class="nav__menu" aria-label="Menu">☰</button>
     </nav>
@@ -34,13 +34,11 @@
 
         <div class="hero__content">
             <div class="hero__eyebrow">— Professional Photography Management</div>
-            <h1 class="hero__title">Run Your<br><span class="accent">Photography</span><br>Business.</h1>
-            <p class="hero__desc">
-                One app for bookings, your team, and your money. Built for Bangladesh's
-                photography studios — works offline, syncs everywhere.
-            </p>
+            <h1 class="hero__title">{{ $heroTitle }}</h1>
+            <p class="hero__desc">{{ $heroSubtitle }}</p>
+            <p class="hero__support">{{ $heroDescription }}</p>
             <div class="hero__actions">
-                <a href="#download" class="btn btn--primary">Get Started →</a>
+                <a href="{{ $appDownloadUrl }}" class="btn btn--primary">Download APK</a>
                 <a href="#features" class="btn btn--ghost">Explore Features</a>
             </div>
         </div>
@@ -83,19 +81,108 @@
         </div>
     </section>
 
-    {{-- WHY / STATS --}}
-    <section id="why" class="section" style="background:var(--bg-alt)">
+    {{-- DETAILS --}}
+    <section class="section section--dark">
         <div class="container">
             <div class="section--center">
-                <div class="section__eyebrow">Why Clicker Pro</div>
-                <h2 class="section__title">One App, Everything Sorted</h2>
-                <p class="section__desc">Replace the notebook, the WhatsApp groups, and the Excel sheet with a single tool your whole team trusts.</p>
+                <div class="section__eyebrow">What You Get</div>
+                <h2 class="section__title">{{ $featureHeadline }}</h2>
+                <p class="section__desc">{{ $featureSubheadline }}</p>
             </div>
-            <div class="stats">
-                <div class="reveal"><div class="stat__value">78+</div><div class="stat__label">Modules</div></div>
-                <div class="reveal"><div class="stat__value">4</div><div class="stat__label">Roles</div></div>
-                <div class="reveal"><div class="stat__value">100%</div><div class="stat__label">Offline Ready</div></div>
-                <div class="reveal"><div class="stat__value">৳0</div><div class="stat__label">To Start</div></div>
+
+            <div class="details-grid">
+                @foreach ($details as $detail)
+                    <article class="detail-card reveal">
+                        <div class="detail-card__icon">{{ $detail['icon'] }}</div>
+                        <h3 class="detail-card__title">{{ $detail['title'] }}</h3>
+                        <p class="detail-card__text">{{ $detail['text'] }}</p>
+                        <a href="{{ $detail['link'] }}" class="btn btn--ghost btn--small">{{ $detail['button'] }}</a>
+                    </article>
+                @endforeach
+            </div>
+        </div>
+    </section>
+
+    {{-- SCREEN PREVIEW --}}
+    <section id="screens" class="section section--light">
+        <div class="container">
+            <div class="section--center">
+                <div class="section__eyebrow">Screenshots</div>
+                <h2 class="section__title">Mobile and web built for real studio workflows.</h2>
+                <p class="section__desc">Tap into a modern interface that keeps bookings, team notes and finances visible from every device.</p>
+            </div>
+
+            <div class="visual-grid">
+                <article class="visual-card reveal">
+                    <div class="visual-card__label">Mobile app preview</div>
+                    <img src="{{ asset('landing/img/mobile-app.jpg') }}" alt="Clicker Pro mobile app screenshot">
+                </article>
+                <article class="visual-card reveal">
+                    <div class="visual-card__label">Web dashboard preview</div>
+                    <img src="{{ asset('landing/img/web-app.jpg') }}" alt="Clicker Pro web dashboard screenshot">
+                </article>
+            </div>
+
+            <div class="screens-grid">
+                <article class="phone-card reveal">
+                    <div class="phone-card__header">
+                        <span>Dashboard</span>
+                        <span class="phone-card__badge">Live</span>
+                    </div>
+                    <div class="phone-card__body">
+                        <div class="phone-card__figure">Good morning, Rahim 👋</div>
+                        <div class="phone-card__text">Today: 6 shoots, 2 invoices due, 11 payments pending.</div>
+                    </div>
+                    <div class="phone-card__footer">Central shoot status and finance at a glance.</div>
+                </article>
+
+                <article class="phone-card reveal">
+                    <div class="phone-card__header">
+                        <span>Calendar</span>
+                        <span class="phone-card__badge phone-card__badge--soft">Upcoming</span>
+                    </div>
+                    <div class="phone-card__body">
+                        <div class="phone-card__figure">July 2026</div>
+                        <div class="phone-card__text">Bookings, holidays, and reminders in one smart schedule.</div>
+                    </div>
+                    <div class="phone-card__footer">Avoid double bookings and see every shoot at once.</div>
+                </article>
+
+                <article class="phone-card reveal">
+                    <div class="phone-card__header">
+                        <span>Team Chat</span>
+                        <span class="phone-card__badge phone-card__badge--muted">3 online</span>
+                    </div>
+                    <div class="phone-card__body">
+                        <div class="phone-card__figure"># Wedding Team</div>
+                        <div class="phone-card__text">Send shoot notes, updates, and file links in one channel.</div>
+                    </div>
+                    <div class="phone-card__footer">Keep conversations tied to each event, not scattered across apps.</div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    {{-- REVIEWS --}}
+    <section class="section">
+        <div class="container">
+            <div class="section--center">
+                <div class="section__eyebrow">Studio Feedback</div>
+                <h2 class="section__title">Loved by photographers and managers.</h2>
+                <p class="section__desc">Reviews from local studios who now run their business with modern workflows instead of paper and chat apps.</p>
+            </div>
+
+            <div class="reviews-grid">
+                @foreach ($reviews as $review)
+                    <article class="review-card reveal">
+                        <div class="review-card__avatar">{{ strtoupper(substr($review['name'], 0, 1)) }}</div>
+                        <div>
+                            <div class="review-card__name">{{ $review['name'] }}</div>
+                            <div class="review-card__role">{{ $review['role'] }}</div>
+                        </div>
+                        <p class="review-card__text">“{{ $review['text'] }}”</p>
+                    </article>
+                @endforeach
             </div>
         </div>
     </section>
@@ -104,9 +191,14 @@
     <section id="download" class="section">
         <div class="container">
             <div class="cta-band reveal">
-                <h2 class="cta-band__title">Ready to run your studio better?</h2>
-                <p class="cta-band__desc">Download Clicker Pro and bring your bookings, team, and money into one place.</p>
-                <a href="{{ asset('ClickerPro.apk') }}" class="btn btn--light">⬇ Download for Android</a>
+                <div class="cta-band__content">
+                    <h2 class="cta-band__title">Ready to run your studio better?</h2>
+                    <p class="cta-band__desc">Download Clicker Pro and bring bookings, team, and money into one place.</p>
+                </div>
+                <div class="cta-band__actions">
+                    <a href="{{ $appDownloadUrl }}" class="btn btn--light">⬇ Download APK</a>
+                    <a href="{{ $appAdminUrl }}" class="btn btn--ghost">Admin Console</a>
+                </div>
             </div>
         </div>
     </section>
@@ -119,7 +211,7 @@
                 <div class="footer__links">
                     <a href="#features" class="footer__link">Features</a>
                     <a href="#download" class="footer__link">Download</a>
-                    <a href="{{ route('admin.login') }}" class="footer__link">Admin</a>
+                    <a href="{{ $appAdminUrl }}" class="footer__link">Admin</a>
                 </div>
             </div>
             <div class="footer__copy">© {{ date('Y') }} Clicker Pro · Photography &amp; event management for Bangladesh.</div>

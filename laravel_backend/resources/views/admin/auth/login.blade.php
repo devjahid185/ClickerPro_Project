@@ -34,7 +34,7 @@
             <div class="auth-brand">
                 <div class="auth-brand__mark">C</div>
                 <h1>Clicker Pro</h1>
-                <div class="section-label" style="margin-top:4px">Admin Console</div>
+                <div class="section-label auth-brand__subtitle">Admin Console</div>
             </div>
 
             <div class="card">
@@ -64,7 +64,7 @@
             </div>
 
             <p class="text-muted" style="text-align:center;margin-top:var(--sp-4);font-size:12px">
-                Admin access only · Clicker Pro &copy; {{ date('Y') }}
+                Admin access only · Clicker Pro © {{ date('Y') }}
             </p>
         </div>
     </div>

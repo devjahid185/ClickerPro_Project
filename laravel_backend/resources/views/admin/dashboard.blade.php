@@ -36,6 +36,21 @@
 
     <div class="card mt-4">
         <div class="card__header">
+            <div>
+                <span class="card__title">Quick Actions</span>
+                <p class="card__meta text-dim" style="margin-top:8px;font-size:13px;">Jump to the landing editor, live site, or settings panel.</p>
+            </div>
+        </div>
+        <div class="card__body">
+            <div class="toolbar">
+                <a href="{{ route('landing') }}" class="btn btn--ghost">View Landing Page</a>
+                <a href="{{ route('admin.settings') }}" class="btn btn--primary">Edit Landing Settings</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card__header">
             <span class="card__title">Foundation Ready</span>
             <span class="badge badge--success">Phase 0</span>
         </div>
