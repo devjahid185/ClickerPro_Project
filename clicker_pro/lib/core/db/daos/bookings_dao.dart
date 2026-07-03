@@ -183,7 +183,20 @@ class BookingsDao extends DatabaseAccessor<AppDatabase>
     }
     final search = query.search?.trim();
     if (search != null && search.isNotEmpty) {
-      q.where((t) => t.title.like('%$search%'));
+      // Photographers search by who/where, not the internal booking title.
+      // Match title, client name/phone, venue and the bride/groom names so a
+      // name or number actually finds the event. LIKE is case-insensitive for
+      // ASCII in SQLite; the leading/trailing % make it a "contains" match.
+      final like = '%$search%';
+      q.where(
+        (t) =>
+            t.title.like(like) |
+            t.clientName.like(like) |
+            t.clientPhone.like(like) |
+            t.venue.like(like) |
+            t.brideName.like(like) |
+            t.groomName.like(like),
+      );
     }
     return q;
   }
