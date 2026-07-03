@@ -47,6 +47,37 @@ class BookingFormat {
     return '$s%';
   }
 
+  /// Converts a stored `"HH:mm"` clock string to a 12-hour label with an
+  /// AM/PM suffix, e.g. `"17:00"` → `"5 PM"`, `"12:00"` → `"12 PM"` (noon),
+  /// `"00:00"` → `"12 AM"` (midnight), `"18:30"` → `"6:30 PM"`.
+  ///
+  /// The `:00` minutes are dropped for a compact result. Falls back to the
+  /// raw string if it doesn't parse. When `lang == 'bn'` the numeric part is
+  /// rendered in Bengali numerals; the AM/PM marker stays Latin (there is no
+  /// standard Bengali abbreviation and studios read "AM/PM" as-is).
+  static String clockTime(String hhmm, {String lang = 'en'}) {
+    final parts = hhmm.split(':');
+    if (parts.length != 2) return hhmm;
+    final h = int.tryParse(parts[0]);
+    final m = int.tryParse(parts[1]);
+    if (h == null || m == null) return hhmm;
+    final period = h < 12 ? 'AM' : 'PM';
+    final h12 = h % 12 == 0 ? 12 : h % 12;
+    final mm = m == 0 ? '' : ':${parts[1]}';
+    final digits = lang == 'bn' ? toBengaliDigits('$h12$mm') : '$h12$mm';
+    return '$digits $period';
+  }
+
+  /// A `"HH:mm"`→`"HH:mm"` range rendered in 12-hour form, e.g.
+  /// `"12:00"`,`"17:00"` → `"12 PM – 5 PM"`. Used on booking cards and detail.
+  static String clockRange(
+    String startHhmm,
+    String endHhmm, {
+    String lang = 'en',
+    String separator = ' – ',
+  }) =>
+      '${clockTime(startHhmm, lang: lang)}$separator${clockTime(endHhmm, lang: lang)}';
+
   /// Date+time render for booking timeline, e.g. `"Jan 5, 2025 17:30"`.
   ///
   /// Time is shown in 24-hour format (`add_Hm`), not 12-hour AM/PM.

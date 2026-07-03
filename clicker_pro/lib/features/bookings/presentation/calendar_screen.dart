@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/format/booking_format.dart';
 import '../../../core/navigation/route_names.dart';
 import '../../../core/role/capability.dart';
 import '../../../l10n/app_localizations.dart';
@@ -514,18 +515,6 @@ Color _shiftAccent(Shift shift) => switch (shift) {
   Shift.both => AppColors.orange,
 };
 
-/// Compacts a 24h "HH:mm" into the design's 12-hour shorthand: "12:00" → "12",
-/// "18:00" → "6", "23:00" → "11", "18:30" → "6:30". Falls back to the raw
-/// string if it doesn't parse.
-String _compactTime(String hhmm) {
-  final parts = hhmm.split(':');
-  if (parts.length != 2) return hhmm;
-  final h = int.tryParse(parts[0]);
-  if (h == null) return hhmm;
-  final h12 = h % 12 == 0 ? 12 : h % 12;
-  return parts[1] == '00' ? '$h12' : '$h12:${parts[1]}';
-}
-
 /// Month keys covered by [start]..[end] — at most two for a week.
 Set<({int year, int month})> _monthKeys(DateTime start, DateTime end) => {
   (year: start.year, month: start.month),
@@ -832,8 +821,11 @@ class _AgendaRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = _shiftAccent(booking.shift);
-    final time =
-        '${_compactTime(booking.startTime)}–${_compactTime(booking.endTime)}';
+    final time = BookingFormat.clockRange(
+      booking.startTime,
+      booking.endTime,
+      separator: '–',
+    );
     final name = (booking.clientName?.trim().isNotEmpty ?? false)
         ? booking.clientName!
         : booking.title;
@@ -984,7 +976,7 @@ class _DayBottomSheet extends StatelessWidget {
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              '${b.startTime} – ${b.endTime}',
+                              BookingFormat.clockRange(b.startTime, b.endTime),
                               style: TextStyle(
                                 color: AppColors.filmDim.withValues(
                                   alpha: 0.85,

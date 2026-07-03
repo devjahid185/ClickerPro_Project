@@ -66,9 +66,10 @@ class ClickerProApp extends ConsumerWidget {
         return MediaQuery(
           data: media.copyWith(
             disableAnimations: media.disableAnimations || reduceMotion,
-            // Force 24-hour time everywhere (pickers + Material time rendering)
-            // regardless of the device's 12h/24h locale setting.
-            alwaysUse24HourFormat: true,
+            // Force 12-hour AM/PM time everywhere (pickers + Material time
+            // rendering) regardless of the device's 12h/24h locale setting.
+            // Studios read "1 PM", not "13:00" — matches BookingFormat.clockTime.
+            alwaysUse24HourFormat: false,
           ),
           child: KeyedSubtree(
             key: ValueKey(activeTheme.name),

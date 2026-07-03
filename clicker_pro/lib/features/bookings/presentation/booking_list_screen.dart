@@ -17,6 +17,7 @@ import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/booking_status/booking_status.dart';
+import '../../../core/format/booking_format.dart';
 import '../../../core/role/capability.dart';
 import '../../../core/navigation/route_names.dart';
 import '../../../l10n/app_localizations.dart';
@@ -695,7 +696,7 @@ class _BookingColumnRow extends ConsumerWidget {
     // "Wedding · 12–5" meta line (event type + compact time range).
     final dateText = DateFormat('MMM d', lang).format(booking.date).toUpperCase();
     final metaText = '${booking.eventType.vibe.label} · '
-        '${booking.startTime}–${booking.endTime}';
+        '${BookingFormat.clockRange(booking.startTime, booking.endTime, lang: lang, separator: '–')}';
 
     // Day cards accent the left edge, Night the right — the 3px coloured rule
     // from the mockup.

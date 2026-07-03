@@ -25,6 +25,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/format/bd_holidays.dart';
+import '../../../core/format/booking_format.dart';
 import '../../../core/navigation/route_names.dart';
 import '../../../theme/web_theme.dart';
 import '../../../shared/widgets/web_motion.dart';
@@ -696,7 +697,7 @@ class _BookingRow extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${vibe.label} · ${booking.startTime}',
+                      '${vibe.label} · ${BookingFormat.clockTime(booking.startTime)}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(

@@ -70,7 +70,8 @@ class BookingListRow extends ConsumerWidget {
         .maybeWhen(data: (c) => c, orElse: () => 'en');
 
     final dateLine = BookingFormat.dateTime(booking.date, lang: lang);
-    final timeLine = '${booking.startTime} – ${booking.endTime}';
+    final timeLine =
+        BookingFormat.clockRange(booking.startTime, booking.endTime, lang: lang);
 
     return Material(
       color: Colors.transparent,

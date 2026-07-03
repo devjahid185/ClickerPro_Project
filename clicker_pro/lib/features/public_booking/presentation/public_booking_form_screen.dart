@@ -29,6 +29,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/format/booking_format.dart';
 import '../../../core/navigation/route_names.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
@@ -189,7 +190,7 @@ class _FormState extends ConsumerState<_Form> {
               child: LensPickerRow(
                 label: 'Start',
                 icon: Icons.schedule_outlined,
-                valueText: _startTime,
+                valueText: BookingFormat.clockTime(_startTime),
                 onTap: () => _pickTime(
                   _startTime,
                   (t) => setState(() => _startTime = t),
@@ -201,7 +202,7 @@ class _FormState extends ConsumerState<_Form> {
               child: LensPickerRow(
                 label: 'End',
                 icon: Icons.schedule_outlined,
-                valueText: _endTime,
+                valueText: BookingFormat.clockTime(_endTime),
                 errorText: _fieldErrors['endTime'],
                 onTap: () =>
                     _pickTime(_endTime, (t) => setState(() => _endTime = t)),
@@ -341,7 +342,9 @@ class _FormState extends ConsumerState<_Form> {
           ),
         ),
         child: MediaQuery(
-          data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
+          // Show the picker in 12-hour AM/PM form (the app-wide convention);
+          // the returned TimeOfDay is still stored as canonical "HH:mm".
+          data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: false),
           child: child!,
         ),
       ),

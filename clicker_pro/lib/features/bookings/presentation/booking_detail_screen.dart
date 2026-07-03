@@ -249,7 +249,7 @@ class BookingDetailScreen extends ConsumerWidget {
         )) {
       _showSnack(
         context,
-        'Event time (${booking.date.day}/${booking.date.month} ${booking.endTime}) '
+        'Event time (${booking.date.day}/${booking.date.month} ${BookingFormat.clockTime(booking.endTime)}) '
         'cannot mark "${_titleCase(to.name)}" before it has ended.',
       );
       return;
@@ -433,7 +433,11 @@ class _DetailBody extends StatelessWidget {
               DetailRow(
                 icon: Icons.schedule_outlined,
                 label: 'Time',
-                value: '${booking.startTime} – ${booking.endTime}',
+                value: BookingFormat.clockRange(
+                  booking.startTime,
+                  booking.endTime,
+                  lang: lang,
+                ),
               ),
               DetailRow(
                 icon: Icons.brightness_4_outlined,
@@ -643,7 +647,7 @@ class _HeaderCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   '${BookingFormat.dateTime(booking.date, lang: lang)} · '
-                  '${booking.startTime}–${booking.endTime}',
+                  '${BookingFormat.clockRange(booking.startTime, booking.endTime, lang: lang, separator: '–')}',
                   style: TextStyle(
                     color: AppColors.onAccent.withValues(alpha: 0.85),
                     fontSize: 12.5,
@@ -1038,6 +1042,10 @@ class _InvoiceAction extends ConsumerWidget {
     // "Due: (if owner show)" requirement.
     final docLabel = forClient ? 'INVOICE' : 'EVENT DETAILS';
 
+    // 12-hour AM/PM time range used across invoice + share text and the PDF.
+    final timeRange =
+        BookingFormat.clockRange(booking.startTime, booking.endTime);
+
     // Client line prefers bride/groom names for wedding-type events.
     final clientLine =
         (brideName?.isNotEmpty ?? false) || (groomName?.isNotEmpty ?? false)
@@ -1056,7 +1064,7 @@ class _InvoiceAction extends ConsumerWidget {
         'Invoice: $invoiceNo',
         'Date: $dateStr',
         'Shift: $shiftLabel',
-        'Time: ${booking.startTime} – ${booking.endTime}',
+        'Time: $timeRange',
         'Event: ${_titleCase(booking.eventType.name)}',
         'Client: $clientLine',
         'Client no: $clientPhone',
@@ -1071,7 +1079,7 @@ class _InvoiceAction extends ConsumerWidget {
       lines = <String>[
         'Date: $dateStr',
         'Shift: $shiftLabel',
-        'Time: ${booking.startTime} – ${booking.endTime}',
+        'Time: $timeRange',
         'Client: $clientLine',
         'Client num: $clientPhone',
         'Location: ${booking.venue ?? '—'}',
@@ -1102,7 +1110,7 @@ class _InvoiceAction extends ConsumerWidget {
       signatureUrl: me?.signatureUrl,
       invoiceNo: invoiceNo,
       dateStr: dateStr,
-      timeStr: '${booking.startTime} – ${booking.endTime}',
+      timeStr: timeRange,
       eventType: _titleCase(booking.eventType.name),
       brideName: brideName,
       groomName: groomName,

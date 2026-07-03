@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/format/booking_format.dart';
 import '../../../core/navigation/route_names.dart';
 import '../../../core/role/capability.dart';
 import '../../../shared/states/empty_state.dart';
@@ -266,7 +267,7 @@ class _RequestRow extends StatelessWidget {
           const SizedBox(height: 5),
           Text(
             '${DateFormat.yMMMEd().format(request.date)} · '
-            '${request.startTime}–${request.endTime}',
+            '${BookingFormat.clockRange(request.startTime, request.endTime, separator: '–')}',
             style: TextStyle(
               color: AppColors.filmDim,
               fontSize: 12,

@@ -24,6 +24,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/format/booking_format.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
@@ -68,7 +69,8 @@ class _FlCheckinScreenState extends ConsumerState<FlCheckinScreen> {
     final eventDate = event['date'] != null
         ? DateTime.parse(event['date'] as String)
         : DateTime.now();
-    final eventTime = event['startTime'] as String? ?? '--:--';
+    final rawStart = event['startTime'] as String? ?? '--:--';
+    final eventTime = BookingFormat.clockTime(rawStart);
     final role = event['role'] as String? ?? '';
 
     return Scaffold(
