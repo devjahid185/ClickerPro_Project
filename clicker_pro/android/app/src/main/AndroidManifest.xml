@@ -4,6 +4,8 @@
     <!-- Local event reminders ("1 hour before"): show notifications +
          schedule exact alarms + re-register them after a reboot. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Alarm-style full-screen event reminders (1 hour before each shoot). -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>

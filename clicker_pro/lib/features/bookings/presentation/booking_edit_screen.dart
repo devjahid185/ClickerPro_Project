@@ -1559,7 +1559,10 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
             : saved.title,
         eventDate: saved.date,
         startTime: saved.startTime,
+        endTime: saved.endTime,
         venue: saved.venue,
+        clientName: saved.clientName,
+        clientPhone: saved.clientPhone,
       );
       // Persist the typed Advance as a real advance PAYMENT. The field used
       // to be display-only — the amount was never stored anywhere, so the

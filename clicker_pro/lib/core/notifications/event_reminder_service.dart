@@ -13,6 +13,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../format/booking_format.dart';
 import '../logging/app_logger.dart';
 
 class EventReminderService {
@@ -76,12 +77,19 @@ class EventReminderService {
   /// [bookingId] keys the notification so re-saving the same booking
   /// replaces the old alarm instead of stacking duplicates. Past events and
   /// events whose reminder time has already passed are skipped silently.
+  ///
+  /// The reminder fires as a FULL-SCREEN alarm-style notification on Android
+  /// (Heaven's spec: "মোবাইলের ফুল স্ক্রিন হবে, ইভেন্ট ডিটেইলস সহ") carrying
+  /// the event details — time, venue, client — in an expanded big-text body.
   Future<void> scheduleForBooking({
     required String bookingId,
     required String title,
     required DateTime eventDate,
     required String startTime,
+    String? endTime,
     String? venue,
+    String? clientName,
+    String? clientPhone,
   }) async {
     await init();
     if (!_ready) return;
@@ -95,24 +103,47 @@ class EventReminderService {
       }
 
       final tzFire = tz.TZDateTime.from(fireAt, tz.local);
-      final body = venue != null && venue.trim().isNotEmpty
-          ? 'Starts in 1 hour — $venue'
+      final timeLine = endTime == null || endTime.trim().isEmpty
+          ? BookingFormat.clockTime(startTime)
+          : BookingFormat.clockRange(startTime, endTime);
+      // Full event details for the expanded (big-text) notification body.
+      final details = <String>[
+        'Starts in 1 hour · $timeLine',
+        if (venue != null && venue.trim().isNotEmpty) 'Venue: ${venue.trim()}',
+        if (clientName != null && clientName.trim().isNotEmpty)
+          'Client: ${clientName.trim()}',
+        if (clientPhone != null && clientPhone.trim().isNotEmpty)
+          'Phone: ${clientPhone.trim()}',
+      ].join('\n');
+      final collapsed = venue != null && venue.trim().isNotEmpty
+          ? 'Starts in 1 hour — ${venue.trim()}'
           : 'Your event starts in 1 hour';
 
       await _plugin.zonedSchedule(
         _idFor(bookingId),
         '📸 $title',
-        body,
+        collapsed,
         tzFire,
-        const NotificationDetails(
+        NotificationDetails(
           android: AndroidNotificationDetails(
             _channelId,
             _channelName,
             channelDescription: _channelDesc,
             importance: Importance.max,
             priority: Priority.high,
+            // Alarm-style: wakes the screen and shows over the lock screen
+            // like an incoming call, with the full details expanded.
+            fullScreenIntent: true,
+            category: AndroidNotificationCategory.alarm,
+            visibility: NotificationVisibility.public,
+            styleInformation: BigTextStyleInformation(
+              details,
+              contentTitle: '📸 $title',
+            ),
           ),
-          iOS: DarwinNotificationDetails(),
+          iOS: const DarwinNotificationDetails(
+            interruptionLevel: InterruptionLevel.timeSensitive,
+          ),
         ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         uiLocalNotificationDateInterpretation:
