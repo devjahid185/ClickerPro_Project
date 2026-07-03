@@ -29,15 +29,15 @@ class ClickerProApp extends ConsumerWidget {
     final reduceMotion = ref.watch(reduceMotionProvider);
 
     // Sync the static palette so every custom-painted surface reads the active
-    // theme's colours without needing a BuildContext. Both mobile themes are
-    // light; web has its own theme and ignores this flag.
-    AppColors.active = activeTheme == AppThemeMode.sunsetStudio
-        ? ActivePalette.sunsetStudio
+    // theme's colours without needing a BuildContext. Web has its own theme and
+    // ignores this flag.
+    AppColors.active = activeTheme == AppThemeMode.noirDark
+        ? ActivePalette.noirDark
         : ActivePalette.clickerPro;
 
-    // Mobile ThemeData for the active theme (ClickerPro default or Sunset).
-    final mobileTheme = activeTheme == AppThemeMode.sunsetStudio
-        ? AppTheme.sunsetStudio()
+    // Mobile ThemeData for the active theme (ClickerPro default or Noir dark).
+    final mobileTheme = activeTheme == AppThemeMode.noirDark
+        ? AppTheme.noirDark()
         : AppTheme.clickerPro();
 
     return MaterialApp(

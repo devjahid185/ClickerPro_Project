@@ -15,6 +15,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/states/error_state.dart';
 import '../../../../shared/states/lens_loader.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_theme.dart';
+
 import '../../../team/application/team_providers.dart';
 import '../../../team/domain/team_member.dart';
 import 'lens_form_fields.dart';
@@ -106,7 +108,7 @@ class _TeamMemberPickerSheetState extends ConsumerState<TeamMemberPickerSheet> {
               widget.title,
               style: TextStyle(
                 color: AppColors.film,
-                fontFamily: 'Poppins',
+                fontFamily: AppText.brandFontFamily,
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
               ),

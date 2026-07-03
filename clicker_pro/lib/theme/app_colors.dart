@@ -1,12 +1,12 @@
 // lib/theme/app_colors.dart
 //
-// Clicker Pro — AppColors (two-theme static accessor).
+// Clicker Pro — AppColors (two-theme static accessor: ClickerPro + Noir).
 //
 // This class is the single static colour accessor used across the mobile
 // codebase (custom-painted widgets read it without a BuildContext). It
 // delegates to one of two palettes based on the active theme:
-//   • AppColorsClicker — the DEFAULT ClickerPro theme (#E2620E, per spec)
-//   • AppColorsLight   — the legacy Sunset Studio theme (#FF6200)
+//   • AppColorsClicker — the DEFAULT ClickerPro theme (LIGHT · #E2620E, per spec)
+//   • AppColorsNoir    — the "Noir" DARK theme (near-black · lime #C8F252)
 //
 // app.dart sets `AppColors.active` whenever the theme changes so every getter
 // resolves to the right palette. `const` fields cannot switch at runtime, so
@@ -16,10 +16,10 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'app_colors_clicker.dart';
-import 'app_colors_light.dart';
+import 'app_colors_noir.dart';
 
 /// Which palette AppColors resolves to. Mirrors AppThemeMode (mobile).
-enum ActivePalette { clickerPro, sunsetStudio }
+enum ActivePalette { clickerPro, noirDark }
 
 class AppColors {
   AppColors._();
@@ -29,29 +29,30 @@ class AppColors {
   // ============================================================
   static ActivePalette active = ActivePalette.clickerPro;
 
-  static bool get _sunset => active == ActivePalette.sunsetStudio;
+  static bool get _noir => active == ActivePalette.noirDark;
 
-  /// Backward-compat: some old code toggled `isDark`. It now selects Sunset.
-  /// (Neither theme is actually dark — both are light.)
-  static bool get isDark => _sunset;
+  /// Backward-compat: some old code toggled `isDark`. `true` now selects the
+  /// Noir dark theme (the app's only genuinely dark theme); `false` restores
+  /// the ClickerPro default.
+  static bool get isDark => _noir;
   static set isDark(bool v) =>
-      active = v ? ActivePalette.sunsetStudio : ActivePalette.clickerPro;
+      active = v ? ActivePalette.noirDark : ActivePalette.clickerPro;
 
   // ============================================================
   // ☀️ SURFACES
   // ============================================================
   static Color get appBg =>
-      _sunset ? AppColorsLight.cream : AppColorsClicker.background;
+      _noir ? AppColorsNoir.background : AppColorsClicker.background;
 
   // On web, cards are solid clean white on the neutral page canvas.
   static Color get surface {
     if (kIsWeb) return Colors.white;
-    return _sunset ? AppColorsLight.glass : AppColorsClicker.surface;
+    return _noir ? AppColorsNoir.surface : AppColorsClicker.surface;
   }
 
   static Color get surfaceAlt {
     if (kIsWeb) return const Color(0xFFF7F8FA);
-    return _sunset ? AppColorsLight.creamDark : AppColorsClicker.surfaceAlt;
+    return _noir ? AppColorsNoir.surfaceAlt : AppColorsClicker.surfaceAlt;
   }
 
   // Backward-compat aliases
@@ -63,7 +64,7 @@ class AppColors {
 
   // ============================================================
   // 🎨 PRIMARY ACCENT
-  // ClickerPro = #E2620E · Sunset Studio = #FF6200
+  // ClickerPro = #E2620E · Noir = lime #C8F252
   // ============================================================
 
   // Static const ramp — ClickerPro brand orange (used in const contexts).
@@ -80,13 +81,13 @@ class AppColors {
 
   // Theme-aware getters (use these in non-const contexts)
   static Color get orange =>
-      _sunset ? AppColorsLight.terracotta : AppColorsClicker.primary;
+      _noir ? AppColorsNoir.accent : AppColorsClicker.primary;
   static Color get orangeLight =>
-      _sunset ? AppColorsLight.terracottaLight : AppColorsClicker.primaryLight;
+      _noir ? AppColorsNoir.accent : AppColorsClicker.primaryLight;
   static Color get orangeSoft =>
-      _sunset ? AppColorsLight.terracottaSoft : AppColorsClicker.primarySoft;
+      _noir ? AppColorsNoir.accentTint : AppColorsClicker.primarySoft;
   static Color get orangeGlow =>
-      _sunset ? AppColorsLight.terracottaGlow : AppColorsClicker.primaryGlow;
+      _noir ? AppColorsNoir.primaryGlow : AppColorsClicker.primaryGlow;
 
   // Static const fallbacks — ClickerPro (default) values for const call sites.
   static const Color orangeConst = AppColorsClicker.primary;
@@ -104,23 +105,29 @@ class AppColors {
   static Color get accentLight => orangeLight;
   static Color get signalOrange => orange;
 
+  /// The correct text/icon colour to place ON the primary accent fill.
+  /// ClickerPro's orange takes white; Noir's lime takes near-black — using this
+  /// instead of a hardcoded `Colors.white` keeps labels legible on both themes.
+  static Color get onAccent =>
+      _noir ? AppColorsNoir.onAccent : Colors.white;
+
   // ============================================================
   // 🟡 GOLD / AMBER
   // ============================================================
   static Color get gold =>
-      _sunset ? AppColorsLight.gold : AppColorsClicker.warning;
+      _noir ? AppColorsNoir.day : AppColorsClicker.warning;
   static Color get goldSoft =>
-      _sunset ? AppColorsLight.goldSoft : AppColorsClicker.goldSoft;
+      _noir ? AppColorsNoir.goldSoft : AppColorsClicker.goldSoft;
 
   // ============================================================
   // 💜 PURPLE / INFO
   // ============================================================
   static Color get purple =>
-      _sunset ? AppColorsLight.plum : AppColorsClicker.accentViolet;
+      _noir ? AppColorsNoir.night : AppColorsClicker.accentViolet;
   static Color get purpleSoft =>
-      _sunset ? AppColorsLight.plumSoft : AppColorsClicker.plumSoft;
+      _noir ? AppColorsNoir.nightTint : AppColorsClicker.plumSoft;
   static Color get indigo =>
-      _sunset ? const Color(0xFF2563EB) : AppColorsClicker.infoBlue;
+      _noir ? AppColorsNoir.night : AppColorsClicker.infoBlue;
   static const Color indigoSoft = Color(0x263541AF);
   static Color get info => indigo;
   static const Color infoSoft = indigoSoft;
@@ -129,11 +136,11 @@ class AppColors {
   // 📝 TEXT
   // ============================================================
   static Color get film =>
-      _sunset ? AppColorsLight.textPrimary : AppColorsClicker.textPrimary;
+      _noir ? AppColorsNoir.text : AppColorsClicker.textPrimary;
   static Color get filmDim =>
-      _sunset ? AppColorsLight.textSecondary : AppColorsClicker.textSecondary;
+      _noir ? AppColorsNoir.muted : AppColorsClicker.textSecondary;
   static Color get filmMuted =>
-      _sunset ? AppColorsLight.textMuted : AppColorsClicker.textMuted;
+      _noir ? AppColorsNoir.faint : AppColorsClicker.textMuted;
 
   static Color get textPrimary => film;
   static Color get textSecondary => filmDim;
@@ -155,70 +162,78 @@ class AppColors {
   // 🟢🔴 SEMANTIC / STATUS
   // ============================================================
   static Color get green =>
-      _sunset ? AppColorsLight.sage : AppColorsClicker.success;
+      _noir ? AppColorsNoir.paid : AppColorsClicker.success;
   static Color get greenSoft =>
-      _sunset ? AppColorsLight.sageSoft : AppColorsClicker.greenSoft;
+      _noir ? AppColorsNoir.paidTint : AppColorsClicker.greenSoft;
   static const Color success = AppColorsClicker.success;
   static const Color mint = AppColorsClicker.success;
 
   static Color get yellow =>
-      _sunset ? AppColorsLight.yellow : AppColorsClicker.warning;
+      _noir ? AppColorsNoir.day : AppColorsClicker.warning;
   static Color get yellowSoft =>
-      _sunset ? AppColorsLight.yellowSoft : AppColorsClicker.yellowSoft;
+      _noir ? AppColorsNoir.goldSoft : AppColorsClicker.yellowSoft;
   static const Color warning = AppColorsClicker.warning;
 
   static Color get red =>
-      _sunset ? AppColorsLight.rust : AppColorsClicker.danger;
+      _noir ? AppColorsNoir.due : AppColorsClicker.danger;
   static Color get redSoft =>
-      _sunset ? AppColorsLight.rustSoft : AppColorsClicker.redSoft;
+      _noir ? AppColorsNoir.dueTint : AppColorsClicker.redSoft;
   static Color get error => red;
   static Color get danger => red;
   static Color get coral => red;
 
   // ============================================================
-  // 🎨 DATA / STAT CARD COLOURS (ClickerPro dashboard — multi-colour)
-  // Spec §1: intentional data cards, kept as-is on both themes.
+  // 🎨 DATA / STAT CARD COLOURS (dashboard — multi-colour)
+  // ClickerPro keeps its intentional data palette; Noir maps them onto its own
+  // shift/semantic set so the stat cards stay legible on the near-black canvas.
   // ============================================================
-  static const Color infoTeal = AppColorsClicker.infoTeal;
-  static const Color infoBlue = AppColorsClicker.infoBlue;
-  static const Color accentViolet = AppColorsClicker.accentViolet;
+  static Color get infoTeal =>
+      _noir ? AppColorsNoir.infoTeal : AppColorsClicker.infoTeal;
+  static Color get infoBlue =>
+      _noir ? AppColorsNoir.infoBlue : AppColorsClicker.infoBlue;
+  static Color get accentViolet =>
+      _noir ? AppColorsNoir.accentViolet : AppColorsClicker.accentViolet;
+  static Color get sageData =>
+      _noir ? AppColorsNoir.sageData : AppColorsClicker.sageData;
 
   // ============================================================
   // 🪟 CARD SURFACES
   // ============================================================
+  // Hairline: black wash on the light themes, white wash on Noir dark so the
+  // stroke stays visible against the near-black canvas.
   static Color line([double alpha = 0.08]) =>
-      Colors.black.withValues(alpha: alpha);
+      (_noir ? Colors.white : Colors.black).withValues(alpha: alpha);
 
   static Color get glass {
     if (kIsWeb) return Colors.white;
-    return _sunset ? AppColorsLight.glass : AppColorsClicker.surface;
+    return _noir ? AppColorsNoir.card : AppColorsClicker.surface;
   }
   static Color get glassBorder =>
-      _sunset ? AppColorsLight.glassBorder : AppColorsClicker.glassBorder;
+      _noir ? AppColorsNoir.stroke : AppColorsClicker.glassBorder;
   static Color get glassHover =>
-      _sunset ? AppColorsLight.glassHover : AppColorsClicker.glassHover;
+      _noir ? AppColorsNoir.glassHover : AppColorsClicker.glassHover;
   static Color get hairline =>
-      _sunset ? AppColorsLight.hairline : AppColorsClicker.hairline;
+      _noir ? AppColorsNoir.strokeStrong : AppColorsClicker.hairline;
 
   static Color get topbarBg =>
-      _sunset ? AppColorsLight.topbarBg : AppColorsClicker.topbarBg;
+      _noir ? AppColorsNoir.topbarBg : AppColorsClicker.topbarBg;
   static Color get topbarBorder =>
-      _sunset ? AppColorsLight.topbarBorder : AppColorsClicker.topbarBorder;
+      _noir ? AppColorsNoir.topbarBorder : AppColorsClicker.topbarBorder;
   static Color get bottomNavBg =>
-      _sunset ? AppColorsLight.bottomNavBg : AppColorsClicker.bottomNavBg;
+      _noir ? AppColorsNoir.bottomNavBg : AppColorsClicker.bottomNavBg;
   static Color get bottomNavBorder =>
-      _sunset ? AppColorsLight.bottomNavBorder : AppColorsClicker.bottomNavBorder;
+      _noir ? AppColorsNoir.bottomNavBorder : AppColorsClicker.bottomNavBorder;
 
   // ============================================================
   // 🌈 GRADIENTS
   // ============================================================
-  static LinearGradient get orangeGradient => _sunset
-      ? AppColorsLight.terracottaGradient
+  static LinearGradient get orangeGradient => _noir
+      ? AppColorsNoir.orangeGradient
       : AppColorsClicker.orangeGradient;
   static const LinearGradient tealGradient = AppColorsClicker.orangeGradient;
 
-  static LinearGradient get drawerHeaderGradient => _sunset
-      ? AppColorsLight.drawerHeaderGradient
+  static LinearGradient get drawerHeaderGradient => _noir
+      ? AppColorsNoir.drawerHeaderGradient
       : AppColorsClicker.drawerHeaderGradient;
 
   static const LinearGradient goldGradient = LinearGradient(
@@ -237,8 +252,8 @@ class AppColors {
   // 🎨 CARD DECORATION HELPERS
   // ============================================================
   static BoxDecoration glassCardDecoration({double radius = 18, Color? tint}) {
-    if (_sunset) {
-      return AppColorsLight.glassCardDecoration(radius: radius, tint: tint);
+    if (_noir) {
+      return AppColorsNoir.glassCardDecoration(radius: radius, tint: tint);
     }
     return AppColorsClicker.glassCardDecoration(radius: radius, tint: tint);
   }
@@ -251,8 +266,8 @@ class AppColors {
   }
 
   static BoxDecoration pillChipDecoration({Color? tint}) {
-    if (_sunset) {
-      return AppColorsLight.pillChipDecoration(tint: tint);
+    if (_noir) {
+      return AppColorsNoir.pillChipDecoration(tint: tint);
     }
     return AppColorsClicker.pillChipDecoration(tint: tint);
   }

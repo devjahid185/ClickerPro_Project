@@ -223,7 +223,7 @@ class GlassKpiCard extends StatelessWidget {
                 ),
               ],
             ),
-            child: Icon(icon, color: Colors.white, size: 22),
+            child: Icon(icon, color: AppColors.onAccent, size: 22),
           ),
           const SizedBox(height: 16),
           Text(

@@ -16,20 +16,25 @@ Future<void> main() async {
     usePathUrlStrategy();
   }
 
-  // Initialize Firebase
-  try {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.android);
-  } catch (e) {
-    debugPrint('Firebase initialization error: $e');
-  }
-
-  // Load .env, but never let a missing/malformed file crash startup —
-  // AppConfig falls back to safe defaults when a key is absent.
+  // Load .env BEFORE the first frame — it's a fast local file read and
+  // AppConfig needs it synchronously. A missing/malformed file must never
+  // crash startup; AppConfig falls back to safe defaults when a key is absent.
   try {
     await dotenv.load(fileName: ".env");
   } catch (_) {
     // .env not bundled or unreadable; continue with defaults.
   }
 
+  // Paint the UI immediately, then initialize Firebase in the background.
+  // Blocking `runApp` on Firebase's network-bound init was the main cause of
+  // the long white native-launch flash and the "slow to open" feel. Nothing
+  // on the first screen (splash) needs Firebase, so let it warm up after the
+  // first frame instead.
   runApp(const ProviderScope(child: ClickerProApp()));
+
+  Firebase.initializeApp(options: DefaultFirebaseOptions.android)
+      .catchError((Object e) {
+    debugPrint('Firebase initialization error: $e');
+    return Firebase.app();
+  });
 }

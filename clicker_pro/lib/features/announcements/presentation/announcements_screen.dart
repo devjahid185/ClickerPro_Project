@@ -100,11 +100,44 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
           'Announcements',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
-            fontSize: 22,
-            fontWeight: FontWeight.w600,
+            fontFamily: AppText.brandFontFamily,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.02 * 20,
           ),
         ),
+        actions: [
+          // Solid orange add tile from the .dc.html header (replaces the FAB).
+          if (canManage)
+            Padding(
+              padding: const EdgeInsets.only(right: 18),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(11),
+                onTap: () => CreateAnnouncementSheet.show(context),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: AppColors.orange,
+                    borderRadius: BorderRadius.circular(11),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.orange.withValues(alpha: 0.5),
+                        blurRadius: 16,
+                        spreadRadius: -8,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.add_rounded,
+                    color: AppColors.onAccent,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
       body: RefreshIndicator(
         color: AppColors.orange,
@@ -167,18 +200,6 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
           ],
         ),
       ),
-      floatingActionButton: canManage
-          ? async.maybeWhen(
-              data: (items) => FloatingActionButton.extended(
-                backgroundColor: AppColors.orange,
-                foregroundColor: Colors.white,
-                onPressed: () => CreateAnnouncementSheet.show(context),
-                icon: const Icon(Icons.add),
-                label: Text('New'),
-              ),
-              orElse: () => null,
-            )
-          : null,
     );
   }
 }
@@ -209,163 +230,154 @@ class _AnnouncementCard extends StatelessWidget {
         : announcement.body;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
       child: GestureDetector(
         onTap: onMarkRead,
         child: AnimatedOpacity(
           opacity: isExpired ? 0.5 : 1.0,
           duration: const Duration(milliseconds: 300),
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppColors.accent.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: announcement.pinned
-                    ? AppColors.gold.withValues(alpha: 0.35)
-                    : AppColors.accent.withValues(alpha: 0.15),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          // ClipRRect + Stack so the pinned card's 3px orange left rule can
+          // sit flush against the rounded edge (.dc.html).
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Stack(
               children: [
-                Row(
-                  children: [
-                    if (announcement.pinned) ...[
-                      Icon(
-                        Icons.push_pin,
-                        color: AppColors.gold,
-                        size: 14,
-                      ),
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.gold.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          'PINNED',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 8.5,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.gold,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                    Text(
-                      announcement.timeAgo,
-                      style: TextStyle(
-                        fontFamily: AppText.sectionTitle.fontFamily,
-                        fontSize: 10,
-                        color: AppColors.filmDim.withValues(alpha: 0.6),
-                      ),
-                    ),
-                    const Spacer(),
-                    if (canManage)
-                      PopupMenuButton<String>(
-                        onSelected: (v) {
-                          if (v == 'pin') onTogglePin();
-                          if (v == 'delete') onDelete();
-                        },
-                        color: AppColors.voidLight,
-                        icon: Icon(
-                          Icons.more_vert,
-                          color: AppColors.filmDim.withValues(alpha: 0.6),
-                          size: 18,
-                        ),
-                        itemBuilder: (_) => [
-                          PopupMenuItem(
-                            value: 'pin',
-                            child: Text(
-                              announcement.pinned ? 'Unpin' : 'Pin',
-                              style: TextStyle(color: AppColors.film),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.line(0.06)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          if (announcement.pinned) ...[
+                            Icon(
+                              Icons.push_pin,
+                              color: AppColors.orange,
+                              size: 15,
+                            ),
+                            const SizedBox(width: 7),
+                            Text(
+                              'PINNED',
+                              style: TextStyle(
+                                fontFamily: AppText.monoFontFamily,
+                                fontSize: 9,
+                                letterSpacing: 1.1,
+                                color: AppColors.orange,
+                              ),
+                            ),
+                          ],
+                          const Spacer(),
+                          Text(
+                            announcement.timeAgo,
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              color: AppColors.filmMuted,
                             ),
                           ),
-                          PopupMenuItem(
-                            value: 'delete',
-                            child: Text(
-                              'Delete',
-                              style: TextStyle(color: AppColors.red),
+                          if (canManage)
+                            PopupMenuButton<String>(
+                              onSelected: (v) {
+                                if (v == 'pin') onTogglePin();
+                                if (v == 'delete') onDelete();
+                              },
+                              color: AppColors.surface,
+                              padding: EdgeInsets.zero,
+                              icon: Icon(
+                                Icons.more_vert,
+                                color: AppColors.filmMuted,
+                                size: 18,
+                              ),
+                              itemBuilder: (_) => [
+                                PopupMenuItem(
+                                  value: 'pin',
+                                  child: Text(
+                                    announcement.pinned ? 'Unpin' : 'Pin',
+                                    style: TextStyle(color: AppColors.film),
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  value: 'delete',
+                                  child: Text(
+                                    'Delete',
+                                    style: TextStyle(color: AppColors.red),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
                         ],
                       ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  announcement.title,
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.film,
-                    height: 1.3,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  preview,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    color: AppColors.filmDim,
-                    height: 1.5,
-                  ),
-                ),
-                if (announcement.expiresAt != null) ...[
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.schedule,
-                        size: 12,
-                        color: isExpired
-                            ? AppColors.red.withValues(alpha: 0.7)
-                            : AppColors.filmDim.withValues(alpha: 0.5),
-                      ),
-                      const SizedBox(width: 4),
+                      SizedBox(height: announcement.pinned ? 9 : 10),
                       Text(
-                        isExpired
-                            ? 'Expired'
-                            : 'Expires ${_formatExpiry(announcement.expiresAt!)}',
+                        announcement.title,
                         style: TextStyle(
-                          fontSize: 10,
-                          color: isExpired
-                              ? AppColors.red.withValues(alpha: 0.7)
-                              : AppColors.filmDim.withValues(alpha: 0.5),
+                          fontFamily: AppText.brandFontFamily,
+                          fontSize: announcement.pinned ? 15 : 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.film,
+                          height: 1.3,
                         ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        preview,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                          height: 1.55,
+                        ),
+                      ),
+                      if (announcement.expiresAt != null) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.schedule,
+                              size: 12,
+                              color: isExpired
+                                  ? AppColors.red.withValues(alpha: 0.7)
+                                  : AppColors.filmMuted,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              isExpired
+                                  ? 'Expired'
+                                  : 'Expires ${_formatExpiry(announcement.expiresAt!)}',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: isExpired
+                                    ? AppColors.red.withValues(alpha: 0.7)
+                                    : AppColors.filmMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      const SizedBox(height: 14),
+                      Container(
+                        padding: const EdgeInsets.only(top: 12),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            top: BorderSide(color: AppColors.line(0.05)),
+                          ),
+                        ),
+                        child: _readStatus(readCount, teamSize),
                       ),
                     ],
                   ),
-                ],
-                const SizedBox(height: 10),
-                Container(
-                  height: 1,
-                  color: AppColors.line(0.06),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '\u{1F441}  $readCount of $teamSize read',
-                      style: TextStyle(
-                        fontFamily: AppText.sectionTitle.fontFamily,
-                        fontSize: 10,
-                        color: AppColors.filmDim.withValues(alpha: 0.6),
-                      ),
-                    ),
-                    _buildReadPips(readCount, teamSize),
-                  ],
-                ),
+                if (announcement.pinned)
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    child: Container(width: 3, color: AppColors.orange),
+                  ),
               ],
             ),
           ),
@@ -374,34 +386,55 @@ class _AnnouncementCard extends StatelessWidget {
     );
   }
 
-  Widget _buildReadPips(int read, int total) {
-    final unread = total - read;
+  /// Footer read state (.dc.html): "All read ✓" in green once everyone has
+  /// seen it, otherwise a small colored-dot stack + "N of M read".
+  Widget _readStatus(int read, int total) {
+    if (read >= total && total > 0) {
+      return Text(
+        'All read ✓',
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: AppColors.green,
+        ),
+      );
+    }
+
+    final dotColors = [AppColors.gold, AppColors.purple, AppColors.green];
+    final dots = read.clamp(0, 3);
     return Row(
       children: [
-        if (read > 0)
-          Container(
-            width: 16,
-            height: 5,
-            decoration: BoxDecoration(
-              color: AppColors.accent,
-              borderRadius: BorderRadius.circular(3),
+        if (dots > 0) ...[
+          SizedBox(
+            width: 20 + (dots - 1) * 13,
+            height: 20,
+            child: Stack(
+              children: [
+                for (var i = 0; i < dots; i++)
+                  Positioned(
+                    left: i * 13.0,
+                    child: Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: dotColors[i % dotColors.length],
+                        border: Border.all(
+                          color: AppColors.surface,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
-        if (unread > 0) ...[
-          const SizedBox(width: 4),
-          ...List.generate(
-            unread.clamp(0, 5),
-            (_) => Container(
-              margin: const EdgeInsets.only(left: 4),
-              width: 5,
-              height: 5,
-              decoration: BoxDecoration(
-                color: AppColors.line(0.2),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
+          const SizedBox(width: 7),
         ],
+        Text(
+          '$read of $total read',
+          style: TextStyle(fontSize: 11, color: AppColors.filmMuted),
+        ),
       ],
     );
   }

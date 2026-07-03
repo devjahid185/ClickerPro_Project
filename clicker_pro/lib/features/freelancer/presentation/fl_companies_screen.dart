@@ -17,6 +17,7 @@ import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
 import '../application/fl_earning_providers.dart';
 import '../domain/fl_earning.dart';
+import '../../../theme/app_theme.dart';
 
 class FlCompaniesScreen extends ConsumerWidget {
   const FlCompaniesScreen({super.key});
@@ -26,10 +27,11 @@ class FlCompaniesScreen extends ConsumerWidget {
     final async = ref.watch(flEarningOverviewControllerProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.voidBlack,
+      backgroundColor: AppColors.appBg,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.appBg,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
@@ -38,8 +40,10 @@ class FlCompaniesScreen extends ConsumerWidget {
           'My Companies',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
-            fontWeight: FontWeight.w600,
+            fontFamily: AppText.brandFontFamily,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.03,
           ),
         ),
       ),
@@ -72,7 +76,7 @@ class FlCompaniesScreen extends ConsumerWidget {
                           '${overview.owners.length == 1 ? "studio" : "studios"} '
                           'you work with',
                           style: TextStyle(
-                            fontFamily: 'Poppins',
+                            fontFamily: AppText.brandFontFamily,
                             fontSize: 13,
                             color: AppColors.filmDim,
                           ),
@@ -102,7 +106,7 @@ class FlCompaniesScreen extends ConsumerWidget {
           child: Text(
             'No companies yet',
             style: TextStyle(
-              fontFamily: 'Poppins',
+              fontFamily: AppText.brandFontFamily,
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: AppColors.film,
@@ -117,7 +121,7 @@ class FlCompaniesScreen extends ConsumerWidget {
             'show up here.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontFamily: 'Poppins',
+              fontFamily: AppText.brandFontFamily,
               fontSize: 13,
               height: 1.5,
               color: AppColors.filmDim.withValues(alpha: 0.8),
@@ -137,11 +141,11 @@ class _CompanyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.glass,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.glassBorder),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.line(0.06)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -149,15 +153,15 @@ class _CompanyCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 38,
-                height: 38,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
-                  color: AppColors.teal.withValues(alpha: 0.12),
+                  color: AppColors.orangeSoft,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Icons.business_rounded,
-                  color: AppColors.teal,
+                  color: AppColors.orange,
                   size: 18,
                 ),
               ),
@@ -169,9 +173,9 @@ class _CompanyCard extends StatelessWidget {
                     Text(
                       owner.ownerName.isEmpty ? 'Studio' : owner.ownerName,
                       style: TextStyle(
-                        fontFamily: 'Poppins',
+                        fontFamily: AppText.brandFontFamily,
                         fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                         color: AppColors.film,
                       ),
                     ),
@@ -180,7 +184,7 @@ class _CompanyCard extends StatelessWidget {
                       '${owner.eventsCount} '
                       '${owner.eventsCount == 1 ? "event" : "events"}',
                       style: TextStyle(
-                        fontFamily: 'Poppins',
+                        fontFamily: AppText.brandFontFamily,
                         fontSize: 11,
                         color: AppColors.filmDim.withValues(alpha: 0.7),
                       ),
@@ -228,18 +232,18 @@ class _CompanyCard extends StatelessWidget {
         Text(
           label.toUpperCase(),
           style: TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: AppText.monoFontFamily,
             fontSize: 9,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.8,
-            color: AppColors.filmDim.withValues(alpha: 0.7),
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.14,
+            color: AppColors.filmMuted,
           ),
         ),
         const SizedBox(height: 2),
         Text(
           value,
           style: TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontSize: 15,
             fontWeight: FontWeight.w700,
             color: color,

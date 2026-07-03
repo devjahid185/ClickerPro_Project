@@ -14,6 +14,7 @@ import '../../../theme/app_colors.dart';
 import '../../bookings/application/booking_providers.dart';
 import '../../bookings/domain/booking.dart';
 import '../../bookings/domain/booking_filter.dart';
+import '../../../theme/app_theme.dart';
 
 // ─── Derived metrics ─────────────────────────────────────────────────────────
 
@@ -87,7 +88,7 @@ class PerformanceScreen extends ConsumerWidget {
           'Performance',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontWeight: FontWeight.w600,
             fontSize: 18,
           ),
@@ -228,7 +229,7 @@ class _KpiCard extends StatelessWidget {
             value,
             style: TextStyle(
               color: AppColors.film,
-              fontFamily: 'Poppins',
+              fontFamily: AppText.brandFontFamily,
               fontSize: 26,
               fontWeight: FontWeight.w700,
             ),
@@ -504,7 +505,7 @@ class _SectionTitle extends StatelessWidget {
         fontSize: 11,
         fontWeight: FontWeight.w700,
         letterSpacing: 1.2,
-        fontFamily: 'Montserrat',
+        fontFamily: AppText.monoFontFamily,
       ),
     );
   }

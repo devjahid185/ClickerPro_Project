@@ -83,6 +83,7 @@ import '../../features/security/presentation/security_settings_screen.dart';
 import '../../features/payments/presentation/payment_entry_screen.dart';
 import '../../theme/app_colors.dart';
 import 'route_names.dart';
+import '../../theme/app_theme.dart';
 
 class AppRouter {
   AppRouter._();
@@ -444,7 +445,7 @@ class _ComingSoonRoute extends StatelessWidget {
           name,
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -471,7 +472,7 @@ class _ComingSoonRoute extends StatelessWidget {
               'Coming soon',
               style: TextStyle(
                 color: AppColors.film,
-                fontFamily: 'Poppins',
+                fontFamily: AppText.brandFontFamily,
                 fontSize: 22,
                 fontWeight: FontWeight.w600,
               ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_colors.dart';
+import '../../theme/app_theme.dart';
 
 class EmptyState extends StatelessWidget {
   const EmptyState({
@@ -41,7 +42,7 @@ class EmptyState extends StatelessWidget {
               message,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontFamily: 'Poppins',
+                fontFamily: AppText.brandFontFamily,
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
                 color: AppColors.film,

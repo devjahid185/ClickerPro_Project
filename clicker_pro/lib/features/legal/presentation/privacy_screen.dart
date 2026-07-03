@@ -18,6 +18,7 @@ import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
 import '../../settings/application/language_controller.dart';
 import '../domain/legal_repository.dart';
+import '../../../theme/app_theme.dart';
 
 /// Streams the privacy document for a given language code. Keyed by lang so
 /// every language switch re-fetches a fresh body (Req 8.8).
@@ -52,7 +53,7 @@ class PrivacyScreen extends ConsumerWidget {
           'Privacy Policy',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -82,19 +83,19 @@ MarkdownStyleSheet _markdownStyle() {
     p: TextStyle(color: baseColor, fontSize: 14, height: 1.55),
     h1: TextStyle(
       color: AppColors.film,
-      fontFamily: 'Poppins',
+      fontFamily: AppText.brandFontFamily,
       fontSize: 28,
       fontWeight: FontWeight.w600,
     ),
     h2: TextStyle(
       color: AppColors.film,
-      fontFamily: 'Poppins',
+      fontFamily: AppText.brandFontFamily,
       fontSize: 22,
       fontWeight: FontWeight.w600,
     ),
     h3: TextStyle(
       color: AppColors.film,
-      fontFamily: 'Poppins',
+      fontFamily: AppText.brandFontFamily,
       fontSize: 18,
       fontWeight: FontWeight.w600,
     ),
@@ -117,7 +118,7 @@ MarkdownStyleSheet _markdownStyle() {
     ),
     code: TextStyle(
       color: AppColors.gold,
-      fontFamily: 'Montserrat',
+      fontFamily: AppText.monoFontFamily,
       fontSize: 12.5,
     ),
     a: TextStyle(

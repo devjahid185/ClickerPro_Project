@@ -9,6 +9,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_theme.dart';
+
 
 /// Glass-surface card with a small uppercase title and a body slot.
 ///
@@ -46,11 +48,13 @@ class DetailSection extends StatelessWidget {
                   child: Text(
                     title.toUpperCase(),
                     style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontSize: 10.5,
-                      letterSpacing: 1.6,
-                      color: AppColors.gold.withValues(alpha: 0.9),
-                      fontWeight: FontWeight.w600,
+                      // Design (.dc.html): section headers are mono uppercase
+                      // micro-labels in muted grey, not a gold serif caption.
+                      fontFamily: AppText.monoFontFamily,
+                      fontSize: 9.5,
+                      letterSpacing: 1.4,
+                      color: AppColors.filmMuted,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),

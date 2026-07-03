@@ -9,6 +9,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/role/capability.dart';
 import '../../../shared/states/empty_state.dart';
@@ -16,6 +17,8 @@ import '../../../shared/states/error_state.dart';
 import '../../../shared/widgets/motion.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_theme.dart';
+
 
 import '../application/booking_providers.dart';
 import '../domain/package.dart';
@@ -67,7 +70,7 @@ class _PackagesScreenState extends ConsumerState<PackagesScreen> {
           'Packages',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontSize: 22,
             fontWeight: FontWeight.w600,
           ),
@@ -195,16 +198,18 @@ class _PackageCard extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: AppColors.glass,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border(
-          left: BorderSide(color: accentColor, width: 3),
-          top: BorderSide(color: AppColors.glassBorder),
+          // Design (.dc.html "Packages"): the accent is a 3px top rule; the
+          // other three edges are the usual hairline.
+          top: BorderSide(color: accentColor, width: 3),
+          left: BorderSide(color: AppColors.glassBorder),
           right: BorderSide(color: AppColors.glassBorder),
           bottom: BorderSide(color: AppColors.glassBorder),
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -215,7 +220,7 @@ class _PackageCard extends ConsumerWidget {
                     package.name,
                     style: TextStyle(
                       color: AppColors.film,
-                      fontFamily: 'Poppins',
+                      fontFamily: AppText.brandFontFamily,
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                     ),
@@ -337,6 +342,10 @@ class _PriceRow extends StatelessWidget {
   final Package package;
   final Color accentColor;
 
+  // ৳ with thousands grouping — the .dc.html package cards read "৳85,000".
+  static final NumberFormat _money = NumberFormat.decimalPattern('en');
+  static String _fmt(num v) => '৳${_money.format(v.round())}';
+
   @override
   Widget build(BuildContext context) {
     final hasDiscount = package.discount > 0;
@@ -344,9 +353,19 @@ class _PriceRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
+        Text(
+          _fmt(package.netPrice),
+          style: TextStyle(
+            color: accentColor,
+            fontFamily: AppText.brandFontFamily,
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
         if (hasDiscount) ...[
+          const SizedBox(width: 6),
           Text(
-            package.basePrice.toStringAsFixed(0),
+            _fmt(package.basePrice),
             style: TextStyle(
               color: AppColors.filmMuted,
               fontSize: 14,
@@ -354,17 +373,7 @@ class _PriceRow extends StatelessWidget {
               decorationColor: AppColors.filmMuted,
             ),
           ),
-          const SizedBox(width: 6),
         ],
-        Text(
-          package.netPrice.toStringAsFixed(0),
-          style: TextStyle(
-            color: accentColor,
-            fontFamily: 'Poppins',
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
         if (hasDiscount) ...[
           const SizedBox(width: 6),
           Container(
@@ -450,10 +459,10 @@ class _SpecGrid extends StatelessWidget {
               Text(
                 s.label,
                 style: TextStyle(
-                  fontFamily: 'Montserrat',
+                  fontFamily: AppText.monoFontFamily,
                   fontSize: 9,
                   letterSpacing: 1,
-                  color: accentColor.withValues(alpha: 0.8),
+                  color: accentColor.withValues(alpha: 0.85),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -497,10 +506,10 @@ class _ItemsList extends StatelessWidget {
         Text(
           'ITEMS',
           style: TextStyle(
-            fontFamily: 'Montserrat',
+            fontFamily: AppText.monoFontFamily,
             fontSize: 9,
             letterSpacing: 1,
-            color: AppColors.filmDim.withValues(alpha: 0.7),
+            color: AppColors.filmMuted,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -689,7 +698,7 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
                           _isEditing ? 'Edit Package' : 'New Package',
                           style: TextStyle(
                             color: AppColors.film,
-                            fontFamily: 'Poppins',
+                            fontFamily: AppText.brandFontFamily,
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
                           ),
@@ -764,7 +773,7 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
                             Text(
                               'NET PRICE',
                               style: TextStyle(
-                                fontFamily: 'Montserrat',
+                                fontFamily: AppText.bodyFontFamily,
                                 fontSize: 10,
                                 letterSpacing: 1.4,
                                 color: AppColors.teal,
@@ -776,7 +785,7 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
                               _netPrice.toStringAsFixed(0),
                               style: TextStyle(
                                 color: AppColors.teal,
-                                fontFamily: 'Poppins',
+                                fontFamily: AppText.brandFontFamily,
                                 fontSize: 20,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -927,7 +936,7 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
           Text(
             'PRINT SIZE',
             style: TextStyle(
-              fontFamily: 'Montserrat',
+              fontFamily: AppText.bodyFontFamily,
               fontSize: 10,
               letterSpacing: 1.4,
               color: AppColors.gold.withValues(alpha: 0.85),
@@ -981,7 +990,7 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
           Text(
             'DELIVERY',
             style: TextStyle(
-              fontFamily: 'Montserrat',
+              fontFamily: AppText.bodyFontFamily,
               fontSize: 10,
               letterSpacing: 1.4,
               color: AppColors.gold.withValues(alpha: 0.85),
@@ -1035,7 +1044,7 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
             Text(
               'ITEMS',
               style: TextStyle(
-                fontFamily: 'Montserrat',
+                fontFamily: AppText.bodyFontFamily,
                 fontSize: 10,
                 letterSpacing: 1.4,
                 color: AppColors.gold.withValues(alpha: 0.85),

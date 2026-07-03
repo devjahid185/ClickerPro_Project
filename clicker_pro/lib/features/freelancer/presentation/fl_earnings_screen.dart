@@ -35,6 +35,7 @@ import '../../../theme/app_colors.dart';
 import '../../profile/application/profile_controllers.dart';
 import '../application/fl_earning_providers.dart';
 import '../domain/fl_earning.dart';
+import '../../../theme/app_theme.dart';
 
 class FlEarningsScreen extends ConsumerStatefulWidget {
   const FlEarningsScreen({super.key});
@@ -52,7 +53,7 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
     final async = ref.watch(flEarningOverviewControllerProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.voidBlack,
+      backgroundColor: AppColors.surfaceAlt,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -60,19 +61,21 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
           icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
+        titleSpacing: 0,
         title: Text(
-          'Earnings',
+          'Payout',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
-            fontSize: 22,
-            fontWeight: FontWeight.w600,
+            fontFamily: AppText.brandFontFamily,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.02 * 20,
           ),
         ),
       ),
       body: RefreshIndicator(
-        color: AppColors.teal,
-        backgroundColor: AppColors.voidLight,
+        color: AppColors.orange,
+        backgroundColor: AppColors.surface,
         onRefresh: () =>
             ref.read(flEarningOverviewControllerProvider.notifier).refresh(),
         child: async.when(
@@ -102,12 +105,12 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
     String lang,
   ) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 32),
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
         _buildPeriodToggle(),
         const SizedBox(height: 16),
-        _buildSummaryCards(overview, lang),
+        _buildEarningsHero(overview, lang),
         const SizedBox(height: 20),
         _buildSectionHeader('Per-Owner Breakdown'),
         const SizedBox(height: 10),
@@ -154,9 +157,9 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: AppColors.glass,
+        color: AppColors.surfaceAlt,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.glassBorder),
+        border: Border.all(color: AppColors.line(0.06)),
       ),
       child: Row(
         children: [
@@ -177,24 +180,19 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 9),
           decoration: BoxDecoration(
-            color: selected
-                ? AppColors.teal.withValues(alpha: 0.15)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-            border: selected
-                ? Border.all(color: AppColors.teal.withValues(alpha: 0.30))
-                : null,
+            color: selected ? AppColors.orange : Colors.transparent,
+            borderRadius: BorderRadius.circular(7),
           ),
           alignment: Alignment.center,
           child: Text(
             label,
             style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: selected ? AppColors.teal : AppColors.filmDim,
+              fontFamily: AppText.brandFontFamily,
+              fontSize: 13.5,
+              fontWeight: FontWeight.w700,
+              color: selected ? AppColors.onAccent : AppColors.filmDim,
             ),
           ),
         ),
@@ -202,52 +200,113 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
     );
   }
 
-  // ─── Summary Cards (FL-01) ───────────────────────────────────────
+  // ─── Earnings Hero (MOD-16) ──────────────────────────────────────
+  //
+  // Solid orange "AVAILABLE TO REQUEST" card — the pending amount is what a
+  // freelancer can request. Received/Total stay visible as inline stats so
+  // no data from the old three-card layout is lost.
 
-  Widget _buildSummaryCards(FlEarningsOverview o, String lang) {
-    return Row(
-      children: [
-        Expanded(
-          child: _SummaryCard(
-            label: 'TOTAL',
-            value: BookingFormat.money(
-              o.totalEarnings,
-              lang: lang,
-              bnNumerals: lang == 'bn',
+  Widget _buildEarningsHero(FlEarningsOverview o, String lang) {
+    String money(double v) =>
+        BookingFormat.money(v, lang: lang, bnNumerals: lang == 'bn');
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: Stack(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              gradient: AppColors.orangeGradient,
+              borderRadius: BorderRadius.circular(18),
             ),
-            color: AppColors.teal,
-            icon: Icons.account_balance_wallet_outlined,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _SummaryCard(
-            label: 'RECEIVED',
-            value: BookingFormat.money(
-              o.receivedAmount,
-              lang: lang,
-              bnNumerals: lang == 'bn',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'AVAILABLE TO REQUEST',
+                  style: TextStyle(
+                    fontFamily: AppText.monoFontFamily,
+                    fontSize: 10,
+                    letterSpacing: 1.6,
+                    color: AppColors.onAccent.withValues(alpha: 0.72),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  money(o.pendingAmount),
+                  style: TextStyle(
+                    color: AppColors.onAccent,
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.03 * 32,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'From ${o.owners.length} '
+                  '${o.owners.length == 1 ? "studio" : "studios"}',
+                  style: TextStyle(
+                    color: AppColors.onAccent.withValues(alpha: 0.82),
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    _heroStat('RECEIVED', money(o.receivedAmount)),
+                    const SizedBox(width: 24),
+                    _heroStat('TOTAL', money(o.totalEarnings)),
+                  ],
+                ),
+              ],
             ),
-            color: AppColors.green,
-            icon: Icons.check_circle_outline,
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _SummaryCard(
-            label: 'PENDING',
-            value: BookingFormat.money(
-              o.pendingAmount,
-              lang: lang,
-              bnNumerals: lang == 'bn',
+          Positioned(
+            right: -30,
+            top: -30,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                // Soft radial bleed instead of a hard-edged ring.
+                gradient: RadialGradient(
+                  colors: [
+                    Colors.white.withValues(alpha: 0.10),
+                    Colors.white.withValues(alpha: 0.0),
+                  ],
+                ),
+              ),
             ),
-            color: AppColors.coral,
-            icon: Icons.access_time,
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
+
+  Widget _heroStat(String label, String value) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: TextStyle(
+          fontSize: 10,
+          color: AppColors.onAccent.withValues(alpha: 0.6),
+        ),
+      ),
+      const SizedBox(height: 2),
+      Text(
+        value,
+        style: TextStyle(
+          color: AppColors.onAccent,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    ],
+  );
 
   // ─── Monthly Bar Chart (FL-04) ──────────────────────────────────
 
@@ -262,9 +321,9 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.glass,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.glassBorder),
+        border: Border.all(color: AppColors.line(0.06)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -272,11 +331,11 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
           Text(
             'EARNINGS HISTORY',
             style: TextStyle(
-              fontFamily: 'Poppins',
+              fontFamily: AppText.monoFontFamily,
               fontSize: 10,
-              letterSpacing: 1.2,
+              letterSpacing: 1.4,
               fontWeight: FontWeight.w600,
-              color: AppColors.filmMuted,
+              color: AppColors.orange,
             ),
           ),
           const SizedBox(height: 14),
@@ -320,7 +379,7 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
           Text(
             'YEARLY RECAP',
             style: TextStyle(
-              fontFamily: 'Poppins',
+              fontFamily: AppText.brandFontFamily,
               fontSize: 10,
               letterSpacing: 1.2,
               fontWeight: FontWeight.w600,
@@ -340,7 +399,7 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
                       lang: lang,
                       bnNumerals: lang == 'bn',
                     ),
-                    color: AppColors.teal,
+                    color: AppColors.orange,
                   ),
                 ),
               if (recap.bestMonth != null && recap.bestOwner != null)
@@ -391,8 +450,8 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
                 ),
                 FilledButton(
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.teal,
-                    foregroundColor: Colors.black,
+                    backgroundColor: AppColors.orange,
+                    foregroundColor: AppColors.onAccent,
                   ),
                   onPressed: () => Navigator.of(ctx).pop(true),
                   child: Text('Send'),
@@ -437,15 +496,19 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
             );
           }
         },
-        icon: const Icon(Icons.send_outlined, size: 18),
-        label: Text('Request Payment'),
+        icon: const Icon(Icons.send_rounded, size: 18),
+        label: Text(
+          'Request Payment',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.teal,
-          foregroundColor: Colors.black,
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          backgroundColor: AppColors.orange,
+          foregroundColor: AppColors.onAccent,
+          padding: const EdgeInsets.symmetric(vertical: 15),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
+          elevation: 0,
         ),
       ),
     );
@@ -454,15 +517,21 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
   // ─── Helpers ──────────────────────────────────────────────────────
 
   Widget _buildSectionHeader(String title) {
-    return Text(
-      title.toUpperCase(),
-      style: TextStyle(
-        fontFamily: 'Poppins',
-        fontSize: 12,
-        letterSpacing: 1.2,
-        fontWeight: FontWeight.w600,
-        color: AppColors.filmMuted,
-      ),
+    return Row(
+      children: [
+        Container(width: 26, height: 1.5, color: AppColors.orange),
+        const SizedBox(width: 10),
+        Text(
+          title.toUpperCase(),
+          style: TextStyle(
+            fontFamily: AppText.monoFontFamily,
+            fontSize: 10,
+            letterSpacing: 1.6,
+            fontWeight: FontWeight.w500,
+            color: AppColors.orange,
+          ),
+        ),
+      ],
     );
   }
 
@@ -473,22 +542,22 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.glass,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.glassBorder),
+        border: Border.all(color: AppColors.line(0.06)),
       ),
       child: Column(
         children: [
           Icon(
             Icons.account_balance_wallet_outlined,
-            color: AppColors.teal.withValues(alpha: 0.7),
+            color: AppColors.orange.withValues(alpha: 0.7),
             size: 26,
           ),
           const SizedBox(height: 8),
           Text(
             title,
             style: TextStyle(
-              fontFamily: 'Poppins',
+              fontFamily: AppText.brandFontFamily,
               fontSize: 14,
               fontWeight: FontWeight.w600,
               color: AppColors.film,
@@ -510,71 +579,6 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
   }
 }
 
-// ─── Summary Card ──────────────────────────────────────────────────
-
-class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.icon,
-  });
-
-  final String label;
-  final String value;
-  final Color color;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withValues(alpha: 0.20)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: color, size: 15),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 9,
-              letterSpacing: 1.2,
-              fontWeight: FontWeight.w600,
-              color: AppColors.filmMuted,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // ─── Owner Card (FL-02) ──────────────────────────────────────────
 
 class _OwnerCard extends StatelessWidget {
@@ -588,9 +592,9 @@ class _OwnerCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.glass,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.glassBorder),
+        border: Border.all(color: AppColors.line(0.06)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -601,12 +605,12 @@ class _OwnerCard extends StatelessWidget {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: AppColors.teal.withValues(alpha: 0.12),
+                  color: AppColors.orangeSoft,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   Icons.business_outlined,
-                  color: AppColors.teal,
+                  color: AppColors.primary700,
                   size: 16,
                 ),
               ),
@@ -618,7 +622,7 @@ class _OwnerCard extends StatelessWidget {
                     Text(
                       owner.ownerName,
                       style: TextStyle(
-                        fontFamily: 'Poppins',
+                        fontFamily: AppText.brandFontFamily,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: AppColors.film,
@@ -628,7 +632,7 @@ class _OwnerCard extends StatelessWidget {
                     Text(
                       '${owner.eventsCount} events',
                       style: TextStyle(
-                        fontFamily: 'Poppins',
+                        fontFamily: AppText.brandFontFamily,
                         fontSize: 11,
                         color: AppColors.filmDim.withValues(alpha: 0.7),
                       ),
@@ -667,7 +671,7 @@ class _OwnerCard extends StatelessWidget {
                 Text(
                   'Last: ${_formatDate(owner.lastPaymentDate!)}',
                   style: TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: AppText.brandFontFamily,
                     fontSize: 10,
                     color: AppColors.filmDim.withValues(alpha: 0.5),
                   ),
@@ -686,7 +690,7 @@ class _OwnerCard extends StatelessWidget {
         Text(
           label.toUpperCase(),
           style: TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontSize: 9,
             letterSpacing: 1.0,
             fontWeight: FontWeight.w600,
@@ -697,7 +701,7 @@ class _OwnerCard extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontSize: 15,
             fontWeight: FontWeight.w600,
             color: color,
@@ -741,9 +745,9 @@ class _PendingPaymentRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.glass,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.glassBorder),
+        border: Border.all(color: AppColors.line(0.06)),
       ),
       child: Row(
         children: [
@@ -768,7 +772,7 @@ class _PendingPaymentRow extends StatelessWidget {
                 Text(
                   payment.ownerName,
                   style: TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: AppText.brandFontFamily,
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: AppColors.film,
@@ -778,7 +782,7 @@ class _PendingPaymentRow extends StatelessWidget {
                 Text(
                   '${BookingFormat.money(payment.amount, lang: lang, bnNumerals: lang == 'bn')} · ${payment.pendingDays} days pending',
                   style: TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: AppText.brandFontFamily,
                     fontSize: 11,
                     color: AppColors.filmDim.withValues(alpha: 0.7),
                   ),
@@ -813,7 +817,7 @@ class _PendingPaymentRow extends StatelessWidget {
                   Text(
                     'Remind',
                     style: TextStyle(
-                      fontFamily: 'Poppins',
+                      fontFamily: AppText.brandFontFamily,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: AppColors.green,
@@ -861,7 +865,7 @@ class _BarColumn extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontSize: 8,
             color: AppColors.filmDim.withValues(alpha: 0.6),
           ),
@@ -871,7 +875,7 @@ class _BarColumn extends StatelessWidget {
           duration: const Duration(milliseconds: 400),
           height: barHeight.clamp(4.0, 90.0),
           decoration: BoxDecoration(
-            color: AppColors.teal,
+            color: AppColors.orange,
             borderRadius: BorderRadius.circular(4),
           ),
         ),
@@ -879,7 +883,7 @@ class _BarColumn extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontSize: 9,
             fontWeight: FontWeight.w600,
             color: AppColors.filmDim.withValues(alpha: 0.6),
@@ -913,7 +917,7 @@ class _RecapStat extends StatelessWidget {
         Text(
           label.toUpperCase(),
           style: TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontSize: 9,
             letterSpacing: 1.0,
             fontWeight: FontWeight.w600,
@@ -924,7 +928,7 @@ class _RecapStat extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: color,
@@ -934,7 +938,7 @@ class _RecapStat extends StatelessWidget {
         Text(
           sub,
           style: TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontSize: 11,
             color: AppColors.filmDim.withValues(alpha: 0.6),
           ),

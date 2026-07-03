@@ -24,6 +24,7 @@ import '../../bookings/domain/booking.dart';
 import '../../bookings/domain/booking_filter.dart';
 import '../application/payment_providers.dart';
 import '../domain/payment_record.dart';
+import '../../../theme/app_theme.dart';
 
 class PaymentEntrySheet extends ConsumerStatefulWidget {
   const PaymentEntrySheet._({required this.eventId});
@@ -137,7 +138,7 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
                 'Record Payment',
                 style: TextStyle(
                   color: AppColors.film,
-                  fontFamily: 'Poppins',
+                  fontFamily: AppText.brandFontFamily,
                   fontSize: 22,
                   fontWeight: FontWeight.w600,
                 ),

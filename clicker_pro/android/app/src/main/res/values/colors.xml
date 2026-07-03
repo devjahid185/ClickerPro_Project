@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#FFFFFF</color>
+    <color name="ic_launcher_background">#FBFAF7</color>
+    <!-- Native launch-screen background: BLACK to match the Dart SplashScreen,
+         whose Scaffold is black and whose full-bleed Sphlash.jpg fades in from
+         a black top edge. A paper-white launch window flashed white before the
+         Dart splash painted; black makes the native→Dart handoff seamless. -->
+    <color name="launch_background">#000000</color>
 </resources>

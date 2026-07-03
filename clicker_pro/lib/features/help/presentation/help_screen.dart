@@ -14,6 +14,7 @@ import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
 import '../application/support_providers.dart';
 import 'dialogs/send_ticket_sheet.dart';
+import '../../../theme/app_theme.dart';
 
 class HelpScreen extends ConsumerWidget {
   const HelpScreen({super.key});
@@ -46,7 +47,7 @@ class HelpScreen extends ConsumerWidget {
           loc.help_title,
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontSize: 22,
             fontWeight: FontWeight.w600,
           ),
@@ -95,7 +96,7 @@ class HelpScreen extends ConsumerWidget {
                           loc.help_contact_section,
                           style: TextStyle(
                             color: AppColors.film,
-                            fontFamily: 'Poppins',
+                            fontFamily: AppText.brandFontFamily,
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
                           ),

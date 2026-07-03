@@ -15,6 +15,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/states/empty_state.dart';
@@ -24,33 +25,87 @@ import '../../../theme/app_colors.dart';
 import '../../profile/application/profile_controllers.dart';
 import '../application/chat_providers.dart';
 import 'widgets/message_bubble.dart';
+import '../../../theme/app_theme.dart';
 
 class ChatScreen extends ConsumerWidget {
   const ChatScreen({super.key});
+
+  /// Two-letter initials for the group avatar in the header.
+  static String _groupInitials(String name) {
+    final parts = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final loc = AppLocalizations.of(context);
     final groupAsync = ref.watch(myGroupProvider);
+    final group = groupAsync.valueOrNull;
 
     return Scaffold(
-      backgroundColor: AppColors.voidBlack,
+      backgroundColor: AppColors.surfaceAlt,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        // White header strip over a hairline, per the .dc.html chat frame.
+        backgroundColor: AppColors.surface,
         elevation: 0,
+        shape: Border(bottom: BorderSide(color: AppColors.line(0.05))),
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: Text(
-          loc.chat_title,
-          style: TextStyle(
-            color: AppColors.film,
-            fontFamily: 'Poppins',
-            fontSize: 22,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        titleSpacing: 0,
+        title: group == null
+            ? Text(
+                loc.chat_title,
+                style: TextStyle(
+                  color: AppColors.film,
+                  fontFamily: AppText.brandFontFamily,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.02 * 18,
+                ),
+              )
+            : Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.orangeSoft,
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      _groupInitials(group.name),
+                      style: TextStyle(
+                        color: AppColors.primary700,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      group.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppColors.film,
+                        fontFamily: AppText.brandFontFamily,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
       ),
       body: groupAsync.when(
         loading: () => const Center(child: LensLoader()),
@@ -146,6 +201,15 @@ class _ChatThreadViewState extends ConsumerState<_ChatThreadView> {
     super.dispose();
   }
 
+  /// Separator label for a calendar day — TODAY / YESTERDAY / "APR 12".
+  String _dayLabel(DateTime day) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    if (day == today) return 'TODAY';
+    if (day == today.subtract(const Duration(days: 1))) return 'YESTERDAY';
+    return DateFormat('MMM d').format(day).toUpperCase();
+  }
+
   Future<void> _send() async {
     final loc = AppLocalizations.of(context);
     final text = _composerCtl.text.trim();
@@ -211,18 +275,29 @@ class _ChatThreadViewState extends ConsumerState<_ChatThreadView> {
                   ),
                 );
               }
-              return ListView.builder(
+              // Flatten into rows with a day separator chip ("TODAY",
+              // "YESTERDAY", "APR 12") whenever the calendar day changes.
+              final rows = <Widget>[];
+              DateTime? lastDay;
+              for (final m in items) {
+                final local = m.sentAt.toLocal();
+                final day = DateTime(local.year, local.month, local.day);
+                if (lastDay != day) {
+                  rows.add(_DaySeparator(label: _dayLabel(day)));
+                  lastDay = day;
+                }
+                final isSelf =
+                    m.senderId == '_self' ||
+                    (selfId != null && m.senderId == selfId) ||
+                    (selfRemoteId != null && m.senderId == selfRemoteId);
+                rows.add(
+                  MessageBubble(message: m, isSelf: isSelf, lang: lang),
+                );
+              }
+              return ListView(
                 controller: _scrollCtl,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                itemCount: items.length,
-                itemBuilder: (_, i) {
-                  final m = items[i];
-                  final isSelf =
-                      m.senderId == '_self' ||
-                      (selfId != null && m.senderId == selfId) ||
-                      (selfRemoteId != null && m.senderId == selfRemoteId);
-                  return MessageBubble(message: m, isSelf: isSelf, lang: lang);
-                },
+                padding: const EdgeInsets.fromLTRB(18, 16, 18, 8),
+                children: rows,
               );
             },
           ),
@@ -236,8 +311,8 @@ class _ChatThreadViewState extends ConsumerState<_ChatThreadView> {
             8 + MediaQuery.of(context).padding.bottom,
           ),
           decoration: BoxDecoration(
-            color: AppColors.voidLight,
-            border: Border(top: BorderSide(color: AppColors.glassBorder)),
+            color: AppColors.surface,
+            border: Border(top: BorderSide(color: AppColors.line(0.05))),
           ),
           child: SafeArea(
             top: false,
@@ -250,27 +325,27 @@ class _ChatThreadViewState extends ConsumerState<_ChatThreadView> {
                     minLines: 1,
                     maxLines: 4,
                     enabled: !_sending,
-                    style: TextStyle(color: AppColors.film),
+                    style: TextStyle(color: AppColors.film, fontSize: 13),
                     decoration: InputDecoration(
                       hintText: loc.chat_message_hint,
-                      hintStyle: TextStyle(color: AppColors.filmMuted),
+                      hintStyle: TextStyle(
+                        color: AppColors.filmMuted,
+                        fontSize: 13,
+                      ),
                       filled: true,
-                      fillColor: AppColors.voidElevated,
+                      // Borderless surfaceAlt pill per the .dc.html composer.
+                      fillColor: AppColors.surfaceAlt,
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
+                        horizontal: 15,
+                        vertical: 11,
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(20),
-                        borderSide: BorderSide(
-                          color: AppColors.glassBorder,
-                        ),
+                        borderSide: BorderSide.none,
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(20),
-                        borderSide: BorderSide(
-                          color: AppColors.glassBorder,
-                        ),
+                        borderSide: BorderSide.none,
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(20),
@@ -286,19 +361,52 @@ class _ChatThreadViewState extends ConsumerState<_ChatThreadView> {
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.orange,
                     foregroundColor: Colors.white,
-                    minimumSize: const Size(48, 44),
+                    minimumSize: const Size(40, 40),
                     shape: const CircleBorder(),
                     padding: EdgeInsets.zero,
                   ),
                   child: _sending
                       ? const LensLoader(size: 16)
-                      : const Icon(Icons.send, size: 18),
+                      : const Icon(Icons.send_rounded, size: 20),
                 ),
               ],
             ),
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Centered day chip ("TODAY") between message groups — mono micro-label
+/// on a slightly darker pill, per the .dc.html thread.
+class _DaySeparator extends StatelessWidget {
+  const _DaySeparator({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+          decoration: BoxDecoration(
+            color: AppColors.film.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: AppText.monoFontFamily,
+              fontSize: 9,
+              letterSpacing: 0.9,
+              color: AppColors.filmMuted,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

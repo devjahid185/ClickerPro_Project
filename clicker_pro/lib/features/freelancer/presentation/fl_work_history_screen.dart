@@ -23,6 +23,7 @@ import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
 import '../application/fl_tools_providers.dart';
+import '../../../theme/app_theme.dart';
 
 class FlWorkHistoryScreen extends ConsumerWidget {
   const FlWorkHistoryScreen({super.key});
@@ -32,10 +33,11 @@ class FlWorkHistoryScreen extends ConsumerWidget {
     final async = ref.watch(flWorkHistoryProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.voidBlack,
+      backgroundColor: AppColors.appBg,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.appBg,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
@@ -44,9 +46,10 @@ class FlWorkHistoryScreen extends ConsumerWidget {
           'Work History',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
-            fontSize: 22,
-            fontWeight: FontWeight.w600,
+            fontFamily: AppText.brandFontFamily,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.03,
           ),
         ),
         actions: [
@@ -54,19 +57,19 @@ class FlWorkHistoryScreen extends ConsumerWidget {
             onPressed: () => _exportPdf(context, ref),
             icon: Icon(
               Icons.picture_as_pdf,
-              color: AppColors.teal,
+              color: AppColors.orange,
               size: 18,
             ),
             label: Text(
               'Export PDF',
-              style: TextStyle(color: AppColors.teal, fontSize: 12),
+              style: TextStyle(color: AppColors.orange, fontSize: 12),
             ),
           ),
         ],
       ),
       body: RefreshIndicator(
         color: AppColors.orange,
-        backgroundColor: AppColors.voidLight,
+        backgroundColor: AppColors.surface,
         onRefresh: () async {
           ref.invalidate(flWorkHistoryProvider);
         },
@@ -172,18 +175,22 @@ class _HistoryRow extends StatelessWidget {
     final icon = icons[eventType] ?? Icons.event_outlined;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
       padding: const EdgeInsets.all(14),
-      decoration: AppColors.glassCardDecoration(),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.line(0.06)),
+      ),
       child: Row(
         children: [
           Container(
             width: 42,
             height: 42,
             decoration: AppColors.iconWrapDecoration(
-              AppColors.teal.withValues(alpha: 0.12),
+              AppColors.orangeSoft,
             ),
-            child: Icon(icon, color: AppColors.teal, size: 20),
+            child: Icon(icon, color: AppColors.orange, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -195,7 +202,7 @@ class _HistoryRow extends StatelessWidget {
                   style: TextStyle(
                     color: AppColors.film,
                     fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 2),

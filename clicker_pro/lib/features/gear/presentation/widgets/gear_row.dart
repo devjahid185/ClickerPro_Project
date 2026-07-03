@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/format/booking_format.dart';
 import '../../../../theme/app_colors.dart';
 import '../../domain/gear_item.dart';
+import '../../../../theme/app_theme.dart';
 
 class GearRow extends StatelessWidget {
   const GearRow({
@@ -126,7 +127,7 @@ class GearRow extends StatelessWidget {
               ),
               style: TextStyle(
                 color: AppColors.gold,
-                fontFamily: 'Poppins',
+                fontFamily: AppText.brandFontFamily,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),

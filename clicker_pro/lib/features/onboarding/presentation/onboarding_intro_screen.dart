@@ -1,21 +1,24 @@
-﻿// lib/features/onboarding/presentation/onboarding_intro_screen.dart
+// lib/features/onboarding/presentation/onboarding_intro_screen.dart
 //
-// MOD-02 three-slide intro. PageView with Skip / dot-indicator / Next-Done.
-// Done (or Skip) marks `onboarding_complete` and pushes Login with a fade
-// transition.
+// MOD-02 three-slide intro — full-bleed photo slides matching the ClickerPro
+// design (ClickerPro App.dc.html · MOD-02 Onboarding). Each slide is a
+// background photo under a dark bottom scrim, with a mono eyebrow, a large
+// 800-weight white headline and body copy. The final slide adds a language
+// selector and a full-width "Get Started" button; earlier slides use a round
+// orange forward FAB. Skip (top-right) and dot indicators throughout.
 //
 // Motion tokens (MOD-04):
-//   • Page indicator width tween : 240ms (default curve)
+//   • Page indicator width tween : 240ms
 //   • PageView next/back         : 320ms cubic-bezier(0.2, 0.8, 0.2, 1)
 //   • Login fade route           : 320ms
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../screens/login_screen.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_theme.dart';
+import '../../settings/application/language_controller.dart';
 import '../application/onboarding_controller.dart';
 
 class OnboardingIntroScreen extends ConsumerStatefulWidget {
@@ -30,33 +33,35 @@ class _OnboardingIntroScreenState extends ConsumerState<OnboardingIntroScreen> {
   final _pageCtrl = PageController();
   int _index = 0;
 
+  // Design copy + assets, in order. Eyebrow tint mirrors the mockup's warm
+  // highlight over each photo.
   static const _slides = <_SlideData>[
     _SlideData(
-      icon: Icons.event_available_rounded,
-      headlineEn: 'Manage every booking',
-      bodyEn:
-          'From inquiry to delivery — your studio in one app, online or offline.',
-      headlineBn: 'Manage every booking',
-      bodyBn:
-          'From first inquiry to delivery — your whole studio in one place, online or offline.',
+      image: 'assets/onboarding/onb-camera.jpg',
+      eyebrow: 'FOR STUDIOS & FREELANCERS',
+      eyebrowColor: Color(0xFFFFD9B8),
+      headline: 'Every shoot,\nperfectly organised',
+      body:
+          'Bookings, gear, teams and packages — from first enquiry to final '
+          'delivery, all in one place.',
     ),
     _SlideData(
-      icon: Icons.groups_2_rounded,
-      headlineEn: 'One app for every role',
-      bodyEn:
-          'Owner, freelancer, or both — Clicker Pro adapts to how you work.',
-      headlineBn: 'One app for every role',
-      bodyBn:
-          'Owner, Freelancer or Both — Clicker Pro adapts to how you work.',
+      image: 'assets/onboarding/onb-city.jpg',
+      eyebrow: 'DAY & NIGHT SHIFTS',
+      eyebrowColor: Color(0xFFFFC98F),
+      headline: 'Never miss\na booking again',
+      body:
+          'Smart calendar with conflict detection, weather alerts for outdoor '
+          'shoots, and reminders that work offline.',
     ),
     _SlideData(
-      // NOTE: Icons.translate_rounded renders a CJK "文"-style glyph that
-      // reads as Chinese text on the slide — swapped for a camera mark.
-      icon: Icons.camera_alt_rounded,
-      headlineEn: 'Built for studios',
-      bodyEn: 'Fast, modern, and made for photography teams.',
-      headlineBn: 'Built for studios',
-      bodyBn: 'Fast, modern, and made for photography teams.',
+      image: 'assets/onboarding/onb-clock.jpg',
+      eyebrow: 'ON TIME, EVERY TIME',
+      eyebrowColor: Color(0xFFFFD9B8),
+      headline: 'Get paid faster,\ntrack every taka',
+      body:
+          'Auto invoices, advance & due tracking and bKash payouts — your '
+          'studio finances, always clear.',
     ),
   ];
 
@@ -73,6 +78,13 @@ class _OnboardingIntroScreenState extends ConsumerState<OnboardingIntroScreen> {
     );
   }
 
+  void _next() {
+    _pageCtrl.nextPage(
+      duration: const Duration(milliseconds: 320),
+      curve: const Cubic(0.2, 0.8, 0.2, 1),
+    );
+  }
+
   @override
   void dispose() {
     _pageCtrl.dispose();
@@ -81,232 +93,298 @@ class _OnboardingIntroScreenState extends ConsumerState<OnboardingIntroScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final lang = Localizations.localeOf(context).languageCode;
-    final isBn = lang == 'bn';
     final isLast = _index == _slides.length - 1;
 
     return Scaffold(
-      backgroundColor: AppColors.voidBlack,
+      backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Subtle watermark — the blade-flower brand mark, same motif as
-          // the landing page so onboarding and site read as one product.
-          // IgnorePointer keeps it from ever blocking touches.
-          Positioned(
-            left: -100,
-            top: -60,
-            child: IgnorePointer(
-              child: Opacity(
-                opacity: 0.06,
-                child: Image.asset(
-                  'assets/brand/logo_flower.png',
-                  width: 360,
-                  height: 360,
+          // Full-bleed photo slides.
+          PageView.builder(
+            controller: _pageCtrl,
+            onPageChanged: (i) => setState(() => _index = i),
+            itemCount: _slides.length,
+            itemBuilder: (_, i) => _Slide(data: _slides[i]),
+          ),
+
+          // Skip — top right (hidden on the last slide where CTA takes over).
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 200),
+                opacity: isLast ? 0 : 1,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 8, 20, 0),
+                  child: TextButton(
+                    onPressed: isLast ? null : _finish,
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.white,
+                    ),
+                    child: Text(
+                      'Skip',
+                      style: TextStyle(
+                        fontFamily: AppText.bodyFontFamily,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
+
+          // Bottom controls: language (last) / dots + forward FAB.
           SafeArea(
-            child: Column(
-              children: [
-                // Skip top right.
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: _finish,
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppColors.filmDim,
-                        ),
-                        child: Text(
-                          'Skip',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                Expanded(
-                  child: PageView.builder(
-                    controller: _pageCtrl,
-                    onPageChanged: (i) => setState(() => _index = i),
-                    itemCount: _slides.length,
-                    itemBuilder: (_, i) => _Slide(data: _slides[i], isBn: isBn),
-                  ),
-                ),
-
-                // Indicator + Next/Done.
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(28, 12, 28, 28),
-                  child: Row(
-                    children: [
-                      Row(
-                        children: List.generate(
-                          _slides.length,
-                          (i) => AnimatedContainer(
-                            duration: const Duration(milliseconds: 240),
-                            margin: const EdgeInsets.only(right: 6),
-                            width: i == _index ? 22 : 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: i == _index
-                                  ? AppColors.orange
-                                  : AppColors.gray300,
-                              borderRadius: BorderRadius.circular(99),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                      SizedBox(
-                        height: 50,
-                        child: FilledButton(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.orange,
-                            padding: const EdgeInsets.symmetric(horizontal: 28),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          onPressed: () {
-                            if (isLast) {
-                              _finish();
-                            } else {
-                              _pageCtrl.nextPage(
-                                duration: const Duration(milliseconds: 320),
-                                curve: const Cubic(0.2, 0.8, 0.2, 1),
-                              );
-                            }
-                          },
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                isLast
-                                    ? ('Get Started')
-                                    : ('Next'),
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                  letterSpacing: 0.3,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              const Icon(
-                                Icons.arrow_forward_rounded,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(34, 0, 34, 30),
+                child: isLast ? _lastControls() : _pagerControls(),
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // Slides 1–2: dots on the left, round orange forward FAB on the right.
+  Widget _pagerControls() {
+    return Row(
+      children: [
+        _dots(),
+        const Spacer(),
+        GestureDetector(
+          onTap: _next,
+          child: Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.orange,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.orange.withValues(alpha: 0.7),
+                  blurRadius: 24,
+                  spreadRadius: -8,
+                  offset: const Offset(0, 12),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.arrow_forward_rounded,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Slide 3: language chips + full-width Get Started, dots centred below.
+  Widget _lastControls() {
+    final lang = ref
+        .watch(languageControllerProvider)
+        .maybeWhen(data: (c) => c, orElse: () => 'en');
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            Expanded(child: _langChip('English', 'en', lang == 'en')),
+            const SizedBox(width: 10),
+            Expanded(child: _langChip('বাংলা', 'bn', lang == 'bn')),
+          ],
+        ),
+        const SizedBox(height: 11),
+        SizedBox(
+          width: double.infinity,
+          child: GestureDetector(
+            onTap: _finish,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              decoration: BoxDecoration(
+                color: AppColors.orange,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.orange.withValues(alpha: 0.7),
+                    blurRadius: 28,
+                    spreadRadius: -10,
+                    offset: const Offset(0, 14),
+                  ),
+                ],
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                'Get Started',
+                style: TextStyle(
+                  fontFamily: AppText.bodyFontFamily,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 18),
+        _dots(),
+      ],
+    );
+  }
+
+  Widget _langChip(String label, String code, bool selected) {
+    return GestureDetector(
+      onTap: () =>
+          ref.read(languageControllerProvider.notifier).setLanguage(code),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 13),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: selected
+              ? Colors.white
+              : Colors.white.withValues(alpha: 0.18),
+          borderRadius: BorderRadius.circular(13),
+          border: selected
+              ? null
+              : Border.all(color: Colors.white.withValues(alpha: 0.4)),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: AppText.bodyFontFamily,
+            fontSize: 13.5,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+            color: selected ? const Color(0xFF1A1A18) : Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _dots() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(
+        _slides.length,
+        (i) => AnimatedContainer(
+          duration: const Duration(milliseconds: 240),
+          margin: const EdgeInsets.only(right: 7),
+          width: i == _index ? 24 : 7,
+          height: 7,
+          decoration: BoxDecoration(
+            color: i == _index
+                ? Colors.white
+                : Colors.white.withValues(alpha: 0.45),
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
       ),
     );
   }
 }
 
 class _Slide extends StatelessWidget {
-  const _Slide({required this.data, required this.isBn});
+  const _Slide({required this.data});
   final _SlideData data;
-  final bool isBn;
 
   @override
   Widget build(BuildContext context) {
-    final headline = isBn ? data.headlineBn : data.headlineEn;
-    final body = isBn ? data.bodyBn : data.bodyEn;
-    final headlineStyle = isBn
-        ? GoogleFonts.notoSansBengali(
-            fontSize: 30,
-            fontWeight: FontWeight.w700,
-            color: AppColors.film,
-            height: 1.2,
-          )
-        : TextStyle(
-            fontFamily: AppText.brand.fontFamily,
-            fontSize: 32,
-            fontWeight: FontWeight.w700,
-            color: AppColors.film,
-            height: 1.15,
-          );
-    final bodyStyle = isBn
-        ? GoogleFonts.notoSansBengali(
-            fontSize: 14,
-            color: AppColors.filmDim,
-            height: 1.6,
-          )
-        : TextStyle(
-            fontSize: 14.5,
-            color: AppColors.filmDim,
-            height: 1.55,
-          );
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Glowing icon block.
-          Center(
-            child: Container(
-              width: 156,
-              height: 156,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.orange.withValues(alpha: 0.1),
-              ),
-              alignment: Alignment.center,
-              child: Container(
-                width: 96,
-                height: 96,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0x1FFF5A1F),
-                  border: Border.all(
-                    color: AppColors.orange.withValues(alpha: 0.45),
-                    width: 1.4,
-                  ),
-                ),
-                child: Icon(data.icon, color: AppColors.orange, size: 40),
-              ),
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Background photo.
+        Image.asset(
+          data.image,
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => ColoredBox(color: AppColors.orange),
+        ),
+        // Dark bottom scrim so the copy stays legible over any photo.
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0x52140A00), // ~0.32 near the top
+                Color(0x00140A00),
+                Color(0x1A140A00),
+                Color(0xDB140A00), // ~0.86 at the bottom
+              ],
+              stops: [0.0, 0.26, 0.42, 1.0],
             ),
           ),
-          const SizedBox(height: 36),
-          Text(headline, style: headlineStyle),
-          const SizedBox(height: 12),
-          Text(body, style: bodyStyle),
-        ],
-      ),
+        ),
+        // Copy pinned to the lower area, above the controls.
+        SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(34, 0, 34, 118),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  data.eyebrow,
+                  style: TextStyle(
+                    fontFamily: AppText.monoFontFamily,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    color: data.eyebrowColor,
+                    letterSpacing: 0.16 * 10,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  data.headline,
+                  style: TextStyle(
+                    fontFamily: AppText.brandFontFamily,
+                    fontSize: 34,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    height: 1.04,
+                    letterSpacing: -0.035 * 34,
+                    shadows: const [
+                      Shadow(color: Color(0x73000000), blurRadius: 16, offset: Offset(0, 2)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  data.body,
+                  style: TextStyle(
+                    fontFamily: AppText.bodyFontFamily,
+                    fontSize: 14.5,
+                    color: Colors.white.withValues(alpha: 0.92),
+                    height: 1.6,
+                    shadows: const [
+                      Shadow(color: Color(0x80000000), blurRadius: 8, offset: Offset(0, 1)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
 
 class _SlideData {
   const _SlideData({
-    required this.icon,
-    required this.headlineEn,
-    required this.bodyEn,
-    required this.headlineBn,
-    required this.bodyBn,
+    required this.image,
+    required this.eyebrow,
+    required this.eyebrowColor,
+    required this.headline,
+    required this.body,
   });
-  final IconData icon;
-  final String headlineEn;
-  final String bodyEn;
-  final String headlineBn;
-  final String bodyBn;
+  final String image;
+  final String eyebrow;
+  final Color eyebrowColor;
+  final String headline;
+  final String body;
 }

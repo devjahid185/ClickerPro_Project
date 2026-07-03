@@ -11,6 +11,7 @@ import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
 import '../../settings/application/language_controller.dart';
 import '../domain/legal_repository.dart';
+import '../../../theme/app_theme.dart';
 
 final termsDocProvider = FutureProvider.family<LegalDocument, String>((
   ref,
@@ -43,7 +44,7 @@ class TermsScreen extends ConsumerWidget {
           'Terms of Service',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -73,19 +74,19 @@ MarkdownStyleSheet _markdownStyle() {
     p: TextStyle(color: baseColor, fontSize: 14, height: 1.55),
     h1: TextStyle(
       color: AppColors.film,
-      fontFamily: 'Poppins',
+      fontFamily: AppText.brandFontFamily,
       fontSize: 28,
       fontWeight: FontWeight.w600,
     ),
     h2: TextStyle(
       color: AppColors.film,
-      fontFamily: 'Poppins',
+      fontFamily: AppText.brandFontFamily,
       fontSize: 22,
       fontWeight: FontWeight.w600,
     ),
     h3: TextStyle(
       color: AppColors.film,
-      fontFamily: 'Poppins',
+      fontFamily: AppText.brandFontFamily,
       fontSize: 18,
       fontWeight: FontWeight.w600,
     ),

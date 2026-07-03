@@ -17,10 +17,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/booking_status/booking_status.dart';
 import '../../../core/navigation/route_names.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_theme.dart';
 import '../../auth/domain/user_role.dart';
 import '../../bookings/application/booking_providers.dart';
 import '../../bookings/domain/booking.dart';
@@ -43,6 +45,10 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   bool _isYearly = false;
   // For "Both" role only: which side of finance is showing.
   bool _showFreelancerSide = false;
+
+  // ৳ with thousands grouping — "৳1,86,500". Shared by the hero + stat cards.
+  static final NumberFormat _moneyFmt = NumberFormat.decimalPattern('en');
+  static String _money(num v) => '৳${_moneyFmt.format(v.round())}';
 
   @override
   Widget build(BuildContext context) {
@@ -131,7 +137,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
               'Finance',
               style: TextStyle(
                 color: AppColors.film,
-                fontFamily: 'Poppins',
+                fontFamily: AppText.brandFontFamily,
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
               ),
@@ -166,7 +172,11 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
             ] else ...[
               _FadeUp(
                 order: 1,
-                child: _buildHero(net: net, collected: collected),
+                child: _buildHero(
+                  net: net,
+                  income: collected,
+                  expense: periodExpense,
+                ),
               ),
               const SizedBox(height: 18),
               _FadeUp(order: 2, child: _buildQuickActions(isManager)),
@@ -222,13 +232,13 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                 Icon(
                   icon,
                   size: 16,
-                  color: selected ? Colors.white : AppColors.filmDim,
+                  color: selected ? AppColors.onAccent : AppColors.filmDim,
                 ),
                 const SizedBox(width: 7),
                 Text(
                   label,
                   style: TextStyle(
-                    color: selected ? Colors.white : AppColors.filmDim,
+                    color: selected ? AppColors.onAccent : AppColors.filmDim,
                     fontSize: 13,
                     fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                   ),
@@ -305,7 +315,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
           label: const Text('Open Earnings Dashboard'),
           style: FilledButton.styleFrom(
             backgroundColor: AppColors.orange,
-            foregroundColor: Colors.white,
+            foregroundColor: AppColors.onAccent,
             padding: const EdgeInsets.symmetric(vertical: 15),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
@@ -348,8 +358,10 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
             alignment: Alignment.center,
             child: Text(
               label,
+              // Selected pill fills with `film` (near-white on Noir, near-black
+              // on light) — so the label must be the surface colour to invert.
               style: TextStyle(
-                color: selected ? Colors.white : AppColors.filmDim,
+                color: selected ? AppColors.surface : AppColors.filmDim,
                 fontSize: 12.5,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 letterSpacing: 0.3,
@@ -398,14 +410,46 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     );
   }
 
-  // ── Hero: oversized Net on a deep gradient card ─────────────────────
-  Widget _buildHero({required double net, required double collected}) {
-    final positive = net >= 0;
+  // ── Hero: oversized Net Profit on the solid orange card ─────────────
+  // Design (.dc.html "Finance"): solid orange, radius 20, a corner-glow
+  // circle, a mono "NET PROFIT · <period>" label, the big ৳ figure, and an
+  // INCOME / EXPENSE stat row along the bottom.
+  Widget _buildHero({
+    required double net,
+    required double income,
+    required double expense,
+  }) {
+    final periodLabel = _isYearly ? 'THIS YEAR' : 'THIS MONTH';
+
+    Widget stat(String label, double value) => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: AppText.monoFontFamily,
+            color: AppColors.onAccent.withValues(alpha: 0.7),
+            fontSize: 10,
+            letterSpacing: 0.6,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          _money(value),
+          style: TextStyle(
+            color: AppColors.onAccent,
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 26, 24, 26),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        gradient: AppColors.drawerHeaderGradient,
-        borderRadius: BorderRadius.circular(28),
+        color: AppColors.orange,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary600.withValues(alpha: 0.35),
@@ -415,59 +459,62 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Text(
-            _isYearly ? 'NET — THIS YEAR' : 'NET — THIS MONTH',
-            style: TextStyle(
-              fontFamily: 'Montserrat',
-              color: Colors.white.withValues(alpha: 0.85),
-              fontSize: 10.5,
-              letterSpacing: 2.2,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 10),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              '৳${net.toStringAsFixed(0)}',
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                color: Colors.white,
-                fontSize: 44,
-                fontWeight: FontWeight.w700,
-                height: 1.04,
-                letterSpacing: -1,
+          Positioned(
+            right: -30,
+            top: -30,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                // Soft radial bleed instead of a hard-edged ring.
+                gradient: RadialGradient(
+                  colors: [
+                    Colors.white.withValues(alpha: 0.10),
+                    Colors.white.withValues(alpha: 0.0),
+                  ],
+                ),
               ),
             ),
           ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+          Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  positive
-                      ? Icons.trending_up_rounded
-                      : Icons.trending_down_rounded,
-                  color: Colors.white,
-                  size: 14,
-                ),
-                const SizedBox(width: 6),
                 Text(
-                  'Collected ৳${collected.toStringAsFixed(0)}',
+                  'NET PROFIT · $periodLabel',
                   style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                    fontFamily: AppText.monoFontFamily,
+                    color: AppColors.onAccent.withValues(alpha: 0.72),
+                    fontSize: 10,
+                    letterSpacing: 1.6,
                   ),
+                ),
+                const SizedBox(height: 6),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    _money(net),
+                    style: TextStyle(
+                      fontFamily: AppText.brandFontFamily,
+                      color: AppColors.onAccent,
+                      fontSize: 36,
+                      fontWeight: FontWeight.w800,
+                      height: 1.04,
+                      letterSpacing: -0.03 * 36,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(child: stat('INCOME', income)),
+                    Expanded(child: stat('EXPENSE', expense)),
+                  ],
                 ),
               ],
             ),
@@ -601,7 +648,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
               Text(
                 label,
                 style: TextStyle(
-                  fontFamily: 'Montserrat',
+                  fontFamily: AppText.monoFontFamily,
                   fontSize: 10,
                   letterSpacing: 1.6,
                   color: AppColors.filmDim.withValues(alpha: 0.8),
@@ -612,9 +659,9 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
-                  '৳${value.toStringAsFixed(0)}',
+                  _money(value),
                   style: TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: AppText.brandFontFamily,
                     color: AppColors.film,
                     fontSize: 21,
                     fontWeight: FontWeight.w700,
@@ -713,9 +760,9 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                 ),
               ),
               Text(
-                '৳${value.toStringAsFixed(0)}',
+                _money(value),
                 style: TextStyle(
-                  fontFamily: 'Poppins',
+                  fontFamily: AppText.brandFontFamily,
                   color: color,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -740,7 +787,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
           Text(
             _isYearly ? 'THIS YEAR' : 'THIS MONTH',
             style: TextStyle(
-              fontFamily: 'Montserrat',
+              fontFamily: AppText.monoFontFamily,
               fontSize: 10,
               letterSpacing: 1.8,
               color: AppColors.filmDim.withValues(alpha: 0.8),
@@ -837,7 +884,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
               Text(
                 'LAST 6 MONTHS',
                 style: TextStyle(
-                  fontFamily: 'Montserrat',
+                  fontFamily: AppText.monoFontFamily,
                   fontSize: 10,
                   letterSpacing: 1.8,
                   color: AppColors.filmDim.withValues(alpha: 0.8),
@@ -875,7 +922,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                       Text(
                         monthNames[m.month - 1],
                         style: TextStyle(
-                          fontFamily: 'Montserrat',
+                          fontFamily: AppText.monoFontFamily,
                           color: AppColors.filmDim.withValues(alpha: 0.7),
                           fontSize: 9.5,
                           fontWeight: FontWeight.w600,
@@ -935,7 +982,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
           child: Text(
             'ACTIVITY LOG — DUE',
             style: TextStyle(
-              fontFamily: 'Montserrat',
+              fontFamily: AppText.monoFontFamily,
               fontSize: 10.5,
               letterSpacing: 1.8,
               color: AppColors.filmDim.withValues(alpha: 0.85),
@@ -1032,7 +1079,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                   const SizedBox(height: 2),
                   Text(
                     '${e.date.day}/${e.date.month}/${e.date.year}'
-                    ' · Paid ৳${e.paid.toStringAsFixed(0)} / ৳${e.total.toStringAsFixed(0)}',
+                    ' · Paid ${_money(e.paid)} / ${_money(e.total)}',
                     style: TextStyle(
                       color: AppColors.filmDim.withValues(alpha: 0.8),
                       fontSize: 11,
@@ -1042,9 +1089,9 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
               ),
             ),
             Text(
-              '-৳${e.due.toStringAsFixed(0)}',
+              '-${_money(e.due)}',
               style: TextStyle(
-                fontFamily: 'Poppins',
+                fontFamily: AppText.brandFontFamily,
                 color: AppColors.coral,
                 fontSize: 15,
                 fontWeight: FontWeight.w700,

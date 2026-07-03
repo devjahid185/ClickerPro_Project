@@ -12,6 +12,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/states/lens_loader.dart';
 import '../../../../theme/app_colors.dart';
 import '../../application/reports_providers.dart';
+import '../../../../theme/app_theme.dart';
 
 class YearlySummaryCard extends ConsumerWidget {
   const YearlySummaryCard({super.key});
@@ -129,7 +130,7 @@ class _Card extends StatelessWidget {
             title,
             style: TextStyle(
               color: AppColors.gold,
-              fontFamily: 'Poppins',
+              fontFamily: AppText.brandFontFamily,
               fontSize: 14,
               letterSpacing: 1.2,
               fontWeight: FontWeight.w600,
@@ -177,7 +178,7 @@ class _Metric extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
             color: colour,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontSize: emphasised ? 22 : 18,
             fontWeight: FontWeight.w600,
           ),

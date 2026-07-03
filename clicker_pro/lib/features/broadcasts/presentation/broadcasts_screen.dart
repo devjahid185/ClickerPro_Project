@@ -31,7 +31,7 @@ class BroadcastsScreen extends ConsumerWidget {
           'Platform Updates',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontSize: 22,
             fontWeight: FontWeight.w600,
           ),
@@ -228,7 +228,7 @@ class _BroadcastCard extends StatelessWidget {
                                 broadcast.title,
                                 style: TextStyle(
                                   color: AppColors.film,
-                                  fontFamily: 'Poppins',
+                                  fontFamily: AppText.brandFontFamily,
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                   height: 1.3,

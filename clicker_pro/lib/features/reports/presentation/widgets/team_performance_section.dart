@@ -14,6 +14,7 @@ import '../../../../shared/states/lens_loader.dart';
 import '../../../../theme/app_colors.dart';
 import '../../application/reports_providers.dart';
 import '../../domain/team_performance_entry.dart';
+import '../../../../theme/app_theme.dart';
 
 class TeamPerformanceSection extends ConsumerWidget {
   const TeamPerformanceSection({super.key});
@@ -40,7 +41,7 @@ class TeamPerformanceSection extends ConsumerWidget {
             loc.reports_team_section,
             style: TextStyle(
               color: AppColors.gold,
-              fontFamily: 'Poppins',
+              fontFamily: AppText.brandFontFamily,
               fontSize: 14,
               letterSpacing: 1.2,
               fontWeight: FontWeight.w600,
@@ -191,7 +192,7 @@ class _Row extends StatelessWidget {
                 color: entry.performanceScore < 0
                     ? AppColors.red
                     : AppColors.orange,
-                fontFamily: 'Poppins',
+                fontFamily: AppText.brandFontFamily,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
               ),

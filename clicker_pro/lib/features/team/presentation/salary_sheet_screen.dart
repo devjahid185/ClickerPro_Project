@@ -19,6 +19,7 @@ import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
 import '../application/team_providers.dart';
 import '../domain/staff_payout.dart';
+import '../../../theme/app_theme.dart';
 
 class SalarySheetScreen extends ConsumerWidget {
   const SalarySheetScreen({super.key});
@@ -40,7 +41,7 @@ class SalarySheetScreen extends ConsumerWidget {
           'Staff Payments',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontSize: 22,
             fontWeight: FontWeight.w600,
           ),
@@ -155,7 +156,7 @@ class SalarySheetScreen extends ConsumerWidget {
     return Text(
       title,
       style: TextStyle(
-        fontFamily: 'Poppins',
+        fontFamily: AppText.brandFontFamily,
         fontSize: 12,
         letterSpacing: 1.2,
         fontWeight: FontWeight.w600,
@@ -199,7 +200,7 @@ class _SummaryHeader extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'Poppins',
+              fontFamily: AppText.brandFontFamily,
               fontSize: 9,
               letterSpacing: 1.0,
               fontWeight: FontWeight.w600,
@@ -212,7 +213,7 @@ class _SummaryHeader extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontFamily: 'Poppins',
+              fontFamily: AppText.brandFontFamily,
               fontSize: 14,
               fontWeight: FontWeight.w600,
               color: color,
@@ -278,7 +279,7 @@ class _StaffPayoutCard extends ConsumerWidget {
                       Text(
                         payout.name,
                         style: TextStyle(
-                          fontFamily: 'Poppins',
+                          fontFamily: AppText.brandFontFamily,
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: AppColors.film,
@@ -288,7 +289,7 @@ class _StaffPayoutCard extends ConsumerWidget {
                       Text(
                         '${payout.events} ${payout.events == 1 ? 'event' : 'events'} · tap for breakdown',
                         style: TextStyle(
-                          fontFamily: 'Poppins',
+                          fontFamily: AppText.brandFontFamily,
                           fontSize: 11,
                           color: AppColors.filmDim.withValues(alpha: 0.7),
                         ),
@@ -308,7 +309,7 @@ class _StaffPayoutCard extends ConsumerWidget {
                   child: Text(
                     isPaid ? 'PAID' : 'DUE',
                     style: TextStyle(
-                      fontFamily: 'Poppins',
+                      fontFamily: AppText.brandFontFamily,
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                       color: statusColor,
@@ -343,7 +344,7 @@ class _StaffPayoutCard extends ConsumerWidget {
         Text(
           label.toUpperCase(),
           style: TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontSize: 9,
             letterSpacing: 1.0,
             fontWeight: FontWeight.w600,
@@ -354,7 +355,7 @@ class _StaffPayoutCard extends ConsumerWidget {
         Text(
           value,
           style: TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontSize: 15,
             fontWeight: FontWeight.w600,
             color: color,
@@ -422,7 +423,7 @@ class _PayoutBreakdownSheet extends ConsumerWidget {
                     payout.name,
                     style: TextStyle(
                       color: AppColors.film,
-                      fontFamily: 'Poppins',
+                      fontFamily: AppText.brandFontFamily,
                       fontSize: 20,
                       fontWeight: FontWeight.w600,
                     ),

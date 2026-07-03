@@ -9,6 +9,7 @@ import '../../../../shared/states/lens_loader.dart';
 import '../../../../theme/app_colors.dart';
 import '../../application/gear_providers.dart';
 import '../../domain/gear_item.dart';
+import '../../../../theme/app_theme.dart';
 
 class AddGearSheet extends ConsumerStatefulWidget {
   const AddGearSheet._();
@@ -119,7 +120,7 @@ class _AddGearSheetState extends ConsumerState<AddGearSheet> {
                 loc.gear_add,
                 style: TextStyle(
                   color: AppColors.film,
-                  fontFamily: 'Poppins',
+                  fontFamily: AppText.brandFontFamily,
                   fontSize: 22,
                   fontWeight: FontWeight.w600,
                 ),

@@ -13,6 +13,7 @@ import '../../../theme/app_colors.dart';
 import '../application/payment_providers.dart';
 import '../domain/payment_record.dart';
 import 'payment_entry_sheet.dart';
+import '../../../theme/app_theme.dart';
 
 class PaymentEntryScreen extends ConsumerWidget {
   const PaymentEntryScreen({super.key});
@@ -34,7 +35,7 @@ class PaymentEntryScreen extends ConsumerWidget {
           'Payment Records',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontSize: 22,
             fontWeight: FontWeight.w600,
           ),
@@ -46,7 +47,7 @@ class PaymentEntryScreen extends ConsumerWidget {
         icon: const Icon(Icons.add_rounded),
         label: Text(
           'Record Payment',
-          style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600),
+          style: TextStyle(fontFamily: AppText.brandFontFamily, fontWeight: FontWeight.w600),
         ),
         onPressed: () async {
           await PaymentEntrySheet.show(context, eventId: '');
@@ -138,7 +139,7 @@ class _SummaryCard extends StatelessWidget {
                   color: AppColors.teal,
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
-                  fontFamily: 'Poppins',
+                  fontFamily: AppText.brandFontFamily,
                 ),
               ),
             ],

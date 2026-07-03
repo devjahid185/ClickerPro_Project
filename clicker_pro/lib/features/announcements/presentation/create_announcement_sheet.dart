@@ -5,6 +5,7 @@ import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
 import '../application/announcement_providers.dart';
 import '../domain/announcement.dart';
+import '../../../theme/app_theme.dart';
 
 class CreateAnnouncementSheet extends ConsumerStatefulWidget {
   const CreateAnnouncementSheet._();
@@ -124,7 +125,7 @@ class _CreateAnnouncementSheetState
                 'New Announcement',
                 style: TextStyle(
                   color: AppColors.film,
-                  fontFamily: 'Poppins',
+                  fontFamily: AppText.brandFontFamily,
                   fontSize: 22,
                   fontWeight: FontWeight.w600,
                 ),

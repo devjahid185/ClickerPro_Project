@@ -23,6 +23,7 @@ import '../../core/providers.dart';
 import '../../features/bookings/application/booking_providers.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_theme.dart';
 
 class SyncStatusSheet extends ConsumerWidget {
   const SyncStatusSheet({super.key});
@@ -58,7 +59,7 @@ class SyncStatusSheet extends ConsumerWidget {
             loc.sync_title,
             style: TextStyle(
               color: AppColors.film,
-              fontFamily: 'Poppins',
+              fontFamily: AppText.brandFontFamily,
               fontSize: 22,
               fontWeight: FontWeight.w600,
             ),
@@ -204,7 +205,7 @@ class _PendingSummary extends StatelessWidget {
                 loc.sync_retry,
                 style: TextStyle(
                   color: AppColors.orange,
-                  fontFamily: 'Montserrat',
+                  fontFamily: AppText.monoFontFamily,
                   fontSize: 11,
                   letterSpacing: 1.2,
                   fontWeight: FontWeight.w700,
@@ -228,7 +229,7 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         label.toUpperCase(),
         style: TextStyle(
-          fontFamily: 'Montserrat',
+          fontFamily: AppText.monoFontFamily,
           fontSize: 10.5,
           letterSpacing: 1.6,
           color: AppColors.gold.withValues(alpha: 0.9),

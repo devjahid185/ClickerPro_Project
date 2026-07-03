@@ -13,6 +13,7 @@ import '../../../theme/app_colors.dart';
 import '../application/gear_providers.dart';
 import 'dialogs/add_gear_sheet.dart';
 import 'widgets/gear_row.dart';
+import '../../../theme/app_theme.dart';
 
 class GearScreen extends ConsumerWidget {
   const GearScreen({super.key});
@@ -82,7 +83,7 @@ class GearScreen extends ConsumerWidget {
           loc.gear_title,
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontSize: 22,
             fontWeight: FontWeight.w600,
           ),
@@ -126,7 +127,7 @@ class GearScreen extends ConsumerWidget {
                       ),
                       style: TextStyle(
                         color: AppColors.gold,
-                        fontFamily: 'Poppins',
+                        fontFamily: AppText.brandFontFamily,
                         fontSize: 22,
                         fontWeight: FontWeight.w600,
                       ),

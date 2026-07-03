@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../theme/app_colors.dart';
 import '../data/crash_service.dart';
+import '../../../theme/app_theme.dart';
 
 class CrashSettingsScreen extends ConsumerStatefulWidget {
   const CrashSettingsScreen({super.key});
@@ -63,7 +64,7 @@ class _CrashSettingsScreenState extends ConsumerState<CrashSettingsScreen> {
           'Crash Reporting',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontWeight: FontWeight.w600,
           ),
         ),

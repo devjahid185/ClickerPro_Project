@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../screens/dashboard_screen.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_theme.dart';
 import '../application/session_controller.dart';
 
 class ManagerInviteScreen extends ConsumerStatefulWidget {
@@ -235,7 +236,7 @@ class _ManagerInviteScreenState extends ConsumerState<ManagerInviteScreen> {
                         'Accept your\ninvite',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontFamily: 'Poppins',
+                          fontFamily: AppText.bodyFontFamily,
                           fontSize: 36,
                           fontWeight: FontWeight.w600,
                           color: AppColors.film,
@@ -247,7 +248,7 @@ class _ManagerInviteScreenState extends ConsumerState<ManagerInviteScreen> {
                         'TEAM MANAGER · ACCESS GRANTED BY OWNER',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontFamily: 'Montserrat',
+                          fontFamily: AppText.bodyFontFamily,
                           fontSize: 10.5,
                           letterSpacing: 2.2,
                           color: AppColors.filmDim.withValues(alpha: 0.7),
@@ -268,7 +269,7 @@ class _ManagerInviteScreenState extends ConsumerState<ManagerInviteScreen> {
                         '6-DIGIT INVITE CODE',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontFamily: 'Montserrat',
+                          fontFamily: AppText.bodyFontFamily,
                           fontSize: 10,
                           letterSpacing: 2,
                           color: AppColors.filmDim.withValues(alpha: 0.7),
@@ -651,7 +652,7 @@ class _DigitCellState extends State<_DigitCell> {
           showCursor: true,
           cursorColor: AppColors.orange,
           style: TextStyle(
-            fontFamily: 'Montserrat',
+            fontFamily: AppText.bodyFontFamily,
             color: AppColors.film,
             fontSize: 20,
             fontWeight: FontWeight.w600,

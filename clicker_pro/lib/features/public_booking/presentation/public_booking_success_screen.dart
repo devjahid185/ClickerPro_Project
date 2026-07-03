@@ -10,6 +10,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_theme.dart';
 
 class PublicBookingSuccessScreen extends StatelessWidget {
   const PublicBookingSuccessScreen({super.key, this.requestId});
@@ -21,7 +22,7 @@ class PublicBookingSuccessScreen extends StatelessWidget {
         ? requestId!.substring(0, 8).toUpperCase()
         : (requestId?.toUpperCase() ?? '—');
     return Scaffold(
-      backgroundColor: AppColors.voidBlack,
+      backgroundColor: AppColors.appBg,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -52,9 +53,10 @@ class PublicBookingSuccessScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: AppColors.film,
-                  fontFamily: 'Poppins',
+                  fontFamily: AppText.brandFontFamily,
                   fontSize: 26,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.03,
                 ),
               ),
               const SizedBox(height: 10),
@@ -63,7 +65,7 @@ class PublicBookingSuccessScreen extends StatelessWidget {
                 'your request and reach out shortly to confirm.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: AppColors.filmDim.withValues(alpha: 0.9),
+                  color: AppColors.filmDim,
                   fontSize: 13.5,
                   height: 1.5,
                 ),
@@ -75,10 +77,10 @@ class PublicBookingSuccessScreen extends StatelessWidget {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.line(0.04),
+                  color: AppColors.surfaceAlt,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: AppColors.line(0.08),
+                    color: AppColors.line(0.06),
                   ),
                 ),
                 child: Row(
@@ -87,10 +89,10 @@ class PublicBookingSuccessScreen extends StatelessWidget {
                     Text(
                       'REF',
                       style: TextStyle(
-                        fontFamily: 'Montserrat',
+                        fontFamily: AppText.monoFontFamily,
                         fontSize: 10.5,
                         letterSpacing: 1.4,
-                        color: AppColors.gold.withValues(alpha: 0.9),
+                        color: AppColors.filmMuted,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -99,7 +101,7 @@ class PublicBookingSuccessScreen extends StatelessWidget {
                       shortRef,
                       style: TextStyle(
                         color: AppColors.film,
-                        fontFamily: 'Montserrat',
+                        fontFamily: AppText.monoFontFamily,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.6,
@@ -115,14 +117,18 @@ class PublicBookingSuccessScreen extends StatelessWidget {
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.orange,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                   onPressed: () => Navigator.of(context).maybePop(),
-                  child: Text(
+                  child: const Text(
                     'Done',
                     style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.4,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
                     ),
                   ),
                 ),

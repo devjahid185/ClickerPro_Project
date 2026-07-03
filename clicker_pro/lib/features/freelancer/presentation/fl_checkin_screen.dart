@@ -29,6 +29,7 @@ import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
 import '../application/fl_tools_providers.dart';
 import '../domain/fl_checkin.dart';
+import '../../../theme/app_theme.dart';
 
 class FlCheckinScreen extends ConsumerStatefulWidget {
   const FlCheckinScreen({super.key, this.eventId, this.eventData});
@@ -71,10 +72,11 @@ class _FlCheckinScreenState extends ConsumerState<FlCheckinScreen> {
     final role = event['role'] as String? ?? '';
 
     return Scaffold(
-      backgroundColor: AppColors.voidBlack,
+      backgroundColor: AppColors.appBg,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.appBg,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
@@ -83,9 +85,10 @@ class _FlCheckinScreenState extends ConsumerState<FlCheckinScreen> {
           'Check-In',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
-            fontSize: 22,
-            fontWeight: FontWeight.w600,
+            fontFamily: AppText.brandFontFamily,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.03,
           ),
         ),
       ),
@@ -95,7 +98,11 @@ class _FlCheckinScreenState extends ConsumerState<FlCheckinScreen> {
           // ── Event Info Card ──
           Container(
             padding: const EdgeInsets.all(18),
-            decoration: AppColors.glassCardDecoration(radius: 16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppColors.line(0.06)),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -105,11 +112,11 @@ class _FlCheckinScreenState extends ConsumerState<FlCheckinScreen> {
                       width: 44,
                       height: 44,
                       decoration: AppColors.iconWrapDecoration(
-                        AppColors.teal.withValues(alpha: 0.12),
+                        AppColors.orangeSoft,
                       ),
                       child: Icon(
                         Icons.event_outlined,
-                        color: AppColors.teal,
+                        color: AppColors.orange,
                         size: 22,
                       ),
                     ),
@@ -122,9 +129,9 @@ class _FlCheckinScreenState extends ConsumerState<FlCheckinScreen> {
                             companyName,
                             style: TextStyle(
                               color: AppColors.film,
-                              fontFamily: 'Poppins',
+                              fontFamily: AppText.brandFontFamily,
                               fontSize: 18,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                           Text(
@@ -187,8 +194,9 @@ class _FlCheckinScreenState extends ConsumerState<FlCheckinScreen> {
                     'SCHEDULE CONFLICTS',
                     style: TextStyle(
                       color: AppColors.gold,
+                      fontFamily: AppText.monoFontFamily,
                       fontSize: 10,
-                      letterSpacing: 1.2,
+                      letterSpacing: 0.16,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -259,8 +267,9 @@ class _FlCheckinScreenState extends ConsumerState<FlCheckinScreen> {
           width: double.infinity,
           child: FilledButton.icon(
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.teal,
-              foregroundColor: AppColors.voidBlack,
+              backgroundColor: AppColors.orange,
+              foregroundColor: Colors.white,
+              elevation: 0,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -268,7 +277,7 @@ class _FlCheckinScreenState extends ConsumerState<FlCheckinScreen> {
             ),
             onPressed: _handleCheckin,
             icon: const Icon(Icons.check_circle_outline, size: 22),
-            label: Text(
+            label: const Text(
               "I'm Here",
               style: TextStyle(
                 fontSize: 16,

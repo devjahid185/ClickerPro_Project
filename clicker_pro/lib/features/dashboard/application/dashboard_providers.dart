@@ -139,6 +139,79 @@ final dashboardSelectedDayProvider = StateProvider<DateTime>((ref) {
   return DateTime(now.year, now.month, now.day);
 });
 
+/// Non-cancelled event counts for the current Mon→Sun week, indexed 0 (Mon)
+/// through 6 (Sun). Feeds the weekday strip's "has event" dots so they reflect
+/// real bookings instead of a hardcoded pattern.
+final weekEventCountsProvider = Provider<List<int>>((ref) {
+  final bookings = ref
+      .watch(bookingListProvider(const BookingFilter()))
+      .valueOrNull;
+  final counts = List<int>.filled(7, 0);
+  if (bookings == null) return counts;
+
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final monday = today.subtract(Duration(days: today.weekday - 1));
+  final sunday = monday.add(const Duration(days: 6));
+
+  for (final b in bookings) {
+    if (b.status == BookingStatus.cancelled) continue;
+    final bDate = DateTime(b.date.year, b.date.month, b.date.day);
+    if (bDate.isBefore(monday) || bDate.isAfter(sunday)) continue;
+    counts[bDate.weekday - 1]++;
+  }
+  return counts;
+});
+
+/// Count of delivered/completed events whose date falls in the current
+/// calendar month. Feeds the Delivered strip's "+N this month" caption.
+final deliveredThisMonthProvider = Provider<int>((ref) {
+  final bookings = ref
+      .watch(bookingListProvider(const BookingFilter()))
+      .valueOrNull;
+  if (bookings == null) return 0;
+
+  final now = DateTime.now();
+  var count = 0;
+  for (final b in bookings) {
+    if (b.status != BookingStatus.completed &&
+        b.status != BookingStatus.delivered) {
+      continue;
+    }
+    if (b.date.year == now.year && b.date.month == now.month) count++;
+  }
+  return count;
+});
+
+/// Delivered/completed counts per week for the last 4 weeks (oldest → newest),
+/// bucketed by event date. Feeds the Delivered strip's mini bar chart so the
+/// bars reflect a real recent trend rather than fixed decorative heights.
+final deliveredTrendProvider = Provider<List<int>>((ref) {
+  final bookings = ref
+      .watch(bookingListProvider(const BookingFilter()))
+      .valueOrNull;
+  final buckets = List<int>.filled(4, 0);
+  if (bookings == null) return buckets;
+
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  // Bucket 3 = this week (last 7 days), bucket 0 = 4 weeks ago.
+  final windowStart = today.subtract(const Duration(days: 27));
+
+  for (final b in bookings) {
+    if (b.status != BookingStatus.completed &&
+        b.status != BookingStatus.delivered) {
+      continue;
+    }
+    final bDate = DateTime(b.date.year, b.date.month, b.date.day);
+    if (bDate.isBefore(windowStart) || bDate.isAfter(today)) continue;
+    final daysAgo = today.difference(bDate).inDays; // 0..27
+    final bucket = 3 - (daysAgo ~/ 7); // 0..3
+    buckets[bucket]++;
+  }
+  return buckets;
+});
+
 /// One booking with money still owed — feeds the dashboard's Due
 /// drill-down sheet ("which events have dues").
 class DueEntry {

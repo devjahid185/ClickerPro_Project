@@ -40,6 +40,7 @@ import '../application/public_booking_providers.dart';
 import '../domain/public_booking_request.dart';
 import '../domain/public_booking_request_status.dart';
 import '../domain/public_booking_token.dart';
+import '../../../theme/app_theme.dart';
 
 class PublicBookingFormScreen extends ConsumerWidget {
   const PublicBookingFormScreen({super.key, required this.token});
@@ -50,17 +51,19 @@ class PublicBookingFormScreen extends ConsumerWidget {
     final tokenAsync = ref.watch(publicBookingTokenProvider(token));
 
     return Scaffold(
-      backgroundColor: AppColors.voidBlack,
+      backgroundColor: AppColors.appBg,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.appBg,
         elevation: 0,
+        scrolledUnderElevation: 0,
         title: Text(
           'Book with us',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
-            fontSize: 22,
-            fontWeight: FontWeight.w600,
+            fontFamily: AppText.brandFontFamily,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.03,
           ),
         ),
       ),
@@ -261,10 +264,11 @@ class _FormState extends ConsumerState<_Form> {
         FilledButton(
           style: FilledButton.styleFrom(
             backgroundColor: AppColors.orange,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 14),
+            foregroundColor: AppColors.onAccent,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            elevation: 0,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(14),
             ),
           ),
           onPressed: _submitting ? null : _onSubmit,
@@ -274,15 +278,15 @@ class _FormState extends ConsumerState<_Form> {
                   width: 18,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Colors.white,
+                    color: AppColors.onAccent,
                   ),
                 )
-              : Text(
+              : const Text(
                   'Submit request',
                   style: TextStyle(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     fontSize: 14,
-                    letterSpacing: 0.4,
+                    letterSpacing: 0.2,
                   ),
                 ),
         ),
@@ -301,12 +305,12 @@ class _FormState extends ConsumerState<_Form> {
         data: Theme.of(ctx).copyWith(
           colorScheme: ColorScheme.light(
             primary: AppColors.orange,
-            onPrimary: Colors.white,
-            surface: AppColors.voidElevated,
+            onPrimary: AppColors.onAccent,
+            surface: AppColors.surface,
             onSurface: AppColors.film,
           ),
           dialogTheme: DialogThemeData(
-            backgroundColor: AppColors.voidElevated,
+            backgroundColor: AppColors.surface,
           ),
         ),
         child: child!,
@@ -331,8 +335,8 @@ class _FormState extends ConsumerState<_Form> {
         data: Theme.of(ctx).copyWith(
           colorScheme: ColorScheme.light(
             primary: AppColors.orange,
-            onPrimary: Colors.white,
-            surface: AppColors.voidElevated,
+            onPrimary: AppColors.onAccent,
+            surface: AppColors.surface,
             onSurface: AppColors.film,
           ),
         ),
@@ -456,35 +460,54 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.orange.withValues(alpha: 0.25),
-          width: 1,
-        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.line(0.06)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            children: [
+              Container(
+                width: 26,
+                height: 1.5,
+                color: AppColors.orange,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'BOOK YOUR EVENT',
+                style: TextStyle(
+                  color: AppColors.filmMuted,
+                  fontFamily: AppText.monoFontFamily,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.16,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
           Text(
             meta.studioName,
             style: TextStyle(
               color: AppColors.film,
-              fontFamily: 'Poppins',
+              fontFamily: AppText.brandFontFamily,
               fontSize: 22,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.03,
               height: 1.1,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             'Tell us about the event you would like us to capture. We will be in touch shortly.',
             style: TextStyle(
-              color: AppColors.filmDim.withValues(alpha: 0.9),
+              color: AppColors.filmDim,
               fontSize: 12.5,
-              height: 1.4,
+              height: 1.45,
             ),
           ),
         ],
@@ -500,16 +523,26 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 12, 4, 6),
-      child: Text(
-        label.toUpperCase(),
-        style: TextStyle(
-          fontFamily: 'Montserrat',
-          fontSize: 10.5,
-          letterSpacing: 1.6,
-          color: AppColors.gold.withValues(alpha: 0.9),
-          fontWeight: FontWeight.w600,
-        ),
+      padding: const EdgeInsets.fromLTRB(4, 12, 4, 8),
+      child: Row(
+        children: [
+          Container(
+            width: 26,
+            height: 1.5,
+            color: AppColors.orange,
+          ),
+          const SizedBox(width: 10),
+          Text(
+            label.toUpperCase(),
+            style: TextStyle(
+              fontFamily: AppText.monoFontFamily,
+              fontSize: 10,
+              letterSpacing: 0.16,
+              color: AppColors.filmMuted,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }

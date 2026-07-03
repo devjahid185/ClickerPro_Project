@@ -1,5 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/booking_status/booking_status.dart';
 import '../../../core/pdf/pdf_export.dart';
@@ -11,6 +12,11 @@ import '../../bookings/domain/booking_filter.dart';
 import '../../expenses/application/expense_providers.dart';
 import '../../petty_cash/domain/petty_cash_entry.dart';
 import '../../petty_cash/presentation/petty_cash_screen.dart';
+import '../../../theme/app_theme.dart';
+
+/// BDT money — "৳1,86,500" (Bangladeshi grouping, no decimals).
+String _money(double v) =>
+    '৳${NumberFormat('#,##,##0', 'en_IN').format(v.round())}';
 
 /// One month's cash-flow figures derived from real booking data.
 class _MonthFlow {
@@ -90,28 +96,30 @@ class CashFlowScreen extends ConsumerWidget {
     final async = ref.watch(_cashFlowProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.voidBlack,
+      backgroundColor: AppColors.appBg,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.appBg,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
-          'Cash Flow Timeline',
+          'Cash Flow',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
-            fontSize: 22,
-            fontWeight: FontWeight.w600,
+            fontFamily: AppText.brandFontFamily,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.03,
           ),
         ),
         actions: [
           IconButton(
             icon: Icon(
               Icons.picture_as_pdf_outlined,
-              color: AppColors.gold,
+              color: AppColors.filmDim,
             ),
             onPressed: () {
               final months = async.valueOrNull ?? [];
@@ -134,12 +142,14 @@ class CashFlowScreen extends ConsumerWidget {
               .toList();
           return ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             children: [
               _buildProfitSummary(ref),
-              const SizedBox(height: 16),
+              const SizedBox(height: 22),
+              _SectionHeader('LAST 6 MONTHS'),
+              const SizedBox(height: 14),
               if (nonEmpty.isEmpty) ...[
-                const SizedBox(height: 80),
+                const SizedBox(height: 60),
                 const EmptyState(
                   icon: Icons.bar_chart_outlined,
                   message: 'No booking revenue yet.\nAdd bookings to see cash flow.',
@@ -150,7 +160,7 @@ class CashFlowScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
                 ],
               ],
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               _buildLegend(),
             ],
           );
@@ -162,7 +172,7 @@ class CashFlowScreen extends ConsumerWidget {
   Future<void> _exportPdf(BuildContext context, List<_MonthFlow> months) async {
     final messenger = ScaffoldMessenger.of(context);
     final grandTotal = months.fold<double>(0, (s, m) => s + m.total);
-    String f(double v) => '৳ ${v.toStringAsFixed(0)}';
+    String f(double v) => _money(v);
     try {
       await PdfExporter.share(
         PdfDocumentData(
@@ -189,7 +199,7 @@ class CashFlowScreen extends ConsumerWidget {
     }
   }
 
-  /// Real income / expense / net-profit band from the live profit-loss API.
+  /// Real income / expense / net-profit hero from the live profit-loss API.
   /// Petty cash counts as expense (per product decision), so it is folded
   /// into the Expenses figure and subtracted from Net Profit here.
   Widget _buildProfitSummary(WidgetRef ref) {
@@ -199,49 +209,21 @@ class CashFlowScreen extends ConsumerWidget {
         .fold<double>(0, (s, p) => s + p.amount);
     return async.when(
       loading: () => Container(
-        height: 96,
-        decoration: AppColors.glassCardDecoration(),
+        height: 150,
+        decoration: BoxDecoration(
+          color: AppColors.orange,
+          borderRadius: BorderRadius.circular(20),
+        ),
         child: const Center(child: LensLoader()),
       ),
       error: (_, _) => const SizedBox.shrink(),
       data: (pl) {
         final totalExpense = pl.totalExpense + pettyTotal;
         final netProfit = pl.totalIncome - totalExpense;
-        String f(double v) => '৳ ${v.toStringAsFixed(0)}';
-        Widget cell(String label, double value, Color color) => Expanded(
-          child: Column(
-            children: [
-              Text(
-                f(value),
-                style: TextStyle(
-                  color: color,
-                  fontFamily: 'Poppins',
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  color: AppColors.filmMuted,
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ),
-        );
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
-          decoration: AppColors.glassCardDecoration(),
-          child: Row(
-            children: [
-              cell('Income', pl.totalIncome, AppColors.green),
-              cell('Expenses', totalExpense, AppColors.red),
-              cell('Net Profit', netProfit,
-                  netProfit >= 0 ? AppColors.orange : AppColors.red),
-            ],
-          ),
+        return _NetHero(
+          net: netProfit,
+          income: pl.totalIncome,
+          expense: totalExpense,
         );
       },
     );
@@ -251,24 +233,42 @@ class CashFlowScreen extends ConsumerWidget {
     final total = m.total;
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: AppColors.glassCardDecoration(),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.line(0.06)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            m.month,
-            style: TextStyle(
-              color: AppColors.film,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+          Row(
+            children: [
+              Text(
+                m.month,
+                style: TextStyle(
+                  color: AppColors.film,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                _money(total),
+                style: TextStyle(
+                  color: AppColors.film,
+                  fontFamily: AppText.brandFontFamily,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           _buildBar(m.solid, m.hatched, m.pending, total),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Row(
             children: [
-              _buildStat('Confirmed', m.solid, AppColors.teal),
+              _buildStat('Confirmed', m.solid, AppColors.orange),
               const SizedBox(width: 16),
               _buildStat('Tentative', m.hatched, AppColors.gold),
               const SizedBox(width: 16),
@@ -277,26 +277,27 @@ class CashFlowScreen extends ConsumerWidget {
           ),
           if (m.pettyCashOut > 0) ...[
             const SizedBox(height: 12),
-            Divider(height: 1, color: AppColors.glassBorder),
+            Divider(height: 1, color: AppColors.line(0.06)),
             const SizedBox(height: 10),
             Row(
               children: [
-                Icon(Icons.savings_outlined, color: AppColors.coral, size: 16),
+                Icon(Icons.savings_outlined, color: AppColors.red, size: 16),
                 const SizedBox(width: 8),
                 Text(
                   'Petty Cash Out',
                   style: TextStyle(
-                    color: AppColors.filmDim.withValues(alpha: 0.85),
+                    color: AppColors.filmDim,
                     fontSize: 12,
                   ),
                 ),
                 const Spacer(),
                 Text(
-                  '-৳ ${m.pettyCashOut.toStringAsFixed(0)}',
+                  '− ${_money(m.pettyCashOut)}',
                   style: TextStyle(
-                    color: AppColors.coral,
+                    color: AppColors.red,
+                    fontFamily: AppText.brandFontFamily,
                     fontSize: 14,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ],
@@ -310,44 +311,43 @@ class CashFlowScreen extends ConsumerWidget {
   Widget _buildBar(double solid, double hatched, double pending, double total) {
     if (total == 0) {
       return Container(
-        height: 8,
+        height: 10,
         decoration: BoxDecoration(
-          color: AppColors.glass,
-          borderRadius: BorderRadius.circular(4),
+          color: AppColors.surfaceAlt,
+          borderRadius: BorderRadius.circular(5),
         ),
-        child: Center(
-          child: Text(
-            'No bookings this month',
-            style: TextStyle(color: AppColors.filmMuted, fontSize: 9),
-          ),
+        alignment: Alignment.center,
+        child: Text(
+          'No bookings this month',
+          style: TextStyle(color: AppColors.filmMuted, fontSize: 9),
         ),
       );
     }
     return ClipRRect(
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: BorderRadius.circular(5),
       child: SizedBox(
-        height: 8,
+        height: 10,
         child: Row(
           children: [
             if (solid > 0)
               Expanded(
                 flex: (solid / total * 1000).toInt(),
-                child: Container(color: AppColors.teal),
+                child: Container(color: AppColors.orange),
               ),
             if (hatched > 0) ...[
-              const SizedBox(width: 1),
+              const SizedBox(width: 2),
               Expanded(
                 flex: (hatched / total * 1000).toInt(),
                 child: Container(color: AppColors.gold),
               ),
             ],
             if (pending > 0) ...[
-              const SizedBox(width: 1),
+              const SizedBox(width: 2),
               Expanded(
                 flex: (pending / total * 1000).toInt(),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: AppColors.filmMuted.withValues(alpha: 0.4),
+                    color: AppColors.filmMuted.withValues(alpha: 0.28),
                   ),
                   child: CustomPaint(painter: _HatchPainter()),
                 ),
@@ -363,20 +363,37 @@ class CashFlowScreen extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: AppColors.filmDim.withValues(alpha: 0.85),
-            fontSize: 11,
-          ),
+        Row(
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label.toUpperCase(),
+              style: TextStyle(
+                color: AppColors.filmMuted,
+                fontFamily: AppText.monoFontFamily,
+                fontSize: 9,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 0.1,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 4),
         Text(
-          '৳ ${value.toStringAsFixed(0)}',
+          _money(value),
           style: TextStyle(
-            color: color,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+            color: AppColors.film,
+            fontFamily: AppText.brandFontFamily,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ],
@@ -385,21 +402,27 @@ class CashFlowScreen extends ConsumerWidget {
 
   Widget _buildLegend() {
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: AppColors.glassCardDecoration(),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.line(0.06)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Legend',
+            'LEGEND',
             style: TextStyle(
-              color: AppColors.film,
-              fontSize: 14,
+              color: AppColors.filmMuted,
+              fontFamily: AppText.monoFontFamily,
+              fontSize: 10,
               fontWeight: FontWeight.w600,
+              letterSpacing: 0.16,
             ),
           ),
-          const SizedBox(height: 8),
-          _legendItem(AppColors.teal, 'Confirmed — Delivered / Completed'),
+          const SizedBox(height: 10),
+          _legendItem(AppColors.orange, 'Confirmed — Delivered / Completed'),
           _legendItem(AppColors.gold, 'Tentative — Confirmed / In Progress'),
           _legendItem(AppColors.filmMuted, 'Pending — Awaiting confirmation'),
         ],
@@ -417,14 +440,14 @@ class CashFlowScreen extends ConsumerWidget {
             height: 12,
             decoration: BoxDecoration(
               color: color,
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: BorderRadius.circular(3),
             ),
           ),
           const SizedBox(width: 8),
           Text(
             text,
             style: TextStyle(
-              color: AppColors.filmDim.withValues(alpha: 0.85),
+              color: AppColors.filmDim,
               fontSize: 12,
             ),
           ),
@@ -434,11 +457,168 @@ class CashFlowScreen extends ConsumerWidget {
   }
 }
 
+/// Solid-orange hero card: NET PROFIT figure + income/expense inline stat row.
+/// Mirrors the Finance / Freelancer Payout hero pattern (.dc.html).
+class _NetHero extends StatelessWidget {
+  const _NetHero({
+    required this.net,
+    required this.income,
+    required this.expense,
+  });
+
+  final double net;
+  final double income;
+  final double expense;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.orange,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.orange.withValues(alpha: 0.35),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          children: [
+            // Corner-glow circle bleeding off the top-right.
+            Positioned(
+              right: -60,
+              top: -55,
+              child: Container(
+                width: 150,
+                height: 150,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  // Soft radial bleed instead of a hard-edged ring.
+                  gradient: RadialGradient(
+                    colors: [
+                      Colors.white.withValues(alpha: 0.10),
+                      Colors.white.withValues(alpha: 0.0),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'NET PROFIT · THIS MONTH',
+                    style: TextStyle(
+                      color: AppColors.onAccent.withValues(alpha: 0.85),
+                      fontFamily: AppText.monoFontFamily,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.18,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _money(net),
+                    style: TextStyle(
+                      color: AppColors.onAccent,
+                      fontFamily: AppText.brandFontFamily,
+                      fontSize: 36,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.03,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      _heroStat('INCOME', income),
+                      Container(
+                        width: 1,
+                        height: 32,
+                        margin: const EdgeInsets.symmetric(horizontal: 18),
+                        color: Colors.white.withValues(alpha: 0.18),
+                      ),
+                      _heroStat('EXPENSE', expense),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _heroStat(String label, double value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: AppColors.onAccent.withValues(alpha: 0.75),
+            fontFamily: AppText.monoFontFamily,
+            fontSize: 9,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.14,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          _money(value),
+          style: TextStyle(
+            color: AppColors.onAccent,
+            fontFamily: AppText.brandFontFamily,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Mono uppercase micro-label with the signature orange 26×1.5px rule.
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader(this.label);
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 26,
+          height: 1.5,
+          color: AppColors.orange,
+        ),
+        const SizedBox(width: 10),
+        Text(
+          label,
+          style: TextStyle(
+            color: AppColors.filmMuted,
+            fontFamily: AppText.monoFontFamily,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.16,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _HatchPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.filmMuted.withValues(alpha: 0.3)
+      ..color = AppColors.filmMuted.withValues(alpha: 0.28)
       ..strokeWidth = 1;
 
     for (double i = -size.height; i < size.width + size.height; i += 4) {

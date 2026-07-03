@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../theme/app_colors.dart';
 import '../data/calendar_sync_service.dart';
 import '../domain/calendar_event.dart';
+import '../../../theme/app_theme.dart';
 
 class CalendarSyncSettings extends StatefulWidget {
   const CalendarSyncSettings({super.key});
@@ -73,7 +74,7 @@ class _CalendarSyncSettingsState extends State<CalendarSyncSettings> {
           'Calendar Sync',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontSize: 22,
             fontWeight: FontWeight.w600,
           ),
@@ -193,7 +194,7 @@ class _CalendarSyncSettingsState extends State<CalendarSyncSettings> {
                 'LAST SYNC',
                 style: TextStyle(
                   color: AppColors.teal,
-                  fontFamily: 'Montserrat',
+                  fontFamily: AppText.monoFontFamily,
                   fontSize: 10,
                   letterSpacing: 1.95,
                 ),

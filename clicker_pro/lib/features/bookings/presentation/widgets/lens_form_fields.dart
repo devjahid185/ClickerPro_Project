@@ -11,7 +11,10 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../../shared/widgets/pill_toggle.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_theme.dart';
+
 
 /// Themed text input with optional error text + suffix slot.
 ///
@@ -52,28 +55,19 @@ class LensTextField extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label.toUpperCase(),
-            style: TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 10,
-              letterSpacing: 1.4,
-              color: AppColors.film,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 6),
+          _FieldLabel(label),
+          const SizedBox(height: 7),
           TextField(
             controller: controller,
             maxLines: maxLines,
             maxLength: maxLength,
             keyboardType: keyboardType,
             onChanged: onChanged,
-            style: TextStyle(color: AppColors.film, fontSize: 13.5),
+            style: TextStyle(color: AppColors.film, fontSize: 14),
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(
-                color: AppColors.filmMuted.withValues(alpha: 0.6),
+                color: AppColors.filmMuted.withValues(alpha: 0.7),
                 fontSize: 13,
               ),
               prefixIcon: prefixIcon == null
@@ -87,11 +81,13 @@ class LensTextField extends StatelessWidget {
               errorText: errorText,
               isDense: true,
               filled: true,
-              fillColor: AppColors.line(0.04),
+              // Design (.dc.html): inputs are solid white cards, not a faint
+              // tint, on the warm paper canvas.
+              fillColor: AppColors.surface,
               counterText: '',
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 12,
+                horizontal: 14,
+                vertical: 13,
               ),
               border: _border(),
               enabledBorder: _border(),
@@ -112,8 +108,30 @@ class LensTextField extends StatelessWidget {
         ? AppColors.orange
         : AppColors.line(0.08);
     return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(13),
       borderSide: BorderSide(color: color, width: focused ? 1.2 : 1),
+    );
+  }
+}
+
+/// Mono uppercase micro-label above each field — the signature ClickerPro
+/// form label (.dc.html): IBM Plex Mono, 10px, 0.12em tracking, ink text.
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text.toUpperCase(),
+      style: TextStyle(
+        fontFamily: AppText.monoFontFamily,
+        fontSize: 10,
+        letterSpacing: 1.2,
+        color: AppColors.film,
+        fontWeight: FontWeight.w500,
+      ),
     );
   }
 }
@@ -144,22 +162,13 @@ class LensSelector<T> extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label.toUpperCase(),
-            style: TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 10,
-              letterSpacing: 1.4,
-              color: AppColors.film,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 6),
+          _FieldLabel(label),
+          const SizedBox(height: 7),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
             decoration: BoxDecoration(
-              color: AppColors.line(0.04),
-              borderRadius: BorderRadius.circular(10),
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(13),
               border: Border.all(
                 color: errorText != null
                     ? AppColors.red
@@ -170,7 +179,7 @@ class LensSelector<T> extends StatelessWidget {
               child: DropdownButton<T>(
                 value: value,
                 isExpanded: true,
-                dropdownColor: AppColors.voidElevated,
+                dropdownColor: AppColors.surface,
                 iconEnabledColor: AppColors.filmDim,
                 style: TextStyle(color: AppColors.film, fontSize: 13.5),
                 onChanged: onChanged,
@@ -220,10 +229,10 @@ class LensSwitchTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+        padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
         decoration: BoxDecoration(
-          color: AppColors.line(0.04),
-          borderRadius: BorderRadius.circular(10),
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(13),
           border: Border.all(color: AppColors.line(0.08)),
         ),
         child: Row(
@@ -237,7 +246,7 @@ class LensSwitchTile extends StatelessWidget {
                     style: TextStyle(
                       color: AppColors.film,
                       fontSize: 13.5,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   if (subtitle != null) ...[
@@ -253,14 +262,10 @@ class LensSwitchTile extends StatelessWidget {
                 ],
               ),
             ),
-            Switch(
-              value: value,
-              onChanged: onChanged,
-              activeThumbColor: Colors.white,
-              activeTrackColor: activeColor ?? AppColors.orange,
-              inactiveThumbColor: AppColors.filmMuted,
-              inactiveTrackColor: AppColors.line(0.08),
-            ),
+            // HTML .dc.html pill toggle (38×22, white 18px thumb) instead of
+            // Material's Switch. `activeColor` is retained on the API for
+            // callers but the mockup always uses the primary accent.
+            PillToggle(value: value, onChanged: onChanged),
           ],
         ),
       ),
@@ -297,30 +302,21 @@ class LensPickerRow extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label.toUpperCase(),
-            style: TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 10,
-              letterSpacing: 1.4,
-              color: AppColors.film,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 6),
+          _FieldLabel(label),
+          const SizedBox(height: 7),
           Material(
             color: Colors.transparent,
             child: InkWell(
               onTap: onTap,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(13),
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
+                  horizontal: 14,
                   vertical: 14,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.line(0.04),
-                  borderRadius: BorderRadius.circular(10),
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(13),
                   border: Border.all(
                     color: errorText != null
                         ? AppColors.red
@@ -341,10 +337,12 @@ class LensPickerRow extends StatelessWidget {
                       child: Text(
                         hasValue ? valueText! : (placeholder ?? 'Tap to pick'),
                         style: TextStyle(
+                          // Picked value is ink on the white field; the earlier
+                          // hardcoded white was invisible on the paper theme.
                           color: hasValue
-                              ? Colors.white
+                              ? AppColors.film
                               : AppColors.filmMuted.withValues(alpha: 0.7),
-                          fontSize: 13.5,
+                          fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
                       ),

@@ -25,6 +25,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/providers.dart';
 import '../../../screens/dashboard_screen.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_theme.dart';
 import '../application/session_controller.dart';
 import '../domain/otp_purpose.dart';
 import 'login_screen.dart' show LoginScreen, slideFromRightRoute;
@@ -362,7 +363,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                       'Verify your\ncode',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontFamily: 'Poppins',
+                        fontFamily: AppText.bodyFontFamily,
                         fontSize: 36,
                         fontWeight: FontWeight.w600,
                         color: AppColors.film,
@@ -374,7 +375,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                       'ONE-TIME PASSCODE',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontFamily: 'Montserrat',
+                        fontFamily: AppText.bodyFontFamily,
                         fontSize: 10.5,
                         letterSpacing: 2.5,
                         color: AppColors.filmDim.withValues(alpha: 0.7),
@@ -402,7 +403,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                       _maskedIdentifier,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontFamily: 'Montserrat',
+                        fontFamily: AppText.bodyFontFamily,
                         fontSize: 13.5,
                         color: AppColors.gold,
                         letterSpacing: 0.8,
@@ -462,7 +463,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                           ? Text(
                               'Resend code in 0:${_resendSecondsLeft.toString().padLeft(2, '0')}',
                               style: TextStyle(
-                                fontFamily: 'Montserrat',
+                                fontFamily: AppText.bodyFontFamily,
                                 fontSize: 12,
                                 letterSpacing: 1.0,
                                 color: AppColors.filmDim.withValues(
@@ -700,7 +701,7 @@ class _DigitCellState extends State<_DigitCell> {
           showCursor: true,
           cursorColor: AppColors.orange,
           style: TextStyle(
-            fontFamily: 'Montserrat',
+            fontFamily: AppText.bodyFontFamily,
             color: AppColors.film,
             fontSize: 22,
             fontWeight: FontWeight.w600,

@@ -18,6 +18,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/providers.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_theme.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -213,7 +214,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                         'Forgot your\npassword?',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontFamily: 'Poppins',
+                          fontFamily: AppText.bodyFontFamily,
                           fontSize: 36,
                           fontWeight: FontWeight.w600,
                           color: AppColors.film,
@@ -225,7 +226,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                         'PASSWORD RECOVERY',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontFamily: 'Montserrat',
+                          fontFamily: AppText.bodyFontFamily,
                           fontSize: 10.5,
                           letterSpacing: 2.5,
                           color: AppColors.filmDim.withValues(alpha: 0.7),

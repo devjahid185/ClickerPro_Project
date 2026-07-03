@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#FBFAF7}
+.ms{font-family:'Material Symbols Rounded';font-weight:normal;font-style:normal;line-height:1;display:inline-flex;align-items:center;justify-content:center;-webkit-font-smoothing:antialiased}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0&amp;display=block" rel="stylesheet">
+</helmet>
+
+<div style="background: #FBFAF7; min-height: 100vh; padding: 40px 24px 80px; font-family: 'Hanken Grotesk',-apple-system,sans-serif; display: flex; flex-wrap: wrap; gap: 56px 44px; justify-content: center; align-items: flex-start; position: absolute; left: 17px; top: -13px">
+
+  <!-- ░░░░ DASHBOARD ░░░░ -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:15px">
+  <div style="width:390px;display:flex;align-items:center;gap:12px">
+    <span style="width:26px;height:1.5px;background:#E2620E;display:block"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:#E2620E">Dashboard · Owner / Both</span>
+  </div>
+
+  <!-- ════ MOBILE SCREEN ════ -->
+  <div style="width:390px;margin:0 auto;background:#F4F3EF;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 44px 100px -32px rgba(20,20,18,0.40),0 0 0 1px rgba(0,0,0,0.04)">
+
+    <!-- status bar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 26px 4px">
+      <span style="font-size:14px;font-weight:700;color:#1A1A18;letter-spacing:-0.01em">9:41</span>
+      <div style="display:flex;align-items:center;gap:6px;color:#1A1A18">
+        <span class="ms" style="font-size:16px">signal_cellular_alt</span>
+        <span class="ms" style="font-size:16px">wifi</span>
+        <span class="ms" style="font-size:18px">battery_full</span>
+      </div>
+    </div>
+
+    <!-- header -->
+    <div style="padding:8px 18px 16px">
+      <div style="display:flex;align-items:center;gap:13px">
+        <span class="ms" style="font-size:25px;color:#1A1A18">menu</span>
+        <span style="font-size:20px;font-weight:800;letter-spacing:-0.03em;color:#1A1A18">Clicker<span style="color: #E2620E; font-size: 22px">Pro</span></span>
+        <span style="flex:1"></span>
+        <span style="position:relative;display:inline-flex">
+          <span class="ms" style="font-size:24px;color:#3A3A36">notifications</span>
+          <span style="position:absolute;top:-1px;right:-1px;width:8px;height:8px;border-radius:50%;background:#C0392B;border:1.5px solid #F4F3EF"></span>
+        </span>
+        <span style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#E2620E,#B84E0A);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;letter-spacing:-0.01em">RH</span>
+      </div>
+      <!-- search -->
+      <div style="margin-top:13px;display:flex;align-items:center;gap:10px;background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:14px;padding:11px 14px">
+        <span class="ms" style="font-size:19px;color:#A3A199">search</span>
+        <span style="font-size:13px;color:#9A988F">Search bookings, clients…</span>
+      </div>
+    </div>
+
+    <!-- content -->
+    <div style="padding: 0 18px; position: relative">
+
+      <!-- weekday strip -->
+      <div style="display:flex;gap:6px">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px">
+          <span style="font-family: 'IBM Plex Mono',monospace; font-size: 9px; letter-spacing: 0.06em; color: #000000">SUN</span>
+          <div style="width:100%;aspect-ratio:1;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#1A1A18;background:#fff;border:1px solid rgba(0,0,0,0.05)">9</div>
+          <span style="width:5px;height:5px;border-radius:50%;background:transparent"></span>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px">
+          <span style="font-family: 'IBM Plex Mono',monospace; font-size: 9px; letter-spacing: 0.06em; color: #000000">MON</span>
+          <div style="width:100%;aspect-ratio:1;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#1A1A18;background:#fff;border:1px solid rgba(0,0,0,0.05)">10</div>
+          <span style="width:5px;height:5px;border-radius:50%;background:transparent"></span>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px">
+          <span style="font-family: 'IBM Plex Mono',monospace; font-size: 9px; letter-spacing: 0.06em; color: #000000">TUE</span>
+          <div style="width:100%;aspect-ratio:1;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#1A1A18;background:#fff;border:1px solid rgba(0,0,0,0.05)">11</div>
+          <span style="width:5px;height:5px;border-radius:50%;background:#C99A2E"></span>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px">
+          <span style="font-family: 'IBM Plex Mono',monospace; font-size: 9px; letter-spacing: 0.06em; color: #E2620E; font-weight: 700">WED</span>
+          <div style="width:100%;aspect-ratio:1;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;background:#E2620E;border:1px solid #E2620E;box-shadow:0 8px 16px -6px rgba(226,98,14,0.55)">12</div>
+          <span style="width:5px;height:5px;border-radius:50%;background:#E2620E"></span>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px">
+          <span style="font-family: 'IBM Plex Mono',monospace; font-size: 9px; letter-spacing: 0.06em; color: #000000">THU</span>
+          <div style="width:100%;aspect-ratio:1;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#1A1A18;background:#fff;border:1px solid rgba(0,0,0,0.05)">13</div>
+          <span style="width:5px;height:5px;border-radius:50%;background:transparent"></span>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px">
+          <span style="font-family: 'IBM Plex Mono',monospace; font-size: 9px; letter-spacing: 0.06em; color: #1217E2">FRI</span>
+          <div style="width:100%;aspect-ratio:1;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#1A1A18;background:#fff;border:1px solid rgba(0,0,0,0.05)">14</div>
+          <span style="width:5px;height:5px;border-radius:50%;background:#6D5BD0"></span>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px">
+          <span style="font-family: 'IBM Plex Mono',monospace; font-size: 9px; letter-spacing: 0.06em; color: #060606">SAT</span>
+          <div style="width:100%;aspect-ratio:1;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#1A1A18;background:#fff;border:1px solid rgba(0,0,0,0.05)">15</div>
+          <span style="width:5px;height:5px;border-radius:50%;background:#C99A2E"></span>
+        </div>
+      </div>
+
+      <!-- split hero -->
+      <div style="display:grid;grid-template-columns:1.22fr 1fr;gap:12px;margin-top:20px">
+        <!-- today (teal hero) -->
+        <div style="border-radius: 22px; padding: 18px 18px 16px; color: #fff; position: relative; overflow: hidden; background-color: #E2620E">
+          <div style="position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.06)"></div>
+          <span style="font-family: 'IBM Plex Mono',monospace; font-size: 14px; letter-spacing: 0.16em; color: rgba(255,255,255,0.72); font-weight: 700">TODAY</span>
+          <div style="font-size:58px;font-weight:800;line-height:0.92;letter-spacing:-0.04em;margin-top:6px">2</div>
+          <div style="font-size:12.5px;color:rgba(255,255,255,0.82);margin-top:2px">events scheduled</div><div style="display:flex;gap:7px;margin-top:14px">
+            <span style="display: inline-flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.16); border-radius: 9px; padding: 4px 9px; font-size: 11px; font-weight: 600"><span style="width:6px;height:6px;border-radius:50%;background:#F2C75B"></span>1 Day</span>
+            <span style="display: inline-flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.16); border-radius: 9px; padding: 4px 9px; font-size: 11px; font-weight: 600"><span style="width:6px;height:6px;border-radius:50%;background:#B7A6F0"></span>1 Night</span>
+          </div>
+          
+        </div>
+        <!-- upcoming + total -->
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="flex: 1; border: 1px solid rgba(0,0,0,0.06); border-radius: 18px; padding: 14px 16px; background-color: #00898B; position: relative">
+            <span style="font-family: 'IBM Plex Mono',monospace; font-size: 14px; letter-spacing: 0.12em; color: #000000">UPCOMING</span>
+            <div style="font-size: 30px; font-weight: 800; letter-spacing: -0.03em; color: #FFFFFF; line-height: 1; margin-top: 5px">14</div>
+            <div style="font-size: 13px; color: #000000; margin-top: 3px">next 7 days</div>
+          <div style="position: absolute; top: -41px; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.06); left: 66px"></div></div>
+          <div style="flex: 1; border: 1px solid rgba(0,0,0,0.06); border-radius: 18px; padding: 14px 16px; background-color: #3541AF; position: relative">
+            <span style="letter-spacing: 0.12em; color: #DD8D0A; font-size: 14px; font-weight: 700">TOTAL</span>
+            <div style="font-size: 30px; font-weight: 800; letter-spacing: -0.03em; color: #FBFBFE; line-height: 1; margin-top: 5px">86</div>
+            <div style="font-size: 13px; color: #FFFFFF; margin-top: 3px">this year</div>
+          <div style="position: absolute; top: -29px; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.06); left: 85px"></div></div>
+        </div>
+      </div>
+
+      <!-- delivered strip -->
+      <div style="margin-top: 12px; border: 1px solid rgba(0,0,0,0.06); border-radius: 18px; padding: 15px 18px; display: flex; align-items: center; justify-content: space-between; background-color: #397564; position: relative">
+        <div>
+          <span style="font-family: 'IBM Plex Mono',monospace; font-size: 14px; letter-spacing: 0.12em; color: #060606; font-weight: 700">DELIVERED</span>
+          <div style="display:flex;align-items:baseline;gap:8px;margin-top:4px">
+            <span style="font-size: 28px; font-weight: 800; letter-spacing: -0.03em; color: #FFFFFF; line-height: 1">48</span>
+            <span style="font-size: 12px; color: #000000; font-weight: 600">+12 this month</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:4px;height:42px">
+          <span style="width:7px;height:40%;background:#F6D9C4;border-radius:3px"></span>
+          <span style="width:7px;height:58%;background:#F6D9C4;border-radius:3px"></span>
+          <span style="width:7px;height:46%;background:#F6D9C4;border-radius:3px"></span>
+          <span style="width:7px;height:72%;background:#EFB68E;border-radius:3px"></span>
+          <span style="width:7px;height:64%;background:#EFB68E;border-radius:3px"></span>
+          <span style="width:7px;height:100%;background:#E2620E;border-radius:3px"></span>
+        </div>
+      <div style="position: absolute; top: -1px; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.06); left: 262px"></div></div>
+
+      <!-- quick actions -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:22px;margin-bottom:12px">
+        <span style="font-size:14px;font-weight:700;letter-spacing:-0.01em;color:#1A1A18">Quick Actions</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#E2620E">EDIT</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:16px;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:9px">
+          <span style="width:38px;height:38px;border-radius:12px;background:#FBEBDE;display:flex;align-items:center;justify-content:center"><span class="ms" style="font-size:21px;color:#E2620E">calendar_month</span></span>
+          <span style="font-size:11px;font-weight:600;color:#3A3A36">Calendar</span>
+        </div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:16px;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:9px">
+          <span style="width:38px;height:38px;border-radius:12px;background:#FBEBDE;display:flex;align-items:center;justify-content:center"><span class="ms" style="font-size:21px;color:#E2620E">receipt_long</span></span>
+          <span style="font-size:11px;font-weight:600;color:#3A3A36">Invoice</span>
+        </div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:16px;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:9px">
+          <span style="width:38px;height:38px;border-radius:12px;background:#FBEBDE;display:flex;align-items:center;justify-content:center"><span class="ms" style="font-size:21px;color:#E2620E">chat_bubble</span></span>
+          <span style="font-size:11px;font-weight:600;color:#3A3A36">Chat</span>
+        </div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:16px;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:9px">
+          <span style="width:38px;height:38px;border-radius:12px;background:#FBEBDE;display:flex;align-items:center;justify-content:center"><span class="ms" style="font-size:21px;color:#E2620E">groups</span></span>
+          <span style="font-size:11px;font-weight:600;color:#3A3A36">Team</span>
+        </div>
+      </div>
+
+      <!-- announcement -->
+      <div style="margin-top:20px;background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:18px;padding:16px 18px;position:relative;overflow:hidden">
+        <span style="position:absolute;left:0;top:0;bottom:0;width:3px;background:#E2620E"></span>
+        <div style="display:flex;align-items:center;gap:7px">
+          <span class="ms" style="font-size:15px;color:#E2620E">push_pin</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.14em;color:#E2620E">ANNOUNCEMENT</span>
+          <span style="flex:1"></span>
+          <span style="font-size:10.5px;color:#A3A199">2h</span>
+        </div>
+        <div style="font-size:14px;font-weight:700;color:#1A1A18;margin-top:9px">Team meeting — Friday 4 PM</div>
+        <div style="font-size:12.5px;color:#7A786F;line-height:1.5;margin-top:3px">Bring all delivered drives and the updated client list for review.</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:12px">
+          <div style="display:flex">
+            <span style="width:20px;height:20px;border-radius:50%;background:#C99A2E;border:2px solid #fff"></span>
+            <span style="width:20px;height:20px;border-radius:50%;background:#6D5BD0;border:2px solid #fff;margin-left:-7px"></span>
+            <span style="width:20px;height:20px;border-radius:50%;background:#E2620E;border:2px solid #fff;margin-left:-7px"></span>
+          </div>
+          <span style="font-size:11px;color:#9A988F">8 of 11 read</span>
+        </div>
+      </div>
+
+      <!-- finance row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:18px;padding:15px 16px">
+          <span style="font-family: 'IBM Plex Mono',monospace; font-size: 12px; letter-spacing: 0.12em; color: #000000">COLLECTION</span>
+          <div style="font-size:22px;font-weight:800;letter-spacing:-0.02em;color:#E2620E;margin-top:6px">৳1,24,500</div>
+          <div style="display:flex;align-items:center;gap:4px;margin-top:4px"><span class="ms" style="font-size:14px;color:#2F8F6B">trending_up</span><span style="font-size:11px;color:#7A786F">this month</span></div>
+        </div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:18px;padding:15px 16px">
+          <span style="font-family: 'IBM Plex Mono',monospace; font-size: 12px; letter-spacing: 0.12em; color: #000000">DUE</span>
+          <div style="font-size:22px;font-weight:800;letter-spacing:-0.02em;color:#C0392B;margin-top:6px">৳38,000</div>
+          <div style="display:flex;align-items:center;gap:4px;margin-top:4px"><span class="ms" style="font-size:14px;color:#C0392B">schedule</span><span style="font-size:11px;color:#7A786F">6 clients</span></div>
+        </div>
+      </div>
+
+      <!-- holidays / cancelled / weather -->
+      <div style="display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:10px;margin-top:12px">
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:16px;padding:13px 14px">
+          <div style="display:flex;align-items:center;gap:6px"><span class="ms" style="font-size:15px;color:#6D5BD0">celebration</span><span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.1em;color:#A3A199">HOLIDAY</span></div>
+          <div style="font-size:13px;font-weight:700;color:#1A1A18;margin-top:7px">Eid-ul-Fitr</div>
+          <div style="font-size:10.5px;color:#9A988F">Apr 12 · Sat</div>
+        </div>
+        <div style="border: 1px solid rgba(0,0,0,0.06); border-radius: 16px; padding: 13px 14px; background-color: #E2620E">
+          <span style="font-family: 'IBM Plex Mono',monospace; font-size: 10px; letter-spacing: 0.1em; color: #FFFFFF">CANCELLED</span>
+          <div style="font-size:24px;font-weight:800;color:#1A1A18;margin-top:5px;line-height:1">3</div>
+          <div style="font-size: 10.5px; color: #FFFFFF; margin-top: 2px">this month</div>
+        </div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:16px;padding:13px 14px">
+          <div style="display:flex;align-items:center;gap:5px"><span class="ms" style="font-size:16px;color:#C99A2E">wb_sunny</span><span style="font-size:20px;font-weight:800;color:#1A1A18;letter-spacing:-0.02em">32°</span></div>
+          <div style="font-size:10.5px;color:#9A988F;margin-top:7px">Clear · Outdoor OK</div>
+        </div>
+      </div>
+
+    <div style="position: absolute; top: 249px; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.06); left: -23px"></div></div>
+
+    <!-- bottom nav -->
+    <div style="margin-top: 24px; background: #fff; border-top: 1px solid rgba(0,0,0,0.06); padding: 11px 24px 24px; display: flex; align-items: flex-start; justify-content: space-between; width: 387px; height: 71px">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:48px">
+        <span class="ms" style="font-size:24px;color:#E2620E;font-variation-settings:'FILL' 1">home</span>
+        <span style="font-family: 'IBM Plex Mono',monospace; font-size: 8.5px; letter-spacing: 0.04em; color: #E2620E; font-weight: 700">Home</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:48px">
+        <span class="ms" style="font-size:24px;color:#A3A199">event_note</span>
+        <span style="font-family: 'IBM Plex Mono',monospace; font-size: 8.5px; letter-spacing: 0.04em; color: #A3A199; font-weight: 700">Bookings</span>
+      </div>
+      <div style="width:56px;display:flex;justify-content:center">
+        <span style="width:54px;height:54px;border-radius:18px;background:#E2620E;display:flex;align-items:center;justify-content:center;box-shadow:0 14px 26px -8px rgba(226,98,14,0.65);transform:translateY(-16px)"><span class="ms" style="font-size:28px;color:#fff">add</span></span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:48px">
+        <span class="ms" style="font-size:24px;color:#A3A199">account_balance_wallet</span>
+        <span style="font-family: 'IBM Plex Mono',monospace; font-size: 8.5px; letter-spacing: 0.04em; color: #A3A199; font-weight: 700">Finance</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:48px">
+        <span class="ms" style="font-size:24px;color:#A3A199">settings</span>
+        <span style="font-family: 'IBM Plex Mono',monospace; font-size: 8.5px; letter-spacing: 0.04em; color: #A3A199; font-weight: 700">Settings</span>
+      </div>
+    </div>
+
+  </div>
+  </div>
+
+  <!-- ░░░░ ADD BOOKING ░░░░ -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:15px">
+  <div style="width:390px;display:flex;align-items:center;gap:12px">
+    <span style="width:26px;height:1.5px;background:#E2620E;display:block"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:#E2620E">Add Booking · Form v6</span>
+  </div>
+  <div style="width:390px;background:#F4F3EF;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 44px 100px -32px rgba(20,20,18,0.40),0 0 0 1px rgba(0,0,0,0.04)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 26px 4px"><span style="font-size:14px;font-weight:700;color:#1A1A18">9:41</span><div style="display:flex;align-items:center;gap:6px;color:#1A1A18"><span class="ms" style="font-size:16px">signal_cellular_alt</span><span class="ms" style="font-size:16px">wifi</span><span class="ms" style="font-size:18px">battery_full</span></div></div>
+    <!-- app bar with sticky save -->
+    <div style="display:flex;align-items:center;gap:12px;padding:6px 18px 14px;border-bottom:1px solid rgba(0,0,0,0.05)">
+      <span class="ms" style="font-size:24px;color:#1A1A18">arrow_back</span>
+      <span style="font-size:18px;font-weight:800;letter-spacing:-0.02em;color:#1A1A18">New Booking</span>
+      <span style="flex:1"></span>
+      <span style="background:#E2620E;color:#fff;font-size:13px;font-weight:700;padding:9px 22px;border-radius:12px;box-shadow:0 10px 20px -8px rgba(226,98,14,0.6)">Save</span>
+    </div>
+    <div style="padding:16px 18px 24px">
+      <!-- mode tabs -->
+      <div style="display:flex;background:#EAE8E2;border-radius:13px;padding:4px;gap:4px;margin-bottom:18px">
+        <span style="flex:1;text-align:center;font-size:12.5px;font-weight:700;color:#fff;background:#E2620E;border-radius:9px;padding:8px 0">Owner</span>
+        <span style="flex:1;text-align:center;font-size:12.5px;font-weight:600;color:#7A786F;padding:8px 0">Both</span>
+        <span style="flex:1;text-align:center;font-size:12.5px;font-weight:600;color:#7A786F;padding:8px 0">Freelancer</span>
+      </div>
+      <!-- client -->
+      <span style="font-family: 'IBM Plex Mono',monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #040404; display: block; margin-bottom: 7px">Client Name *</span>
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:13px;padding:13px 14px;font-size:14px;color:#1A1A18;margin-bottom:14px">Tahmina Rahman</div>
+      <span style="font-family: 'IBM Plex Mono',monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #000000; display: block; margin-bottom: 7px">Client Phone *</span>
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:13px;padding:13px 14px;font-size:14px;color:#1A1A18">+880 1712-345678</div>
+      <!-- shift + date -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px">
+        <div>
+          <span style="font-family: 'IBM Plex Mono',monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #000000; display: block; margin-bottom: 7px">Shift *</span>
+          <div style="display:flex;gap:6px">
+            <span style="flex:1;text-align:center;font-size:12.5px;font-weight:700;color:#fff;background:#C99A2E;border-radius:11px;padding:11px 0">Day</span>
+            <span style="flex:1;text-align:center;font-size:12.5px;font-weight:600;color:#7A786F;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:11px;padding:11px 0">Night</span>
+          </div>
+        </div>
+        <div>
+          <span style="font-family: 'IBM Plex Mono',monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #000000; display: block; margin-bottom: 7px">Date *</span>
+          <div style="background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:13px;padding:13px 14px;font-size:14px;color:#1A1A18;display:flex;align-items:center;justify-content:space-between">Apr 12 <span class="ms" style="font-size:18px;color:#E2620E">calendar_month</span></div>
+        </div>
+      </div>
+      <!-- package -->
+      <span style="font-family: 'IBM Plex Mono',monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #080807; display: block; margin: 18px 0 9px">Package</span>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <div style="background:#fff;border:1.5px solid #E2620E;border-radius:14px;padding:13px 15px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 18px -10px rgba(226,98,14,0.45)">
+          <div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1A1A18">Premium Wedding</div><div style="font-size:11.5px;color:#9A988F;margin-top:2px">2 albums · 600 prints · drone</div></div>
+          <div style="font-size:15px;font-weight:800;color:#E2620E">৳85,000</div>
+          <span class="ms" style="font-size:22px;color:#E2620E;font-variation-settings:'FILL' 1">check_circle</span>
+        </div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:14px;padding:13px 15px;display:flex;align-items:center;gap:12px">
+          <div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1A1A18">Standard</div><div style="font-size:11.5px;color:#9A988F;margin-top:2px">1 album · 300 prints</div></div>
+          <div style="font-size:15px;font-weight:800;color:#1A1A18">৳55,000</div>
+          <span style="width:20px;height:20px;border-radius:50%;border:2px solid rgba(0,0,0,0.15)"></span>
+        </div>
+      </div>
+      <!-- toggles -->
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <div style="flex:1;background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:13px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:13px;font-weight:600;color:#1A1A18">Outdoor</span><span style="width:38px;height:22px;border-radius:11px;background:#E0DDD5;position:relative;display:inline-block"><span style="position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></span></span></div>
+        <div style="flex:1;background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:13px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:13px;font-weight:600;color:#1A1A18">Chief</span><span style="width:38px;height:22px;border-radius:11px;background:#C99A2E;position:relative;display:inline-block"><span style="position:absolute;top:2px;left:18px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></span></span></div>
+      </div>
+      <!-- team -->
+      <span style="font-family: 'IBM Plex Mono',monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #020202; display: block; margin: 18px 0 9px">Team</span>
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:14px;padding:13px 14px;margin-bottom:9px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px"><span class="ms" style="font-size:16px;color:#E2620E">photo_camera</span><span style="font-size:12px;font-weight:700;color:#1A1A18">Photographers</span><span style="font-size:11px;color:#9A988F">· 2</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:7px">
+          <span style="display:inline-flex;align-items:center;gap:6px;background:#FBEBDE;color:#B84E0A;border-radius:9px;padding:6px 10px;font-size:12px;font-weight:600">Karim <span class="ms" style="font-size:14px">close</span></span>
+          <span style="display:inline-flex;align-items:center;gap:6px;background:#FBEBDE;color:#B84E0A;border-radius:9px;padding:6px 10px;font-size:12px;font-weight:600">Rafi <span class="ms" style="font-size:14px">close</span></span>
+          <span style="display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px dashed rgba(0,0,0,0.22);color:#7A786F;border-radius:9px;padding:6px 10px;font-size:12px;font-weight:600"><span class="ms" style="font-size:14px">add</span> Add</span>
+        </div>
+      </div>
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:14px;padding:13px 14px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px"><span class="ms" style="font-size:16px;color:#6D5BD0">videocam</span><span style="font-size:12px;font-weight:700;color:#1A1A18">Cinematographers</span><span style="font-size:11px;color:#9A988F">· 1</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:7px">
+          <span style="display:inline-flex;align-items:center;gap:6px;background:#EEEBFA;color:#5847B0;border-radius:9px;padding:6px 10px;font-size:12px;font-weight:600">Sumon <span class="ms" style="font-size:14px">close</span></span>
+          <span style="display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px dashed rgba(0,0,0,0.22);color:#7A786F;border-radius:9px;padding:6px 10px;font-size:12px;font-weight:600"><span class="ms" style="font-size:14px">add</span> Add</span>
+        </div>
+      </div>
+      <!-- event type -->
+      <span style="font-family: 'IBM Plex Mono',monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #020202; display: block; margin: 18px 0 9px">Event Type</span>
+      <div style="display:flex;flex-wrap:wrap;gap:7px">
+        <span style="background:#E2620E;color:#fff;border-radius:9px;padding:7px 13px;font-size:12.5px;font-weight:600">Wedding</span>
+        <span style="background:#fff;border:1px solid rgba(0,0,0,0.1);color:#3A3A36;border-radius:9px;padding:7px 13px;font-size:12.5px;font-weight:600">Holud</span>
+        <span style="background:#fff;border:1px solid rgba(0,0,0,0.1);color:#3A3A36;border-radius:9px;padding:7px 13px;font-size:12.5px;font-weight:600">Reception</span>
+        <span style="background:#fff;border:1px solid rgba(0,0,0,0.1);color:#3A3A36;border-radius:9px;padding:7px 13px;font-size:12.5px;font-weight:600">Corporate</span>
+        <span style="background:#fff;border:1px solid rgba(0,0,0,0.1);color:#3A3A36;border-radius:9px;padding:7px 13px;font-size:12.5px;font-weight:600">Portrait</span>
+      </div>
+      <!-- payment -->
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:16px;padding:16px;margin-top:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px"><span style="font-size:13px;color:#7A786F">Total <span style="font-size:10px;color:#9A988F">(auto)</span></span><span style="font-size:15px;font-weight:800;color:#1A1A18">৳85,000</span></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid rgba(0,0,0,0.05)"><span style="font-size:13px;color:#7A786F">Advance</span><span style="font-size:14px;font-weight:700;color:#2F8F6B">৳30,000</span></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid rgba(0,0,0,0.05)"><span style="font-size:13px;color:#7A786F">Due <span style="font-size:10px;color:#9A988F">(auto)</span></span><span style="font-size:15px;font-weight:800;color:#C0392B">৳55,000</span></div>
+        <div style="display:flex;gap:6px;margin-top:14px">
+          <span style="flex:1;text-align:center;font-size:12px;font-weight:700;color:#fff;background:#E2620E;border-radius:10px;padding:9px 0">bKash</span>
+          <span style="flex:1;text-align:center;font-size:12px;font-weight:600;color:#7A786F;background:#F4F3EF;border-radius:10px;padding:9px 0">Bank</span>
+          <span style="flex:1;text-align:center;font-size:12px;font-weight:600;color:#7A786F;background:#F4F3EF;border-radius:10px;padding:9px 0">Cash</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:13px;padding-top:13px;border-top:1px solid rgba(0,0,0,0.05)"><span class="ms" style="font-size:18px;color:#9A988F">visibility_off</span><span style="font-size:12.5px;color:#7A786F;flex:1">Hide payment from team</span><span style="width:38px;height:22px;border-radius:11px;background:#E0DDD5;position:relative;display:inline-block"><span style="position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></span></span></div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ░░░░ BOOKING LIST ░░░░ -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:15px">
+  <div style="width:390px;display:flex;align-items:center;gap:12px">
+    <span style="width:26px;height:1.5px;background:#E2620E;display:block"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:#E2620E">Booking List · Day | Night</span>
+  </div>
+  <div style="width:390px;background:#F4F3EF;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 44px 100px -32px rgba(20,20,18,0.40),0 0 0 1px rgba(0,0,0,0.04)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 26px 4px"><span style="font-size:14px;font-weight:700;color:#1A1A18">9:41</span><div style="display:flex;align-items:center;gap:6px;color:#1A1A18"><span class="ms" style="font-size:16px">signal_cellular_alt</span><span class="ms" style="font-size:16px">wifi</span><span class="ms" style="font-size:18px">battery_full</span></div></div>
+    <div style="padding:8px 18px 0">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:22px;font-weight:800;letter-spacing:-0.02em;color:#1A1A18">Bookings</span>
+        <span style="background:#FBEBDE;color:#B84E0A;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;padding:3px 9px;border-radius:8px">86</span>
+        <span style="flex:1"></span>
+        <span class="ms" style="font-size:23px;color:#3A3A36">tune</span>
+      </div>
+      <div style="margin-top:13px;display:flex;align-items:center;gap:10px;background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:14px;padding:11px 14px"><span class="ms" style="font-size:19px;color:#A3A199">search</span><span style="font-size:13px;color:#9A988F">Search by client or venue…</span></div>
+      <!-- status chips -->
+      <div style="display:flex;gap:7px;margin-top:14px;overflow:hidden">
+        <span style="background:#E2620E;color:#fff;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;white-space:nowrap">All</span>
+        <span style="background:#fff;border:1px solid rgba(0,0,0,0.1);color:#7A786F;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;white-space:nowrap">Pending</span>
+        <span style="background:#fff;border:1px solid rgba(0,0,0,0.1);color:#7A786F;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;white-space:nowrap">Confirmed</span>
+        <span style="background:#fff;border:1px solid rgba(0,0,0,0.1);color:#7A786F;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;white-space:nowrap">Delivered</span>
+      </div>
+    </div>
+    <!-- two columns -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;padding:16px 18px 18px">
+      <div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px"><span style="width:8px;height:8px;border-radius:50%;background:#C99A2E"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#1A1A18;font-weight:600">DAY · 5</span></div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-left:3px solid #C99A2E;border-radius:12px;padding:11px 12px"><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#9A988F">APR 12</div><div style="font-size:13px;font-weight:700;color:#1A1A18;margin-top:3px">Tahmina &amp; Arif</div><div style="font-size:11px;color:#9A988F;margin-top:2px">Wedding · 12–5</div></div>
+          <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-left:3px solid #C99A2E;border-radius:12px;padding:11px 12px"><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#9A988F">APR 14</div><div style="font-size:13px;font-weight:700;color:#1A1A18;margin-top:3px">Nusrat J.</div><div style="font-size:11px;color:#9A988F;margin-top:2px">Holud · 12–5</div></div>
+          <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-left:3px solid #C99A2E;border-radius:12px;padding:11px 12px"><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#9A988F">APR 15</div><div style="font-size:13px;font-weight:700;color:#1A1A18;margin-top:3px">Imran Co.</div><div style="font-size:11px;color:#9A988F;margin-top:2px">Corporate · 12–5</div></div>
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px"><span style="width:8px;height:8px;border-radius:50%;background:#6D5BD0"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#1A1A18;font-weight:600">NIGHT · 4</span></div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-right:3px solid #6D5BD0;border-radius:12px;padding:11px 12px"><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#9A988F">APR 12</div><div style="font-size:13px;font-weight:700;color:#1A1A18;margin-top:3px">Reza &amp; Mim</div><div style="font-size:11px;color:#9A988F;margin-top:2px">Reception · 6–11</div></div>
+          <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-right:3px solid #6D5BD0;border-radius:12px;padding:11px 12px"><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#9A988F">APR 14</div><div style="font-size:13px;font-weight:700;color:#1A1A18;margin-top:3px">Shahin H.</div><div style="font-size:11px;color:#9A988F;margin-top:2px">Wedding · 6–11</div></div>
+          <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-right:3px solid #6D5BD0;border-radius:12px;padding:11px 12px"><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#9A988F">APR 18</div><div style="font-size:13px;font-weight:700;color:#1A1A18;margin-top:3px">Farhana K.</div><div style="font-size:11px;color:#9A988F;margin-top:2px">Engagement · 6–11</div></div>
+        </div>
+      </div>
+    </div>
+    <!-- bottom nav (Bookings active) -->
+    <div style="background:#fff;border-top:1px solid rgba(0,0,0,0.06);padding:11px 24px 24px;display:flex;align-items:flex-start;justify-content:space-between">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:48px"><span class="ms" style="font-size:24px;color:#A3A199">home</span><span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#A3A199">Home</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:48px"><span class="ms" style="font-size:24px;color:#E2620E;font-variation-settings:'FILL' 1">event_note</span><span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#E2620E">Bookings</span></div>
+      <div style="width:56px;display:flex;justify-content:center"><span style="width:54px;height:54px;border-radius:18px;background:#E2620E;display:flex;align-items:center;justify-content:center;box-shadow:0 14px 26px -8px rgba(226,98,14,0.65);transform:translateY(-16px)"><span class="ms" style="font-size:28px;color:#fff">add</span></span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:48px"><span class="ms" style="font-size:24px;color:#A3A199">account_balance_wallet</span><span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#A3A199">Finance</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:48px"><span class="ms" style="font-size:24px;color:#A3A199">settings</span><span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#A3A199">Settings</span></div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ░░░░ EVENT DETAILS ░░░░ -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:15px">
+  <div style="width:390px;display:flex;align-items:center;gap:12px">
+    <span style="width:26px;height:1.5px;background:#E2620E;display:block"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:#E2620E">Event Details</span>
+  </div>
+  <div style="width:390px;background:#F4F3EF;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 44px 100px -32px rgba(20,20,18,0.40),0 0 0 1px rgba(0,0,0,0.04)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 26px 4px"><span style="font-size:14px;font-weight:700;color:#1A1A18">9:41</span><div style="display:flex;align-items:center;gap:6px;color:#1A1A18"><span class="ms" style="font-size:16px">signal_cellular_alt</span><span class="ms" style="font-size:16px">wifi</span><span class="ms" style="font-size:18px">battery_full</span></div></div>
+    <div style="display:flex;align-items:center;gap:12px;padding:6px 18px 12px"><span class="ms" style="font-size:24px;color:#1A1A18">arrow_back</span><span style="font-size:18px;font-weight:800;letter-spacing:-0.02em;color:#1A1A18">Event Details</span><span style="flex:1"></span><span class="ms" style="font-size:23px;color:#3A3A36">more_horiz</span></div>
+    <div style="padding:0 18px 20px">
+      <!-- hero -->
+      <div style="background:#E2620E;border-radius:22px;padding:20px;color:#fff;position:relative;overflow:hidden">
+        <div style="position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.07)"></div>
+        <div style="display:flex;align-items:center;gap:8px"><span style="background:rgba(255,255,255,0.2);border-radius:7px;padding:3px 9px;font-size:10px;font-weight:700;letter-spacing:0.04em">CONFIRMED</span><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:rgba(255,255,255,0.85)"><span style="width:6px;height:6px;border-radius:50%;background:#F2C75B"></span>Day shift</span></div>
+        <div style="font-size:26px;font-weight:800;letter-spacing:-0.02em;margin-top:12px">Wedding</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.85);margin-top:3px">Wed, Apr 12 · 12:00 – 5:00 PM</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:8px"><span class="ms" style="font-size:16px;color:rgba(255,255,255,0.85)">location_on</span><span style="font-size:12.5px;color:rgba(255,255,255,0.9)">Gulshan Community Center</span></div>
+      </div>
+      <!-- client -->
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:16px;padding:15px 16px;margin-top:12px;display:flex;align-items:center;gap:12px">
+        <span style="width:42px;height:42px;border-radius:50%;background:#FBEBDE;color:#B84E0A;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700">TA</span>
+        <div style="flex:1"><div style="font-size:14.5px;font-weight:700;color:#1A1A18">Tahmina &amp; Arif</div><div style="font-size:12px;color:#9A988F;margin-top:1px">+880 1712-345678</div></div>
+        <span style="width:38px;height:38px;border-radius:11px;background:#E7F5EE;display:flex;align-items:center;justify-content:center"><span class="ms" style="font-size:19px;color:#2F8F6B">call</span></span>
+      </div>
+      <!-- team -->
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:16px;padding:15px 16px;margin-top:12px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#A3A199">Team</span>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:12px"><span class="ms" style="font-size:18px;color:#C99A2E;font-variation-settings:'FILL' 1">star</span><div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:#1A1A18">Karim Uddin <span style="font-size:10px;color:#C99A2E;font-weight:600">CHIEF</span></div><div style="font-size:11px;color:#9A988F">Photographer</div></div><span class="ms" style="font-size:18px;color:#2F8F6B">call</span></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(0,0,0,0.05)"><span class="ms" style="font-size:18px;color:#E2620E">photo_camera</span><div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:#1A1A18">Rafi Ahmed</div><div style="font-size:11px;color:#9A988F">Photographer</div></div><span class="ms" style="font-size:18px;color:#2F8F6B">call</span></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(0,0,0,0.05)"><span class="ms" style="font-size:18px;color:#6D5BD0">videocam</span><div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:#1A1A18">Sumon Das</div><div style="font-size:11px;color:#9A988F">Cinematographer</div></div><span class="ms" style="font-size:18px;color:#2F8F6B">call</span></div>
+      </div>
+      <!-- payment -->
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:16px;padding:16px;margin-top:12px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#A3A199">Payment</span>
+        <div style="display:flex;justify-content:space-between;margin-top:12px"><div><div style="font-size:10px;color:#9A988F">TOTAL</div><div style="font-size:16px;font-weight:800;color:#1A1A18;margin-top:2px">৳85,000</div></div><div><div style="font-size:10px;color:#9A988F">ADVANCE</div><div style="font-size:16px;font-weight:800;color:#2F8F6B;margin-top:2px">৳30,000</div></div><div style="text-align:right"><div style="font-size:10px;color:#9A988F">DUE</div><div style="font-size:16px;font-weight:800;color:#C0392B;margin-top:2px">৳55,000</div></div></div>
+        <div style="height:7px;border-radius:4px;background:#EFEDE7;margin-top:13px;overflow:hidden"><span style="display:block;height:100%;width:35%;background:#2F8F6B;border-radius:4px"></span></div>
+        <div style="font-size:10.5px;color:#9A988F;margin-top:6px">35% collected</div>
+      </div>
+      <!-- actions -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:9px;background:#E2620E;border-radius:14px;padding:14px;margin-top:14px;box-shadow:0 12px 24px -10px rgba(226,98,14,0.55)"><span class="ms" style="font-size:20px;color:#fff">receipt_long</span><span style="font-size:14px;font-weight:700;color:#fff">Generate Invoice</span></div>
+      <div style="display:flex;gap:9px;margin-top:9px">
+        <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:13px;padding:12px"><span class="ms" style="font-size:18px;color:#2F8F6B">chat</span><span style="font-size:13px;font-weight:600;color:#1A1A18">WhatsApp</span></div>
+        <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:13px;padding:12px"><span class="ms" style="font-size:18px;color:#7A786F">edit</span><span style="font-size:13px;font-weight:600;color:#1A1A18">Edit</span></div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ░░░░ PACKAGES ░░░░ -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:15px">
+  <div style="width:390px;display:flex;align-items:center;gap:12px">
+    <span style="width:26px;height:1.5px;background:#E2620E;display:block"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:#E2620E">Packages · MOD-25</span>
+  </div>
+  <div style="width:390px;background:#F4F3EF;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 44px 100px -32px rgba(20,20,18,0.40),0 0 0 1px rgba(0,0,0,0.04)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 26px 4px"><span style="font-size:14px;font-weight:700;color:#1A1A18">9:41</span><div style="display:flex;align-items:center;gap:6px;color:#1A1A18"><span class="ms" style="font-size:16px">signal_cellular_alt</span><span class="ms" style="font-size:16px">wifi</span><span class="ms" style="font-size:18px">battery_full</span></div></div>
+    <div style="display:flex;align-items:center;gap:12px;padding:6px 18px 14px"><span class="ms" style="font-size:24px;color:#1A1A18">arrow_back</span><span style="font-size:20px;font-weight:800;letter-spacing:-0.02em;color:#1A1A18">Packages</span><span style="flex:1"></span><span style="display:inline-flex;align-items:center;gap:5px;background:#E2620E;color:#fff;font-size:12.5px;font-weight:700;padding:8px 14px;border-radius:11px"><span class="ms" style="font-size:17px">add</span>New</span></div>
+    <div style="padding:0 18px 22px;display:flex;flex-direction:column;gap:12px">
+      <!-- package 1 -->
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-top:3px solid #E2620E;border-radius:16px;padding:16px">
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <div style="flex:1"><div style="font-size:16px;font-weight:800;color:#1A1A18">Premium Wedding</div><div style="display:flex;align-items:baseline;gap:8px;margin-top:4px"><span style="font-size:19px;font-weight:800;color:#E2620E">৳85,000</span><span style="font-size:12px;color:#9A988F;text-decoration:line-through">৳95,000</span><span style="background:#FDECEA;color:#C0392B;font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px">-10K</span></div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px">
+          <div style="background:#F7F6F2;border-radius:10px;padding:9px 10px"><div style="font-size:9px;color:#9A988F;font-family:'IBM Plex Mono',monospace">PRINTS</div><div style="font-size:12.5px;font-weight:700;color:#1A1A18;margin-top:2px">600 · 12×18</div></div>
+          <div style="background:#F7F6F2;border-radius:10px;padding:9px 10px"><div style="font-size:9px;color:#9A988F;font-family:'IBM Plex Mono',monospace">ALBUM</div><div style="font-size:12.5px;font-weight:700;color:#1A1A18;margin-top:2px">2 books</div></div>
+          <div style="background:#F7F6F2;border-radius:10px;padding:9px 10px"><div style="font-size:9px;color:#9A988F;font-family:'IBM Plex Mono',monospace">VIDEO</div><div style="font-size:12.5px;font-weight:700;color:#1A1A18;margin-top:2px">1 + 2 trailer</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:11px"><span class="ms" style="font-size:15px;color:#9A988F">cloud_done</span><span style="font-size:11.5px;color:#7A786F">Delivery — Pendrive + Google Drive</span></div>
+        <div style="display:flex;gap:9px;margin-top:14px;padding-top:13px;border-top:1px solid rgba(0,0,0,0.05)"><span style="flex:1;text-align:center;font-size:12.5px;font-weight:700;color:#E2620E">Edit</span><span style="width:1px;background:rgba(0,0,0,0.07)"></span><span style="flex:1;text-align:center;font-size:12.5px;font-weight:600;color:#C0392B">Delete</span></div>
+      </div>
+      <!-- package 2 -->
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-top:3px solid #6D5BD0;border-radius:16px;padding:16px">
+        <div style="font-size:16px;font-weight:800;color:#1A1A18">Standard</div>
+        <div style="display:flex;align-items:baseline;gap:8px;margin-top:4px"><span style="font-size:19px;font-weight:800;color:#6D5BD0">৳55,000</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px">
+          <div style="background:#F7F6F2;border-radius:10px;padding:9px 10px"><div style="font-size:9px;color:#9A988F;font-family:'IBM Plex Mono',monospace">PRINTS</div><div style="font-size:12.5px;font-weight:700;color:#1A1A18;margin-top:2px">300 · 10×12</div></div>
+          <div style="background:#F7F6F2;border-radius:10px;padding:9px 10px"><div style="font-size:9px;color:#9A988F;font-family:'IBM Plex Mono',monospace">ALBUM</div><div style="font-size:12.5px;font-weight:700;color:#1A1A18;margin-top:2px">1 book</div></div>
+          <div style="background:#F7F6F2;border-radius:10px;padding:9px 10px"><div style="font-size:9px;color:#9A988F;font-family:'IBM Plex Mono',monospace">VIDEO</div><div style="font-size:12.5px;font-weight:700;color:#1A1A18;margin-top:2px">1 trailer</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:11px"><span class="ms" style="font-size:15px;color:#9A988F">usb</span><span style="font-size:11.5px;color:#7A786F">Delivery — Pendrive</span></div>
+        <div style="display:flex;gap:9px;margin-top:14px;padding-top:13px;border-top:1px solid rgba(0,0,0,0.05)"><span style="flex:1;text-align:center;font-size:12.5px;font-weight:700;color:#E2620E">Edit</span><span style="width:1px;background:rgba(0,0,0,0.07)"></span><span style="flex:1;text-align:center;font-size:12.5px;font-weight:600;color:#C0392B">Delete</span></div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ░░░░ FINANCE ░░░░ -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:15px">
+  <div style="width:390px;display:flex;align-items:center;gap:12px">
+    <span style="width:26px;height:1.5px;background:#E2620E;display:block"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:#E2620E">Finance · Owner</span>
+  </div>
+  <div style="width:390px;background:#F4F3EF;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 44px 100px -32px rgba(20,20,18,0.40),0 0 0 1px rgba(0,0,0,0.04)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 26px 4px"><span style="font-size:14px;font-weight:700;color:#1A1A18">9:41</span><div style="display:flex;align-items:center;gap:6px;color:#1A1A18"><span class="ms" style="font-size:16px">signal_cellular_alt</span><span class="ms" style="font-size:16px">wifi</span><span class="ms" style="font-size:18px">battery_full</span></div></div>
+    <div style="padding:8px 18px 0">
+      <div style="display:flex;align-items:center"><span style="font-size:22px;font-weight:800;letter-spacing:-0.02em;color:#1A1A18">Finance</span><span style="flex:1"></span><div style="display:flex;background:#EAE8E2;border-radius:10px;padding:3px;gap:3px"><span style="font-size:11.5px;font-weight:700;color:#fff;background:#E2620E;border-radius:7px;padding:5px 12px">Monthly</span><span style="font-size:11.5px;font-weight:600;color:#7A786F;padding:5px 12px">Yearly</span></div></div>
+      <!-- net hero -->
+      <div style="background:#E2620E;border-radius:20px;padding:18px;color:#fff;margin-top:14px;position:relative;overflow:hidden">
+        <div style="position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.07)"></div>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.16em;color:rgba(255,255,255,0.72)">NET PROFIT · APRIL</span>
+        <div style="font-size:36px;font-weight:800;letter-spacing:-0.03em;margin-top:6px">৳1,86,500</div>
+        <div style="display:flex;gap:18px;margin-top:12px">
+          <div><div style="font-size:10px;color:rgba(255,255,255,0.7)">INCOME</div><div style="font-size:15px;font-weight:700;margin-top:2px">৳2,42,000</div></div>
+          <div><div style="font-size:10px;color:rgba(255,255,255,0.7)">EXPENSE</div><div style="font-size:15px;font-weight:700;margin-top:2px">৳55,500</div></div>
+        </div>
+      </div>
+      <!-- 6 month chart -->
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:18px;padding:16px;margin-top:12px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#A3A199">Last 6 Months</span>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px;height:90px;margin-top:14px">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end"><span style="width:100%;height:48%;background:#F6D9C4;border-radius:5px"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#9A988F">NOV</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end"><span style="width:100%;height:62%;background:#F6D9C4;border-radius:5px"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#9A988F">DEC</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end"><span style="width:100%;height:55%;background:#F6D9C4;border-radius:5px"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#9A988F">JAN</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end"><span style="width:100%;height:74%;background:#EFB68E;border-radius:5px"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#9A988F">FEB</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end"><span style="width:100%;height:68%;background:#EFB68E;border-radius:5px"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#9A988F">MAR</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end"><span style="width:100%;height:100%;background:#E2620E;border-radius:5px"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#E2620E;font-weight:700">APR</span></div>
+        </div>
+      </div>
+      <!-- booked/collected/due -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px">
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:14px;padding:12px"><div style="font-size:9px;color:#9A988F;font-family:'IBM Plex Mono',monospace">BOOKED</div><div style="font-size:15px;font-weight:800;color:#1A1A18;margin-top:4px">৳2.4L</div></div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:14px;padding:12px"><div style="font-size:9px;color:#9A988F;font-family:'IBM Plex Mono',monospace">COLLECTED</div><div style="font-size:15px;font-weight:800;color:#2F8F6B;margin-top:4px">৳2.0L</div></div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:14px;padding:12px"><div style="font-size:9px;color:#9A988F;font-family:'IBM Plex Mono',monospace">DUE</div><div style="font-size:15px;font-weight:800;color:#C0392B;margin-top:4px">৳38K</div></div>
+      </div>
+      <!-- who owes -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:18px 0 10px"><span style="font-size:14px;font-weight:700;color:#1A1A18">Who owes</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#E2620E">SEND REMINDERS</span></div>
+      <div style="display:flex;flex-direction:column;gap:9px;padding-bottom:18px">
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:11px"><span style="width:36px;height:36px;border-radius:50%;background:#FBEBDE;color:#B84E0A;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">TA</span><div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:#1A1A18">Tahmina &amp; Arif</div><div style="font-size:11px;color:#9A988F">Wedding · Apr 12</div></div><div style="font-size:14px;font-weight:800;color:#C0392B">৳55,000</div></div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:11px"><span style="width:36px;height:36px;border-radius:50%;background:#EEEBFA;color:#5847B0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">SH</span><div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:#1A1A18">Shahin H.</div><div style="font-size:11px;color:#9A988F">Wedding · Apr 14</div></div><div style="font-size:14px;font-weight:800;color:#C0392B">৳40,000</div></div>
+      </div>
+    </div>
+    <!-- bottom nav (Finance active) -->
+    <div style="background:#fff;border-top:1px solid rgba(0,0,0,0.06);padding:11px 24px 24px;display:flex;align-items:flex-start;justify-content:space-between">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:48px"><span class="ms" style="font-size:24px;color:#A3A199">home</span><span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#A3A199">Home</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:48px"><span class="ms" style="font-size:24px;color:#A3A199">event_note</span><span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#A3A199">Bookings</span></div>
+      <div style="width:56px;display:flex;justify-content:center"><span style="width:54px;height:54px;border-radius:18px;background:#E2620E;display:flex;align-items:center;justify-content:center;box-shadow:0 14px 26px -8px rgba(226,98,14,0.65);transform:translateY(-16px)"><span class="ms" style="font-size:28px;color:#fff">add</span></span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:48px"><span class="ms" style="font-size:24px;color:#E2620E;font-variation-settings:'FILL' 1">account_balance_wallet</span><span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#E2620E">Finance</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:48px"><span class="ms" style="font-size:24px;color:#A3A199">settings</span><span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#A3A199">Settings</span></div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ░░░░ PROFILE & SETTINGS ░░░░ -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:15px">
+  <div style="width:390px;display:flex;align-items:center;gap:12px">
+    <span style="width:26px;height:1.5px;background:#E2620E;display:block"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:#E2620E">Profile &amp; Settings · MOD-03</span>
+  </div>
+  <div style="width:390px;background:#F4F3EF;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 44px 100px -32px rgba(20,20,18,0.40),0 0 0 1px rgba(0,0,0,0.04)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 26px 4px"><span style="font-size:14px;font-weight:700;color:#1A1A18">9:41</span><div style="display:flex;align-items:center;gap:6px;color:#1A1A18"><span class="ms" style="font-size:16px">signal_cellular_alt</span><span class="ms" style="font-size:16px">wifi</span><span class="ms" style="font-size:18px">battery_full</span></div></div>
+    <div style="padding:8px 18px 0"><span style="font-size:22px;font-weight:800;letter-spacing:-0.02em;color:#1A1A18">Settings</span></div>
+    <div style="padding:14px 18px 0">
+      <!-- hero -->
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:18px;padding:18px;display:flex;align-items:center;gap:14px">
+        <span style="width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#E2620E,#B84E0A);color:#fff;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:700">RH</span>
+        <div style="flex:1"><div style="font-size:17px;font-weight:800;color:#1A1A18">Rezaul Haque</div><div style="font-size:12px;color:#9A988F;margin-top:1px">+880 1819-200300</div></div>
+        <span style="background:#FBEBDE;color:#B84E0A;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;padding:4px 10px;border-radius:8px">BOTH</span>
+      </div>
+      <!-- account -->
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#A3A199;display:block;margin:18px 0 9px">Account</span>
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:16px;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 15px"><span class="ms" style="font-size:19px;color:#7A786F">person</span><span style="flex:1;font-size:13.5px;color:#1A1A18">Name &amp; email</span><span class="ms" style="font-size:19px;color:#C5C3BC">chevron_right</span></div>
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-top:1px solid rgba(0,0,0,0.05)"><span class="ms" style="font-size:19px;color:#7A786F">photo_camera</span><span style="flex:1;font-size:13.5px;color:#1A1A18">Profile photo</span><span class="ms" style="font-size:19px;color:#C5C3BC">chevron_right</span></div>
+      </div>
+      <!-- studio -->
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#A3A199;display:block;margin:18px 0 9px">Studio · Owner / Both</span>
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:16px;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 15px"><span class="ms" style="font-size:19px;color:#7A786F">storefront</span><span style="flex:1;font-size:13.5px;color:#1A1A18">Studio name</span><span style="font-size:12.5px;color:#9A988F">Clicker Studio</span></div>
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-top:1px solid rgba(0,0,0,0.05)"><span class="ms" style="font-size:19px;color:#7A786F">draw</span><span style="flex:1;font-size:13.5px;color:#1A1A18">Logo &amp; signature</span><span class="ms" style="font-size:19px;color:#C5C3BC">chevron_right</span></div>
+      </div>
+      <!-- preferences -->
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#A3A199;display:block;margin:18px 0 9px">Preferences</span>
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:16px;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 15px"><span class="ms" style="font-size:19px;color:#7A786F">translate</span><span style="flex:1;font-size:13.5px;color:#1A1A18">Language</span><span style="font-size:12.5px;color:#9A988F">English</span></div>
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-top:1px solid rgba(0,0,0,0.05)"><span class="ms" style="font-size:19px;color:#7A786F">dark_mode</span><span style="flex:1;font-size:13.5px;color:#1A1A18">Theme</span><span style="font-size:12.5px;color:#9A988F">Light</span></div>
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-top:1px solid rgba(0,0,0,0.05)"><span class="ms" style="font-size:19px;color:#7A786F">event_repeat</span><span style="flex:1;font-size:13.5px;color:#1A1A18">Distribution mode</span><span style="width:38px;height:22px;border-radius:11px;background:#E2620E;position:relative;display:inline-block"><span style="position:absolute;top:2px;left:18px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></span></span></div>
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-top:1px solid rgba(0,0,0,0.05)"><span class="ms" style="font-size:19px;color:#7A786F">admin_panel_settings</span><span style="flex:1;font-size:13.5px;color:#1A1A18">Manager permissions</span><span class="ms" style="font-size:19px;color:#C5C3BC">chevron_right</span></div>
+      </div>
+      <!-- actions -->
+      <div style="display:flex;gap:9px;margin:18px 0 18px">
+        <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:13px;padding:13px"><span class="ms" style="font-size:18px;color:#7A786F">logout</span><span style="font-size:13px;font-weight:600;color:#1A1A18">Log out</span></div>
+        <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;background:#FDECEA;border:1px solid rgba(192,57,43,0.2);border-radius:13px;padding:13px"><span class="ms" style="font-size:18px;color:#C0392B">delete</span><span style="font-size:13px;font-weight:600;color:#C0392B">Delete</span></div>
+      </div>
+    </div>
+    <!-- bottom nav (Settings active) -->
+    <div style="background:#fff;border-top:1px solid rgba(0,0,0,0.06);padding:11px 24px 24px;display:flex;align-items:flex-start;justify-content:space-between">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:48px"><span class="ms" style="font-size:24px;color:#A3A199">home</span><span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#A3A199">Home</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:48px"><span class="ms" style="font-size:24px;color:#A3A199">event_note</span><span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#A3A199">Bookings</span></div>
+      <div style="width:56px;display:flex;justify-content:center"><span style="width:54px;height:54px;border-radius:18px;background:#E2620E;display:flex;align-items:center;justify-content:center;box-shadow:0 14px 26px -8px rgba(226,98,14,0.65);transform:translateY(-16px)"><span class="ms" style="font-size:28px;color:#fff">add</span></span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:48px"><span class="ms" style="font-size:24px;color:#A3A199">account_balance_wallet</span><span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#A3A199">Finance</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:48px"><span class="ms" style="font-size:24px;color:#E2620E;font-variation-settings:'FILL' 1">settings</span><span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#E2620E">Settings</span></div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ░░░░ FL-12 FREELANCER BOOKING ░░░░ -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:15px">
+  <div style="width:390px;display:flex;align-items:center;gap:12px">
+    <span style="width:26px;height:1.5px;background:#E2620E;display:block"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:#E2620E">FL-12 · Freelancer Booking</span>
+  </div>
+  <div style="width:390px;background:#F4F3EF;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 44px 100px -32px rgba(20,20,18,0.40),0 0 0 1px rgba(0,0,0,0.04)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 26px 4px"><span style="font-size:14px;font-weight:700;color:#1A1A18">9:41</span><div style="display:flex;align-items:center;gap:6px;color:#1A1A18"><span class="ms" style="font-size:16px">signal_cellular_alt</span><span class="ms" style="font-size:16px">wifi</span><span class="ms" style="font-size:18px">battery_full</span></div></div>
+    <div style="display:flex;align-items:center;gap:12px;padding:6px 18px 14px;border-bottom:1px solid rgba(0,0,0,0.05)"><span class="ms" style="font-size:24px;color:#1A1A18">arrow_back</span><span style="font-size:18px;font-weight:800;letter-spacing:-0.02em;color:#1A1A18">My Booking</span><span style="flex:1"></span><span style="background:#E2620E;color:#fff;font-size:13px;font-weight:700;padding:9px 22px;border-radius:12px;box-shadow:0 10px 20px -8px rgba(226,98,14,0.6)">Save</span></div>
+    <div style="padding:16px 18px 24px">
+      <!-- top tab -->
+      <div style="display:flex;background:#EAE8E2;border-radius:13px;padding:4px;gap:4px"><span style="flex:1;text-align:center;font-size:12.5px;font-weight:700;color:#fff;background:#E2620E;border-radius:9px;padding:8px 0">Freelancer</span><span style="flex:1;text-align:center;font-size:12.5px;font-weight:600;color:#7A786F;padding:8px 0">Company</span></div>
+      <!-- max 2/day notice -->
+      <div style="display:flex;align-items:center;gap:9px;background:#FBEBDE;border-radius:12px;padding:11px 14px;margin-top:14px"><span class="ms" style="font-size:18px;color:#B84E0A">info</span><span style="font-size:12px;color:#8A4A1A;line-height:1.4">Max 2 events/day. 1 booked today — 1 slot left.</span></div>
+      <!-- company -->
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#A3A199;display:block;margin:16px 0 7px">Company Name</span>
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:13px;padding:13px 14px;font-size:14px;color:#1A1A18">Lens &amp; Light Studio</div>
+      <!-- date -->
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#A3A199;display:block;margin:14px 0 7px">Date</span>
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:13px;padding:13px 14px;font-size:14px;color:#1A1A18;display:flex;align-items:center;justify-content:space-between">Sat, Apr 15 <span class="ms" style="font-size:18px;color:#E2620E">calendar_month</span></div>
+      <!-- shift -->
+      <div style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:13px;padding:13px 15px;margin-top:14px"><span style="font-size:13.5px;font-weight:600;color:#1A1A18">Shift</span><div style="display:flex;gap:6px"><span style="font-size:12px;font-weight:700;color:#fff;background:#C99A2E;border-radius:9px;padding:7px 16px">Day</span><span style="font-size:12px;font-weight:600;color:#7A786F;background:#F4F3EF;border-radius:9px;padding:7px 16px">Night</span></div></div>
+      <!-- outdoor expand -->
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:13px;padding:13px 15px;margin-top:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:13.5px;font-weight:600;color:#1A1A18">Outdoor</span><span style="width:38px;height:22px;border-radius:11px;background:#E2620E;position:relative;display:inline-block"><span style="position:absolute;top:2px;left:18px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></span></span></div>
+        <div style="margin-top:13px;padding-top:13px;border-top:1px solid rgba(0,0,0,0.05)">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#A3A199;display:block;margin-bottom:7px">Location</span>
+          <div style="background:#F7F6F2;border:1px solid rgba(0,0,0,0.06);border-radius:11px;padding:11px 13px;font-size:13.5px;color:#1A1A18">Cox's Bazar Beach</div>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#A3A199;display:block;margin:12px 0 7px">Reporting Time</span>
+          <div style="background:#F7F6F2;border:1px solid rgba(0,0,0,0.06);border-radius:11px;padding:11px 13px;font-size:13.5px;color:#1A1A18">7:00 AM</div>
+        </div>
+      </div>
+      <!-- event type -->
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#A3A199;display:block;margin:16px 0 9px">Event Type</span>
+      <div style="display:flex;flex-wrap:wrap;gap:7px">
+        <span style="background:#E2620E;color:#fff;border-radius:9px;padding:7px 13px;font-size:12.5px;font-weight:600">Wedding</span>
+        <span style="background:#fff;border:1px solid rgba(0,0,0,0.1);color:#3A3A36;border-radius:9px;padding:7px 13px;font-size:12.5px;font-weight:600">Holud</span>
+        <span style="background:#fff;border:1px solid rgba(0,0,0,0.1);color:#3A3A36;border-radius:9px;padding:7px 13px;font-size:12.5px;font-weight:600">Portrait</span>
+        <span style="background:#fff;border:1px solid rgba(0,0,0,0.1);color:#3A3A36;border-radius:9px;padding:7px 13px;font-size:12.5px;font-weight:600">Other</span>
+      </div>
+      <!-- notes -->
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#A3A199;display:block;margin:16px 0 7px">Notes</span>
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:13px;padding:13px 14px;font-size:13.5px;color:#7A786F;min-height:54px">Bring extra batteries and the 70-200 lens.</div>
+      <!-- removed note -->
+      <div style="display:flex;align-items:center;gap:7px;margin-top:16px;justify-content:center"><span class="ms" style="font-size:16px;color:#C5C3BC">block</span><span style="font-size:11px;color:#9A988F">No booking status · No due request · No invoice</span></div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ░░░░ MOD-01 AUTHENTICATION ░░░░ -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:15px">
+  <div style="width:390px;display:flex;align-items:center;gap:12px">
+    <span style="width:26px;height:1.5px;background:#E2620E;display:block"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:#E2620E">MOD-01 · Authentication</span>
+  </div>
+  <div style="width:390px;height:760px;background:#F4F3EF;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 44px 100px -32px rgba(20,20,18,0.40),0 0 0 1px rgba(0,0,0,0.04);display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 26px 4px"><span style="font-size:14px;font-weight:700;color:#1A1A18">9:41</span><div style="display:flex;align-items:center;gap:6px;color:#1A1A18"><span class="ms" style="font-size:16px">signal_cellular_alt</span><span class="ms" style="font-size:16px">wifi</span><span class="ms" style="font-size:18px">battery_full</span></div></div>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 28px">
+      <span style="width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,#E2620E,#B84E0A);display:flex;align-items:center;justify-content:center;box-shadow:0 18px 36px -12px rgba(226,98,14,0.6)"><span class="ms" style="font-size:34px;color:#fff;font-variation-settings:'FILL' 1">photo_camera</span></span>
+      <div style="font-size:30px;font-weight:800;letter-spacing:-0.03em;color:#1A1A18;margin-top:24px">Welcome back</div>
+      <div style="font-size:14px;color:#7A786F;margin-top:6px;line-height:1.5">Sign in to manage your studio bookings, team and finances.</div>
+      <!-- phone -->
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#A3A199;display:block;margin:28px 0 8px">Phone Number</span>
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:14px;padding:14px 15px;display:flex;align-items:center;gap:10px"><span style="font-size:14px;font-weight:700;color:#1A1A18">🇧🇩 +880</span><span style="width:1px;height:18px;background:rgba(0,0,0,0.1)"></span><span style="font-size:14px;color:#1A1A18">1712-345678</span></div>
+      <!-- OTP send -->
+      <div style="background:#E2620E;border-radius:14px;padding:15px;text-align:center;margin-top:14px;box-shadow:0 12px 24px -10px rgba(226,98,14,0.55)"><span style="font-size:15px;font-weight:700;color:#fff">Send OTP</span></div>
+      <!-- OTP boxes -->
+      <div style="display:flex;gap:9px;margin-top:22px;justify-content:center">
+        <span style="width:48px;height:56px;border-radius:13px;background:#fff;border:1.5px solid #E2620E;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#1A1A18">4</span>
+        <span style="width:48px;height:56px;border-radius:13px;background:#fff;border:1.5px solid #E2620E;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#1A1A18">2</span>
+        <span style="width:48px;height:56px;border-radius:13px;background:#fff;border:1px solid rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#C5C3BC"></span>
+        <span style="width:48px;height:56px;border-radius:13px;background:#fff;border:1px solid rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#C5C3BC"></span>
+      </div>
+      <div style="text-align:center;font-size:12px;color:#9A988F;margin-top:12px">Resend code in <span style="color:#E2620E;font-weight:700">0:24</span></div>
+      <!-- divider -->
+      <div style="display:flex;align-items:center;gap:12px;margin:24px 0"><span style="flex:1;height:1px;background:rgba(0,0,0,0.08)"></span><span style="font-size:11px;color:#9A988F">or continue with</span><span style="flex:1;height:1px;background:rgba(0,0,0,0.08)"></span></div>
+      <div style="display:flex;gap:10px">
+        <div style="flex:1;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:13px;padding:13px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="font-size:15px;font-weight:700;color:#4285F4">G</span><span style="font-size:13.5px;font-weight:600;color:#1A1A18">Google</span></div>
+        <div style="flex:1;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:13px;padding:13px;display:flex;align-items:center;justify-content:center;gap:8px"><span class="ms" style="font-size:18px;color:#7A786F">mail</span><span style="font-size:13.5px;font-weight:600;color:#1A1A18">Email</span></div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ░░░░ MOD-02 ONBOARDING (3 slides) ░░░░ -->
+  <!-- slide 1 — camera flat lay -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:15px">
+  <div style="width:390px;display:flex;align-items:center;gap:12px">
+    <span style="width:26px;height:1.5px;background:#E2620E;display:block"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:#E2620E">MOD-02 · Onboarding 1</span>
+  </div>
+  <div style="width:390px;height:760px;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 44px 100px -32px rgba(20,20,18,0.40),0 0 0 1px rgba(0,0,0,0.04);background:url('assets/onb-camera.jpg') center/cover;display:flex;flex-direction:column">
+    <!-- top + bottom scrim -->
+    <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(20,10,0,0.32) 0%,rgba(20,10,0,0) 26%,rgba(20,10,0,0) 42%,rgba(20,10,0,0.86) 100%)"></div>
+    <div style="position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;padding:15px 26px 4px"><span style="font-size:14px;font-weight:700;color:#fff">9:41</span><div style="display:flex;align-items:center;gap:6px;color:#fff"><span class="ms" style="font-size:16px">signal_cellular_alt</span><span class="ms" style="font-size:16px">wifi</span><span class="ms" style="font-size:18px">battery_full</span></div></div>
+    <div style="position:relative;z-index:1;display:flex;justify-content:flex-end;padding:8px 28px"><span style="font-size:13px;font-weight:600;color:#fff">Skip</span></div>
+    <div style="flex:1"></div>
+    <div style="position:relative;z-index:1;padding:0 34px 30px">
+      <span style="display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.16em;color:#FFD9B8;text-transform:uppercase">For studios &amp; freelancers</span>
+      <div style="font-size:34px;font-weight:800;letter-spacing:-0.035em;color:#fff;line-height:1.04;margin-top:12px;text-shadow:0 2px 16px rgba(0,0,0,0.45)">Every shoot,<br>perfectly organised</div>
+      <div style="font-size:14.5px;color:rgba(255,255,255,0.92);margin-top:12px;line-height:1.6;text-shadow:0 1px 8px rgba(0,0,0,0.5)">Bookings, gear, teams and packages — from first enquiry to final delivery, all in one place.</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:30px">
+        <div style="display:flex;gap:7px"><span style="width:24px;height:7px;border-radius:4px;background:#fff"></span><span style="width:7px;height:7px;border-radius:4px;background:rgba(255,255,255,0.45)"></span><span style="width:7px;height:7px;border-radius:4px;background:rgba(255,255,255,0.45)"></span></div>
+        <span style="width:52px;height:52px;border-radius:50%;background:#E2620E;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 24px -8px rgba(226,98,14,0.7)"><span class="ms" style="font-size:24px;color:#fff">arrow_forward</span></span>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- slide 2 — sunset city -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:15px">
+  <div style="width:390px;display:flex;align-items:center;gap:12px">
+    <span style="width:26px;height:1.5px;background:#E2620E;display:block"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:#E2620E">MOD-02 · Onboarding 2</span>
+  </div>
+  <div style="width:390px;height:760px;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 44px 100px -32px rgba(20,20,18,0.40),0 0 0 1px rgba(0,0,0,0.04);background:url('assets/onb-city.jpg') center/cover;display:flex;flex-direction:column">
+    <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,8,16,0.28) 0%,rgba(10,8,16,0) 24%,rgba(10,8,16,0.1) 44%,rgba(10,8,16,0.9) 100%)"></div>
+    <div style="position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;padding:15px 26px 4px"><span style="font-size:14px;font-weight:700;color:#fff">9:41</span><div style="display:flex;align-items:center;gap:6px;color:#fff"><span class="ms" style="font-size:16px">signal_cellular_alt</span><span class="ms" style="font-size:16px">wifi</span><span class="ms" style="font-size:18px">battery_full</span></div></div>
+    <div style="position:relative;z-index:1;display:flex;justify-content:flex-end;padding:8px 28px"><span style="font-size:13px;font-weight:600;color:#fff">Skip</span></div>
+    <div style="flex:1"></div>
+    <div style="position:relative;z-index:1;padding:0 34px 30px">
+      <span style="display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.16em;color:#FFC98F;text-transform:uppercase">Day &amp; night shifts</span>
+      <div style="font-size:34px;font-weight:800;letter-spacing:-0.035em;color:#fff;line-height:1.04;margin-top:12px;text-shadow:0 2px 16px rgba(0,0,0,0.5)">Never miss<br>a booking again</div>
+      <div style="font-size:14.5px;color:rgba(255,255,255,0.92);margin-top:12px;line-height:1.6;text-shadow:0 1px 8px rgba(0,0,0,0.55)">Smart calendar with conflict detection, weather alerts for outdoor shoots, and reminders that work offline.</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:30px">
+        <div style="display:flex;gap:7px"><span style="width:7px;height:7px;border-radius:4px;background:rgba(255,255,255,0.45)"></span><span style="width:24px;height:7px;border-radius:4px;background:#fff"></span><span style="width:7px;height:7px;border-radius:4px;background:rgba(255,255,255,0.45)"></span></div>
+        <span style="width:52px;height:52px;border-radius:50%;background:#E2620E;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 24px -8px rgba(226,98,14,0.7)"><span class="ms" style="font-size:24px;color:#fff">arrow_forward</span></span>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- slide 3 — clock wall + lang select -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:15px">
+  <div style="width:390px;display:flex;align-items:center;gap:12px">
+    <span style="width:26px;height:1.5px;background:#E2620E;display:block"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:#E2620E">MOD-02 · Onboarding 3</span>
+  </div>
+  <div style="width:390px;height:760px;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 44px 100px -32px rgba(20,20,18,0.40),0 0 0 1px rgba(0,0,0,0.04);background:url('assets/onb-clock.jpg') center/cover;display:flex;flex-direction:column">
+    <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(60,22,4,0.18) 0%,rgba(60,22,4,0) 30%,rgba(40,14,2,0.55) 68%,rgba(30,10,1,0.92) 100%)"></div>
+    <div style="position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;padding:15px 26px 4px"><span style="font-size:14px;font-weight:700;color:#fff">9:41</span><div style="display:flex;align-items:center;gap:6px;color:#fff"><span class="ms" style="font-size:16px">signal_cellular_alt</span><span class="ms" style="font-size:16px">wifi</span><span class="ms" style="font-size:18px">battery_full</span></div></div>
+    <div style="flex:1"></div>
+    <div style="position:relative;z-index:1;padding:0 34px 30px">
+      <span style="display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.16em;color:#FFD9B8;text-transform:uppercase">On time, every time</span>
+      <div style="font-size:34px;font-weight:800;letter-spacing:-0.035em;color:#fff;line-height:1.04;margin-top:12px;text-shadow:0 2px 16px rgba(0,0,0,0.5)">Get paid faster,<br>track every taka</div>
+      <div style="font-size:14.5px;color:rgba(255,255,255,0.92);margin-top:12px;line-height:1.6;text-shadow:0 1px 8px rgba(0,0,0,0.55)">Auto invoices, advance &amp; due tracking and bKash payouts — your studio finances, always clear.</div>
+      <!-- lang select -->
+      <div style="display:flex;gap:10px;margin-top:24px">
+        <div style="flex:1;background:#fff;border-radius:13px;padding:13px;text-align:center;font-size:13.5px;font-weight:700;color:#1A1A18">English</div>
+        <div style="flex:1;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.4);border-radius:13px;padding:13px;text-align:center;font-size:13.5px;font-weight:600;color:#fff;backdrop-filter:blur(4px)">বাংলা</div>
+      </div>
+      <!-- get started -->
+      <div style="background:#E2620E;border-radius:14px;padding:15px;text-align:center;margin-top:11px;box-shadow:0 14px 28px -10px rgba(226,98,14,0.7)"><span style="font-size:15px;font-weight:700;color:#fff">Get Started</span></div>
+      <div style="display:flex;justify-content:center;margin-top:18px"><div style="display:flex;gap:7px"><span style="width:7px;height:7px;border-radius:4px;background:rgba(255,255,255,0.45)"></span><span style="width:7px;height:7px;border-radius:4px;background:rgba(255,255,255,0.45)"></span><span style="width:24px;height:7px;border-radius:4px;background:#fff"></span></div></div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ░░░░ MOD-12 CALENDAR ░░░░ -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:15px">
+  <div style="width:390px;display:flex;align-items:center;gap:12px">
+    <span style="width:26px;height:1.5px;background:#E2620E;display:block"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:#E2620E">MOD-12 · Calendar</span>
+  </div>
+  <div style="width:390px;background:#F4F3EF;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 44px 100px -32px rgba(20,20,18,0.40),0 0 0 1px rgba(0,0,0,0.04)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 26px 4px"><span style="font-size:14px;font-weight:700;color:#1A1A18">9:41</span><div style="display:flex;align-items:center;gap:6px;color:#1A1A18"><span class="ms" style="font-size:16px">signal_cellular_alt</span><span class="ms" style="font-size:16px">wifi</span><span class="ms" style="font-size:18px">battery_full</span></div></div>
+    <div style="padding:8px 18px 0">
+      <div style="display:flex;align-items:center"><span class="ms" style="font-size:24px;color:#1A1A18">arrow_back</span><span style="font-size:20px;font-weight:800;letter-spacing:-0.02em;color:#1A1A18;margin-left:12px">Calendar</span><span style="flex:1"></span><div style="display:flex;background:#EAE8E2;border-radius:10px;padding:3px;gap:3px"><span style="font-size:11px;font-weight:700;color:#fff;background:#E2620E;border-radius:7px;padding:5px 10px">Month</span><span style="font-size:11px;font-weight:600;color:#7A786F;padding:5px 10px">Week</span><span style="font-size:11px;font-weight:600;color:#7A786F;padding:5px 10px">Day</span></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px"><span class="ms" style="font-size:22px;color:#7A786F">chevron_left</span><span style="font-size:16px;font-weight:800;color:#1A1A18">April 2026</span><span class="ms" style="font-size:22px;color:#7A786F">chevron_right</span></div>
+    </div>
+    <!-- weekday header -->
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:0;padding:14px 18px 6px">
+      <span style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#A3A199">S</span><span style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#A3A199">M</span><span style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#A3A199">T</span><span style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#A3A199">W</span><span style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#A3A199">T</span><span style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#A3A199">F</span><span style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#A3A199">S</span>
+    </div>
+    <!-- grid -->
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;padding:0 18px 12px">
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#C5C3BC">29</div>
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#C5C3BC">30</div>
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#1A1A18">1</div>
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#1A1A18">2<span style="display:flex;gap:2px"><span style="width:4px;height:4px;border-radius:50%;background:#C99A2E"></span></span></div>
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#1A1A18">3</div>
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#1A1A18">4<span style="display:flex;gap:2px"><span style="width:4px;height:4px;border-radius:50%;background:#6D5BD0"></span></span></div>
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#1A1A18">5</div>
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#1A1A18">6</div>
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#1A1A18">7</div>
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#1A1A18">8</div>
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#1A1A18">9</div>
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#1A1A18">10</div>
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#1A1A18">11<span style="display:flex;gap:2px"><span style="width:4px;height:4px;border-radius:50%;background:#C99A2E"></span></span></div>
+      <div style="aspect-ratio:1;border-radius:12px;background:#E2620E;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;font-weight:800;color:#fff;box-shadow:0 8px 16px -6px rgba(226,98,14,0.55)">12<span style="display:flex;gap:2px"><span style="width:4px;height:4px;border-radius:50%;background:#fff"></span><span style="width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,0.6)"></span></span></div>
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#1A1A18">13</div>
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#1A1A18">14<span style="display:flex;gap:2px"><span style="width:4px;height:4px;border-radius:50%;background:#C99A2E"></span><span style="width:4px;height:4px;border-radius:50%;background:#6D5BD0"></span></span></div>
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#1A1A18">15<span style="display:flex;gap:2px"><span style="width:4px;height:4px;border-radius:50%;background:#C99A2E"></span></span></div>
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#1A1A18">16</div>
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#1A1A18">17</div>
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#1A1A18">18<span style="display:flex;gap:2px"><span style="width:4px;height:4px;border-radius:50%;background:#6D5BD0"></span></span></div>
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#1A1A18">19</div>
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#1A1A18">20</div>
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#1A1A18">21</div>
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#1A1A18">22</div>
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#1A1A18">23</div>
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#1A1A18">24</div>
+      <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:#1A1A18">25</div>
+    </div>
+    <!-- day agenda -->
+    <div style="padding:4px 18px 20px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px"><span style="font-size:13px;font-weight:700;color:#1A1A18">Sat, Apr 12</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#9A988F">· 2 events</span></div>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-left:3px solid #C99A2E;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:11px"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#C99A2E;width:42px">12–5</span><div style="flex:1"><div style="font-size:13px;font-weight:700;color:#1A1A18">Tahmina &amp; Arif</div><div style="font-size:11px;color:#9A988F">Wedding · Gulshan</div></div></div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-left:3px solid #6D5BD0;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:11px"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#6D5BD0;width:42px">6–11</span><div style="flex:1"><div style="font-size:13px;font-weight:700;color:#1A1A18">Reza &amp; Mim</div><div style="font-size:11px;color:#9A988F">Reception · Banani</div></div></div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ░░░░ MOD-14 INVOICE ░░░░ -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:15px">
+  <div style="width:390px;display:flex;align-items:center;gap:12px">
+    <span style="width:26px;height:1.5px;background:#E2620E;display:block"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:#E2620E">MOD-14 · Invoice Sheet</span>
+  </div>
+  <div style="width:390px;background:#F4F3EF;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 44px 100px -32px rgba(20,20,18,0.40),0 0 0 1px rgba(0,0,0,0.04)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 26px 4px"><span style="font-size:14px;font-weight:700;color:#1A1A18">9:41</span><div style="display:flex;align-items:center;gap:6px;color:#1A1A18"><span class="ms" style="font-size:16px">signal_cellular_alt</span><span class="ms" style="font-size:16px">wifi</span><span class="ms" style="font-size:18px">battery_full</span></div></div>
+    <div style="display:flex;align-items:center;gap:12px;padding:6px 18px 14px"><span class="ms" style="font-size:24px;color:#1A1A18">close</span><span style="font-size:18px;font-weight:800;letter-spacing:-0.02em;color:#1A1A18">Invoice</span><span style="flex:1"></span><div style="display:flex;background:#EAE8E2;border-radius:9px;padding:3px;gap:3px"><span style="font-size:11px;font-weight:700;color:#fff;background:#E2620E;border-radius:6px;padding:4px 11px">EN</span><span style="font-size:11px;font-weight:600;color:#7A786F;padding:4px 11px">বাং</span></div></div>
+    <div style="padding:0 18px 16px">
+      <!-- invoice paper -->
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:18px;padding:22px 20px;box-shadow:0 12px 30px -16px rgba(0,0,0,0.18)">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;padding-bottom:16px;border-bottom:2px solid #E2620E">
+          <div><div style="font-size:17px;font-weight:800;color:#1A1A18">Clicker Studio</div><div style="font-size:11px;color:#9A988F;margin-top:2px">+880 1819-200300</div></div>
+          <div style="text-align:right"><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#E2620E">INVOICE</div><div style="font-size:12px;font-weight:700;color:#1A1A18;margin-top:3px">#INV-0042</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:16px">
+          <div><div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.1em;color:#A3A199">CLIENT</div><div style="font-size:13px;font-weight:700;color:#1A1A18;margin-top:3px">Tahmina &amp; Arif</div><div style="font-size:11px;color:#9A988F">+880 1712-345678</div></div>
+          <div><div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.1em;color:#A3A199">DATE / EVENT</div><div style="font-size:13px;font-weight:700;color:#1A1A18;margin-top:3px">Apr 12 · Wedding</div><div style="font-size:11px;color:#9A988F">Gulshan Center</div></div>
+        </div>
+        <!-- team -->
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(0,0,0,0.07)">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.1em;color:#A3A199;margin-bottom:8px">TEAM</div>
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#3A3A36;margin-bottom:4px"><span>Karim Uddin · Photographer</span><span style="color:#9A988F">01712-100200</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#3A3A36"><span>Sumon Das · Cinematographer</span><span style="color:#9A988F">01712-300400</span></div>
+        </div>
+        <!-- line -->
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(0,0,0,0.07)">
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#1A1A18;margin-bottom:9px"><span>Premium Wedding Package</span><span style="font-weight:700">৳85,000</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:#7A786F;margin-bottom:9px"><span>VAT (15%)</span><span>৳12,750</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:#2F8F6B;margin-bottom:12px"><span>Advance paid</span><span>− ৳30,000</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:2px solid #E2620E"><span style="font-size:14px;font-weight:700;color:#1A1A18">Due</span><span style="font-size:20px;font-weight:800;color:#C0392B">৳67,750</span></div>
+        </div>
+      </div>
+      <!-- actions -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-top:14px">
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:13px;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:6px"><span class="ms" style="font-size:20px;color:#7A786F">content_copy</span><span style="font-size:11px;font-weight:600;color:#1A1A18">Copy</span></div>
+        <div style="background:#E7F5EE;border:1px solid rgba(47,143,107,0.2);border-radius:13px;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:6px"><span class="ms" style="font-size:20px;color:#2F8F6B">chat</span><span style="font-size:11px;font-weight:600;color:#2F8F6B">WhatsApp</span></div>
+        <div style="background:#E2620E;border-radius:13px;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;box-shadow:0 10px 20px -10px rgba(226,98,14,0.55)"><span class="ms" style="font-size:20px;color:#fff">picture_as_pdf</span><span style="font-size:11px;font-weight:600;color:#fff">PDF</span></div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ░░░░ MOD-08 TEAM MANAGEMENT ░░░░ -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:15px">
+  <div style="width:390px;display:flex;align-items:center;gap:12px">
+    <span style="width:26px;height:1.5px;background:#E2620E;display:block"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:#E2620E">MOD-08 · Team Management</span>
+  </div>
+  <div style="width:390px;background:#F4F3EF;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 44px 100px -32px rgba(20,20,18,0.40),0 0 0 1px rgba(0,0,0,0.04)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 26px 4px"><span style="font-size:14px;font-weight:700;color:#1A1A18">9:41</span><div style="display:flex;align-items:center;gap:6px;color:#1A1A18"><span class="ms" style="font-size:16px">signal_cellular_alt</span><span class="ms" style="font-size:16px">wifi</span><span class="ms" style="font-size:18px">battery_full</span></div></div>
+    <div style="display:flex;align-items:center;gap:12px;padding:6px 18px 14px"><span class="ms" style="font-size:24px;color:#1A1A18">arrow_back</span><span style="font-size:20px;font-weight:800;letter-spacing:-0.02em;color:#1A1A18">Team</span><span style="flex:1"></span><span style="display:inline-flex;align-items:center;gap:5px;background:#E2620E;color:#fff;font-size:12.5px;font-weight:700;padding:8px 14px;border-radius:11px"><span class="ms" style="font-size:17px">person_add</span>Invite</span></div>
+    <div style="padding:0 18px 20px">
+      <!-- invite methods -->
+      <div style="display:flex;gap:9px;margin-bottom:18px">
+        <div style="flex:1;background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:13px;padding:13px 8px;display:flex;flex-direction:column;align-items:center;gap:7px"><span class="ms" style="font-size:20px;color:#E2620E">pin</span><span style="font-size:11px;font-weight:600;color:#3A3A36">Passcode</span></div>
+        <div style="flex:1;background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:13px;padding:13px 8px;display:flex;flex-direction:column;align-items:center;gap:7px"><span class="ms" style="font-size:20px;color:#E2620E">link</span><span style="font-size:11px;font-weight:600;color:#3A3A36">Link</span></div>
+        <div style="flex:1;background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:13px;padding:13px 8px;display:flex;flex-direction:column;align-items:center;gap:7px"><span class="ms" style="font-size:20px;color:#E2620E">edit_note</span><span style="font-size:11px;font-weight:600;color:#3A3A36">Manual</span></div>
+      </div>
+      <!-- role group: managers -->
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:10px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#1A1A18;font-weight:600">MANAGERS · 1</span></div>
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:11px;margin-bottom:18px"><span style="width:40px;height:40px;border-radius:50%;background:#FBEBDE;color:#B84E0A;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">MA</span><div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:#1A1A18">Mahmud Alam</div><div style="font-size:11px;color:#9A988F">+880 1711-900800</div></div><span style="background:#FBEBDE;color:#B84E0A;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;padding:3px 8px;border-radius:7px">MANAGER</span></div>
+      <!-- photographers -->
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:10px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#1A1A18;font-weight:600">PHOTOGRAPHERS · 3</span></div>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:11px"><span style="width:40px;height:40px;border-radius:50%;background:#E7F5EE;color:#2F8F6B;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">KU</span><div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:#1A1A18">Karim Uddin <span class="ms" style="font-size:13px;color:#C99A2E;vertical-align:-2px;font-variation-settings:'FILL' 1">star</span></div><div style="font-size:11px;color:#9A988F">12 events · ⭐ Chief eligible</div></div><span class="ms" style="font-size:20px;color:#C5C3BC">more_vert</span></div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:11px"><span style="width:40px;height:40px;border-radius:50%;background:#E7F5EE;color:#2F8F6B;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">RA</span><div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:#1A1A18">Rafi Ahmed</div><div style="font-size:11px;color:#9A988F">8 events</div></div><span class="ms" style="font-size:20px;color:#C5C3BC">more_vert</span></div>
+      </div>
+      <!-- freelancers -->
+      <div style="display:flex;align-items:center;gap:7px;margin:18px 0 10px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#1A1A18;font-weight:600">FREELANCERS · 2</span></div>
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:11px"><span style="width:40px;height:40px;border-radius:50%;background:#EEEBFA;color:#5847B0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">SD</span><div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:#1A1A18">Sumon Das</div><div style="font-size:11px;color:#9A988F">Cinematographer · freelance</div></div><span style="background:#EEEBFA;color:#5847B0;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;padding:3px 8px;border-radius:7px">FL</span></div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ░░░░ MOD-40 TEAM CHAT ░░░░ -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:15px">
+  <div style="width:390px;display:flex;align-items:center;gap:12px">
+    <span style="width:26px;height:1.5px;background:#E2620E;display:block"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:#E2620E">MOD-40 · Team Chat</span>
+  </div>
+  <div style="width:390px;height:760px;background:#F4F3EF;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 44px 100px -32px rgba(20,20,18,0.40),0 0 0 1px rgba(0,0,0,0.04);display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 26px 4px"><span style="font-size:14px;font-weight:700;color:#1A1A18">9:41</span><div style="display:flex;align-items:center;gap:6px;color:#1A1A18"><span class="ms" style="font-size:16px">signal_cellular_alt</span><span class="ms" style="font-size:16px">wifi</span><span class="ms" style="font-size:18px">battery_full</span></div></div>
+    <div style="display:flex;align-items:center;gap:12px;padding:6px 18px 12px;border-bottom:1px solid rgba(0,0,0,0.05);background:#fff"><span class="ms" style="font-size:24px;color:#1A1A18">arrow_back</span><span style="width:36px;height:36px;border-radius:50%;background:#FBEBDE;color:#B84E0A;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">CS</span><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1A1A18">Clicker Studio Team</div><div style="font-size:11px;color:#2F8F6B">Karim typing…</div></div><span class="ms" style="font-size:22px;color:#7A786F">group</span></div>
+    <!-- messages -->
+    <div style="flex:1;padding:16px 18px;display:flex;flex-direction:column;gap:12px;background:#F4F3EF">
+      <div style="text-align:center"><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;color:#A3A199;background:#EAE8E2;padding:3px 10px;border-radius:8px">TODAY</span></div>
+      <!-- incoming -->
+      <div style="display:flex;gap:8px;align-items:flex-end;max-width:80%"><span style="width:26px;height:26px;border-radius:50%;background:#E7F5EE;color:#2F8F6B;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">KU</span><div><div style="font-size:10px;color:#9A988F;margin-bottom:3px;margin-left:2px">Karim</div><div style="background:#fff;border:1px solid rgba(0,0,0,0.05);border-radius:14px 14px 14px 4px;padding:10px 13px;font-size:13.5px;color:#1A1A18">Reaching Gulshan venue by 11:30 for the Tahmina wedding.</div></div></div>
+      <!-- outgoing -->
+      <div style="display:flex;justify-content:flex-end"><div style="max-width:78%"><div style="background:#E2620E;border-radius:14px 14px 4px 14px;padding:10px 13px;font-size:13.5px;color:#fff">Perfect. Sumon will join for the cinematography at 12.</div><div style="font-size:10px;color:#9A988F;text-align:right;margin-top:3px">9:42 · Seen</div></div></div>
+      <!-- incoming -->
+      <div style="display:flex;gap:8px;align-items:flex-end;max-width:80%"><span style="width:26px;height:26px;border-radius:50%;background:#EEEBFA;color:#5847B0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">SD</span><div><div style="font-size:10px;color:#9A988F;margin-bottom:3px;margin-left:2px">Sumon</div><div style="background:#fff;border:1px solid rgba(0,0,0,0.05);border-radius:14px 14px 14px 4px;padding:10px 13px;font-size:13.5px;color:#1A1A18">On my way 👍 Carrying the gimbal and drone.</div></div></div>
+    </div>
+    <!-- composer -->
+    <div style="padding:12px 16px 22px;background:#fff;border-top:1px solid rgba(0,0,0,0.05);display:flex;align-items:center;gap:10px"><span class="ms" style="font-size:24px;color:#9A988F">add_circle</span><div style="flex:1;background:#F4F3EF;border-radius:20px;padding:11px 15px;font-size:13px;color:#9A988F">Message…</div><span style="width:40px;height:40px;border-radius:50%;background:#E2620E;display:flex;align-items:center;justify-content:center"><span class="ms" style="font-size:20px;color:#fff">send</span></span></div>
+  </div>
+  </div>
+
+  <!-- ░░░░ MOD-41 ANNOUNCEMENT BOARD ░░░░ -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:15px">
+  <div style="width:390px;display:flex;align-items:center;gap:12px">
+    <span style="width:26px;height:1.5px;background:#E2620E;display:block"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:#E2620E">MOD-41 · Announcements</span>
+  </div>
+  <div style="width:390px;background:#F4F3EF;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 44px 100px -32px rgba(20,20,18,0.40),0 0 0 1px rgba(0,0,0,0.04)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 26px 4px"><span style="font-size:14px;font-weight:700;color:#1A1A18">9:41</span><div style="display:flex;align-items:center;gap:6px;color:#1A1A18"><span class="ms" style="font-size:16px">signal_cellular_alt</span><span class="ms" style="font-size:16px">wifi</span><span class="ms" style="font-size:18px">battery_full</span></div></div>
+    <div style="display:flex;align-items:center;gap:12px;padding:6px 18px 14px"><span class="ms" style="font-size:24px;color:#1A1A18">arrow_back</span><span style="font-size:20px;font-weight:800;letter-spacing:-0.02em;color:#1A1A18">Announcements</span><span style="flex:1"></span><span style="width:36px;height:36px;border-radius:11px;background:#E2620E;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 16px -8px rgba(226,98,14,0.5)"><span class="ms" style="font-size:20px;color:#fff">add</span></span></div>
+    <div style="padding:0 18px 20px;display:flex;flex-direction:column;gap:12px">
+      <!-- pinned -->
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:16px;padding:16px;position:relative;overflow:hidden">
+        <span style="position:absolute;left:0;top:0;bottom:0;width:3px;background:#E2620E"></span>
+        <div style="display:flex;align-items:center;gap:7px"><span class="ms" style="font-size:15px;color:#E2620E">push_pin</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#E2620E">PINNED</span><span style="flex:1"></span><span style="font-size:10.5px;color:#A3A199">2h ago</span></div>
+        <div style="font-size:15px;font-weight:700;color:#1A1A18;margin-top:9px">Team meeting — Friday 4 PM</div>
+        <div style="font-size:13px;color:#7A786F;line-height:1.55;margin-top:4px">Bring all delivered drives and the updated client list for review. We'll also plan the Eid season schedule.</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid rgba(0,0,0,0.05)">
+          <div style="display:flex;align-items:center;gap:7px"><div style="display:flex"><span style="width:20px;height:20px;border-radius:50%;background:#C99A2E;border:2px solid #fff"></span><span style="width:20px;height:20px;border-radius:50%;background:#6D5BD0;border:2px solid #fff;margin-left:-7px"></span><span style="width:20px;height:20px;border-radius:50%;background:#2F8F6B;border:2px solid #fff;margin-left:-7px"></span></div><span style="font-size:11px;color:#9A988F">8 of 11 read</span></div>
+          <div style="display:flex;align-items:center;gap:5px"><span class="ms" style="font-size:16px;color:#9A988F">chat_bubble_outline</span><span style="font-size:11px;color:#9A988F">3</span></div>
+        </div>
+      </div>
+      <!-- regular -->
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:16px;padding:16px">
+        <div style="display:flex;align-items:center;gap:7px"><span style="width:24px;height:24px;border-radius:50%;background:#FBEBDE;color:#B84E0A;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">RH</span><span style="font-size:12px;font-weight:600;color:#1A1A18">Rezaul Haque</span><span style="flex:1"></span><span style="font-size:10.5px;color:#A3A199">Yesterday</span></div>
+        <div style="font-size:14px;font-weight:700;color:#1A1A18;margin-top:10px">New price list effective May 1</div>
+        <div style="font-size:13px;color:#7A786F;line-height:1.55;margin-top:4px">Premium package goes up by ৳5,000. Update your quotes accordingly.</div>
+        <div style="display:flex;align-items:center;gap:7px;margin-top:12px"><span style="font-size:11px;color:#2F8F6B;font-weight:600">All read ✓</span></div>
+      </div>
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:16px;padding:16px">
+        <div style="display:flex;align-items:center;gap:7px"><span style="width:24px;height:24px;border-radius:50%;background:#FBEBDE;color:#B84E0A;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">RH</span><span style="font-size:12px;font-weight:600;color:#1A1A18">Rezaul Haque</span><span style="flex:1"></span><span style="font-size:10.5px;color:#A3A199">3d ago</span></div>
+        <div style="font-size:14px;font-weight:700;color:#1A1A18;margin-top:10px">Studio closed for Eid · Apr 12–14</div>
+        <div style="font-size:13px;color:#7A786F;line-height:1.55;margin-top:4px">Only confirmed outdoor shoots will run. Enjoy the holidays!</div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ░░░░ MOD-18/54 EXPENSE + PETTY CASH ░░░░ -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:15px">
+  <div style="width:390px;display:flex;align-items:center;gap:12px">
+    <span style="width:26px;height:1.5px;background:#E2620E;display:block"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:#E2620E">MOD-18 / 54 · Expense &amp; Petty Cash</span>
+  </div>
+  <div style="width:390px;background:#F4F3EF;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 44px 100px -32px rgba(20,20,18,0.40),0 0 0 1px rgba(0,0,0,0.04)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 26px 4px"><span style="font-size:14px;font-weight:700;color:#1A1A18">9:41</span><div style="display:flex;align-items:center;gap:6px;color:#1A1A18"><span class="ms" style="font-size:16px">signal_cellular_alt</span><span class="ms" style="font-size:16px">wifi</span><span class="ms" style="font-size:18px">battery_full</span></div></div>
+    <div style="display:flex;align-items:center;gap:12px;padding:6px 18px 14px"><span class="ms" style="font-size:24px;color:#1A1A18">arrow_back</span><span style="font-size:20px;font-weight:800;letter-spacing:-0.02em;color:#1A1A18">Expenses</span><span style="flex:1"></span><span class="ms" style="font-size:23px;color:#3A3A36">picture_as_pdf</span></div>
+    <div style="padding:0 18px 20px">
+      <!-- petty cash balance -->
+      <div style="background:#1A1A18;border-radius:18px;padding:18px;color:#fff;position:relative;overflow:hidden">
+        <div style="position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:rgba(226,98,14,0.16)"></div>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.16em;color:rgba(255,255,255,0.6)">PETTY CASH BALANCE</span>
+        <div style="font-size:32px;font-weight:800;letter-spacing:-0.03em;margin-top:6px">৳4,250</div>
+        <div style="display:flex;gap:18px;margin-top:12px"><div><div style="font-size:10px;color:rgba(255,255,255,0.55)">OPENING</div><div style="font-size:13px;font-weight:700;margin-top:2px">৳10,000</div></div><div><div style="font-size:10px;color:rgba(255,255,255,0.55)">SPENT</div><div style="font-size:13px;font-weight:700;margin-top:2px;color:#F2A65A">৳5,750</div></div></div>
+      </div>
+      <!-- category chips -->
+      <div style="display:flex;gap:7px;margin-top:14px;flex-wrap:wrap">
+        <span style="background:#E2620E;color:#fff;border-radius:20px;padding:6px 13px;font-size:11.5px;font-weight:700">All</span>
+        <span style="background:#fff;border:1px solid rgba(0,0,0,0.1);color:#7A786F;border-radius:20px;padding:6px 13px;font-size:11.5px;font-weight:600">Transport</span>
+        <span style="background:#fff;border:1px solid rgba(0,0,0,0.1);color:#7A786F;border-radius:20px;padding:6px 13px;font-size:11.5px;font-weight:600">Food</span>
+        <span style="background:#fff;border:1px solid rgba(0,0,0,0.1);color:#7A786F;border-radius:20px;padding:6px 13px;font-size:11.5px;font-weight:600">Print</span>
+        <span style="background:#fff;border:1px solid rgba(0,0,0,0.1);color:#7A786F;border-radius:20px;padding:6px 13px;font-size:11.5px;font-weight:600">Misc</span>
+      </div>
+      <!-- list -->
+      <div style="display:flex;flex-direction:column;gap:9px;margin-top:16px">
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:12px"><span style="width:38px;height:38px;border-radius:11px;background:#EEEBFA;display:flex;align-items:center;justify-content:center"><span class="ms" style="font-size:19px;color:#5847B0">local_taxi</span></span><div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:#1A1A18">Rickshaw to Gulshan</div><div style="font-size:11px;color:#9A988F">Transport · Tahmina event</div></div><div style="text-align:right"><div style="font-size:14px;font-weight:800;color:#C0392B">৳180</div><div style="font-size:10px;color:#9A988F">Apr 12</div></div></div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:12px"><span style="width:38px;height:38px;border-radius:11px;background:#FBEBDE;display:flex;align-items:center;justify-content:center"><span class="ms" style="font-size:19px;color:#B84E0A">restaurant</span></span><div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:#1A1A18">Team lunch</div><div style="font-size:11px;color:#9A988F">Food · 4 people</div></div><div style="text-align:right"><div style="font-size:14px;font-weight:800;color:#C0392B">৳1,200</div><div style="font-size:10px;color:#9A988F">Apr 12</div></div></div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:12px"><span style="width:38px;height:38px;border-radius:11px;background:#E7F5EE;display:flex;align-items:center;justify-content:center"><span class="ms" style="font-size:19px;color:#2F8F6B">print</span></span><div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:#1A1A18">Album printing</div><div style="font-size:11px;color:#9A988F">Print · Reza album <span class="ms" style="font-size:12px;color:#E2620E;vertical-align:-2px">attach_file</span></div></div><div style="text-align:right"><div style="font-size:14px;font-weight:800;color:#C0392B">৳3,500</div><div style="font-size:10px;color:#9A988F">Apr 10</div></div></div>
+      </div>
+    </div>
+    <!-- add FAB inline -->
+    <div style="padding:0 18px 22px"><div style="background:#E2620E;border-radius:14px;padding:14px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 12px 24px -10px rgba(226,98,14,0.55)"><span class="ms" style="font-size:20px;color:#fff">add</span><span style="font-size:14px;font-weight:700;color:#fff">Add Expense</span></div></div>
+  </div>
+  </div>
+
+  <!-- ░░░░ MOD-16 FREELANCER PAYOUT ░░░░ -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:15px">
+  <div style="width:390px;display:flex;align-items:center;gap:12px">
+    <span style="width:26px;height:1.5px;background:#E2620E;display:block"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:#E2620E">MOD-16 · Freelancer Payout</span>
+  </div>
+  <div style="width:390px;background:#F4F3EF;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 44px 100px -32px rgba(20,20,18,0.40),0 0 0 1px rgba(0,0,0,0.04)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 26px 4px"><span style="font-size:14px;font-weight:700;color:#1A1A18">9:41</span><div style="display:flex;align-items:center;gap:6px;color:#1A1A18"><span class="ms" style="font-size:16px">signal_cellular_alt</span><span class="ms" style="font-size:16px">wifi</span><span class="ms" style="font-size:18px">battery_full</span></div></div>
+    <div style="display:flex;align-items:center;gap:12px;padding:6px 18px 14px"><span class="ms" style="font-size:24px;color:#1A1A18">arrow_back</span><span style="font-size:20px;font-weight:800;letter-spacing:-0.02em;color:#1A1A18">Payout</span></div>
+    <div style="padding:0 18px 20px">
+      <!-- earnings hero -->
+      <div style="background:#E2620E;border-radius:18px;padding:18px;color:#fff;position:relative;overflow:hidden">
+        <div style="position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.07)"></div>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.16em;color:rgba(255,255,255,0.72)">AVAILABLE TO REQUEST</span>
+        <div style="font-size:32px;font-weight:800;letter-spacing:-0.03em;margin-top:6px">৳18,500</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.82);margin-top:3px">From 5 completed events</div>
+      </div>
+      <!-- payout method -->
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#A3A199;display:block;margin:18px 0 9px">Payout Method</span>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <div style="background:#fff;border:1.5px solid #E2620E;border-radius:14px;padding:13px 15px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 18px -10px rgba(226,98,14,0.4)"><span style="width:38px;height:38px;border-radius:11px;background:#FDE7EE;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#E2136C">bK</span><div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:#1A1A18">bKash</div><div style="font-size:11px;color:#9A988F">01712-•••678</div></div><span class="ms" style="font-size:21px;color:#E2620E;font-variation-settings:'FILL' 1">radio_button_checked</span></div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:14px;padding:13px 15px;display:flex;align-items:center;gap:12px"><span style="width:38px;height:38px;border-radius:11px;background:#FCE9D9;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#ED7D2B">Ng</span><div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:#1A1A18">Nagad</div><div style="font-size:11px;color:#9A988F">Not added</div></div><span class="ms" style="font-size:21px;color:#C5C3BC">radio_button_unchecked</span></div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:14px;padding:13px 15px;display:flex;align-items:center;gap:12px"><span style="width:38px;height:38px;border-radius:11px;background:#E7F5EE;display:flex;align-items:center;justify-content:center"><span class="ms" style="font-size:19px;color:#2F8F6B">account_balance</span></span><div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:#1A1A18">Bank Transfer</div><div style="font-size:11px;color:#9A988F">City Bank · ••4521</div></div><span class="ms" style="font-size:21px;color:#C5C3BC">radio_button_unchecked</span></div>
+      </div>
+      <!-- breakdown -->
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#A3A199;display:block;margin:18px 0 9px">Earnings Breakdown</span>
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:14px;padding:6px 15px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid rgba(0,0,0,0.05)"><div><div style="font-size:13px;font-weight:600;color:#1A1A18">Tahmina Wedding</div><div style="font-size:10.5px;color:#9A988F">Apr 12 · Cinematography</div></div><span style="font-size:13.5px;font-weight:700;color:#2F8F6B">৳5,000</span></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid rgba(0,0,0,0.05)"><div><div style="font-size:13px;font-weight:600;color:#1A1A18">Reza Reception</div><div style="font-size:10.5px;color:#9A988F">Apr 9 · Cinematography</div></div><span style="font-size:13.5px;font-weight:700;color:#2F8F6B">৳4,500</span></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0"><div><div style="font-size:13px;font-weight:600;color:#1A1A18">Imran Corporate</div><div style="font-size:10.5px;color:#9A988F">Apr 5 · Photography</div></div><span style="font-size:13.5px;font-weight:700;color:#2F8F6B">৳9,000</span></div>
+      </div>
+      <!-- pending request -->
+      <div style="display:flex;align-items:center;gap:9px;background:#FFF6E8;border:1px solid rgba(201,154,46,0.3);border-radius:13px;padding:12px 14px;margin-top:14px"><span class="ms" style="font-size:18px;color:#C99A2E">hourglass_top</span><span style="font-size:12px;color:#8A6A18;flex:1">৳3,000 requested Apr 8 — awaiting Owner approval</span></div>
+    </div>
+    <div style="padding:0 18px 22px"><div style="background:#E2620E;border-radius:14px;padding:15px;text-align:center;box-shadow:0 12px 24px -10px rgba(226,98,14,0.55)"><span style="font-size:15px;font-weight:700;color:#fff">Request ৳18,500 Payout</span></div></div>
+  </div>
+  </div>
+
+  <!-- ░░░░ MOD-53 CASH FLOW TIMELINE ░░░░ -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:15px">
+  <div style="width:390px;display:flex;align-items:center;gap:12px">
+    <span style="width:26px;height:1.5px;background:#E2620E;display:block"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:#E2620E">MOD-53 · Cash Flow Timeline</span>
+  </div>
+  <div style="width:390px;background:#F4F3EF;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 44px 100px -32px rgba(20,20,18,0.40),0 0 0 1px rgba(0,0,0,0.04)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 26px 4px"><span style="font-size:14px;font-weight:700;color:#1A1A18">9:41</span><div style="display:flex;align-items:center;gap:6px;color:#1A1A18"><span class="ms" style="font-size:16px">signal_cellular_alt</span><span class="ms" style="font-size:16px">wifi</span><span class="ms" style="font-size:18px">battery_full</span></div></div>
+    <div style="display:flex;align-items:center;gap:12px;padding:6px 18px 14px"><span class="ms" style="font-size:24px;color:#1A1A18">arrow_back</span><span style="font-size:20px;font-weight:800;letter-spacing:-0.02em;color:#1A1A18">Cash Flow</span><span style="flex:1"></span><span class="ms" style="font-size:23px;color:#3A3A36">picture_as_pdf</span></div>
+    <div style="padding:0 18px 20px">
+      <div style="font-size:13px;color:#7A786F;line-height:1.5">Projected income vs expense — next 3 months</div>
+      <!-- legend -->
+      <div style="display:flex;gap:16px;margin-top:14px">
+        <div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:3px;background:#E2620E"></span><span style="font-size:11px;color:#7A786F">Confirmed</span></div>
+        <div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:3px;background:#F6D9C4"></span><span style="font-size:11px;color:#7A786F">Pending</span></div>
+        <div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:3px;background:#C0392B"></span><span style="font-size:11px;color:#7A786F">Expense</span></div>
+      </div>
+      <!-- chart -->
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:18px;padding:18px 16px;margin-top:14px">
+        <div style="display:flex;align-items:flex-end;justify-content:space-around;height:150px;gap:18px">
+          <!-- APR -->
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;height:100%;justify-content:flex-end">
+            <div style="display:flex;gap:4px;align-items:flex-end;height:100%">
+              <div style="width:16px;display:flex;flex-direction:column;justify-content:flex-end;height:100%"><span style="height:46%;background:#F6D9C4;border-radius:4px 4px 0 0"></span><span style="height:42%;background:#E2620E;border-radius:0 0 4px 4px"></span></div>
+              <span style="width:16px;height:30%;background:#C0392B;border-radius:4px;align-self:flex-end"></span>
+            </div>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#9A988F">APR</span>
+          </div>
+          <!-- MAY -->
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;height:100%;justify-content:flex-end">
+            <div style="display:flex;gap:4px;align-items:flex-end;height:100%">
+              <div style="width:16px;display:flex;flex-direction:column;justify-content:flex-end;height:100%"><span style="height:60%;background:#F6D9C4;border-radius:4px 4px 0 0"></span><span style="height:30%;background:#E2620E;border-radius:0 0 4px 4px"></span></div>
+              <span style="width:16px;height:34%;background:#C0392B;border-radius:4px;align-self:flex-end"></span>
+            </div>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#9A988F">MAY</span>
+          </div>
+          <!-- JUN -->
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;height:100%;justify-content:flex-end">
+            <div style="display:flex;gap:4px;align-items:flex-end;height:100%">
+              <div style="width:16px;display:flex;flex-direction:column;justify-content:flex-end;height:100%"><span style="height:78%;background:#F6D9C4;border-radius:4px 4px 0 0"></span><span style="height:18%;background:#E2620E;border-radius:0 0 4px 4px"></span></div>
+              <span style="width:16px;height:28%;background:#C0392B;border-radius:4px;align-self:flex-end"></span>
+            </div>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#9A988F">JUN</span>
+          </div>
+        </div>
+      </div>
+      <!-- summary -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:14px;padding:14px"><div style="font-size:9px;color:#9A988F;font-family:'IBM Plex Mono',monospace">PROJECTED IN</div><div style="font-size:18px;font-weight:800;color:#2F8F6B;margin-top:4px">৳5,40,000</div></div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:14px;padding:14px"><div style="font-size:9px;color:#9A988F;font-family:'IBM Plex Mono',monospace">PROJECTED OUT</div><div style="font-size:18px;font-weight:800;color:#C0392B;margin-top:4px">৳1,65,000</div></div>
+      </div>
+      <div style="background:#1A1A18;border-radius:16px;padding:16px 18px;margin-top:12px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:13px;color:rgba(255,255,255,0.7)">Net projection</span><span style="font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.02em">+৳3,75,000</span></div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ░░░░ MOD-13 CLIENT SELF-BOOKING ░░░░ -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:15px">
+  <div style="width:390px;display:flex;align-items:center;gap:12px">
+    <span style="width:26px;height:1.5px;background:#E2620E;display:block"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:#E2620E">MOD-13 · Client Self-Booking</span>
+  </div>
+  <div style="width:390px;background:#F4F3EF;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 44px 100px -32px rgba(20,20,18,0.40),0 0 0 1px rgba(0,0,0,0.04)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 26px 4px"><span style="font-size:14px;font-weight:700;color:#1A1A18">9:41</span><div style="display:flex;align-items:center;gap:6px;color:#1A1A18"><span class="ms" style="font-size:16px">signal_cellular_alt</span><span class="ms" style="font-size:16px">wifi</span><span class="ms" style="font-size:18px">battery_full</span></div></div>
+    <!-- public studio header -->
+    <div style="text-align:center;padding:12px 18px 18px">
+      <span style="width:56px;height:56px;border-radius:18px;background:linear-gradient(135deg,#E2620E,#B84E0A);display:inline-flex;align-items:center;justify-content:center;box-shadow:0 14px 28px -10px rgba(226,98,14,0.5)"><span class="ms" style="font-size:30px;color:#fff;font-variation-settings:'FILL' 1">photo_camera</span></span>
+      <div style="font-size:19px;font-weight:800;letter-spacing:-0.02em;color:#1A1A18;margin-top:12px">Clicker Studio</div>
+      <div style="font-size:12.5px;color:#9A988F;margin-top:2px">Request a booking — we'll confirm within 24h</div>
+    </div>
+    <div style="padding:0 18px 20px">
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:18px;padding:18px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#A3A199;display:block;margin-bottom:7px">Your Name *</span>
+        <div style="background:#F7F6F2;border:1px solid rgba(0,0,0,0.06);border-radius:12px;padding:12px 14px;font-size:13.5px;color:#1A1A18">Farhana Karim</div>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#A3A199;display:block;margin:14px 0 7px">Phone *</span>
+        <div style="background:#F7F6F2;border:1px solid rgba(0,0,0,0.06);border-radius:12px;padding:12px 14px;font-size:13.5px;color:#1A1A18">+880 1815-667788</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:14px">
+          <div><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#A3A199;display:block;margin-bottom:7px">Date *</span><div style="background:#F7F6F2;border:1px solid rgba(0,0,0,0.06);border-radius:12px;padding:12px 14px;font-size:13px;color:#1A1A18">May 18</div></div>
+          <div><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#A3A199;display:block;margin-bottom:7px">Shift *</span><div style="display:flex;gap:5px"><span style="flex:1;text-align:center;font-size:11.5px;font-weight:700;color:#fff;background:#C99A2E;border-radius:10px;padding:11px 0">Day</span><span style="flex:1;text-align:center;font-size:11.5px;font-weight:600;color:#7A786F;background:#F7F6F2;border:1px solid rgba(0,0,0,0.06);border-radius:10px;padding:11px 0">Night</span></div></div>
+        </div>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#A3A199;display:block;margin:14px 0 9px">Event Type</span>
+        <div style="display:flex;flex-wrap:wrap;gap:7px"><span style="background:#E2620E;color:#fff;border-radius:9px;padding:7px 13px;font-size:12px;font-weight:600">Wedding</span><span style="background:#F7F6F2;border:1px solid rgba(0,0,0,0.08);color:#3A3A36;border-radius:9px;padding:7px 13px;font-size:12px;font-weight:600">Holud</span><span style="background:#F7F6F2;border:1px solid rgba(0,0,0,0.08);color:#3A3A36;border-radius:9px;padding:7px 13px;font-size:12px;font-weight:600">Portrait</span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:14px;justify-content:center"><span class="ms" style="font-size:15px;color:#9A988F">lock</span><span style="font-size:11px;color:#9A988F">No payment now · Owner approves first</span></div>
+      <div style="background:#E2620E;border-radius:14px;padding:15px;text-align:center;margin-top:14px;box-shadow:0 12px 24px -10px rgba(226,98,14,0.55)"><span style="font-size:15px;font-weight:700;color:#fff">Send Request</span></div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ░░░░ MOD-55-57 TEMPLATE / DUPLICATE / WAITLIST ░░░░ -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:15px">
+  <div style="width:390px;display:flex;align-items:center;gap:12px">
+    <span style="width:26px;height:1.5px;background:#E2620E;display:block"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:#E2620E">MOD-55–57 · Template / Duplicate / Waitlist</span>
+  </div>
+  <div style="width:390px;background:#F4F3EF;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 44px 100px -32px rgba(20,20,18,0.40),0 0 0 1px rgba(0,0,0,0.04)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 26px 4px"><span style="font-size:14px;font-weight:700;color:#1A1A18">9:41</span><div style="display:flex;align-items:center;gap:6px;color:#1A1A18"><span class="ms" style="font-size:16px">signal_cellular_alt</span><span class="ms" style="font-size:16px">wifi</span><span class="ms" style="font-size:18px">battery_full</span></div></div>
+    <div style="display:flex;align-items:center;gap:12px;padding:6px 18px 14px"><span class="ms" style="font-size:24px;color:#1A1A18">arrow_back</span><span style="font-size:20px;font-weight:800;letter-spacing:-0.02em;color:#1A1A18">Quick Booking</span></div>
+    <div style="padding:0 18px 20px">
+      <!-- templates -->
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:11px"><span class="ms" style="font-size:17px;color:#E2620E">bookmark</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#1A1A18;font-weight:600">SAVED TEMPLATES</span></div>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-left:3px solid #E2620E;border-radius:13px;padding:13px 14px;display:flex;align-items:center;gap:12px"><span style="width:38px;height:38px;border-radius:11px;background:#FBEBDE;display:flex;align-items:center;justify-content:center"><span class="ms" style="font-size:19px;color:#B84E0A">favorite</span></span><div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:#1A1A18">Standard Wedding</div><div style="font-size:11px;color:#9A988F">Premium pkg · 2 photo + 1 cine · Day</div></div><span style="background:#E2620E;color:#fff;font-size:11px;font-weight:700;padding:6px 12px;border-radius:9px">Use</span></div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-left:3px solid #6D5BD0;border-radius:13px;padding:13px 14px;display:flex;align-items:center;gap:12px"><span style="width:38px;height:38px;border-radius:11px;background:#EEEBFA;display:flex;align-items:center;justify-content:center"><span class="ms" style="font-size:19px;color:#5847B0">favorite</span></span><div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:#1A1A18">Corporate Half-day</div><div style="font-size:11px;color:#9A988F">Standard pkg · 1 photo · Day</div></div><span style="background:#fff;border:1px solid #E2620E;color:#E2620E;font-size:11px;font-weight:700;padding:6px 12px;border-radius:9px">Use</span></div>
+      </div>
+      <!-- duplicate recent -->
+      <div style="display:flex;align-items:center;gap:7px;margin:20px 0 11px"><span class="ms" style="font-size:17px;color:#E2620E">content_copy</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#1A1A18;font-weight:600">DUPLICATE RECENT</span></div>
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:13px;padding:13px 14px;display:flex;align-items:center;gap:12px"><span style="width:38px;height:38px;border-radius:50%;background:#FBEBDE;color:#B84E0A;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">TA</span><div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:#1A1A18">Tahmina &amp; Arif</div><div style="font-size:11px;color:#9A988F">Apr 12 · just change the date</div></div><span class="ms" style="font-size:20px;color:#E2620E">add_circle</span></div>
+      <!-- waitlist -->
+      <div style="display:flex;align-items:center;gap:7px;margin:20px 0 11px"><span class="ms" style="font-size:17px;color:#C99A2E">hourglass_top</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#1A1A18;font-weight:600">WAITLIST · 2</span></div>
+      <div style="background:#FFF6E8;border:1px solid rgba(201,154,46,0.3);border-radius:13px;padding:13px 14px;margin-bottom:9px"><div style="display:flex;align-items:center;gap:8px"><span class="ms" style="font-size:16px;color:#C99A2E">event_busy</span><span style="font-size:12.5px;font-weight:700;color:#8A6A18;flex:1">Apr 12 — Day shift full</span><span style="font-size:10px;color:#A88930">2 waiting</span></div><div style="font-size:11.5px;color:#9A7A2E;margin-top:6px;line-height:1.4">You'll get an FCM alert the moment a slot opens from a cancellation.</div></div>
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:13px;padding:13px 14px;display:flex;align-items:center;gap:11px"><span style="width:34px;height:34px;border-radius:50%;background:#E7F5EE;color:#2F8F6B;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">NK</span><div style="flex:1"><div style="font-size:13px;font-weight:700;color:#1A1A18">Nadia &amp; Kamal</div><div style="font-size:11px;color:#9A988F">Position #1 · added Apr 8</div></div><span style="background:#E7F5EE;color:#2F8F6B;font-size:11px;font-weight:700;padding:6px 11px;border-radius:9px">Promote</span></div>
+    </div>
+  </div>
+  </div>
+
+  <!--SCREENS-->
+</div>
+</x-dc>
+</body>
+</html>

@@ -38,4 +38,10 @@ class ExpensesDao extends DatabaseAccessor<AppDatabase>
   Future<void> clearAll() async {
     await delete(expensesTable).go();
   }
+
+  /// Clears only rows already synced to the server, leaving locally-created
+  /// `pending` rows intact so an unsynced expense survives a remote refresh.
+  Future<void> clearSynced() async {
+    await (delete(expensesTable)..where((t) => t.pending.equals(false))).go();
+  }
 }

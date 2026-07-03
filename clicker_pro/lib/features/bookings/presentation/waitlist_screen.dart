@@ -7,6 +7,8 @@ import '../../../shared/states/error_state.dart';
 import '../../../shared/widgets/motion.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_theme.dart';
+
 import '../../auth/application/session_controller.dart';
 import '../domain/waitlist_entry.dart';
 import '../data/waitlist_api.dart';
@@ -27,10 +29,11 @@ class WaitlistScreen extends ConsumerWidget {
     final async = ref.watch(waitlistProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.voidBlack,
+      backgroundColor: AppColors.appBg,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.appBg,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
@@ -39,15 +42,16 @@ class WaitlistScreen extends ConsumerWidget {
           'Waitlist',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
-            fontSize: 22,
-            fontWeight: FontWeight.w600,
+            fontFamily: AppText.brandFontFamily,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.03,
           ),
         ),
       ),
       body: RefreshIndicator(
-        color: AppColors.teal,
-        backgroundColor: AppColors.voidLight,
+        color: AppColors.orange,
+        backgroundColor: AppColors.surface,
         onRefresh: () async {
           ref.invalidate(waitlistProvider);
         },
@@ -83,10 +87,10 @@ class WaitlistScreen extends ConsumerWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.teal,
+        backgroundColor: AppColors.orange,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_rounded),
-        label: Text('Add', style: TextStyle(fontWeight: FontWeight.w600)),
+        label: const Text('Add', style: TextStyle(fontWeight: FontWeight.w700)),
         onPressed: () => _showAddSheet(context, ref),
       ),
     );
@@ -102,25 +106,25 @@ class WaitlistScreen extends ConsumerWidget {
       labelText: label,
       labelStyle: TextStyle(color: AppColors.filmDim),
       filled: true,
-      fillColor: AppColors.voidElevated,
+      fillColor: AppColors.surface,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColors.glassBorder),
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: AppColors.line(0.06)),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColors.glassBorder),
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: AppColors.line(0.06)),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColors.teal),
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: AppColors.orange, width: 1.5),
       ),
     );
 
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.voidLight,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -149,9 +153,10 @@ class WaitlistScreen extends ConsumerWidget {
                     'Add to Waitlist',
                     style: TextStyle(
                       color: AppColors.film,
-                      fontFamily: 'Poppins',
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600,
+                      fontFamily: AppText.brandFontFamily,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.03,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -235,16 +240,17 @@ class WaitlistScreen extends ConsumerWidget {
                         }
                       },
                       style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.teal,
+                        backgroundColor: AppColors.orange,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                      child: Text(
+                      child: const Text(
                         'Add',
-                        style: TextStyle(fontWeight: FontWeight.w600),
+                        style: TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
                   ),
@@ -273,7 +279,7 @@ class _WaitlistRow extends StatelessWidget {
       case WaitlistStatus.waiting:
         return AppColors.gold;
       case WaitlistStatus.contacted:
-        return AppColors.teal;
+        return AppColors.orange;
       case WaitlistStatus.booked:
         return AppColors.green;
       case WaitlistStatus.expired:
@@ -290,15 +296,19 @@ class _WaitlistRow extends StatelessWidget {
         '${entry.preferredDate.day.toString().padLeft(2, '0')}';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: AppColors.glassCardDecoration(),
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.line(0.06)),
+      ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
         leading: Container(
-          width: 38,
-          height: 38,
+          width: 40,
+          height: 40,
           decoration: AppColors.iconWrapDecoration(
-            statusColor.withValues(alpha: 0.15),
+            statusColor.withValues(alpha: 0.14),
           ),
           child: Icon(Icons.person_outline, color: statusColor, size: 20),
         ),
@@ -307,28 +317,30 @@ class _WaitlistRow extends StatelessWidget {
           style: TextStyle(
             color: AppColors.film,
             fontSize: 14,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
           ),
         ),
         subtitle: Text(
           '${entry.phone} \u00b7 $dateStr',
           style: TextStyle(
-            color: AppColors.filmDim.withValues(alpha: 0.85),
+            color: AppColors.filmDim,
             fontSize: 12,
           ),
         ),
         trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
           decoration: BoxDecoration(
-            color: statusColor.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(8),
+            color: statusColor.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(999),
           ),
           child: Text(
-            entry.status.name[0].toUpperCase() + entry.status.name.substring(1),
+            entry.status.name.toUpperCase(),
             style: TextStyle(
               color: statusColor,
-              fontSize: 10,
+              fontFamily: AppText.monoFontFamily,
+              fontSize: 9,
               fontWeight: FontWeight.w600,
+              letterSpacing: 0.6,
             ),
           ),
         ),

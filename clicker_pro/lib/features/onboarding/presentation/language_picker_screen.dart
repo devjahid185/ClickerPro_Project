@@ -219,7 +219,7 @@ class _LangCard extends StatelessWidget {
                     Text(
                       secondary.toUpperCase(),
                       style: TextStyle(
-                        fontFamily: 'Montserrat',
+                        fontFamily: AppText.bodyFontFamily,
                         fontSize: 10,
                         letterSpacing: 1.6,
                         color: AppColors.filmDim.withValues(alpha: 0.7),

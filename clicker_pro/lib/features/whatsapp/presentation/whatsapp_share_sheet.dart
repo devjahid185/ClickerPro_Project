@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../theme/app_colors.dart';
 import '../domain/whatsapp_template.dart';
 import '../data/whatsapp_service.dart';
+import '../../../theme/app_theme.dart';
 
 class WhatsAppShareSheet extends StatefulWidget {
   const WhatsAppShareSheet({
@@ -165,7 +166,7 @@ class _WhatsAppShareSheetState extends State<WhatsAppShareSheet> {
                           'WhatsApp Message',
                           style: TextStyle(
                             color: AppColors.film,
-                            fontFamily: 'Poppins',
+                            fontFamily: AppText.brandFontFamily,
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
                           ),
@@ -242,7 +243,7 @@ class _WhatsAppShareSheetState extends State<WhatsAppShareSheet> {
           'PHONE',
           style: TextStyle(
             color: AppColors.teal,
-            fontFamily: 'Montserrat',
+            fontFamily: AppText.monoFontFamily,
             fontSize: 10,
             letterSpacing: 1.95,
           ),
@@ -295,7 +296,7 @@ class _WhatsAppShareSheetState extends State<WhatsAppShareSheet> {
               'MESSAGE',
               style: TextStyle(
                 color: AppColors.teal,
-                fontFamily: 'Montserrat',
+                fontFamily: AppText.monoFontFamily,
                 fontSize: 10,
                 letterSpacing: 1.95,
               ),

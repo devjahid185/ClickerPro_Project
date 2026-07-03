@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_theme.dart';
+
 import '../domain/booking_template.dart';
 import '../domain/event_type.dart';
 import '../domain/shift.dart';
@@ -62,7 +64,7 @@ class BookingTemplateSheet extends ConsumerStatefulWidget {
     return showModalBottomSheet<BookingTemplate?>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.voidLight,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -118,9 +120,10 @@ class _BookingTemplateSheetState extends ConsumerState<BookingTemplateSheet> {
                       'Booking Templates',
                       style: TextStyle(
                         color: AppColors.film,
-                        fontFamily: 'Poppins',
-                        fontSize: 22,
-                        fontWeight: FontWeight.w600,
+                        fontFamily: AppText.brandFontFamily,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.03,
                       ),
                     ),
                   ),
@@ -141,21 +144,25 @@ class _BookingTemplateSheetState extends ConsumerState<BookingTemplateSheet> {
                   itemBuilder: (_, i) {
                     final t = templates[i];
                     return Container(
-                      margin: const EdgeInsets.only(bottom: 6),
-                      decoration: AppColors.glassCardDecoration(),
+                      margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.line(0.06)),
+                      ),
                       child: ListTile(
                         title: Text(
                           t.name,
                           style: TextStyle(
                             color: AppColors.film,
                             fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                         subtitle: Text(
                           '${t.eventType.name} \u00b7 ${t.shift.name}',
                           style: TextStyle(
-                            color: AppColors.filmDim.withValues(alpha: 0.85),
+                            color: AppColors.filmDim,
                             fontSize: 12,
                           ),
                         ),
@@ -194,26 +201,26 @@ class _BookingTemplateSheetState extends ConsumerState<BookingTemplateSheet> {
                         hintText: 'Template name...',
                         hintStyle: TextStyle(color: AppColors.filmMuted),
                         filled: true,
-                        fillColor: AppColors.voidElevated,
+                        fillColor: AppColors.surfaceAlt,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(14),
                           borderSide: BorderSide(
-                            color: AppColors.glassBorder,
+                            color: AppColors.line(0.06),
                           ),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(14),
                           borderSide: BorderSide(
-                            color: AppColors.glassBorder,
+                            color: AppColors.line(0.06),
                           ),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: AppColors.teal),
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(color: AppColors.orange, width: 1.5),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
+                          horizontal: 14,
+                          vertical: 12,
                         ),
                       ),
                     ),
@@ -240,19 +247,20 @@ class _BookingTemplateSheetState extends ConsumerState<BookingTemplateSheet> {
                             setState(() => _saving = false);
                           },
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.teal,
+                      backgroundColor: AppColors.orange,
                       foregroundColor: Colors.white,
+                      elevation: 0,
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
+                        horizontal: 18,
+                        vertical: 14,
                       ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    child: Text(
+                    child: const Text(
                       'Save',
-                      style: TextStyle(fontWeight: FontWeight.w600),
+                      style: TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ),
                 ],

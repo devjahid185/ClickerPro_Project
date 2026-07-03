@@ -8,6 +8,7 @@ import '../../../shared/widgets/motion.dart';
 import '../../../theme/app_colors.dart';
 import '../application/reminder_providers.dart';
 import '../domain/reminder.dart';
+import '../../../theme/app_theme.dart';
 
 class RemindersScreen extends ConsumerWidget {
   const RemindersScreen({super.key});
@@ -45,7 +46,7 @@ class RemindersScreen extends ConsumerWidget {
           'Reminders',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontSize: 22,
             fontWeight: FontWeight.w600,
           ),
@@ -54,7 +55,7 @@ class RemindersScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddSheet(context, ref),
         backgroundColor: AppColors.orange,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.onAccent,
         child: const Icon(Icons.add),
       ),
       body: RefreshIndicator(
@@ -141,7 +142,7 @@ class _AddReminderSheetState extends State<_AddReminderSheet> {
         data: Theme.of(ctx).copyWith(
           colorScheme: ColorScheme.dark(
             primary: AppColors.orange,
-            onPrimary: Colors.white,
+            onPrimary: AppColors.onAccent,
             surface: AppColors.surface,
             onSurface: AppColors.film,
           ),
@@ -236,7 +237,7 @@ class _AddReminderSheetState extends State<_AddReminderSheet> {
                   selectedColor: AppColors.orange,
                   backgroundColor: AppColors.voidLight,
                   labelStyle: TextStyle(
-                    color: selected ? Colors.white : AppColors.filmDim,
+                    color: selected ? AppColors.onAccent : AppColors.filmDim,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -265,7 +266,7 @@ class _AddReminderSheetState extends State<_AddReminderSheet> {
                   selectedColor: AppColors.teal,
                   backgroundColor: AppColors.voidLight,
                   labelStyle: TextStyle(
-                    color: selected ? Colors.white : AppColors.filmDim,
+                    color: selected ? AppColors.onAccent : AppColors.filmDim,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -341,7 +342,7 @@ class _AddReminderSheetState extends State<_AddReminderSheet> {
               onPressed: _saving ? null : _save,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.orange,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.onAccent,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
                 elevation: 0,
@@ -351,7 +352,7 @@ class _AddReminderSheetState extends State<_AddReminderSheet> {
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
+                          strokeWidth: 2, color: AppColors.onAccent),
                     )
                   : Text(
                       'Save Reminder',

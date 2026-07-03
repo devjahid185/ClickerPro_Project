@@ -11,6 +11,7 @@ import '../../../theme/app_colors.dart';
 import '../application/team_providers.dart';
 import '../data/team_api.dart' show TeamMemberProfile;
 import '../domain/team_member.dart';
+import '../../../theme/app_theme.dart';
 
 class TeamScreen extends ConsumerWidget {
   const TeamScreen({super.key});
@@ -33,20 +34,49 @@ class TeamScreen extends ConsumerWidget {
           loc.menu_team,
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
-            fontSize: 22,
-            fontWeight: FontWeight.w600,
+            fontFamily: AppText.brandFontFamily,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.02 * 20,
           ),
         ),
         actions: [
-          IconButton(
-            tooltip: 'Join a team with code',
-            icon: Icon(Icons.key_outlined, color: AppColors.teal),
-            onPressed: () => _showJoinSheet(context),
-          ),
-          IconButton(
-            icon: Icon(Icons.person_add_outlined, color: AppColors.gold),
-            onPressed: () => _showInviteSheet(context, ref),
+          // Solid orange "Invite" pill from the .dc.html header.
+          Padding(
+            padding: const EdgeInsets.only(right: 18),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(11),
+              onTap: () => _showInviteSheet(context, ref),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.orange,
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.person_add_alt_1_rounded,
+                      size: 17,
+                      color: AppColors.onAccent,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      'Invite',
+                      style: TextStyle(
+                        color: AppColors.onAccent,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -69,16 +99,24 @@ class TeamScreen extends ConsumerWidget {
                     onAction: () => _showInviteSheet(context, ref),
                   );
                 }
+                final groups = _groupByRole(members);
                 return ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+                  padding: const EdgeInsets.fromLTRB(18, 12, 18, 96),
                   children: [
-                    _TeamStatsStrip(members: members),
-                    const SizedBox(height: 16),
-                    _sectionLabel('ALL MEMBERS', members.length),
-                    const SizedBox(height: 10),
-                    for (var i = 0; i < members.length; i++) ...[
-                      _TeamMemberTile(member: members[i]),
-                      if (i != members.length - 1) const SizedBox(height: 8),
+                    _InviteMethodsRow(
+                      onPasscode: () => _showInviteSheet(context, ref),
+                      onJoin: () => _showJoinSheet(context),
+                    ),
+                    const SizedBox(height: 18),
+                    for (final group in groups) ...[
+                      _roleHeader(group.label, group.members.length),
+                      const SizedBox(height: 10),
+                      for (var i = 0; i < group.members.length; i++) ...[
+                        _TeamMemberTile(member: group.members[i]),
+                        if (i != group.members.length - 1)
+                          const SizedBox(height: 9),
+                      ],
+                      if (group != groups.last) const SizedBox(height: 18),
                     ],
                   ],
                 );
@@ -116,104 +154,107 @@ class TeamScreen extends ConsumerWidget {
   }
 }
 
-/// Small uppercase section label with a count chip, matching the
-/// Clicker Team layout.
-Widget _sectionLabel(String text, int count) {
-  return Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      Text(
-        text,
-        style: TextStyle(
-          fontFamily: 'Montserrat',
-          fontSize: 11,
-          letterSpacing: 1.6,
-          fontWeight: FontWeight.w700,
-          color: AppColors.filmDim.withValues(alpha: 0.85),
-        ),
-      ),
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-        decoration: BoxDecoration(
-          color: AppColors.orange.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          '$count',
-          style: TextStyle(
-            color: AppColors.orange,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-    ],
+/// Role-group header — mono ink label like "MANAGERS · 1" (.dc.html).
+Widget _roleHeader(String label, int count) {
+  return Text(
+    '$label · $count',
+    style: TextStyle(
+      fontFamily: AppText.monoFontFamily,
+      fontSize: 10,
+      letterSpacing: 1.0,
+      fontWeight: FontWeight.w600,
+      color: AppColors.film,
+    ),
   );
 }
 
-/// Stats strip — total members + role breakdown, themed in orange.
-class _TeamStatsStrip extends StatelessWidget {
-  const _TeamStatsStrip({required this.members});
+/// A named bucket of members sharing one role, in display order.
+class _RoleGroup {
+  const _RoleGroup(this.label, this.members);
+  final String label;
   final List<TeamMember> members;
+}
+
+/// Buckets members by role in the design's order (owners → managers →
+/// freelancers → both → anything else).
+List<_RoleGroup> _groupByRole(List<TeamMember> members) {
+  const order = ['OWNER', 'MANAGER', 'FREELANCER', 'BOTH'];
+  String labelFor(String role) => switch (role) {
+    'OWNER' => 'OWNERS',
+    'MANAGER' => 'MANAGERS',
+    'FREELANCER' => 'FREELANCERS',
+    'BOTH' => 'BOTH',
+    '' => 'MEMBERS',
+    _ => '${role}S',
+  };
+
+  final buckets = <String, List<TeamMember>>{};
+  for (final m in members) {
+    buckets.putIfAbsent(m.role, () => <TeamMember>[]).add(m);
+  }
+  final keys = buckets.keys.toList()
+    ..sort((a, b) {
+      final ia = order.indexOf(a);
+      final ib = order.indexOf(b);
+      return (ia < 0 ? order.length : ia).compareTo(
+        ib < 0 ? order.length : ib,
+      );
+    });
+  return [for (final k in keys) _RoleGroup(labelFor(k), buckets[k]!)];
+}
+
+/// Avatar/chip tint per role — orange for owner/manager, violet for
+/// freelancers, green for everyone else (.dc.html palette).
+(Color, Color) _roleTint(String role) => switch (role) {
+  'OWNER' || 'MANAGER' => (AppColors.orangeSoft, AppColors.primary700),
+  'FREELANCER' => (AppColors.purpleSoft, AppColors.purple),
+  _ => (AppColors.greenSoft, AppColors.green),
+};
+
+/// Invite-method tiles row (.dc.html): white cards, orange icon, 11px label.
+class _InviteMethodsRow extends StatelessWidget {
+  const _InviteMethodsRow({required this.onPasscode, required this.onJoin});
+
+  final VoidCallback onPasscode;
+  final VoidCallback onJoin;
 
   @override
   Widget build(BuildContext context) {
-    final total = members.length;
-    final photographers = members
-        .where((m) => m.role.toUpperCase().contains('PHOTO'))
-        .length;
-    final others = total - photographers;
-
-    Widget cell(String value, String label, Color tint) => Expanded(
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 26,
-              fontWeight: FontWeight.w700,
-              color: tint,
-              height: 1,
-            ),
+    Widget tile(IconData icon, String label, VoidCallback onTap) => Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(13),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 8),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(13),
+            border: Border.all(color: AppColors.line(0.06)),
           ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 9.5,
-              letterSpacing: 1.2,
-              fontWeight: FontWeight.w600,
-              color: AppColors.filmMuted,
-            ),
+          child: Column(
+            children: [
+              Icon(icon, size: 20, color: AppColors.orange),
+              const SizedBox(height: 7),
+              Text(
+                label,
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
 
-    Widget divider() => Container(
-      width: 1,
-      height: 34,
-      color: AppColors.hairline,
-    );
-
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 18),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.glassBorder),
-      ),
-      child: Row(
-        children: [
-          cell('$total'.padLeft(2, '0'), 'MEMBERS', AppColors.orange),
-          divider(),
-          cell('$photographers'.padLeft(2, '0'), 'PHOTO', AppColors.film),
-          divider(),
-          cell('$others'.padLeft(2, '0'), 'OTHERS', AppColors.gold),
-        ],
-      ),
+    return Row(
+      children: [
+        tile(Icons.pin_outlined, 'Passcode', onPasscode),
+        const SizedBox(width: 9),
+        tile(Icons.key_outlined, 'Join Team', onJoin),
+      ],
     );
   }
 }
@@ -394,7 +435,7 @@ class _JoinTeamSheetState extends ConsumerState<_JoinTeamSheet> {
             'Join a team',
             style: TextStyle(
               color: AppColors.film,
-              fontFamily: 'Poppins',
+              fontFamily: AppText.brandFontFamily,
               fontSize: 20,
               fontWeight: FontWeight.w600,
             ),
@@ -416,11 +457,11 @@ class _JoinTeamSheetState extends ConsumerState<_JoinTeamSheet> {
             maxLength: 6,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             style: TextStyle(
-              color: AppColors.teal,
+              color: AppColors.orange,
               fontSize: 28,
               fontWeight: FontWeight.w700,
               letterSpacing: 10,
-              fontFamily: 'Montserrat',
+              fontFamily: AppText.monoFontFamily,
             ),
             decoration: InputDecoration(
               counterText: '',
@@ -430,22 +471,22 @@ class _JoinTeamSheetState extends ConsumerState<_JoinTeamSheet> {
                 letterSpacing: 10,
               ),
               filled: true,
-              fillColor: AppColors.voidBlack,
+              fillColor: AppColors.appBg,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide(
-                  color: AppColors.teal.withValues(alpha: 0.3),
+                  color: AppColors.orange.withValues(alpha: 0.3),
                 ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide(
-                  color: AppColors.teal.withValues(alpha: 0.3),
+                  color: AppColors.orange.withValues(alpha: 0.3),
                 ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: AppColors.teal),
+                borderSide: BorderSide(color: AppColors.orange),
               ),
             ),
           ),
@@ -455,8 +496,8 @@ class _JoinTeamSheetState extends ConsumerState<_JoinTeamSheet> {
             child: FilledButton(
               onPressed: _loading ? null : _join,
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.teal,
-                foregroundColor: AppColors.voidBlack,
+                backgroundColor: AppColors.orange,
+                foregroundColor: AppColors.onAccent,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -481,80 +522,110 @@ class _TeamMemberTile extends ConsumerWidget {
   const _TeamMemberTile({required this.member});
   final TeamMember member;
 
+  /// Two-letter initials — first letter of the first two words.
+  String get _initials {
+    final parts = member.fullName
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+
+  /// Short role chip text per the mock ("FL" for freelancers).
+  String get _chipLabel =>
+      member.role == 'FREELANCER' ? 'FL' : member.role;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final loc = AppLocalizations.of(context);
-    final roleLabel = member.role.toLowerCase();
-    final roleDisplay = roleLabel[0].toUpperCase() + roleLabel.substring(1);
+    final (tintBg, tintFg) = _roleTint(member.role);
+    final hasAvatar = (member.avatarUrl ?? '').isNotEmpty;
 
     return InkWell(
       borderRadius: BorderRadius.circular(14),
       onTap: () => _showMemberProfile(context, ref),
       child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       decoration: BoxDecoration(
-        color: AppColors.voidLight,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.hairline),
+        border: Border.all(color: AppColors.line(0.06)),
       ),
       child: Row(
         children: [
           Container(
-            width: 46,
-            height: 46,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.orange,
-                  AppColors.orangeLight,
-                ],
-              ),
-              border: Border.all(color: AppColors.glassBorder, width: 1.5),
+              color: tintBg,
+              image: hasAvatar
+                  ? DecorationImage(
+                      image: NetworkImage(member.avatarUrl!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
             ),
             alignment: Alignment.center,
-            child: Text(
-              member.fullName.isNotEmpty
-                  ? member.fullName[0].toUpperCase()
-                  : '?',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 17,
-              ),
-            ),
+            child: hasAvatar
+                ? null
+                : Text(
+                    _initials,
+                    style: TextStyle(
+                      color: tintFg,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 11),
           Expanded(
-            // Only the teammate's display name is shown — email and other
-            // personal identifiers are intentionally hidden in the team list.
-            child: Text(
-              member.fullName,
-              style: TextStyle(
-                color: AppColors.film,
-                fontWeight: FontWeight.w600,
-                fontSize: 15,
-              ),
+            // Only name + phone are shown — email and other personal
+            // identifiers are intentionally hidden in the team list.
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  member.fullName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.film,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13.5,
+                  ),
+                ),
+                if ((member.phone ?? '').isNotEmpty)
+                  Text(
+                    member.phone!,
+                    style: TextStyle(
+                      color: AppColors.filmMuted,
+                      fontSize: 11,
+                    ),
+                  ),
+              ],
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: AppColors.teal.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(6),
+              color: tintBg,
+              borderRadius: BorderRadius.circular(7),
             ),
             child: Text(
-              roleDisplay,
+              _chipLabel,
               style: TextStyle(
-                color: AppColors.teal,
-                fontSize: 11,
+                fontFamily: AppText.monoFontFamily,
+                color: tintFg,
+                fontSize: 9,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
           PopupMenuButton<String>(
             color: AppColors.voidLight,
             onSelected: (value) async {
@@ -673,7 +744,7 @@ class _MemberProfileSheet extends ConsumerWidget {
               Center(
                 child: CircleAvatar(
                   radius: 36,
-                  backgroundColor: AppColors.teal.withValues(alpha: 0.15),
+                  backgroundColor: AppColors.orangeSoft,
                   backgroundImage:
                       (member.avatarUrl != null && member.avatarUrl!.isNotEmpty)
                       ? NetworkImage(member.avatarUrl!)
@@ -684,7 +755,7 @@ class _MemberProfileSheet extends ConsumerWidget {
                               ? member.fullName[0].toUpperCase()
                               : '?',
                           style: TextStyle(
-                            color: AppColors.teal,
+                            color: AppColors.primary700,
                             fontWeight: FontWeight.w700,
                             fontSize: 26,
                           ),
@@ -698,7 +769,7 @@ class _MemberProfileSheet extends ConsumerWidget {
                   member.fullName,
                   style: TextStyle(
                     color: AppColors.film,
-                    fontFamily: 'Poppins',
+                    fontFamily: AppText.brandFontFamily,
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                   ),
@@ -722,7 +793,7 @@ class _MemberProfileSheet extends ConsumerWidget {
                     _contactButton(
                       icon: Icons.call_outlined,
                       label: 'Call',
-                      color: AppColors.teal,
+                      color: AppColors.orange,
                       onTap: () => launchUrl(
                         Uri.parse('tel:${member.phone}'),
                         mode: LaunchMode.externalApplication,
@@ -814,7 +885,7 @@ class _MemberProfileSheet extends ConsumerWidget {
                     Text(
                       'GEAR',
                       style: TextStyle(
-                        fontFamily: 'Montserrat',
+                        fontFamily: AppText.monoFontFamily,
                         fontSize: 10,
                         letterSpacing: 1.4,
                         color: AppColors.filmDim.withValues(alpha: 0.8),
@@ -839,7 +910,7 @@ class _MemberProfileSheet extends ConsumerWidget {
                               Icon(
                                 Icons.camera_outlined,
                                 size: 16,
-                                color: AppColors.teal,
+                                color: AppColors.orange,
                               ),
                               const SizedBox(width: 8),
                               Expanded(
@@ -984,7 +1055,7 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
             widget.loc.team_invite_member,
             style: TextStyle(
               color: AppColors.film,
-              fontFamily: 'Poppins',
+              fontFamily: AppText.brandFontFamily,
               fontSize: 20,
               fontWeight: FontWeight.w600,
             ),
@@ -1004,10 +1075,10 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 20),
               decoration: BoxDecoration(
-                color: AppColors.voidBlack,
+                color: AppColors.appBg,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: AppColors.teal.withValues(alpha: 0.3),
+                  color: AppColors.orange.withValues(alpha: 0.3),
                 ),
               ),
               child: Column(
@@ -1015,11 +1086,11 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
                   Text(
                     _code!,
                     style: TextStyle(
-                      color: AppColors.teal,
+                      color: AppColors.orange,
                       fontSize: 36,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 8,
-                      fontFamily: 'Montserrat',
+                      fontFamily: AppText.monoFontFamily,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -1039,8 +1110,8 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
               child: FilledButton(
                 onPressed: () => Navigator.of(context).pop(),
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.teal,
-                  foregroundColor: AppColors.voidBlack,
+                  backgroundColor: AppColors.orange,
+                  foregroundColor: AppColors.onAccent,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -1056,7 +1127,7 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
                 onPressed: _loading ? null : _generate,
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.orange,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.onAccent,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),

@@ -26,17 +26,24 @@ import '../../../shared/states/lens_loader.dart';
 import '../../../shared/states/offline_banner.dart';
 import '../../../shared/widgets/motion.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_theme.dart';
+
 import '../../auth/domain/user_role.dart';
 import '../../public_booking/application/public_booking_providers.dart';
 import '../../settings/application/language_controller.dart';
 import '../application/booking_providers.dart';
 import '../domain/booking.dart';
 import '../domain/booking_filter.dart';
+import '../domain/event_type_vibe.dart';
 import '../domain/shift.dart';
 
-enum _StatusChip { all, confirmed, successful, delivered, cancelled }
+enum _StatusChip { all, pending, confirmed, successful, delivered, cancelled }
 
 enum _DateRangePreset { any, today, week, month, lastMonth }
+
+/// Which edge a booking card's shift accent sits on. Day cards accent the
+/// left edge, Night cards the right — matching the .dc.html "Booking List".
+enum _AccentSide { left, right }
 
 class BookingListScreen extends ConsumerStatefulWidget {
   const BookingListScreen({super.key});
@@ -76,23 +83,20 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
   _StatusChip get _activeChip {
     final statuses = ref.read(bookingFilterProvider).statuses;
     if (statuses.isEmpty) return _StatusChip.all;
-    if (statuses.length == 1) {
-      // "Confirmed" is no longer a selectable chip; a confirmed/pending-only
-      // filter falls back to highlighting "All" so the strip never shows a
-      // ghost (no-chip) selection.
-      if (statuses.contains(BookingStatus.confirmed) ||
-          statuses.contains(BookingStatus.pending)) {
-        return _StatusChip.all;
-      }
-      if (statuses.contains(BookingStatus.delivered)) {
-        return _StatusChip.delivered;
-      }
-      if (statuses.contains(BookingStatus.cancelled)) {
-        return _StatusChip.cancelled;
-      }
+    // Resolve the active chip by matching the filter's status set against each
+    // chip's status set — the exact inverse of [_statusesForChip]. This must
+    // cover EVERY chip (including the multi-status `successful` and the
+    // single-status `cancelled`); missing one made that tab fall back to
+    // "all", which then hid its own rows (cancelled never rendered).
+    for (final chip in _StatusChip.values) {
+      if (chip == _StatusChip.all) continue;
+      if (_setEquals(statuses, _statusesForChip(chip))) return chip;
     }
-    return _StatusChip.successful;
+    return _StatusChip.all;
   }
+
+  static bool _setEquals(Set<BookingStatus> a, Set<BookingStatus> b) =>
+      a.length == b.length && a.containsAll(b);
 
   /// Date with the time stripped — so same-day events group together
   /// regardless of their shift start time.
@@ -105,10 +109,10 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
     switch (chip) {
       case _StatusChip.all:
         return {};
+      case _StatusChip.pending:
+        return {BookingStatus.pending};
       case _StatusChip.confirmed:
-        // "Confirmed" now also surfaces pending bookings so nothing is
-        // hidden after the dedicated Pending chip was removed.
-        return {BookingStatus.pending, BookingStatus.confirmed};
+        return {BookingStatus.confirmed};
       case _StatusChip.successful:
         return {
           BookingStatus.inProgress,
@@ -189,7 +193,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
           loc.bookings_title,
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontSize: 22,
             fontWeight: FontWeight.w600,
           ),
@@ -232,19 +236,22 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
           ],
           if (listAsync.hasValue)
             Center(
+              // Design (.dc.html "Booking List"): count badge sits inline next
+              // to the title — soft orange tint fill (#FBEBDE) with the darker
+              // brand-orange text (#B84E0A), in the mono label face.
               child: Container(
                 margin: const EdgeInsets.only(right: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.glass,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.glassBorder),
+                  color: AppColors.orangeSoft,
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   '$totalCount',
                   style: TextStyle(
-                    color: AppColors.filmDim,
-                    fontSize: 12,
+                    fontFamily: AppText.monoFontFamily,
+                    color: AppColors.primary700,
+                    fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -362,11 +369,9 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                               )
                               .toList();
 
-                    // ONE chronological list — strictly by date+time ascending
-                    // so the 14th always appears before the 15th. The old
-                    // Day|Night two-column layout made a 14th-night event look
-                    // like it came "after" a 15th-day event. Each row now
-                    // carries its own Day/Night badge instead.
+                    // Sorted date+time ascending (14th before 15th, Day before
+                    // Night within a day) before the Day|Night split so each
+                    // column below reads in chronological order.
                     final visible = filtered.toList()
                       ..sort((a, b) {
                         final byDate = _dayOnly(
@@ -454,12 +459,12 @@ class _StatusChips extends StatelessWidget {
   final _StatusChip selected;
   final ValueChanged<_StatusChip> onSelected;
 
-  // "Confirmed" removed per feedback — its filter overlapped with the default
-  // working set and the chip strip read cleaner without it. The remaining
-  // chips cover the states users actually filter by.
+  // Design (Booking List): All · Pending · Confirmed · Delivered, plus a
+  // Cancelled tab so cancelled events (hidden from "All") stay reachable.
   static const _chips = [
     (_StatusChip.all, 'All'),
-    (_StatusChip.successful, 'Successful'),
+    (_StatusChip.pending, 'Pending'),
+    (_StatusChip.confirmed, 'Confirmed'),
     (_StatusChip.delivered, 'Delivered'),
     (_StatusChip.cancelled, 'Cancelled'),
   ];
@@ -484,14 +489,16 @@ class _StatusChips extends StatelessWidget {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: isSelected
-                    ? AppColors.teal.withValues(alpha: 0.15)
-                    : AppColors.glass,
+                // Design: active chip = solid orange fill + white text;
+                // inactive = white surface with a soft hairline border.
+                color: isSelected ? AppColors.orange : AppColors.glass,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: isSelected ? AppColors.teal : AppColors.glassBorder,
+                  color: isSelected
+                      ? AppColors.orange
+                      : AppColors.line(0.10),
                   width: 1,
                 ),
               ),
@@ -501,10 +508,11 @@ class _StatusChips extends StatelessWidget {
                 overflow: TextOverflow.visible,
                 softWrap: false,
                 style: TextStyle(
-                  color: isSelected ? AppColors.teal : AppColors.filmDim,
-                  fontSize: 13,
+                  fontFamily: AppText.bodyFontFamily,
+                  color: isSelected ? Colors.white : AppColors.filmDim,
+                  fontSize: 12,
                   height: 1.0,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                 ),
               ),
             ),
@@ -560,18 +568,20 @@ class _BookingListColumn extends StatelessWidget {
           Expanded(
             child: _ShiftColumn(
               title: 'DAY',
-              icon: Icons.wb_sunny_outlined,
               color: AppColors.gold,
               bookings: dayBookings,
+              // Design: Day cards carry the accent as a left edge, Night as a
+              // right edge — so the two columns visually "face" each other.
+              accentSide: _AccentSide.left,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 11),
           Expanded(
             child: _ShiftColumn(
               title: 'NIGHT',
-              icon: Icons.nightlight_outlined,
               color: AppColors.purple,
               bookings: nightBookings,
+              accentSide: _AccentSide.right,
             ),
           ),
         ],
@@ -585,55 +595,46 @@ class _BookingListColumn extends StatelessWidget {
 class _ShiftColumn extends StatelessWidget {
   const _ShiftColumn({
     required this.title,
-    required this.icon,
     required this.color,
     required this.bookings,
+    required this.accentSide,
   });
 
   final String title;
-  final IconData icon;
   final Color color;
   final List<Booking> bookings;
+  final _AccentSide accentSide;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: color.withValues(alpha: 0.3)),
-          ),
+        // Design (.dc.html): a small filled dot + a mono "DAY · 5" caption —
+        // no boxed pill. The dot carries the shift colour.
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10, left: 2),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: color, size: 15),
-              const SizedBox(width: 6),
-              Text(
-                title,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.0,
-                ),
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
               ),
               const SizedBox(width: 6),
               Text(
-                '${bookings.length}',
+                '$title · ${bookings.length}',
                 style: TextStyle(
+                  fontFamily: AppText.monoFontFamily,
                   color: AppColors.film,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.0,
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 8),
         if (bookings.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 24),
@@ -652,8 +653,8 @@ class _ShiftColumn extends StatelessWidget {
               order: i.clamp(0, 8),
               child: _BookingColumnRow(
                 booking: bookings[i],
-                borderSide: BorderSide(color: color, width: 2),
-                iconColor: color,
+                accentColor: color,
+                accentSide: accentSide,
               ),
             ),
       ],
@@ -664,13 +665,13 @@ class _ShiftColumn extends StatelessWidget {
 class _BookingColumnRow extends ConsumerWidget {
   const _BookingColumnRow({
     required this.booking,
-    required this.borderSide,
-    required this.iconColor,
+    required this.accentColor,
+    required this.accentSide,
   });
 
   final Booking booking;
-  final BorderSide borderSide;
-  final Color iconColor;
+  final Color accentColor;
+  final _AccentSide accentSide;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -690,164 +691,92 @@ class _BookingColumnRow extends ConsumerWidget {
         ? booking.clientName!
         : booking.title;
 
-    final dayText = DateFormat('d', lang).format(booking.date);
-    final monthText = DateFormat(
-      'MMM',
-      lang,
-    ).format(booking.date).toUpperCase();
-    final shiftIcon = booking.shift == Shift.day
-        ? Icons.wb_sunny_outlined
-        : booking.shift == Shift.night
-        ? Icons.nightlight_outlined
-        : Icons.wb_twilight_outlined;
+    // Design (.dc.html): mono date "APR 12" on top, client name, then a
+    // "Wedding · 12–5" meta line (event type + compact time range).
+    final dateText = DateFormat('MMM d', lang).format(booking.date).toUpperCase();
+    final metaText = '${booking.eventType.vibe.label} · '
+        '${booking.startTime}–${booking.endTime}';
+
+    // Day cards accent the left edge, Night the right — the 3px coloured rule
+    // from the mockup.
+    final accentBorder = BorderSide(color: accentColor, width: 3);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 6),
+      margin: const EdgeInsets.only(bottom: 9),
       decoration: BoxDecoration(
         color: AppColors.glass,
-        borderRadius: BorderRadius.circular(10),
-        border: Border(left: borderSide),
+        borderRadius: BorderRadius.circular(12),
+        border: Border(
+          top: BorderSide(color: AppColors.line(0.06)),
+          bottom: BorderSide(color: AppColors.line(0.06)),
+          left: accentSide == _AccentSide.left
+              ? accentBorder
+              : BorderSide(color: AppColors.line(0.06)),
+          right: accentSide == _AccentSide.right
+              ? accentBorder
+              : BorderSide(color: AppColors.line(0.06)),
+        ),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           onTap: () => Navigator.of(
             context,
           ).pushNamed(RouteNames.bookingDetail, arguments: booking.id),
+          onLongPress: () => Navigator.of(context).pushNamed(
+            RouteNames.bookingEdit,
+            arguments: 'duplicate:${booking.id}',
+          ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Row(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 38,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: AppColors.voidElevated,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: AppColors.line(0.06),
-                    ),
-                  ),
-                  alignment: Alignment.center,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        dayText,
-                        style: TextStyle(
-                          color: AppColors.film,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          height: 1.0,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        monthText,
-                        style: TextStyle(
-                          color: AppColors.filmDim.withValues(alpha: 0.85),
-                          fontSize: 8,
-                          letterSpacing: 1,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        displayName.trim().isEmpty ? 'Untitled' : displayName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: AppColors.film,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Row(
-                        // The DAY/NIGHT column header already states the shift,
-                        // so each row shows its start–end time instead.
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(shiftIcon, color: iconColor, size: 12),
-                          const SizedBox(width: 3),
-                          Flexible(
-                            child: Text(
-                              '${booking.startTime}–${booking.endTime}',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: iconColor,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 4),
-                if (booking.pending)
-                  Container(
-                    width: 6,
-                    height: 6,
-                    margin: const EdgeInsets.only(right: 6),
-                    decoration: BoxDecoration(
-                      color: AppColors.teal,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                SizedBox(
-                  width: 28,
-                  height: 32,
-                  child: PopupMenuButton<String>(
-                  icon: Icon(
-                    Icons.more_vert,
-                    color: AppColors.filmMuted,
-                    size: 18,
-                  ),
-                  // Keep the trailing action compact in the narrow
-                  // DAY/NIGHT columns.
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 28,
-                    minHeight: 32,
-                  ),
-                  color: AppColors.voidElevated,
-                  onSelected: (value) {
-                    if (value == 'duplicate') {
-                      Navigator.of(context).pushNamed(
-                        RouteNames.bookingEdit,
-                        arguments: 'duplicate:${booking.id}',
-                      );
-                    }
-                  },
-                  itemBuilder: (_) => [
-                    PopupMenuItem(
-                      value: 'duplicate',
-                      child: Row(
-                        children: [
-                          Icon(Icons.copy, color: AppColors.teal, size: 16),
-                          SizedBox(width: 8),
-                          Text(
-                            'Duplicate',
-                            style: TextStyle(color: AppColors.film, fontSize: 13),
-                          ),
-                        ],
+                Row(
+                  children: [
+                    Text(
+                      dateText,
+                      style: TextStyle(
+                        fontFamily: AppText.monoFontFamily,
+                        color: AppColors.filmMuted,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
+                    const Spacer(),
+                    if (booking.pending)
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: AppColors.orange,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
                   ],
                 ),
+                const SizedBox(height: 3),
+                Text(
+                  displayName.trim().isEmpty ? 'Untitled' : displayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.film,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  metaText,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.filmMuted,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),

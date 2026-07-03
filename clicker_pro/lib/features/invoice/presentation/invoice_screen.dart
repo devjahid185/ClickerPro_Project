@@ -18,7 +18,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../../theme/app_colors.dart';
 import '../../../core/navigation/route_names.dart';
@@ -28,6 +27,7 @@ import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../application/invoice_providers.dart';
 import '../domain/invoice.dart';
+import '../../../theme/app_theme.dart';
 
 class InvoiceScreen extends ConsumerWidget {
   const InvoiceScreen({super.key, this.invoice});
@@ -48,227 +48,67 @@ class InvoiceScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.film),
+          // Detail is a "sheet" per the design (close), the list is a page.
+          icon: Icon(
+            inv == null ? Icons.arrow_back : Icons.close_rounded,
+            color: AppColors.film,
+          ),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
+        titleSpacing: 0,
         title: Text(
           inv == null ? 'Invoices' : 'Invoice',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
-            fontSize: 22,
-            fontWeight: FontWeight.w600,
+            fontFamily: AppText.brandFontFamily,
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.02 * 18,
           ),
         ),
       ),
       body: inv == null
           ? _InvoiceList()
           : SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+              padding: const EdgeInsets.fromLTRB(18, 8, 18, 24),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildCompanyHeader(inv),
-                  const SizedBox(height: 24),
-                  _buildEventDetails(inv),
-                  const SizedBox(height: 16),
-                  _buildTeamSection(inv),
-                  const SizedBox(height: 16),
-                  _buildPaymentSummary(inv),
-                  const SizedBox(height: 28),
-                  _buildShareButtons(context, inv),
-                  const SizedBox(height: 12),
-                  _buildPdfExportButton(context, inv),
+                  _InvoicePaper(invoice: inv),
+                  const SizedBox(height: 14),
+                  _buildActionGrid(context, inv),
                 ],
               ),
             ),
     );
   }
 
-  Widget _buildCompanyHeader(Invoice inv) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: AppColors.glassCardDecoration(),
-      child: Column(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: AppColors.tealSoft,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(
-              Icons.camera_alt,
-              color: AppColors.teal,
-              size: 28,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            inv.companyName.isNotEmpty ? inv.companyName : 'Clicker Pro',
-            style: TextStyle(
-              color: AppColors.film,
-              fontFamily: 'Poppins',
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          if (inv.companyPhone.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              inv.companyPhone,
-              style: TextStyle(color: AppColors.filmDim, fontSize: 13),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEventDetails(Invoice inv) {
-    return _CardSection(
-      title: 'Event Details',
-      child: Column(
-        children: [
-          _detailRow(Icons.receipt_long, 'Package', inv.packageName),
-          _detailRow(Icons.flag, 'Status', inv.status.toUpperCase()),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTeamSection(Invoice inv) {
-    if (inv.teamNames.isEmpty) return const SizedBox.shrink();
-
-    return _CardSection(
-      title: 'Team',
-      child: Column(
-        children: [
-          for (var i = 0; i < inv.teamNames.length; i++)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                children: [
-                  Icon(
-                    i == 0 ? Icons.star_outline : Icons.person_outline,
-                    color: i == 0 ? AppColors.gold : AppColors.filmDim,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      inv.teamNames[i],
-                      style: TextStyle(
-                        color: AppColors.film,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                  if (i < inv.teamPhones.length)
-                    Text(
-                      inv.teamPhones[i],
-                      style: TextStyle(
-                        color: AppColors.filmDim,
-                        fontSize: 13,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPaymentSummary(Invoice inv) {
-    return _CardSection(
-      title: 'Payment Summary',
-      child: Column(
-        children: [
-          _paymentRow('Total', inv.total, AppColors.film),
-          const SizedBox(height: 6),
-          _paymentRow('Advance', inv.advance, AppColors.green),
-          const SizedBox(height: 6),
-          Divider(color: AppColors.glassBorder, height: 1),
-          const SizedBox(height: 6),
-          _paymentRow(
-            'Due',
-            inv.due,
-            inv.due > 0 ? AppColors.red : AppColors.green,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _paymentRow(String label, double amount, Color valueColor) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(color: AppColors.filmDim, fontSize: 14),
-        ),
-        Text(
-          '৳${amount.toStringAsFixed(0)}',
-          style: TextStyle(
-            color: valueColor,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _detailRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        children: [
-          Icon(icon, color: AppColors.teal, size: 18),
-          const SizedBox(width: 10),
-          Text(
-            label,
-            style: TextStyle(color: AppColors.filmDim, fontSize: 13),
-          ),
-          const Spacer(),
-          Flexible(
-            child: Text(
-              value,
-              style: TextStyle(color: AppColors.film, fontSize: 14),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildShareButtons(BuildContext context, Invoice inv) {
-    final summary = _invoiceText(inv);
+  // ─── Action grid (.dc.html): Copy · WhatsApp · PDF ─────────────────
+  // Copy is a plain white tile, WhatsApp a green-tinted one, PDF the solid
+  // orange primary. (The old Messenger button is gone per the design; the
+  // system share sheet is still reachable from the exported PDF.)
+  Widget _buildActionGrid(BuildContext context, Invoice inv) {
     return Row(
       children: [
         Expanded(
-          child: _ShareButton(
-            icon: Icons.copy_outlined,
+          child: _ActionTile(
+            icon: Icons.copy_rounded,
             label: 'Copy',
+            style: _ActionStyle.plain,
             onTap: () {
-              Clipboard.setData(ClipboardData(text: summary));
+              Clipboard.setData(ClipboardData(text: _invoiceText(inv)));
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('Invoice copied to clipboard')),
               );
             },
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 9),
         Expanded(
-          child: _ShareButton(
-            icon: Icons.chat_bubble_outline,
+          child: _ActionTile(
+            icon: Icons.chat_rounded,
             label: 'WhatsApp',
-            color: AppColors.green,
+            style: _ActionStyle.whatsapp,
             onTap: () {
               Navigator.of(context).pushNamed(
                 RouteNames.whatsappShare,
@@ -288,39 +128,16 @@ class InvoiceScreen extends ConsumerWidget {
             },
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 9),
         Expanded(
-          child: _ShareButton(
-            icon: Icons.messenger_outline,
-            label: 'Messenger',
-            color: AppColors.purple,
-            // No reliable Messenger deep link for arbitrary text, so open the
-            // system share sheet — Messenger (and any other app) shows up there.
-            onTap: () => SharePlus.instance.share(ShareParams(text: summary)),
+          child: _ActionTile(
+            icon: Icons.picture_as_pdf_rounded,
+            label: 'PDF',
+            style: _ActionStyle.primary,
+            onTap: () => _exportPdf(context, inv),
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildPdfExportButton(BuildContext context, Invoice inv) {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        onPressed: () => _exportPdf(context, inv),
-        icon: Icon(Icons.picture_as_pdf_outlined, color: AppColors.teal),
-        label: Text(
-          'Export PDF',
-          style: TextStyle(color: AppColors.teal, fontWeight: FontWeight.w600),
-        ),
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: AppColors.tealGlow),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
     );
   }
 
@@ -387,76 +204,359 @@ class InvoiceScreen extends ConsumerWidget {
 
 // ─── Shared private widgets ──────────────────────────────────────────
 
-class _CardSection extends StatelessWidget {
-  const _CardSection({required this.title, required this.child});
+/// The .dc.html "invoice paper": one white card that reads like a printed
+/// invoice — studio header over a 2px orange rule, mono INVOICE number,
+/// team list, then the package / advance / due money block.
+class _InvoicePaper extends StatelessWidget {
+  const _InvoicePaper({required this.invoice});
 
-  final String title;
-  final Widget child;
+  final Invoice invoice;
+
+  String _money(double v) =>
+      BookingFormat.money(v, lang: 'en', bnNumerals: false);
+
+  /// "#INV-XXXX" — last 4 characters of the id, matching the mock's
+  /// "#INV-0042" without inventing a sequence the backend doesn't have.
+  String get _number {
+    final id = invoice.id.replaceAll('-', '');
+    final tail = id.length > 4 ? id.substring(id.length - 4) : id;
+    return '#INV-${tail.toUpperCase()}';
+  }
 
   @override
   Widget build(BuildContext context) {
+    final statusColor = switch (invoice.status.toLowerCase()) {
+      'paid' => AppColors.green,
+      'sent' => AppColors.gold,
+      _ => AppColors.filmDim,
+    };
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: AppColors.glassCardDecoration(),
+      padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.line(0.08)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 30,
+            spreadRadius: -16,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: AppColors.filmDim,
-              fontSize: 12,
-              letterSpacing: 1.0,
+          // Studio ↔ INVOICE header over the signature 2px orange rule.
+          Container(
+            padding: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: AppColors.orange, width: 2),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        invoice.companyName.isNotEmpty
+                            ? invoice.companyName
+                            : 'ClickerPro',
+                        style: TextStyle(
+                          color: AppColors.film,
+                          fontFamily: AppText.brandFontFamily,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.02 * 17,
+                        ),
+                      ),
+                      if (invoice.companyPhone.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          invoice.companyPhone,
+                          style: TextStyle(
+                            color: AppColors.filmMuted,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'INVOICE',
+                      style: TextStyle(
+                        fontFamily: AppText.monoFontFamily,
+                        fontSize: 10,
+                        letterSpacing: 1.0,
+                        color: AppColors.orange,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      _number,
+                      style: TextStyle(
+                        color: AppColors.film,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        invoice.status.toUpperCase(),
+                        style: TextStyle(
+                          fontFamily: AppText.monoFontFamily,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                          color: statusColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 12),
-          child,
+
+          // Team list.
+          if (invoice.teamNames.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(
+              'TEAM',
+              style: TextStyle(
+                fontFamily: AppText.monoFontFamily,
+                fontSize: 9,
+                letterSpacing: 1.0,
+                color: AppColors.filmMuted,
+              ),
+            ),
+            const SizedBox(height: 8),
+            for (var i = 0; i < invoice.teamNames.length; i++)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        invoice.teamNames[i],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: AppColors.filmDim,
+                          fontSize: 12.5,
+                        ),
+                      ),
+                    ),
+                    if (i < invoice.teamPhones.length)
+                      Text(
+                        invoice.teamPhones[i],
+                        style: TextStyle(
+                          color: AppColors.filmMuted,
+                          fontSize: 12.5,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+          ],
+
+          // Money block: package · advance · due.
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.only(top: 14),
+            decoration: BoxDecoration(
+              border: Border(top: BorderSide(color: AppColors.line(0.07))),
+            ),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 9),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          invoice.packageName.isNotEmpty
+                              ? invoice.packageName
+                              : 'Package',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: AppColors.film,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        _money(invoice.total),
+                        style: TextStyle(
+                          color: AppColors.film,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Advance paid',
+                          style: TextStyle(
+                            color: AppColors.green,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '− ${_money(invoice.advance)}',
+                        style: TextStyle(
+                          color: AppColors.green,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.only(top: 12),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      top: BorderSide(color: AppColors.orange, width: 2),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        'Due',
+                        style: TextStyle(
+                          color: AppColors.film,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        _money(invoice.due),
+                        style: TextStyle(
+                          color: invoice.due > 0
+                              ? AppColors.red
+                              : AppColors.green,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.02 * 20,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _ShareButton extends StatelessWidget {
-  const _ShareButton({
+/// Visual style of an invoice action tile.
+enum _ActionStyle { plain, whatsapp, primary }
+
+class _ActionTile extends StatelessWidget {
+  const _ActionTile({
     required this.icon,
     required this.label,
+    required this.style,
     required this.onTap,
-    this.color,
   });
 
   final IconData icon;
   final String label;
+  final _ActionStyle style;
   final VoidCallback onTap;
-  final Color? color;
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? AppColors.teal;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: c.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: c.withValues(alpha: 0.25)),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: c, size: 20),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: c,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+    final (Color bg, Color? borderColor, Color fg, List<BoxShadow>? shadow) =
+        switch (style) {
+      _ActionStyle.plain => (
+        AppColors.surface,
+        AppColors.line(0.08),
+        AppColors.filmDim,
+        null,
+      ),
+      _ActionStyle.whatsapp => (
+        AppColors.greenSoft,
+        AppColors.green.withValues(alpha: 0.2),
+        AppColors.green,
+        null,
+      ),
+      _ActionStyle.primary => (
+        AppColors.orange,
+        null,
+        Colors.white,
+        [
+          BoxShadow(
+            color: AppColors.orange.withValues(alpha: 0.55),
+            blurRadius: 20,
+            spreadRadius: -10,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+    };
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(13),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(13),
+            border: borderColor == null
+                ? null
+                : Border.all(color: borderColor),
+            boxShadow: shadow,
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: fg, size: 20),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: style == _ActionStyle.plain ? AppColors.film : fg,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -497,7 +597,7 @@ class _InvoiceList extends ConsumerWidget {
                   child: Text(
                     'No invoices yet',
                     style: TextStyle(
-                      fontFamily: 'Poppins',
+                      fontFamily: AppText.brandFontFamily,
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: AppColors.film,
@@ -512,7 +612,7 @@ class _InvoiceList extends ConsumerWidget {
                     'event details.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontFamily: 'Poppins',
+                      fontFamily: AppText.brandFontFamily,
                       fontSize: 13,
                       height: 1.5,
                       color: AppColors.filmDim.withValues(alpha: 0.8),
@@ -595,7 +695,7 @@ class _InvoiceRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontFamily: 'Poppins',
+                      fontFamily: AppText.brandFontFamily,
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: AppColors.film,
@@ -605,7 +705,7 @@ class _InvoiceRow extends StatelessWidget {
                   Text(
                     'Due ${BookingFormat.money(invoice.due, lang: 'en', bnNumerals: false)}',
                     style: TextStyle(
-                      fontFamily: 'Poppins',
+                      fontFamily: AppText.brandFontFamily,
                       fontSize: 12,
                       color: AppColors.filmDim.withValues(alpha: 0.8),
                     ),
@@ -622,7 +722,7 @@ class _InvoiceRow extends StatelessWidget {
               child: Text(
                 invoice.status.toUpperCase(),
                 style: TextStyle(
-                  fontFamily: 'Poppins',
+                  fontFamily: AppText.brandFontFamily,
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.5,

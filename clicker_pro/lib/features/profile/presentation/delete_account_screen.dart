@@ -25,6 +25,7 @@ import '../../../core/providers.dart';
 import '../../../core/storage/kv_store.dart';
 import '../../../theme/app_colors.dart';
 import '../../auth/application/session_controller.dart';
+import '../../../theme/app_theme.dart';
 
 class DeleteAccountScreen extends ConsumerStatefulWidget {
   const DeleteAccountScreen({super.key});
@@ -102,7 +103,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
           'Delete account?',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -127,7 +128,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
             'Delete account?',
             style: TextStyle(
               color: AppColors.film,
-              fontFamily: 'Poppins',
+              fontFamily: AppText.brandFontFamily,
               fontSize: 32,
               fontWeight: FontWeight.w600,
               height: 1.1,
@@ -210,7 +211,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
             'Confirm by typing DELETE',
             style: TextStyle(
               color: AppColors.film,
-              fontFamily: 'Poppins',
+              fontFamily: AppText.brandFontFamily,
               fontSize: 26,
               fontWeight: FontWeight.w600,
               height: 1.15,
@@ -238,7 +239,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
               textCapitalization: TextCapitalization.characters,
               style: TextStyle(
                 color: AppColors.film,
-                fontFamily: 'Montserrat',
+                fontFamily: AppText.monoFontFamily,
                 fontSize: 16,
                 letterSpacing: 2,
               ),
@@ -246,7 +247,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
                 hintText: 'DELETE',
                 hintStyle: TextStyle(
                   color: AppColors.filmDim.withValues(alpha: 0.55),
-                  fontFamily: 'Montserrat',
+                  fontFamily: AppText.monoFontFamily,
                   letterSpacing: 2,
                 ),
                 contentPadding: const EdgeInsets.symmetric(

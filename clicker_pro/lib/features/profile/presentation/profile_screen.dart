@@ -1,10 +1,9 @@
 ﻿// lib/features/profile/presentation/profile_screen.dart
 //
-// Clicker Pro — Profile Screen (Dark Luxury Lens)
+// Clicker Pro — Profile Screen (Claude Design · light "paper" theme)
 //
-// Visual: PRESERVED from the legacy screen — Container(... AppColors.glass,
-// border ...), gradient avatar circle, role chip, section cards, gear/company
-// pill rows. Visual treatment is the contract.
+// Visual: white surface section cards on the paper canvas, gradient avatar
+// circle, role chip, mono section headers, gear/company pill rows.
 //
 // Wiring (this slice):
 //   • currentUserProvider                 — single source of truth for the user
@@ -41,6 +40,7 @@ import '../../team/application/team_providers.dart';
 import '../application/profile_controllers.dart';
 import '../domain/gear_item.dart';
 import '../domain/user_model.dart';
+import '../../../theme/app_theme.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -85,7 +85,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final userAsync = ref.watch(currentUserProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.voidBlack,
+      backgroundColor: AppColors.appBg,
       appBar: _buildAppBar(),
       body: Column(
         children: [
@@ -121,8 +121,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   PreferredSizeWidget _buildAppBar() {
     final policy = ref.watch(rolePolicyProvider);
     return AppBar(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.appBg,
       elevation: 0,
+      scrolledUnderElevation: 0,
       leading: IconButton(
         icon: Icon(Icons.arrow_back, color: AppColors.film),
         onPressed: () => Navigator.of(context).maybePop(),
@@ -131,15 +132,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         'Profile',
         style: TextStyle(
           color: AppColors.film,
-          fontFamily: 'Poppins',
-          fontWeight: FontWeight.w600,
+          fontFamily: AppText.brandFontFamily,
+          fontSize: 20,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.03,
         ),
       ),
       actions: [
         PopupMenuButton<String>(
           tooltip: 'More',
           icon: Icon(Icons.more_vert_rounded, color: AppColors.film),
-          color: AppColors.voidElevated,
+          color: AppColors.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(color: AppColors.line(0.08)),
@@ -392,10 +395,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               child: Text(
                 user.avatarInitials,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.onAccent,
                   fontSize: 36,
                   fontWeight: FontWeight.w700,
-                  fontFamily: 'Poppins',
+                  fontFamily: AppText.brandFontFamily,
                   letterSpacing: 1.2,
                 ),
               ),
@@ -422,7 +425,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       icon: Icon(
                         Icons.camera_alt,
                         size: 18,
-                        color: AppColors.film,
+                        color: AppColors.onAccent,
                       ),
                       onPressed: () => _pickAndUploadImage(
                         (url) => _updateDraft(
@@ -443,7 +446,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               color: AppColors.filmDim.withValues(alpha: 0.85),
               fontSize: 12,
               letterSpacing: 1.2,
-              fontFamily: 'Montserrat',
+              fontFamily: AppText.monoFontFamily,
             ),
           ),
           const SizedBox(height: 8),
@@ -471,17 +474,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Widget _buildSectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10, left: 5),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          title,
-          style: TextStyle(
-            color: AppColors.filmDim,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+      padding: const EdgeInsets.only(bottom: 12, left: 2),
+      child: Row(
+        children: [
+          Container(width: 26, height: 1.5, color: AppColors.orange),
+          const SizedBox(width: 10),
+          Text(
+            title.toUpperCase(),
+            style: TextStyle(
+              color: AppColors.filmMuted,
+              fontFamily: AppText.monoFontFamily,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.16,
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -490,9 +498,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.glass,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.glassBorder),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.line(0.06)),
       ),
       child: Column(
         children: children.asMap().entries.map((e) {
@@ -533,16 +541,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: BoxDecoration(
-              color: AppColors.glass,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.glassBorder),
+              border: Border.all(color: AppColors.line(0.06)),
             ),
             child: Row(
               children: [
                 Icon(
                   Icons.account_balance,
                   size: 20,
-                  color: hasBank ? AppColors.teal : AppColors.filmMuted,
+                  color: hasBank ? AppColors.orange : AppColors.filmMuted,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -573,7 +581,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 if (hasBank)
                   Icon(
                     Icons.check_circle_rounded,
-                    color: AppColors.teal,
+                    color: AppColors.orange,
                     size: 18,
                   ),
                 Icon(
@@ -604,7 +612,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     final saved = await showModalBottomSheet<bool>(
       context: context,
-      backgroundColor: AppColors.voidLight,
+      backgroundColor: AppColors.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -625,9 +633,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 'Bank Account Details',
                 style: TextStyle(
                   color: AppColors.film,
-                  fontFamily: 'Poppins',
+                  fontFamily: AppText.brandFontFamily,
                   fontSize: 18,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.03,
                 ),
               ),
               const SizedBox(height: 14),
@@ -643,22 +652,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       fontSize: 13,
                     ),
                     filled: true,
-                    fillColor: AppColors.voidBlack,
+                    fillColor: AppColors.surfaceAlt,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(14),
                       borderSide: BorderSide(
-                        color: AppColors.glassBorder,
+                        color: AppColors.line(0.06),
                       ),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(14),
                       borderSide: BorderSide(
-                        color: AppColors.glassBorder,
+                        color: AppColors.line(0.06),
                       ),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: AppColors.teal),
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: AppColors.orange, width: 1.5),
                     ),
                   ),
                 ),
@@ -667,15 +676,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               const SizedBox(height: 4),
               FilledButton(
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.teal,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  backgroundColor: AppColors.orange,
+                  foregroundColor: AppColors.onAccent,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                 ),
                 onPressed: () => Navigator.of(ctx).pop(true),
-                child: Text('Save'),
+                child: const Text(
+                  'Save',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
               ),
             ],
           ),
@@ -1015,9 +1028,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.glass,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.glassBorder),
+        border: Border.all(color: AppColors.line(0.06)),
       ),
       child: Row(
         children: [
@@ -1083,9 +1096,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.glass,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.glassBorder),
+                border: Border.all(color: AppColors.line(0.06)),
               ),
               child: Row(
                 children: [
@@ -1109,7 +1122,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.voidElevated,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
@@ -1220,9 +1233,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
           decoration: BoxDecoration(
-            color: AppColors.glass,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.glassBorder),
+            border: Border.all(color: AppColors.line(0.06)),
           ),
           child: Row(
             children: [
@@ -1307,7 +1320,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget _vDivider() => Container(
     width: 1,
     height: 32,
-    color: AppColors.glassBorder,
+    color: AppColors.line(0.06),
     margin: const EdgeInsets.symmetric(horizontal: 4),
   );
 
@@ -1475,7 +1488,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setLocal) => AlertDialog(
-          backgroundColor: AppColors.voidElevated,
+          backgroundColor: AppColors.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
             side: BorderSide(color: AppColors.line(0.08)),
@@ -1484,7 +1497,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             t('add_gear'),
             style: TextStyle(
               color: AppColors.film,
-              fontFamily: 'Poppins',
+              fontFamily: AppText.brandFontFamily,
             ),
           ),
           content: TextField(
@@ -1496,7 +1509,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               hintStyle: TextStyle(color: AppColors.filmMuted),
               errorText: errorText,
               enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: AppColors.glassBorder),
+                borderSide: BorderSide(color: AppColors.line(0.06)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: AppColors.accent),
@@ -1602,7 +1615,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.voidElevated,
+        backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: AppColors.line(0.08)),
@@ -1611,7 +1624,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           'Manager invite',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
           ),
         ),
         content: Column(
@@ -1629,7 +1642,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
               decoration: BoxDecoration(
-                color: AppColors.glass,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: AppColors.gold.withValues(alpha: 0.4),
@@ -1638,7 +1651,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               child: Text(
                 code,
                 style: TextStyle(
-                  fontFamily: 'Montserrat',
+                  fontFamily: AppText.monoFontFamily,
                   color: AppColors.gold,
                   fontSize: 32,
                   fontWeight: FontWeight.w700,
@@ -1692,7 +1705,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             message,
             style: TextStyle(color: AppColors.film, fontSize: 13),
           ),
-          backgroundColor: AppColors.voidElevated,
+          backgroundColor: AppColors.surface,
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(12),
           shape: RoundedRectangleBorder(
@@ -1850,11 +1863,11 @@ class _JoinByPasscodeSheetState extends ConsumerState<_JoinByPasscodeSheet> {
               contentPadding: const EdgeInsets.symmetric(vertical: 16),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: AppColors.glassBorder),
+                borderSide: BorderSide(color: AppColors.line(0.06)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: AppColors.glassBorder),
+                borderSide: BorderSide(color: AppColors.line(0.06)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -1879,17 +1892,18 @@ class _JoinByPasscodeSheetState extends ConsumerState<_JoinByPasscodeSheet> {
               onPressed: _loading ? null : _join,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.orange,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.onAccent,
+                elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                 ),
               ),
               child: _loading
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 22,
                       height: 22,
                       child: CircularProgressIndicator(
-                        color: Colors.white,
+                        color: AppColors.onAccent,
                         strokeWidth: 2.5,
                       ),
                     )

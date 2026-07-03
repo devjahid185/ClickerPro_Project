@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/providers.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_theme.dart';
 import 'login_screen.dart';
 
 class ResetPasswordScreen extends ConsumerStatefulWidget {
@@ -151,7 +152,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                         'Set a new\npassword',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontFamily: 'Poppins',
+                          fontFamily: AppText.bodyFontFamily,
                           fontSize: 36,
                           fontWeight: FontWeight.w600,
                           color: AppColors.film,
@@ -163,7 +164,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                         'CHOOSE A STRONG PASSPHRASE',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontFamily: 'Montserrat',
+                          fontFamily: AppText.bodyFontFamily,
                           fontSize: 10.5,
                           letterSpacing: 2.5,
                           color: AppColors.filmDim.withValues(alpha: 0.7),

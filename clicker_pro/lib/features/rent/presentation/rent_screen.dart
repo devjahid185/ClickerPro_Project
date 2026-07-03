@@ -12,6 +12,7 @@ import '../../../theme/app_colors.dart';
 import '../application/rent_providers.dart';
 import 'dialogs/add_rent_sheet.dart';
 import 'widgets/rent_row.dart';
+import '../../../theme/app_theme.dart';
 
 class RentScreen extends ConsumerWidget {
   const RentScreen({super.key});
@@ -38,7 +39,7 @@ class RentScreen extends ConsumerWidget {
               loc.rent_title,
               style: TextStyle(
                 color: AppColors.film,
-                fontFamily: 'Poppins',
+                fontFamily: AppText.brandFontFamily,
                 fontSize: 22,
                 fontWeight: FontWeight.w600,
               ),

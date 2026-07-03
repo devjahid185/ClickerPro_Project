@@ -226,7 +226,7 @@ class PaymentSummaryCard extends ConsumerWidget {
               label,
               style: TextStyle(
                 color: emphasized
-                    ? Colors.white
+                    ? AppColors.film
                     : AppColors.filmMuted.withValues(alpha: 0.9),
                 fontSize: 13,
                 fontWeight: emphasized ? FontWeight.w600 : FontWeight.w500,
@@ -237,7 +237,7 @@ class PaymentSummaryCard extends ConsumerWidget {
             BookingFormat.money(amount, lang: lang, bnNumerals: lang == 'bn'),
             style: TextStyle(
               color:
-                  amountColor ?? (emphasized ? AppColors.gold : Colors.white),
+                  amountColor ?? (emphasized ? AppColors.gold : AppColors.film),
               fontSize: emphasized ? 16 : 14,
               fontWeight: emphasized ? FontWeight.w700 : FontWeight.w600,
               fontFeatures: const [FontFeature.tabularFigures()],

@@ -40,6 +40,8 @@ import '../../../shared/states/lens_loader.dart';
 import '../../../shared/states/offline_banner.dart';
 import '../../../shared/widgets/status_conflict_listener.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_theme.dart';
+
 import '../../auth/domain/user_role.dart';
 import '../../profile/application/profile_controllers.dart';
 import '../../settings/application/language_controller.dart';
@@ -53,7 +55,6 @@ import '../domain/shift.dart';
 import 'booking_list_screen.dart'
     show shouldShowPayment, shouldShowPaymentInShare;
 import 'widgets/assignments_section.dart';
-import 'widgets/booking_status_badge.dart';
 import 'widgets/detail_section.dart';
 import 'widgets/payment_summary_card.dart';
 import 'widgets/re_edit_section.dart';
@@ -88,7 +89,7 @@ class BookingDetailScreen extends ConsumerWidget {
             'Booking',
             style: TextStyle(
               color: AppColors.film,
-              fontFamily: 'Poppins',
+              fontFamily: AppText.brandFontFamily,
               fontSize: 22,
               fontWeight: FontWeight.w600,
             ),
@@ -111,8 +112,8 @@ class BookingDetailScreen extends ConsumerWidget {
                 },
               ),
             PopupMenuButton<_DetailMenuAction>(
-              icon: const Icon(Icons.more_vert, color: Colors.white),
-              color: AppColors.voidElevated,
+              icon: Icon(Icons.more_vert, color: AppColors.filmDim),
+              color: AppColors.surface,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
                 side: BorderSide(color: AppColors.line(0.08)),
@@ -183,7 +184,7 @@ class BookingDetailScreen extends ConsumerWidget {
             }
             return FloatingActionButton.extended(
               backgroundColor: AppColors.orange,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.onAccent,
               icon: const Icon(Icons.arrow_forward_rounded),
               label: Text('Move to ${_titleCase(next.name)}'),
               onPressed: () => _handleAdvance(context, ref, next),
@@ -542,47 +543,138 @@ class _HeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Design (.dc.html "Event Details" hero): solid orange card, radius 22,
+    // with a soft corner-glow circle, a CONFIRMED-style status pill + shift
+    // dot, a large white event title, a date · time line and a location row.
+    final shiftDotColor = booking.shift == Shift.night
+        ? AppColors.purple
+        : AppColors.gold;
+    final shiftLabel = '${_titleCase(booking.shift.name)} shift';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: AppColors.orange,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.orange.withValues(alpha: 0.25),
-          width: 1,
-        ),
+        borderRadius: BorderRadius.circular(22),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
+          // Decorative corner glow bleeding off the top-right.
+          Positioned(
+            right: -30,
+            top: -30,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                // Soft radial bleed instead of a hard-edged ring.
+                gradient: RadialGradient(
+                  colors: [
+                    Colors.white.withValues(alpha: 0.10),
+                    Colors.white.withValues(alpha: 0.0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Status pill + shift dot.
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.20),
+                        borderRadius: BorderRadius.circular(7),
+                      ),
+                      child: Text(
+                        booking.status.displayName(context).toUpperCase(),
+                        style: TextStyle(
+                          color: AppColors.onAccent,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: shiftDotColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      shiftLabel,
+                      style: TextStyle(
+                        color: AppColors.onAccent.withValues(alpha: 0.85),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
                   booking.title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'Poppins',
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
-                    height: 1.1,
+                    color: AppColors.onAccent,
+                    fontFamily: AppText.brandFontFamily,
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    height: 1.05,
+                    letterSpacing: -0.02 * 26,
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              BookingStatusBadge(booking.status, size: BadgeSize.lg),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '${BookingFormat.dateTime(booking.date, lang: lang)} · ${_titleCase(booking.shift.name)} shift · ${booking.startTime}–${booking.endTime}',
-            style: TextStyle(
-              color: AppColors.filmDim.withValues(alpha: 0.9),
-              fontSize: 12.5,
-              height: 1.35,
+                const SizedBox(height: 4),
+                Text(
+                  '${BookingFormat.dateTime(booking.date, lang: lang)} · '
+                  '${booking.startTime}–${booking.endTime}',
+                  style: TextStyle(
+                    color: AppColors.onAccent.withValues(alpha: 0.85),
+                    fontSize: 12.5,
+                    height: 1.35,
+                  ),
+                ),
+                if (booking.venue != null && booking.venue!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.location_on_outlined,
+                        size: 16,
+                        color: AppColors.onAccent.withValues(alpha: 0.85),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          booking.venue!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: AppColors.onAccent.withValues(alpha: 0.9),
+                            fontSize: 12.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
             ),
           ),
         ],
@@ -631,10 +723,10 @@ class _CancelReasonDialogState extends State<_CancelReasonDialog> {
             Text(
               'Cancel booking',
               style: TextStyle(
-                fontFamily: 'Poppins',
+                fontFamily: AppText.brandFontFamily,
                 fontSize: 22,
                 fontWeight: FontWeight.w600,
-                color: Colors.white,
+                color: AppColors.film,
               ),
             ),
             const SizedBox(height: 6),
@@ -652,7 +744,7 @@ class _CancelReasonDialogState extends State<_CancelReasonDialog> {
               maxLines: 4,
               maxLength: 500,
               autofocus: true,
-              style: TextStyle(color: Colors.white, fontSize: 13.5),
+              style: TextStyle(color: AppColors.film, fontSize: 13.5),
               decoration: InputDecoration(
                 hintText: 'Reason for cancellation (optional)',
                 hintStyle: TextStyle(
@@ -803,11 +895,11 @@ class _InvoiceAction extends ConsumerWidget {
             width: double.infinity,
             child: FilledButton.icon(
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.teal,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                backgroundColor: AppColors.orange,
+                foregroundColor: AppColors.onAccent,
+                padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(14),
                 ),
               ),
               icon: const Icon(Icons.receipt_long_rounded, size: 18),
@@ -876,6 +968,17 @@ class _InvoiceAction extends ConsumerWidget {
     final chiefName = _resolveChiefName(members);
     final teamLines = envelope.assignments
         .map((a) => memberLine(a.userId, _titleCase(a.role.name)))
+        .toList(growable: false);
+    // Structured rows for the designed paper: "Name · Role" ↔ phone.
+    final teamEntries = envelope.assignments
+        .map((a) {
+          final m = members.where((x) => x.userId == a.userId).firstOrNull;
+          final roleLabel = _titleCase(a.role.name);
+          return (
+            name: m == null ? roleLabel : '${m.fullName} · $roleLabel',
+            phone: (m?.phone ?? '').trim(),
+          );
+        })
         .toList(growable: false);
     // Team names only (no role suffix) for the simple shared text spec.
     final teamNamesOnly = envelope.assignments
@@ -1010,6 +1113,9 @@ class _InvoiceAction extends ConsumerWidget {
       // Team is for the SHARED event details only — the client invoice never
       // lists the studio's team / payouts.
       teamLines: forClient ? const <String>[] : teamLines,
+      teamEntries: forClient
+          ? const <({String name, String phone})>[]
+          : teamEntries,
       shiftLabel: shiftLabel,
       packageName: envelope.package?.name,
       showPayment: showPayment,
@@ -1089,6 +1195,7 @@ class _InvoiceData {
     required this.advanceText,
     required this.dueText,
     required this.dueIsZero,
+    this.teamEntries = const <({String name, String phone})>[],
   });
 
   final String docLabel;
@@ -1115,6 +1222,9 @@ class _InvoiceData {
   final String advanceText;
   final String dueText;
   final bool dueIsZero;
+
+  /// Structured team rows for the designed paper — "Name · Role" ↔ phone.
+  final List<({String name, String phone})> teamEntries;
 }
 
 /// Modern, designed invoice template (MOD-14). A branded header band,
@@ -1134,120 +1244,26 @@ class _InvoiceSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
-      initialChildSize: 0.82,
+      initialChildSize: 0.85,
       minChildSize: 0.5,
       maxChildSize: 0.95,
       expand: false,
       builder: (context, scrollController) => Container(
-        margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        margin: const EdgeInsets.fromLTRB(10, 0, 10, 10),
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.line(0.08)),
+          color: AppColors.appBg,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: AppColors.line(0.06)),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
           children: [
+            _sheetHeader(context),
             Expanded(
               child: ListView(
                 controller: scrollController,
-                padding: EdgeInsets.zero,
-                children: [
-                  _brandHeader(),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _sectionLabel('BILL TO'),
-                        const SizedBox(height: 6),
-                        Text(
-                          data.clientName,
-                          style: TextStyle(
-                            color: AppColors.film,
-                            fontFamily: 'Poppins',
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        if (data.clientPhone != '—')
-                          Text(
-                            data.clientPhone,
-                            style: TextStyle(
-                              color: AppColors.filmDim.withValues(alpha: 0.85),
-                              fontSize: 13,
-                            ),
-                          ),
-                        const SizedBox(height: 18),
-                        _sectionLabel('EVENT DETAILS'),
-                        const SizedBox(height: 8),
-                        _kv('Event', data.eventType),
-                        if (data.brideName?.isNotEmpty ?? false)
-                          _kv('Bride', data.brideName!),
-                        if (data.groomName?.isNotEmpty ?? false)
-                          _kv('Groom', data.groomName!),
-                        _kv('Date', data.dateStr),
-                        _kv('Shift', data.shiftLabel),
-                        _kv('Time', data.timeStr),
-                        _kv('Venue', data.venue),
-                        if (data.packageName != null)
-                          _kv('Package', data.packageName!),
-                        if (data.chiefName != '—')
-                          _kv('Chief', data.chiefName),
-                        if (data.teamLines.isNotEmpty) ...[
-                          const SizedBox(height: 14),
-                          _sectionLabel('TEAM'),
-                          const SizedBox(height: 6),
-                          for (final line in data.teamLines)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 3),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Padding(
-                                    padding: EdgeInsets.only(top: 6, right: 8),
-                                    child: Icon(
-                                      Icons.circle,
-                                      size: 5,
-                                      color: AppColors.goldConst,
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Text(
-                                      line,
-                                      style: TextStyle(
-                                        color: AppColors.film,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                        ],
-                        if (data.showPayment) ...[
-                          const SizedBox(height: 18),
-                          _totalsBox(),
-                        ],
-                        const SizedBox(height: 26),
-                        // Signature block — matches the reference invoices'
-                        // "YOUR SIGNATURE" line at the bottom-right.
-                        _signatureBlock(),
-                        const SizedBox(height: 18),
-                        Center(
-                          child: Text(
-                            'Generated by ${data.studioName} · CLICKER PRO',
-                            style: TextStyle(
-                              color: AppColors.filmDim.withValues(alpha: 0.6),
-                              fontSize: 10.5,
-                              letterSpacing: 0.3,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                padding: const EdgeInsets.fromLTRB(18, 0, 18, 8),
+                children: [_paper()],
               ),
             ),
             _shareBar(context),
@@ -1257,147 +1273,374 @@ class _InvoiceSheet extends StatelessWidget {
     );
   }
 
-  Widget _brandHeader() {
+  // Sheet title bar — close affordance + document title (the .dc.html
+  // MOD-14 header row).
+  Widget _sheetHeader(BuildContext context) {
+    final title = data.docLabel == 'INVOICE' ? 'Invoice' : 'Event Details';
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 8, 6, 2),
+      child: Row(
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              color: AppColors.film,
+              fontFamily: AppText.brandFontFamily,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.02 * 18,
+            ),
+          ),
+          const Spacer(),
+          IconButton(
+            icon: Icon(Icons.close_rounded, color: AppColors.film),
+            onPressed: () => Navigator.of(context).maybePop(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The .dc.html "invoice paper": one white card that reads like a printed
+  /// document — studio header over a 2px orange rule, mono micro-labels,
+  /// client/event grid, team list, money block, signature.
+  Widget _paper() {
+    final coupleLine = [data.brideName, data.groomName]
+        .where((s) => s?.trim().isNotEmpty ?? false)
+        .map((s) => s!.trim())
+        .join(' & ');
+    final clientTitle = coupleLine.isNotEmpty ? coupleLine : data.clientName;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
-      decoration: BoxDecoration(gradient: AppColors.orangeGradient),
+      padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.line(0.08)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 30,
+            spreadRadius: -16,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _paperHeader(),
+          const SizedBox(height: 16),
+          _detailGrid(clientTitle),
+          if (data.teamEntries.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _teamBlock(),
+          ],
+          if (data.showPayment) ...[
+            const SizedBox(height: 16),
+            _moneyBlock(),
+          ],
+          const SizedBox(height: 24),
+          _signatureBlock(),
+          const SizedBox(height: 14),
+          Center(
+            child: Text(
+              'Generated by ${data.studioName} · CLICKER PRO',
+              style: TextStyle(
+                color: AppColors.filmDim.withValues(alpha: 0.6),
+                fontSize: 10.5,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Studio ↔ INVOICE header over the signature 2px orange rule.
+  Widget _paperHeader() {
+    return Container(
+      padding: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: AppColors.orange, width: 2),
+        ),
+      ),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  data.studioName.toUpperCase(),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  data.studioName,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'Poppins',
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
+                    color: AppColors.film,
+                    fontFamily: AppText.brandFontFamily,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.02 * 17,
                   ),
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  data.docLabel,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'Montserrat',
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.6,
+                if (data.studioPhone.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      data.studioPhone,
+                      style: TextStyle(
+                        color: AppColors.filmMuted,
+                        fontSize: 11,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                data.studioPhone.isEmpty ? '' : '☎ ${data.studioPhone}',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.9),
-                  fontSize: 12,
-                ),
-              ),
-              Text(
-                data.invoiceNo,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.95),
-                  fontFamily: 'Montserrat',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.8,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _totalsBox() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.film,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          _totalRow('Total', data.totalText, Colors.white, false),
-          const SizedBox(height: 8),
-          _totalRow(
-            'Advance Paid',
-            data.advanceText,
-            AppColors.green,
-            false,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Divider(
-              height: 1,
-              color: Colors.white.withValues(alpha: 0.12),
+                if (data.studioAddress.isNotEmpty)
+                  Text(
+                    data.studioAddress,
+                    style: TextStyle(
+                      color: AppColors.filmMuted,
+                      fontSize: 11,
+                    ),
+                  ),
+              ],
             ),
           ),
-          _totalRow(
-            data.dueIsZero ? 'Due · Fully Paid ✓' : 'Due',
-            data.dueText,
-            data.dueIsZero ? AppColors.green : AppColors.gold,
-            true,
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                data.docLabel,
+                style: TextStyle(
+                  fontFamily: AppText.monoFontFamily,
+                  fontSize: 10,
+                  letterSpacing: 1.0,
+                  color: AppColors.orange,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                '#${data.invoiceNo}',
+                style: TextStyle(
+                  color: AppColors.film,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _totalRow(String label, String value, Color color, bool big) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _microLabel(String text) => Text(
+    text,
+    style: TextStyle(
+      fontFamily: AppText.monoFontFamily,
+      fontSize: 9,
+      letterSpacing: 0.9,
+      color: AppColors.filmMuted,
+    ),
+  );
+
+  // Two-column CLIENT / DATE·EVENT grid from the mock, extended with the
+  // extra booking facts (shift/time, package, chief) in the same cell style.
+  Widget _detailGrid(String clientTitle) {
+    final cells = <Widget>[
+      _gridCell(
+        'CLIENT',
+        clientTitle,
+        data.clientPhone == '—' ? '' : data.clientPhone,
+      ),
+      _gridCell(
+        'DATE / EVENT',
+        '${data.dateStr} · ${data.eventType}',
+        data.venue == '—' ? '' : data.venue,
+      ),
+      _gridCell('SHIFT / TIME', data.shiftLabel, data.timeStr),
+      if (data.packageName?.trim().isNotEmpty ?? false)
+        _gridCell('PACKAGE', data.packageName!.trim(), ''),
+      if (data.chiefName != '—') _gridCell('CHIEF', data.chiefName, ''),
+    ];
+
+    return Column(
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.85),
-            fontSize: big ? 14 : 13,
-            fontWeight: big ? FontWeight.w600 : FontWeight.w500,
+        for (var i = 0; i < cells.length; i += 2)
+          Padding(
+            padding: EdgeInsets.only(top: i == 0 ? 0 : 13),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: cells[i]),
+                const SizedBox(width: 13),
+                Expanded(
+                  child: i + 1 < cells.length
+                      ? cells[i + 1]
+                      : const SizedBox.shrink(),
+                ),
+              ],
+            ),
           ),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            color: color,
-            fontFamily: 'Poppins',
-            fontSize: big ? 20 : 15,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
       ],
     );
   }
 
-  Widget _sectionLabel(String text) => Text(
-    text,
-    style: TextStyle(
-      color: AppColors.orange.withValues(alpha: 0.9),
-      fontFamily: 'Montserrat',
-      fontSize: 10,
-      fontWeight: FontWeight.w700,
-      letterSpacing: 1.6,
-    ),
+  Widget _gridCell(String label, String value, String sub) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _microLabel(label),
+      const SizedBox(height: 3),
+      Text(
+        value,
+        style: TextStyle(
+          color: AppColors.film,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      if (sub.isNotEmpty)
+        Text(
+          sub,
+          style: TextStyle(color: AppColors.filmMuted, fontSize: 11),
+        ),
+    ],
   );
+
+  // TEAM list — "Name · Role" left, phone right, over a hairline rule.
+  Widget _teamBlock() {
+    return Container(
+      padding: const EdgeInsets.only(top: 14),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: AppColors.line(0.07))),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _microLabel('TEAM'),
+          const SizedBox(height: 8),
+          for (final member in data.teamEntries)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      member.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppColors.filmDim,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ),
+                  if (member.phone.isNotEmpty)
+                    Text(
+                      member.phone,
+                      style: TextStyle(
+                        color: AppColors.filmMuted,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // Money block: package/total · advance · big due over a 2px orange rule.
+  Widget _moneyBlock() {
+    final lineLabel = (data.packageName?.trim().isNotEmpty ?? false)
+        ? data.packageName!.trim()
+        : 'Package total';
+    return Container(
+      padding: const EdgeInsets.only(top: 14),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: AppColors.line(0.07))),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 9),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    lineLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: AppColors.film, fontSize: 13),
+                  ),
+                ),
+                Text(
+                  data.totalText,
+                  style: TextStyle(
+                    color: AppColors.film,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Advance paid',
+                    style: TextStyle(color: AppColors.green, fontSize: 12),
+                  ),
+                ),
+                Text(
+                  '− ${data.advanceText}',
+                  style: TextStyle(color: AppColors.green, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.only(top: 12),
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(color: AppColors.orange, width: 2),
+              ),
+            ),
+            child: Row(
+              children: [
+                Text(
+                  data.dueIsZero ? 'Due · Fully Paid ✓' : 'Due',
+                  style: TextStyle(
+                    color: AppColors.film,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  data.dueText,
+                  style: TextStyle(
+                    color: data.dueIsZero ? AppColors.green : AppColors.red,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.02 * 20,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   /// Bottom-right signature block — uses the studio's saved signature image
   /// when present, otherwise a blank signature line, with the studio name.
@@ -1426,7 +1669,7 @@ class _InvoiceSheet extends StatelessWidget {
             'Authorized Signature',
             style: TextStyle(
               color: AppColors.filmDim.withValues(alpha: 0.8),
-              fontFamily: 'Montserrat',
+              fontFamily: AppText.bodyFontFamily,
               fontSize: 10,
               letterSpacing: 0.8,
               fontWeight: FontWeight.w600,
@@ -1445,49 +1688,21 @@ class _InvoiceSheet extends StatelessWidget {
     );
   }
 
-  Widget _kv(String key, String value) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 78,
-          child: Text(
-            key,
-            style: TextStyle(
-              color: AppColors.filmDim.withValues(alpha: 0.8),
-              fontSize: 12.5,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: TextStyle(
-              color: AppColors.film,
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-
   Widget _shareBar(BuildContext context) {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+        padding: const EdgeInsets.fromLTRB(18, 10, 18, 14),
         child: Column(
           children: [
             // Row 1 — share the plain event-details text (client / team).
             Row(
               children: [
                 Expanded(
-                  child: _ShareButton(
+                  child: _ShareTile(
                     icon: Icons.copy_rounded,
                     label: 'Copy',
+                    style: _ShareTileStyle.plain,
                     onTap: () {
                       Clipboard.setData(ClipboardData(text: invoiceText));
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -1496,12 +1711,12 @@ class _InvoiceSheet extends StatelessWidget {
                     },
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 9),
                 Expanded(
-                  child: _ShareButton(
+                  child: _ShareTile(
                     icon: Icons.chat_rounded,
                     label: 'WhatsApp',
-                    color: const Color(0xFF25D366),
+                    style: _ShareTileStyle.whatsapp,
                     onTap: () => launchUrl(
                       Uri.parse(
                         'https://wa.me/?text=${Uri.encodeComponent(invoiceText)}',
@@ -1510,12 +1725,12 @@ class _InvoiceSheet extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 9),
                 Expanded(
-                  child: _ShareButton(
+                  child: _ShareTile(
                     icon: Icons.ios_share_rounded,
                     label: 'Share',
-                    color: AppColors.indigo,
+                    style: _ShareTileStyle.plain,
                     onTap: () => SharePlus.instance.share(
                       ShareParams(text: invoiceText),
                     ),
@@ -1523,25 +1738,25 @@ class _InvoiceSheet extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 9),
             // Row 2 — the formal booking invoice PDF: Print (blank signature)
-            // or Download (saved signature embedded).
+            // or PDF download (saved signature embedded).
             Row(
               children: [
                 Expanded(
-                  child: _ShareButton(
+                  child: _ShareTile(
                     icon: Icons.print_rounded,
                     label: 'Print',
-                    color: AppColors.teal,
+                    style: _ShareTileStyle.plain,
                     onTap: () => _exportInvoicePdf(context, forPrint: true),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 9),
                 Expanded(
-                  child: _ShareButton(
-                    icon: Icons.download_rounded,
-                    label: 'Download',
-                    color: AppColors.gold,
+                  child: _ShareTile(
+                    icon: Icons.picture_as_pdf_rounded,
+                    label: 'PDF',
+                    style: _ShareTileStyle.primary,
                     onTap: () => _exportInvoicePdf(context, forPrint: false),
                   ),
                 ),
@@ -1629,46 +1844,85 @@ class _InvoiceSheet extends StatelessWidget {
   }
 }
 
-class _ShareButton extends StatelessWidget {
-  const _ShareButton({
+/// Visual style of an invoice-sheet action tile (matches the .dc.html
+/// action grid: plain white · WhatsApp green tint · solid orange primary).
+enum _ShareTileStyle { plain, whatsapp, primary }
+
+class _ShareTile extends StatelessWidget {
+  const _ShareTile({
     required this.icon,
     required this.label,
+    required this.style,
     required this.onTap,
-    this.color,
   });
 
   final IconData icon;
   final String label;
+  final _ShareTileStyle style;
   final VoidCallback onTap;
-  final Color? color;
 
   @override
   Widget build(BuildContext context) {
-    final resolvedColor = color ?? AppColors.teal;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: resolvedColor.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: resolvedColor.withValues(alpha: 0.3)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 16, color: resolvedColor),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                color: resolvedColor,
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
+    final (Color bg, Color? borderColor, Color fg, List<BoxShadow>? shadow) =
+        switch (style) {
+      _ShareTileStyle.plain => (
+        AppColors.surface,
+        AppColors.line(0.08),
+        AppColors.filmDim,
+        null,
+      ),
+      _ShareTileStyle.whatsapp => (
+        AppColors.greenSoft,
+        AppColors.green.withValues(alpha: 0.2),
+        AppColors.green,
+        null,
+      ),
+      _ShareTileStyle.primary => (
+        AppColors.orange,
+        null,
+        AppColors.onAccent,
+        [
+          BoxShadow(
+            color: AppColors.orange.withValues(alpha: 0.55),
+            blurRadius: 20,
+            spreadRadius: -10,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+    };
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(13),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(13),
+            border: borderColor == null
+                ? null
+                : Border.all(color: borderColor),
+            boxShadow: shadow,
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: fg, size: 20),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: style == _ShareTileStyle.plain
+                      ? AppColors.film
+                      : fg,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

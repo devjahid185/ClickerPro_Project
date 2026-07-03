@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import '../../../core/role/capability.dart';
 import '../../../core/role/role_policy.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_theme.dart';
 import '../domain/user_role.dart';
 
 class RoleChangeDialog extends StatefulWidget {
@@ -190,7 +191,7 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
               Text(
                 'Change role',
                 style: TextStyle(
-                  fontFamily: 'Poppins',
+                  fontFamily: AppText.bodyFontFamily,
                   fontSize: 26,
                   fontWeight: FontWeight.w600,
                   color: AppColors.film,
@@ -200,7 +201,7 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
               Text(
                 'CURRENT · ${widget.currentRole.displayLabel.toUpperCase()}',
                 style: TextStyle(
-                  fontFamily: 'Montserrat',
+                  fontFamily: AppText.bodyFontFamily,
                   fontSize: 10.5,
                   letterSpacing: 2,
                   color: AppColors.gold.withValues(alpha: 0.85),
@@ -259,7 +260,7 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
                                   Text(
                                     'You will lose access to:',
                                     style: TextStyle(
-                                      fontFamily: 'Montserrat',
+                                      fontFamily: AppText.bodyFontFamily,
                                       fontSize: 11,
                                       letterSpacing: 1.2,
                                       color: AppColors.gold,

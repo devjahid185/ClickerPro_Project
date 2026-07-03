@@ -36,6 +36,8 @@ import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../shared/widgets/celebration.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_theme.dart';
+
 import '../../auth/domain/user_role.dart';
 import '../../calendar_sync/data/calendar_sync_service.dart';
 import '../../profile/application/profile_controllers.dart';
@@ -241,7 +243,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                 : loc.bookings_edit_booking_screen,
             style: TextStyle(
               color: AppColors.film,
-              fontFamily: 'Poppins',
+              fontFamily: AppText.brandFontFamily,
               fontSize: 22,
               fontWeight: FontWeight.w600,
             ),
@@ -313,17 +315,17 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                           : loc.bookings_save_changes,
                     ),
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.teal,
-                      foregroundColor: AppColors.voidBlack,
+                      backgroundColor: AppColors.orange,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
-                        vertical: 12,
+                        vertical: 14,
                       ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       textStyle: TextStyle(
-                        fontFamily: 'Montserrat',
+                        fontFamily: AppText.bodyFontFamily,
                         fontSize: 12,
                         letterSpacing: 1.2,
                         fontWeight: FontWeight.w700,
@@ -386,12 +388,13 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
   }
 
   Widget _buildModePicker() {
+    // Design (.dc.html "Form v6"): a segmented control on a warm grey track;
+    // the active segment is a solid orange pill with white text.
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppColors.line(0.04),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.line(0.08)),
+        color: AppColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(13),
       ),
       child: Row(
         children: [
@@ -706,15 +709,14 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                 margin: EdgeInsets.only(right: shift != Shift.both ? 8 : 0),
                 padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 6),
                 decoration: BoxDecoration(
-                  // Selected = solid teal so the white label/icon is readable
-                  // and it's obvious which shift is picked.
-                  color: isSelected
-                      ? AppColors.teal
-                      : AppColors.line(0.04),
-                  borderRadius: BorderRadius.circular(9),
+                  // Selected = solid orange so the white label/icon is readable
+                  // and it's obvious which shift is picked; unselected = white
+                  // card to match the .dc.html form fields.
+                  color: isSelected ? AppColors.orange : AppColors.surface,
+                  borderRadius: BorderRadius.circular(11),
                   border: Border.all(
                     color: isSelected
-                        ? AppColors.teal
+                        ? AppColors.orange
                         : AppColors.line(0.08),
                     width: isSelected ? 1.2 : 1,
                   ),
@@ -771,10 +773,10 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
             () => _packageSectionExpanded = !_packageSectionExpanded,
           ),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             decoration: BoxDecoration(
-              color: AppColors.line(0.04),
-              borderRadius: BorderRadius.circular(10),
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(13),
               border: Border.all(color: AppColors.line(0.08)),
             ),
             child: Row(
@@ -792,11 +794,11 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                       Text(
                         'PACKAGE',
                         style: TextStyle(
-                          fontFamily: 'Montserrat',
+                          fontFamily: AppText.monoFontFamily,
                           fontSize: 10,
-                          letterSpacing: 1.4,
+                          letterSpacing: 1.2,
                           color: AppColors.film,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -868,10 +870,10 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
           onTap: () =>
               setState(() => _eventTypesExpanded = !_eventTypesExpanded),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             decoration: BoxDecoration(
-              color: AppColors.line(0.04),
-              borderRadius: BorderRadius.circular(10),
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(13),
               border: Border.all(color: AppColors.line(0.08)),
             ),
             child: Row(
@@ -889,11 +891,11 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                       Text(
                         'EVENT TYPE',
                         style: TextStyle(
-                          fontFamily: 'Montserrat',
+                          fontFamily: AppText.monoFontFamily,
                           fontSize: 10,
-                          letterSpacing: 1.4,
+                          letterSpacing: 1.2,
                           color: AppColors.film,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -942,26 +944,25 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.teal.withValues(alpha: 0.15)
-                          : AppColors.line(0.04),
-                      borderRadius: BorderRadius.circular(999),
+                      // Design (.dc.html): active event-type chip is a solid
+                      // orange fill with white text; inactive is a white chip
+                      // with a hairline border.
+                      color: isSelected ? AppColors.orange : AppColors.surface,
+                      borderRadius: BorderRadius.circular(9),
                       border: Border.all(
                         color: isSelected
-                            ? AppColors.teal.withValues(alpha: 0.5)
-                            : AppColors.line(0.08),
+                            ? AppColors.orange
+                            : AppColors.line(0.10),
                       ),
                     ),
                     child: Text(
                       _eventTypeChipLabel(type),
                       style: TextStyle(
                         color: isSelected
-                            ? AppColors.teal
+                            ? Colors.white
                             : AppColors.filmDim.withValues(alpha: 0.85),
-                        fontSize: 12,
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.w500,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -1009,7 +1010,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                       Text(
                         'CHIEF PHOTOGRAPHER',
                         style: TextStyle(
-                          fontFamily: 'Montserrat',
+                          fontFamily: AppText.bodyFontFamily,
                           fontSize: 10,
                           letterSpacing: 1.4,
                           color: isEnabled
@@ -1150,7 +1151,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
           Text(
             'ADD TEAM',
             style: TextStyle(
-              fontFamily: 'Montserrat',
+              fontFamily: AppText.bodyFontFamily,
               fontSize: 10,
               letterSpacing: 1.4,
               color: AppColors.film,
@@ -1235,11 +1236,11 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
         Text(
           'PAYMENT',
           style: TextStyle(
-            fontFamily: 'Montserrat',
+            fontFamily: AppText.monoFontFamily,
             fontSize: 10,
-            letterSpacing: 1.4,
+            letterSpacing: 1.2,
             color: AppColors.film,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w500,
           ),
         ),
         const SizedBox(height: 8),
@@ -1248,15 +1249,15 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
           builder: (context, child) {
             final flashValue = _isFlashingTotal ? _flashAnim.value : 0.0;
             return Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: flashValue > 0
-                    ? AppColors.teal.withValues(alpha: flashValue * 0.08)
-                    : AppColors.line(0.04),
-                borderRadius: BorderRadius.circular(10),
+                    ? AppColors.orange.withValues(alpha: flashValue * 0.08)
+                    : AppColors.surface,
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: flashValue > 0
-                      ? AppColors.teal.withValues(alpha: flashValue * 0.4)
+                      ? AppColors.orange.withValues(alpha: flashValue * 0.4)
                       : AppColors.line(0.08),
                 ),
               ),
@@ -1719,7 +1720,7 @@ class _PackagePickerSheet extends ConsumerWidget {
             'Pick a package',
             style: TextStyle(
               color: AppColors.film,
-              fontFamily: 'Poppins',
+              fontFamily: AppText.brandFontFamily,
               fontSize: 22,
               fontWeight: FontWeight.w600,
             ),
@@ -1840,18 +1841,10 @@ class _ModePill extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: 9),
         decoration: BoxDecoration(
-          color: selected
-              ? AppColors.teal.withValues(alpha: 0.12)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: selected
-                ? AppColors.teal.withValues(alpha: 0.5)
-                : Colors.transparent,
-            width: selected ? 1.2 : 1,
-          ),
+          color: selected ? AppColors.orange : Colors.transparent,
+          borderRadius: BorderRadius.circular(9),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1860,7 +1853,7 @@ class _ModePill extends StatelessWidget {
               icon,
               size: 16,
               color: selected
-                  ? AppColors.teal
+                  ? Colors.white
                   : AppColors.filmDim.withValues(alpha: 0.7),
             ),
             const SizedBox(width: 6),
@@ -1868,10 +1861,10 @@ class _ModePill extends StatelessWidget {
               label,
               style: TextStyle(
                 color: selected
-                    ? AppColors.teal
+                    ? Colors.white
                     : AppColors.filmDim.withValues(alpha: 0.85),
-                fontSize: 13,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                fontSize: 12.5,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
               ),
             ),
           ],

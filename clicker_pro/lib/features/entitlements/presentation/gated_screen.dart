@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../theme/app_colors.dart';
 import '../application/entitlement_providers.dart';
 import 'paywall.dart';
+import '../../../theme/app_theme.dart';
 
 /// Route-level gate. Wrap a gated screen in the router so it renders the real
 /// [child] only when the feature is unlocked; otherwise it shows a locked
@@ -58,7 +59,7 @@ class GatedScreen extends ConsumerWidget {
           featureName,
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontSize: 22,
             fontWeight: FontWeight.w600,
           ),

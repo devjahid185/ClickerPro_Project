@@ -8,6 +8,7 @@ import '../../../../shared/states/lens_loader.dart';
 import '../../../../theme/app_colors.dart';
 import '../../application/support_providers.dart';
 import '../../domain/support_ticket_draft.dart';
+import '../../../../theme/app_theme.dart';
 
 class SendTicketSheet extends ConsumerStatefulWidget {
   const SendTicketSheet._();
@@ -94,7 +95,7 @@ class _SendTicketSheetState extends ConsumerState<SendTicketSheet> {
                 loc.help_send_ticket,
                 style: TextStyle(
                   color: AppColors.film,
-                  fontFamily: 'Poppins',
+                  fontFamily: AppText.brandFontFamily,
                   fontSize: 22,
                   fontWeight: FontWeight.w600,
                 ),

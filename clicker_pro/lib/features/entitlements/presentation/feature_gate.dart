@@ -66,15 +66,15 @@ class FeatureGate extends ConsumerWidget {
                     ),
                   ],
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.lock_rounded, color: Colors.white, size: 10),
-                    SizedBox(width: 2),
+                    Icon(Icons.lock_rounded, color: AppColors.onAccent, size: 10),
+                    const SizedBox(width: 2),
                     Text(
                       'PRO',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.onAccent,
                         fontSize: 9,
                         fontWeight: FontWeight.w800,
                       ),

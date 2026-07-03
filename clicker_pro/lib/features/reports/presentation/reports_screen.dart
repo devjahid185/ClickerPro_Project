@@ -29,6 +29,7 @@ import '../application/reports_providers.dart';
 import 'widgets/team_performance_section.dart';
 import 'widgets/year_selector.dart';
 import 'widgets/yearly_summary_card.dart';
+import '../../../theme/app_theme.dart';
 
 class ReportsScreen extends ConsumerWidget {
   const ReportsScreen({super.key});
@@ -51,7 +52,7 @@ class ReportsScreen extends ConsumerWidget {
           loc.reports_title,
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontSize: 22,
             fontWeight: FontWeight.w600,
           ),

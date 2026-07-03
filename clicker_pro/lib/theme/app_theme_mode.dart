@@ -1,19 +1,19 @@
 // lib/theme/app_theme_mode.dart
 //
 // Clicker Pro — Theme mode manager.
-// Two mobile themes (both LIGHT):
-//   • clickerPro   — the current default (Hanken Grotesk + #E2620E, per spec)
-//   • sunsetStudio — the earlier warm editorial theme (Playfair + #FF6200)
+// Two mobile themes:
+//   • clickerPro — the default (LIGHT · Hanken Grotesk + #E2620E)
+//   • noirDark   — the "Noir" dark theme (DARK · Space Grotesk + lime #C8F252)
 // Web uses its own theme (see AppTheme.web()); these apply to mobile.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/providers.dart';
 
-/// The named app themes. Both are light; the app has no dark mode.
+/// The named app themes: the ClickerPro light default and the Noir dark theme.
 enum AppThemeMode {
   clickerPro, // DEFAULT — editorial paper, orange #E2620E, Hanken Grotesk
-  sunsetStudio, // legacy — warm cream, orange #FF6200, Playfair Display
+  noirDark, // dark — near-black canvas, lime #C8F252, Space Grotesk
 }
 
 class ThemeModeController extends AsyncNotifier<AppThemeMode> {

@@ -1,8 +1,9 @@
 // lib/theme/app_theme.dart
 //
-// Clicker Pro v15 — Theme entry point
-// Single theme: Sunset Studio (light, default).
-// Sunrise Pulse and Deep Ocean retired in v15.
+// Clicker Pro — Theme entry point
+// Two mobile themes: ClickerPro (light, default) and Noir (dark).
+// Sunset Studio / Sunrise Pulse / Deep Ocean are retired (kept only as
+// backward-compat shims below).
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 import 'app_theme_clicker.dart';
 import 'app_theme_light.dart';
+import 'app_theme_noir.dart';
 import 'app_theme_web.dart';
 
 /// ============================================================
@@ -40,34 +42,59 @@ class AppRadius {
 }
 
 /// ============================================================
-/// TYPOGRAPHY — Sunset Studio
-///   display/brand: Mood Booster (dashboard only) → Playfair Display (serif)
-///   body: Outfit
-///   mono/labels: IBM Plex Mono
+/// TYPOGRAPHY — theme-aware shared accessor.
+///   • ClickerPro (default): brand + body = Hanken Grotesk · mono = IBM Plex Mono
+///   • Noir (dark)         : brand + body = Space Grotesk · mono = JetBrains Mono
+///
+/// Fonts resolve per the active palette so shared widgets and auth/onboarding
+/// screens that read AppText.* pick up the right typeface automatically.
 /// ============================================================
 class AppText {
   AppText._();
 
-  static final String? _brandFont = GoogleFonts.playfairDisplay().fontFamily;
-  static final String? _bodyFont = GoogleFonts.outfit().fontFamily;
-  static final String? _monoFont = GoogleFonts.ibmPlexMono().fontFamily;
+  static final String? _hanken = GoogleFonts.hankenGrotesk().fontFamily;
+  static final String? _spaceGrotesk = GoogleFonts.spaceGrotesk().fontFamily;
+  static final String? _ibmMono = GoogleFonts.ibmPlexMono().fontFamily;
+  static final String? _jetMono = GoogleFonts.jetBrainsMono().fontFamily;
+
+  static bool get _noir => AppColors.active == ActivePalette.noirDark;
+
+  // ClickerPro uses Hanken for both brand + body; Noir uses Space Grotesk for
+  // both (its mono/grotesk pairing is the theme's signature).
+  static String? get _brandFont => _noir ? _spaceGrotesk : _hanken;
+  static String? get _bodyFont => _noir ? _spaceGrotesk : _hanken;
+  // Mono: JetBrains Mono on Noir, IBM Plex Mono on ClickerPro.
+  static String? get _monoFont => _noir ? _jetMono : _ibmMono;
+
+  /// Public theme-aware font families — use these instead of hardcoded
+  /// 'Montserrat'/'Poppins' strings (which were never bundled and fell back to
+  /// the platform default). Resolve per the active palette.
+  static String? get brandFontFamily => _brandFont;
+  static String? get bodyFontFamily => _bodyFont;
+  static String? get monoFontFamily => _monoFont;
+
+  /// Fixed ClickerPro (Hanken) family — for the auth/onboarding brand chrome
+  /// that must always read as the ClickerPro spec regardless of the saved
+  /// theme (those screens show before/around the theme toggle).
+  static String? get clickerBrandFontFamily => _hanken;
 
   static TextStyle get brand => TextStyle(
     fontFamily: _brandFont,
     fontSize: 22,
-    fontWeight: FontWeight.w700,
+    // ClickerPro: Hanken 800, tight. Noir: Space Grotesk 700, tight.
+    fontWeight: _noir ? FontWeight.w700 : FontWeight.w800,
     color: AppColors.film,
     height: 1.1,
-    letterSpacing: 0.3,
+    letterSpacing: -0.02 * 22,
   );
 
   static TextStyle get brandAccent => TextStyle(
     fontFamily: _brandFont,
     fontSize: 22,
-    fontWeight: FontWeight.w700,
-    fontStyle: FontStyle.italic,
+    fontWeight: _noir ? FontWeight.w700 : FontWeight.w800,
     color: AppColors.teal,
     height: 1.1,
+    letterSpacing: -0.02 * 22,
   );
 
   static TextStyle get metricValue => TextStyle(
@@ -286,6 +313,11 @@ class AppTheme {
   /// Kept as the secondary mobile theme. Delegates to AppThemeLight.
   static ThemeData sunsetStudio() => AppThemeLight.light();
 
+  /// Noir — the DARK theme (near-black canvas, lime #C8F252, Space Grotesk +
+  /// JetBrains Mono). Built to CLICKERPRO_DARK_FLUTTER_SPEC.md. Delegates to
+  /// AppThemeNoir.
+  static ThemeData noirDark() => AppThemeNoir.theme();
+
   /// Web base theme — neutral placeholder scaffold driven by WebTheme tokens.
   /// Used as MaterialApp.theme on the web build only (see app.dart). Awaiting
   /// the new Claude Design theme; swap WebTheme's values to reskin.
@@ -293,9 +325,10 @@ class AppTheme {
 
   // ── Backward-compat shims ──────────────────────────────────────────
   // Older callers referenced these names. Sunrise Pulse / Deep Ocean are
-  // retired, so they all resolve to the single Sunset Studio theme.
+  // retired, so they resolve to Sunset Studio; `dark()` now resolves to the
+  // real Noir dark theme.
   static ThemeData sunrisePulse() => sunsetStudio();
-  static ThemeData dark() => sunsetStudio();
+  static ThemeData dark() => noirDark();
   static ThemeData orangeHorizon() => sunsetStudio();
   static ThemeData oceanDeep() => sunsetStudio();
 }

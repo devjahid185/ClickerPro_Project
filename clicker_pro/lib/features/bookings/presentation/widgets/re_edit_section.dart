@@ -23,6 +23,8 @@ import 'package:intl/intl.dart';
 import '../../../../core/booking_status/booking_status.dart';
 import '../../../../core/role/capability.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_theme.dart';
+
 import '../../application/booking_detail_controller.dart';
 import '../../application/booking_providers.dart';
 import '../../domain/booking.dart';
@@ -461,7 +463,7 @@ class _RequestReEditDialogState extends State<_RequestReEditDialog> {
               'Request re-edit (Round ${widget.defaultRound})',
               style: TextStyle(
                 color: AppColors.film,
-                fontFamily: 'Poppins',
+                fontFamily: AppText.brandFontFamily,
                 fontSize: 22,
                 fontWeight: FontWeight.w600,
               ),

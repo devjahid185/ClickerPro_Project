@@ -27,6 +27,7 @@ import '../../shared/states/lens_loader.dart';
 import '../../theme/app_colors.dart';
 import 'capability.dart';
 import 'role_policy.dart';
+import '../../theme/app_theme.dart';
 
 class RoleGatedScreen extends ConsumerWidget {
   const RoleGatedScreen({
@@ -73,7 +74,7 @@ class RoleGatedScreen extends ConsumerWidget {
           title,
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontSize: 22,
             fontWeight: FontWeight.w600,
           ),

@@ -48,6 +48,8 @@ dependencies:
   # Writes booking events straight into the phone's calendar (no Google
   # web page / manual Save). Permission-gated; falls back to the web URL.
   device_calendar: ^4.3.3
+  # Full-screen looping brand video on the login backdrop.
+  video_player: ^2.9.2
 
 dev_dependencies:
   flutter_test:
@@ -65,8 +67,8 @@ flutter_launcher_icons:
   image_path: "assets/icon/app_icon.png"
   image_path_ios: "assets/icon/app_icon_ios.png"
   min_sdk_android: 21
-  adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/icon/app_icon.png"
+  adaptive_icon_background: "#FBFAF7"
+  adaptive_icon_foreground: "assets/icon/app_icon_fg.png"
 
 flutter:
   generate: true
@@ -74,3 +76,7 @@ flutter:
   assets:
     - .env
     - assets/brand/
+    - assets/onboarding/
+    - assets/Login/
+    - assets/Sphlash/
+    - assets/Register/

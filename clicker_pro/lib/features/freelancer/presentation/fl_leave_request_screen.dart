@@ -26,6 +26,7 @@ import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
 import '../application/fl_tools_providers.dart';
 import '../domain/fl_leave_request.dart';
+import '../../../theme/app_theme.dart';
 
 class FlLeaveRequestScreen extends ConsumerStatefulWidget {
   const FlLeaveRequestScreen({super.key});
@@ -62,10 +63,11 @@ class _FlLeaveRequestScreenState extends ConsumerState<FlLeaveRequestScreen> {
     final async = ref.watch(flLeaveRequestControllerProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.voidBlack,
+      backgroundColor: AppColors.appBg,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.appBg,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
@@ -74,15 +76,16 @@ class _FlLeaveRequestScreenState extends ConsumerState<FlLeaveRequestScreen> {
           'Leave Request',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
-            fontSize: 22,
-            fontWeight: FontWeight.w600,
+            fontFamily: AppText.brandFontFamily,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.03,
           ),
         ),
       ),
       body: RefreshIndicator(
         color: AppColors.orange,
-        backgroundColor: AppColors.voidLight,
+        backgroundColor: AppColors.surface,
         onRefresh: () =>
             ref.read(flLeaveRequestControllerProvider.notifier).refresh(),
         child: ListView(
@@ -90,16 +93,23 @@ class _FlLeaveRequestScreenState extends ConsumerState<FlLeaveRequestScreen> {
           padding: const EdgeInsets.all(16),
           children: [
             // ── Existing Requests ──
-            Text(
-              'PAST REQUESTS',
-              style: TextStyle(
-                color: AppColors.filmMuted,
-                fontSize: 10,
-                letterSpacing: 1.2,
-                fontWeight: FontWeight.w600,
-              ),
+            Row(
+              children: [
+                Container(width: 26, height: 1.5, color: AppColors.orange),
+                const SizedBox(width: 10),
+                Text(
+                  'PAST REQUESTS',
+                  style: TextStyle(
+                    color: AppColors.filmMuted,
+                    fontFamily: AppText.monoFontFamily,
+                    fontSize: 10,
+                    letterSpacing: 0.16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             async.when(
               loading: () => const SizedBox(
                 height: 100,
@@ -113,7 +123,11 @@ class _FlLeaveRequestScreenState extends ConsumerState<FlLeaveRequestScreen> {
                 if (items.isEmpty) {
                   return Container(
                     padding: const EdgeInsets.all(20),
-                    decoration: AppColors.glassCardDecoration(),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: AppColors.line(0.06)),
+                    ),
                     child: Text(
                       'No leave requests yet.',
                       style: TextStyle(
@@ -135,14 +149,21 @@ class _FlLeaveRequestScreenState extends ConsumerState<FlLeaveRequestScreen> {
             const SizedBox(height: 24),
 
             // ── New Request Form ──
-            Text(
-              'NEW REQUEST',
-              style: TextStyle(
-                color: AppColors.filmMuted,
-                fontSize: 10,
-                letterSpacing: 1.2,
-                fontWeight: FontWeight.w600,
-              ),
+            Row(
+              children: [
+                Container(width: 26, height: 1.5, color: AppColors.orange),
+                const SizedBox(width: 10),
+                Text(
+                  'NEW REQUEST',
+                  style: TextStyle(
+                    color: AppColors.filmMuted,
+                    fontFamily: AppText.monoFontFamily,
+                    fontSize: 10,
+                    letterSpacing: 0.16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
 
@@ -159,20 +180,20 @@ class _FlLeaveRequestScreenState extends ConsumerState<FlLeaveRequestScreen> {
             // Reason dropdown
             DropdownButtonFormField<String>(
               initialValue: _reason,
-              dropdownColor: AppColors.voidElevated,
+              dropdownColor: AppColors.surfaceAlt,
               style: TextStyle(color: AppColors.film),
               decoration: InputDecoration(
                 labelText: 'Reason',
                 labelStyle: TextStyle(color: AppColors.filmMuted),
                 filled: true,
-                fillColor: AppColors.voidElevated,
+                fillColor: AppColors.surfaceAlt,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: AppColors.glassBorder),
+                  borderSide: BorderSide(color: AppColors.line(0.06)),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: AppColors.glassBorder),
+                  borderSide: BorderSide(color: AppColors.line(0.06)),
                 ),
               ),
               items: _reasons
@@ -191,14 +212,14 @@ class _FlLeaveRequestScreenState extends ConsumerState<FlLeaveRequestScreen> {
                 hintText: 'Additional notes (optional)',
                 hintStyle: TextStyle(color: AppColors.filmMuted),
                 filled: true,
-                fillColor: AppColors.voidElevated,
+                fillColor: AppColors.surfaceAlt,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: AppColors.glassBorder),
+                  borderSide: BorderSide(color: AppColors.line(0.06)),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: AppColors.glassBorder),
+                  borderSide: BorderSide(color: AppColors.line(0.06)),
                 ),
               ),
             ),
@@ -210,10 +231,11 @@ class _FlLeaveRequestScreenState extends ConsumerState<FlLeaveRequestScreen> {
               child: FilledButton(
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.orange,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  foregroundColor: AppColors.onAccent,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                 ),
                 onPressed: _submitting ? null : _submit,
@@ -222,11 +244,14 @@ class _FlLeaveRequestScreenState extends ConsumerState<FlLeaveRequestScreen> {
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
-                          color: Colors.white,
+                          color: AppColors.onAccent,
                           strokeWidth: 2,
                         ),
                       )
-                    : Text('Submit Request'),
+                    : const Text(
+                        'Submit Request',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
               ),
             ),
           ],
@@ -305,8 +330,8 @@ class _FlLeaveRequestScreenState extends ConsumerState<FlLeaveRequestScreen> {
             return Theme(
               data: Theme.of(context).copyWith(
                 colorScheme: ColorScheme.light(
-                  primary: AppColors.teal,
-                  surface: AppColors.voidElevated,
+                  primary: AppColors.orange,
+                  surface: AppColors.surfaceAlt,
                 ),
               ),
               child: child!,
@@ -318,9 +343,9 @@ class _FlLeaveRequestScreenState extends ConsumerState<FlLeaveRequestScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.voidElevated,
+          color: AppColors.surfaceAlt,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppColors.glassBorder),
+          border: Border.all(color: AppColors.line(0.06)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -363,16 +388,20 @@ class _LeaveRequestRow extends StatelessWidget {
     final endStr = '${request.endDate.month}/${request.endDate.day}';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
-      decoration: AppColors.glassCardDecoration(),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.line(0.06)),
+      ),
       child: Row(
         children: [
           Container(
             width: 40,
             height: 40,
             decoration: AppColors.iconWrapDecoration(
-              color.withValues(alpha: 0.15),
+              color.withValues(alpha: 0.14),
             ),
             child: Icon(
               request.status == LeaveRequestStatus.approved
@@ -394,7 +423,7 @@ class _LeaveRequestRow extends StatelessWidget {
                   style: TextStyle(
                     color: AppColors.film,
                     fontSize: 13,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -414,12 +443,13 @@ class _LeaveRequestRow extends StatelessWidget {
               tint: color.withValues(alpha: 0.15),
             ),
             child: Text(
-              request.status.name[0].toUpperCase() +
-                  request.status.name.substring(1),
+              request.status.name.toUpperCase(),
               style: TextStyle(
                 color: color,
-                fontSize: 10,
+                fontFamily: AppText.monoFontFamily,
+                fontSize: 9,
                 fontWeight: FontWeight.w600,
+                letterSpacing: 0.6,
               ),
             ),
           ),

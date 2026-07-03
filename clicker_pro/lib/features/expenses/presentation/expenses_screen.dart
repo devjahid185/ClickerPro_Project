@@ -34,18 +34,28 @@ import '../application/expense_providers.dart';
 import 'dialogs/add_expense_sheet.dart';
 import 'widgets/expense_row.dart';
 import 'widgets/profit_loss_card.dart';
+import '../../../theme/app_theme.dart';
 
-class ExpensesScreen extends ConsumerWidget {
+class ExpensesScreen extends ConsumerStatefulWidget {
   const ExpensesScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ExpensesScreen> createState() => _ExpensesScreenState();
+}
+
+class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
+  // Active category filter — null means "All". Compared case-insensitively
+  // against each expense's free-form category string.
+  String? _filter;
+
+  @override
+  Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     final lang = 'en';
     final async = ref.watch(expenseListControllerProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.voidBlack,
+      backgroundColor: AppColors.surfaceAlt,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -53,80 +63,206 @@ class ExpensesScreen extends ConsumerWidget {
           icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
+        titleSpacing: 0,
         title: Text(
           loc.expenses_title,
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
-            fontSize: 22,
-            fontWeight: FontWeight.w600,
+            fontFamily: AppText.brandFontFamily,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.02 * 20,
           ),
         ),
       ),
-      body: RefreshIndicator(
-        color: AppColors.orange,
-        backgroundColor: AppColors.voidLight,
-        onRefresh: () async {
-          await ref.read(expenseListControllerProvider.notifier).refresh();
-          ref.invalidate(profitLossProvider);
-        },
-        child: CustomScrollView(
-          // `AlwaysScrollable...` so the pull-to-refresh works even when
-          // the list is empty (otherwise the empty state can't be pulled)।
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            const SliverToBoxAdapter(child: ProfitLossCard()),
-            async.when(
-              loading: () => const SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(child: LensLoader()),
-              ),
-              error: (_, _) => SliverFillRemaining(
-                hasScrollBody: false,
-                child: ErrorState(
-                  message: loc.expenses_load_failed,
-                  onRetry: () => ref
-                      .read(expenseListControllerProvider.notifier)
-                      .refresh(),
-                ),
-              ),
-              data: (items) {
-                if (items.isEmpty) {
-                  return SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: EmptyState(
-                      message:
-                          '${loc.expenses_empty_title}\n'
-                          '${loc.expenses_empty_subtitle}',
-                      icon: Icons.payments_outlined,
-                      actionLabel: loc.expenses_add,
-                      onAction: () => AddExpenseSheet.show(context),
-                    ),
-                  );
-                }
-                return SliverList.builder(
-                  itemCount: items.length,
-                  itemBuilder: (_, i) => StaggeredList.item(
-                    i,
-                    ExpenseRow(expense: items[i], lang: lang),
-                  ),
-                );
+      body: Column(
+        children: [
+          Expanded(
+            child: RefreshIndicator(
+              color: AppColors.orange,
+              backgroundColor: AppColors.surface,
+              onRefresh: () async {
+                await ref
+                    .read(expenseListControllerProvider.notifier)
+                    .refresh();
+                ref.invalidate(profitLossProvider);
               },
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: async.maybeWhen(
-        data: (items) => items.isEmpty
-            ? null // empty state already exposes the "Add" affordance
-            : FloatingActionButton.extended(
-                backgroundColor: AppColors.orange,
-                foregroundColor: Colors.white,
-                onPressed: () => AddExpenseSheet.show(context),
-                icon: const Icon(Icons.add),
-                label: Text(loc.expenses_add_short),
+              child: CustomScrollView(
+                // `AlwaysScrollable...` so the pull-to-refresh works even
+                // when the list is empty.
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  const SliverToBoxAdapter(child: ProfitLossCard()),
+                  async.maybeWhen(
+                    data: (items) {
+                      final categories = <String>{
+                        for (final e in items)
+                          if (e.category.trim().isNotEmpty) e.category.trim(),
+                      }.toList()..sort();
+                      if (categories.isEmpty) {
+                        return const SliverToBoxAdapter(
+                          child: SizedBox.shrink(),
+                        );
+                      }
+                      return SliverToBoxAdapter(
+                        child: _CategoryChips(
+                          categories: categories,
+                          active: _filter,
+                          onSelect: (c) => setState(() => _filter = c),
+                        ),
+                      );
+                    },
+                    orElse: () =>
+                        const SliverToBoxAdapter(child: SizedBox.shrink()),
+                  ),
+                  async.when(
+                    loading: () => const SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(child: LensLoader()),
+                    ),
+                    error: (_, _) => SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: ErrorState(
+                        message: loc.expenses_load_failed,
+                        onRetry: () => ref
+                            .read(expenseListControllerProvider.notifier)
+                            .refresh(),
+                      ),
+                    ),
+                    data: (items) {
+                      if (items.isEmpty) {
+                        return SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: EmptyState(
+                            message:
+                                '${loc.expenses_empty_title}\n'
+                                '${loc.expenses_empty_subtitle}',
+                            icon: Icons.payments_outlined,
+                            actionLabel: loc.expenses_add,
+                            onAction: () => AddExpenseSheet.show(context),
+                          ),
+                        );
+                      }
+                      final filtered = _filter == null
+                          ? items
+                          : [
+                              for (final e in items)
+                                if (e.category.trim().toLowerCase() ==
+                                    _filter!.toLowerCase())
+                                  e,
+                            ];
+                      return SliverPadding(
+                        padding: const EdgeInsets.only(top: 4),
+                        sliver: SliverList.builder(
+                          itemCount: filtered.length,
+                          itemBuilder: (_, i) => StaggeredList.item(
+                            i,
+                            ExpenseRow(expense: filtered[i], lang: lang),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SliverPadding(padding: EdgeInsets.only(bottom: 8)),
+                ],
               ),
-        orElse: () => null,
+            ),
+          ),
+          // Inline "Add Expense" bar (.dc.html) — replaces the floating FAB,
+          // hidden on the empty state (which has its own Add affordance).
+          async.maybeWhen(
+            data: (items) => items.isEmpty
+                ? const SizedBox.shrink()
+                : SafeArea(
+                    top: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 4, 18, 14),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: () => AddExpenseSheet.show(context),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.orange,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            elevation: 0,
+                          ),
+                          icon: const Icon(Icons.add_rounded, size: 20),
+                          label: Text(
+                            loc.expenses_add,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+            orElse: () => const SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Horizontal category filter chips (.dc.html): "All" (solid orange when
+/// active) plus one pill per category (white + hairline when inactive).
+class _CategoryChips extends StatelessWidget {
+  const _CategoryChips({
+    required this.categories,
+    required this.active,
+    required this.onSelect,
+  });
+
+  final List<String> categories;
+  final String? active;
+  final ValueChanged<String?> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget chip(String label, bool selected, VoidCallback onTap) {
+      return Padding(
+        padding: const EdgeInsets.only(right: 7),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+            decoration: BoxDecoration(
+              color: selected ? AppColors.orange : AppColors.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: selected
+                  ? null
+                  : Border.all(color: AppColors.line(0.1)),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                color: selected ? Colors.white : AppColors.textSecondary,
+                fontSize: 11.5,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 46,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.fromLTRB(18, 6, 11, 6),
+        children: [
+          chip('All', active == null, () => onSelect(null)),
+          for (final c in categories)
+            chip(c, active == c, () => onSelect(c)),
+        ],
       ),
     );
   }

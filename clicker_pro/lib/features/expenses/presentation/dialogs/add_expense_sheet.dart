@@ -21,6 +21,7 @@ import '../../../../shared/states/lens_loader.dart';
 import '../../../../theme/app_colors.dart';
 import '../../application/expense_providers.dart';
 import '../../domain/expense.dart';
+import '../../../../theme/app_theme.dart';
 
 class AddExpenseSheet extends ConsumerStatefulWidget {
   const AddExpenseSheet._();
@@ -107,8 +108,15 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
       return;
     }
     setState(() => _saving = true);
+    // Give every draft a unique local id up front. When the API is reachable
+    // the server id replaces this; when offline the row is stored `pending`
+    // under THIS id — a stable, unique key so multiple offline expenses don't
+    // collide on the DB primary key (previously all used `''` and overwrote
+    // each other / vanished on refresh).
+    final localId =
+        'local_${DateTime.now().microsecondsSinceEpoch}_${_incurredAt.millisecondsSinceEpoch}';
     final draft = Expense(
-      id: '', // server assigns
+      id: localId,
       category: _category!,
       amount: double.parse(_amountCtl.text.trim()),
       note: _noteCtl.text.trim().isEmpty ? null : _noteCtl.text.trim(),
@@ -159,7 +167,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                 loc.expenses_add,
                 style: TextStyle(
                   color: AppColors.film,
-                  fontFamily: 'Poppins',
+                  fontFamily: AppText.brandFontFamily,
                   fontSize: 22,
                   fontWeight: FontWeight.w600,
                 ),

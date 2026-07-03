@@ -18,6 +18,8 @@
 //     segments using AnimatedAlign + AnimatedSwitcher (220ms easeOutCubic).
 //   • Submit button: same gradient + glow as Login, with the loading swap.
 
+import 'dart:math' as math;
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -26,6 +28,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/navigation/route_names.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/providers.dart';
+import '../../../shared/widgets/auth_glass_field.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_theme.dart';
 import '../application/session_controller.dart';
@@ -55,6 +58,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _obscureConfirm = true;
   bool _isLoading = false;
   String? _emailError;
+
+  // Rotating full-screen backdrop: one of these is picked at random each time
+  // the Register screen mounts, so different users / sessions see a different
+  // photo. A dark gradient scrim over it keeps the (always-white) text crisp
+  // no matter how bright or colourful the chosen image is.
+  static const List<String> _backdrops = [
+    'assets/Register/Register.jpg',
+    'assets/Register/Register 2.jpg',
+    'assets/Register/Register 3.jpg',
+    'assets/Register/Register 4.jpg',
+    'assets/Register/Register 5.jpg',
+  ];
+  late final String _backdrop =
+      _backdrops[math.Random().nextInt(_backdrops.length)];
 
   static final RegExp _emailRegex = RegExp(
     r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
@@ -197,36 +214,33 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget build(BuildContext context) {
 
     return Scaffold(
-      backgroundColor: AppColors.voidBlack,
+      // Full-bleed photo backdrop → scaffold on black so there is no paper
+      // seam behind the image / status bar.
+      backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // ─── BACKGROUND GLOW BLOBS ───────────────────────────────
-          Positioned(
-            top: -100,
-            right: -100,
-            child: Container(
-              width: 300,
-              height: 300,
+          // ─── FULL-SCREEN ROTATING PHOTO ──────────────────────────
+          Positioned.fill(
+            child: Image.asset(_backdrop, fit: BoxFit.cover),
+          ),
+          // Dark gradient scrim (stronger top & bottom, where the heading and
+          // the CTA / sign-in link sit) so white text reads on any photo.
+          Positioned.fill(
+            child: DecoratedBox(
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.orange.withValues(alpha: 0.08),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.62),
+                    Colors.black.withValues(alpha: 0.45),
+                    Colors.black.withValues(alpha: 0.68),
+                  ],
+                  stops: const [0.0, 0.45, 1.0],
+                ),
               ),
             ),
           ),
-          Positioned(
-            bottom: -80,
-            left: -80,
-            child: Container(
-              width: 260,
-              height: 260,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.gold.withValues(alpha: 0.08),
-              ),
-            ),
-          ),
-
-
 
           // ─── MAIN CONTENT ────────────────────────────────────────
           SafeArea(
@@ -252,7 +266,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           fontFamily: AppText.brand.fontFamily,
                           fontSize: 36,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.film,
+                          // White over the photo scrim.
+                          color: Colors.white,
                           height: 1.1,
                         ),
                       ),
@@ -261,10 +276,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         'COMPANY MANAGEMENT · STEP 1 OF 1',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontFamily: 'Montserrat',
+                          fontFamily: AppText.bodyFontFamily,
                           fontSize: 11.5,
                           letterSpacing: 2.2,
-                          color: AppColors.filmDim.withValues(alpha: 0.7),
+                          color: Colors.white.withValues(alpha: 0.75),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -286,7 +301,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       const SizedBox(height: 22),
 
                       // ── FORM FIELDS ────────────────────────────
-                      _glassField(
+                      AuthGlassField(
                         controller: _nameController,
                         label: 'Full Name',
                         icon: Icons.person_outline_rounded,
@@ -301,7 +316,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             (_role == UserRole.owner || _role == UserRole.both)
                             ? Padding(
                                 padding: const EdgeInsets.only(top: 14),
-                                child: _glassField(
+                                child: AuthGlassField(
                                   controller: _companyController,
                                   label: 'Company Name',
                                   icon: Icons.business_rounded,
@@ -312,7 +327,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             : const SizedBox.shrink(),
                       ),
                       const SizedBox(height: 14),
-                      _glassField(
+                      AuthGlassField(
                         controller: _emailController,
                         label: 'Email Address',
                         icon: Icons.mail_outline_rounded,
@@ -326,7 +341,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         },
                       ),
                       const SizedBox(height: 14),
-                      _glassField(
+                      AuthGlassField(
                         controller: _phoneController,
                         label: 'Phone',
                         icon: Icons.phone_outlined,
@@ -338,7 +353,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         validator: _validatePhone,
                       ),
                       const SizedBox(height: 14),
-                      _glassField(
+                      AuthGlassField(
                         controller: _passwordController,
                         label: 'Password',
                         icon: Icons.lock_outline_rounded,
@@ -351,7 +366,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         validator: _validatePassword,
                       ),
                       const SizedBox(height: 14),
-                      _glassField(
+                      AuthGlassField(
                         controller: _confirmController,
                         label: 'Confirm Password',
                         icon: Icons.lock_reset_rounded,
@@ -401,8 +416,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                   TextSpan(
                                     text: 'Already have an account? ',
                                     style: TextStyle(
-                                      color: AppColors.filmDim.withValues(
-                                        alpha: 0.75,
+                                      color: Colors.white.withValues(
+                                        alpha: 0.8,
                                       ),
                                     ),
                                   ),
@@ -431,10 +446,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             left: 8,
             child: SafeArea(
               child: IconButton(
-                icon: Icon(
+                icon: const Icon(
                   Icons.arrow_back_ios_new_rounded,
                   size: 18,
-                  color: AppColors.film,
+                  color: Colors.white,
                 ),
                 onPressed: () => Navigator.of(context).maybePop(),
               ),
@@ -477,94 +492,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  // ─── GLASS FIELD ───────────────────────────────────────────────
-  Widget _glassField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    bool isPassword = false,
-    bool obscured = false,
-    VoidCallback? onToggleObscure,
-    TextInputType? keyboardType,
-    TextInputAction? textInputAction,
-    String? Function(String?)? validator,
-    void Function(String)? onChanged,
-    List<TextInputFormatter>? inputFormatters,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surfaceAlt,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.glassBorder),
-      ),
-      child: TextFormField(
-        controller: controller,
-        obscureText: isPassword && obscured,
-        keyboardType: keyboardType,
-        textInputAction: textInputAction,
-        inputFormatters: inputFormatters,
-        validator: validator,
-        onChanged: onChanged,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        style: TextStyle(
-          color: AppColors.film,
-          fontSize: 16.5,
-          fontWeight: FontWeight.w400,
-        ),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(
-            color: AppColors.filmDim.withValues(alpha: 0.7),
-            fontSize: 15,
-          ),
-          floatingLabelStyle: TextStyle(
-            color: AppColors.orange,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-          prefixIcon: Padding(
-            padding: const EdgeInsets.only(left: 14, right: 10),
-            child: Icon(icon, color: AppColors.orange, size: 19),
-          ),
-          prefixIconConstraints: const BoxConstraints(
-            minWidth: 0,
-            minHeight: 0,
-          ),
-          suffixIcon: isPassword
-              ? IconButton(
-                  icon: Icon(
-                    obscured
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
-                    color: AppColors.filmDim,
-                    size: 19,
-                  ),
-                  onPressed: onToggleObscure,
-                )
-              : null,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 16,
-          ),
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(
-              color: AppColors.orange.withValues(alpha: 0.5),
-              width: 1.5,
-            ),
-          ),
-          errorStyle: TextStyle(
-            color: Colors.redAccent,
-            fontSize: 11,
-            height: 0.9,
-          ),
-        ),
       ),
     );
   }
@@ -795,7 +722,7 @@ class _ConsentRow extends StatelessWidget {
             text: TextSpan(
               style: TextStyle(
                 fontSize: 13.5,
-                color: AppColors.filmDim.withValues(alpha: 0.85),
+                color: Colors.white.withValues(alpha: 0.85),
                 height: 1.4,
               ),
               children: [

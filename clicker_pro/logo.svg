@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="ClickerPro">
+  <title>ClickerPro aperture</title>
+  <path d="M100 14 A86 86 0 0 1 174.48 57 L119 100 L109.5 83.55 Z" fill="#F9A52E"></path>
+  <path d="M174.48 57 A86 86 0 0 1 174.48 143 L109.5 116.45 L119 100 Z" fill="#F4881C"></path>
+  <path d="M174.48 143 A86 86 0 0 1 100 186 L90.5 116.45 L109.5 116.45 Z" fill="#EA7414"></path>
+  <path d="M100 186 A86 86 0 0 1 25.52 143 L81 100 L90.5 116.45 Z" fill="#E2620E"></path>
+  <path d="M25.52 143 A86 86 0 0 1 25.52 57 L90.5 83.55 L81 100 Z" fill="#F4881C"></path>
+  <path d="M25.52 57 A86 86 0 0 1 100 14 L109.5 83.55 L90.5 83.55 Z" fill="#F9A52E"></path>
+</svg>

@@ -26,6 +26,8 @@ import '../../../../core/format/booking_format.dart';
 import '../../../../core/role/capability.dart';
 import '../../../../features/settings/application/language_controller.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_theme.dart';
+
 import '../../../auth/domain/user_role.dart';
 import '../../application/booking_providers.dart';
 import '../../domain/assignment.dart';
@@ -121,7 +123,7 @@ class _TaskProgressSectionState extends ConsumerState<TaskProgressSection> {
               own == null ? 'SET' : 'UPDATE',
               style: TextStyle(
                 color: AppColors.orange,
-                fontFamily: 'Montserrat',
+                fontFamily: AppText.bodyFontFamily,
                 fontSize: 11,
                 letterSpacing: 1.2,
                 fontWeight: FontWeight.w700,

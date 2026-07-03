@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../theme/app_colors.dart';
 import '../domain/fl_badge.dart';
+import '../../../theme/app_theme.dart';
 
 class FlBadgesScreen extends StatefulWidget {
   const FlBadgesScreen({super.key});
@@ -148,10 +149,11 @@ class _FlBadgesScreenState extends State<FlBadgesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.voidBlack,
+      backgroundColor: AppColors.appBg,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.appBg,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
@@ -160,9 +162,10 @@ class _FlBadgesScreenState extends State<FlBadgesScreen> {
           'Badges',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
-            fontSize: 22,
-            fontWeight: FontWeight.w600,
+            fontFamily: AppText.brandFontFamily,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.03,
           ),
         ),
       ),
@@ -225,9 +228,10 @@ class _FlBadgesScreenState extends State<FlBadgesScreen> {
           Text(
             '${_summary.currentLevel.name[0].toUpperCase()}${_summary.currentLevel.name.substring(1)} Level',
             style: TextStyle(
-              fontFamily: 'Poppins',
+              fontFamily: AppText.brandFontFamily,
               fontSize: 20,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.03,
               color: levelColor,
             ),
           ),
@@ -235,7 +239,7 @@ class _FlBadgesScreenState extends State<FlBadgesScreen> {
           Text(
             '${_summary.totalEvents} events completed',
             style: TextStyle(
-              fontFamily: 'Poppins',
+              fontFamily: AppText.brandFontFamily,
               fontSize: 14,
               color: AppColors.filmDim.withValues(alpha: 0.7),
             ),
@@ -245,7 +249,7 @@ class _FlBadgesScreenState extends State<FlBadgesScreen> {
             Text(
               '${next.threshold - _summary.totalEvents} more to ${next.name}',
               style: TextStyle(
-                fontFamily: 'Poppins',
+                fontFamily: AppText.brandFontFamily,
                 fontSize: 12,
                 color: levelColor.withValues(alpha: 0.7),
               ),
@@ -269,9 +273,9 @@ class _FlBadgesScreenState extends State<FlBadgesScreen> {
             Text(
               'PROGRESS TO NEXT LEVEL',
               style: TextStyle(
-                fontFamily: 'Poppins',
+                fontFamily: AppText.monoFontFamily,
                 fontSize: 10,
-                letterSpacing: 1.2,
+                letterSpacing: 0.16,
                 fontWeight: FontWeight.w600,
                 color: AppColors.filmMuted,
               ),
@@ -279,7 +283,7 @@ class _FlBadgesScreenState extends State<FlBadgesScreen> {
             Text(
               '${(progress * 100).toInt()}%',
               style: TextStyle(
-                fontFamily: 'Poppins',
+                fontFamily: AppText.brandFontFamily,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: levelColor,
@@ -293,7 +297,7 @@ class _FlBadgesScreenState extends State<FlBadgesScreen> {
           child: LinearProgressIndicator(
             value: progress,
             minHeight: 6,
-            backgroundColor: AppColors.glass,
+            backgroundColor: AppColors.surfaceAlt,
             valueColor: AlwaysStoppedAnimation<Color>(levelColor),
           ),
         ),
@@ -304,7 +308,7 @@ class _FlBadgesScreenState extends State<FlBadgesScreen> {
   Widget _buildStatsRow() {
     return Row(
       children: [
-        _statCard('TOTAL EVENTS', '${_summary.totalEvents}', AppColors.teal),
+        _statCard('TOTAL EVENTS', '${_summary.totalEvents}', AppColors.orange),
         const SizedBox(width: 10),
         _statCard('YEARS ACTIVE', '${_summary.yearsActive}', AppColors.gold),
         const SizedBox(width: 10),
@@ -331,9 +335,9 @@ class _FlBadgesScreenState extends State<FlBadgesScreen> {
             Text(
               value,
               style: TextStyle(
-                fontFamily: 'Poppins',
+                fontFamily: AppText.brandFontFamily,
                 fontSize: 22,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w800,
                 color: color,
               ),
             ),
@@ -341,9 +345,9 @@ class _FlBadgesScreenState extends State<FlBadgesScreen> {
             Text(
               label,
               style: TextStyle(
-                fontFamily: 'Poppins',
+                fontFamily: AppText.monoFontFamily,
                 fontSize: 8,
-                letterSpacing: 1.2,
+                letterSpacing: 0.14,
                 fontWeight: FontWeight.w600,
                 color: AppColors.filmMuted,
               ),
@@ -373,15 +377,21 @@ class _FlBadgesScreenState extends State<FlBadgesScreen> {
   }
 
   Widget _buildSectionHeader(String title) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontFamily: 'Poppins',
-        fontSize: 12,
-        letterSpacing: 1.2,
-        fontWeight: FontWeight.w600,
-        color: AppColors.filmMuted,
-      ),
+    return Row(
+      children: [
+        Container(width: 26, height: 1.5, color: AppColors.orange),
+        const SizedBox(width: 10),
+        Text(
+          title,
+          style: TextStyle(
+            fontFamily: AppText.monoFontFamily,
+            fontSize: 11,
+            letterSpacing: 0.16,
+            fontWeight: FontWeight.w600,
+            color: AppColors.filmMuted,
+          ),
+        ),
+      ],
     );
   }
 
@@ -394,7 +404,7 @@ class _FlBadgesScreenState extends State<FlBadgesScreen> {
       case BadgeLevel.gold:
         return AppColors.gold;
       case BadgeLevel.platinum:
-        return AppColors.teal;
+        return AppColors.orange;
     }
   }
 
@@ -427,11 +437,11 @@ class _BadgeTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: locked ? AppColors.glass : levelColor.withValues(alpha: 0.08),
+          color: locked ? AppColors.surfaceAlt : levelColor.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: locked
-                ? AppColors.glassBorder
+                ? AppColors.line(0.06)
                 : levelColor.withValues(alpha: 0.25),
           ),
         ),
@@ -449,7 +459,7 @@ class _BadgeTile extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontFamily: 'Poppins',
+                fontFamily: AppText.brandFontFamily,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: effectiveColor,
@@ -464,7 +474,7 @@ class _BadgeTile extends StatelessWidget {
   void _showBadgeDetail(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.voidLight,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -487,9 +497,10 @@ class _BadgeTile extends StatelessWidget {
             Text(
               badge.name,
               style: TextStyle(
-                fontFamily: 'Poppins',
+                fontFamily: AppText.brandFontFamily,
                 fontSize: 20,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.03,
                 color: _levelColor(badge.level),
               ),
             ),
@@ -498,7 +509,7 @@ class _BadgeTile extends StatelessWidget {
               badge.description,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontFamily: 'Poppins',
+                fontFamily: AppText.brandFontFamily,
                 fontSize: 14,
                 color: AppColors.filmDim.withValues(alpha: 0.7),
               ),
@@ -507,7 +518,7 @@ class _BadgeTile extends StatelessWidget {
             Text(
               'Earned: ${_formatDate(badge.earnedAt)}',
               style: TextStyle(
-                fontFamily: 'Poppins',
+                fontFamily: AppText.brandFontFamily,
                 fontSize: 12,
                 color: AppColors.filmMuted,
               ),
@@ -578,7 +589,7 @@ class _BadgeTile extends StatelessWidget {
       case BadgeLevel.gold:
         return AppColors.gold;
       case BadgeLevel.platinum:
-        return AppColors.teal;
+        return AppColors.orange;
     }
   }
 }

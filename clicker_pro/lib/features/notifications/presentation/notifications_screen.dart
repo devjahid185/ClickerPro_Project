@@ -20,6 +20,7 @@ import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
 import '../application/notification_providers.dart';
 import 'widgets/notification_row.dart';
+import '../../../theme/app_theme.dart';
 
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
@@ -46,7 +47,7 @@ class NotificationsScreen extends ConsumerWidget {
               loc.notifications_title,
               style: TextStyle(
                 color: AppColors.film,
-                fontFamily: 'Poppins',
+                fontFamily: AppText.brandFontFamily,
                 fontSize: 22,
                 fontWeight: FontWeight.w600,
               ),

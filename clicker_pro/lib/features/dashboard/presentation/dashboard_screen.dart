@@ -358,7 +358,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     fontFamily: AppText.brand.fontFamily,
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
-                    color: Colors.black,
+                    color: AppColors.onAccent,
                   ),
                 ),
         ),
@@ -561,6 +561,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   // ─── Weekday strip (Mon → Sun of the current week) ─────────────────
   Widget _buildWeekStrip() {
     final selected = ref.watch(dashboardSelectedDayProvider);
+    final weekEventCounts = ref.watch(weekEventCountsProvider);
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final monday = today.subtract(Duration(days: today.weekday - 1));
@@ -583,7 +584,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           final d = days[i];
           final isToday = _isSameDay(d, today);
           final isSelected = _isSameDay(d, selected);
-          final hasEvent = i == 0 || i == 3;
+          final hasEvent = weekEventCounts[i] > 0;
 
           // Today: filled teal always. Selected (non-today): light tint.
           final Decoration? cellDecoration = isToday
@@ -610,9 +611,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               : null;
 
           final Color labelColor = isToday
-              ? Colors.white
+              ? AppColors.onAccent
               : AppColors.filmDim.withValues(alpha: 0.65);
-          final Color numColor = isToday ? Colors.white : AppColors.film;
+          final Color numColor = isToday ? AppColors.onAccent : AppColors.film;
 
           return Expanded(
             child: GestureDetector(
@@ -659,7 +660,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               height: 3,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: isToday ? Colors.white : AppColors.teal,
+                                color: isToday ? AppColors.onAccent : AppColors.teal,
                               ),
                             )
                           : null,
@@ -713,90 +714,86 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       ),
       data: (m) {
         final dayNight = (m.todayDayEvents, m.todayNightEvents);
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        // IntrinsicHeight so the tall orange hero and the stacked Upcoming/Total
+        // column share one height — matching the design's side-by-side balance.
+        return IntrinsicHeight(
+          child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // ── Left: Big today count card ──
+            // Design: solid orange (#E2620E) hero, radius 22, decorative white
+            // corner circle, mono "TODAY" label, 58px white figure (no pad),
+            // "events scheduled" subtitle, Day/Night pills on white-16 tint.
             Expanded(
+              flex: 122, // design split ratio 1.22 : 1
               child: GestureDetector(
                 onTap: _openTodayEvents,
                 child: Container(
-                  padding: const EdgeInsets.all(16),
+                  clipBehavior: Clip.antiAlias,
+                  padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
                   decoration: BoxDecoration(
-                    color: AppColors.teal.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: AppColors.teal.withValues(alpha: 0.20),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.teal.withValues(alpha: 0.15),
-                        blurRadius: 16,
-                        spreadRadius: -4,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+                    color: AppColors.orange,
+                    borderRadius: BorderRadius.circular(22),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Stack(
                     children: [
-                      Row(
+                      // HTML: 120px circle, offset -30/-30, white @ 6%.
+                      _cornerGlow(size: 120, right: -30, top: -30),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            width: 28,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              color: AppColors.teal.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(
-                              Icons.calendar_today_outlined,
-                              color: AppColors.teal,
-                              size: 15,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
                           Text(
-                            t('today_events'),
+                            'TODAY',
                             style: TextStyle(
-                              fontFamily: AppText.body.fontFamily,
+                              fontFamily: AppText.monoFontFamily,
                               fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.filmDim,
-                              letterSpacing: 0.2,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.onAccent.withValues(alpha: 0.72),
+                              letterSpacing: 0.16 * 11,
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 180),
-                        child: Text(
-                          _twoDigit(m.todayEvents),
-                          key: ValueKey('hero-today-${m.todayEvents}'),
-                          style: TextStyle(
-                            fontFamily: AppText.brand.fontFamily,
-                            fontSize: 42,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.teal,
-                            height: 1.0,
-                            letterSpacing: -1.2,
+                          const SizedBox(height: 6),
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 180),
+                            child: Text(
+                              '${m.todayEvents}',
+                              key: ValueKey('hero-today-${m.todayEvents}'),
+                              style: TextStyle(
+                                fontFamily: AppText.brandFontFamily,
+                                fontSize: 58,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.onAccent,
+                                height: 0.92,
+                                letterSpacing: -0.04 * 58,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          _dayNightPill(
-                            label: 'Day',
-                            count: dayNight.$1,
-                            color: AppColors.yellow,
+                          const SizedBox(height: 2),
+                          Text(
+                            'events scheduled',
+                            style: TextStyle(
+                              fontFamily: AppText.bodyFontFamily,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.onAccent.withValues(alpha: 0.82),
+                            ),
                           ),
-                          const SizedBox(width: 6),
-                          _dayNightPill(
-                            label: 'Night',
-                            count: dayNight.$2,
-                            color: AppColors.indigo,
+                          const SizedBox(height: 14),
+                          Row(
+                            children: [
+                              _dayNightPill(
+                                label: 'Day',
+                                count: dayNight.$1,
+                                dotColor: const Color(0xFFF2C75B),
+                              ),
+                              const SizedBox(width: 7),
+                              _dayNightPill(
+                                label: 'Night',
+                                count: dayNight.$2,
+                                dotColor: const Color(0xFFB7A6F0),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -805,52 +802,111 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 ),
               ),
             ),
-            const SizedBox(width: 10),
-            // ── Right: Upcoming + Total stacked ──
+            const SizedBox(width: 12),
+            // ── Right: Upcoming + Total stacked (each fills half the hero) ──
             Expanded(
+              flex: 100,
               child: Column(
                 children: [
-                  _miniHeroCard(
-                    title: 'Upcoming',
-                    value: '${m.upcomingEvents}',
-                    color: AppColors.gold,
-                    onTap: _openUpcomingEvents,
+                  Expanded(
+                    child: _miniHeroCard(
+                      title: 'Upcoming',
+                      value: '${m.upcomingEvents}',
+                      color: AppColors.infoTeal,
+                      subtitle: 'next 7 days',
+                      labelColor: Colors.black,
+                      subtitleColor: Colors.black,
+                      onTap: _openUpcomingEvents,
+                    ),
                   ),
-                  const SizedBox(height: 10),
-                  _miniHeroCard(
-                    title: 'Total',
-                    value: '${m.totalEvents}',
-                    color: AppColors.indigo,
-                    onTap: _openAllEvents,
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: _miniHeroCard(
+                      title: 'Total',
+                      value: '${m.totalEvents}',
+                      color: AppColors.infoBlue,
+                      subtitle: 'this year',
+                      labelColor: const Color(0xFFDD8D0A),
+                      subtitleColor: Colors.white,
+                      onTap: _openAllEvents,
+                    ),
                   ),
                 ],
               ),
             ),
           ],
+          ),
         );
       },
     );
   }
 
+  // Decorative corner circle for the filled stat cards — matches the .dc.html
+  // mockup EXACTLY: a plain solid translucent circle (NOT a radial glow),
+  // 120px offset -30/-30 into the top-right corner, white @ 6% opacity
+  // (rgba(255,255,255,0.06) in the HTML). The card's `clipBehavior: antiAlias`
+  // crops it to the rounded corner, reproducing the HTML's `overflow:hidden`.
+  Widget _cornerGlow({
+    double size = 120,
+    double? top = -30,
+    double? right = -30,
+    double? left,
+    double? bottom,
+    double opacity = 0.06,
+  }) {
+    return Positioned(
+      top: top,
+      right: right,
+      left: left,
+      bottom: bottom,
+      child: IgnorePointer(
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white.withValues(alpha: opacity),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Design: pill on white-16 tint over the orange hero, white label text and a
+  // small colored dot (Day = amber, Night = violet).
   Widget _dayNightPill({
     required String label,
     required int count,
-    required Color color,
+    required Color dotColor,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
+        color: Colors.white.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(9),
       ),
-      child: Text(
-        '$count $label',
-        style: TextStyle(
-          fontFamily: AppText.body.fontFamily,
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: dotColor,
+            ),
+          ),
+          const SizedBox(width: 5),
+          Text(
+            '$count $label',
+            style: TextStyle(
+              fontFamily: AppText.bodyFontFamily,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: AppColors.onAccent,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -860,45 +916,76 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     required String value,
     required Color color,
     required VoidCallback onTap,
+    String? subtitle,
+    Color labelColor = Colors.white,
+    Color subtitleColor = Colors.white,
   }) {
+    // ClickerPro (light): FILLED data cards (#00898B / #3541AF) with a white
+    // figure. Noir (dark): per the dark spec §4.1 these are plain dark StatCards
+    // — dark `card` surface + hairline, the figure carries the accent colour and
+    // the label/subtitle drop to the muted tones.
+    final bool noir = AppColors.isDark;
+    final Color cardBg = noir ? AppColors.glass : color;
+    final Color figureColor = noir ? color : AppColors.onAccent;
+    final Color labelC = noir ? AppColors.filmMuted : labelColor;
+    final Color subtitleC = noir ? AppColors.filmDim : subtitleColor;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.line(0.14)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        clipBehavior: Clip.antiAlias,
+        decoration: noir
+            ? AppColors.glassCardDecoration(radius: 18)
+            : BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(18),
+              ),
+        child: Stack(
           children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontFamily: AppText.body.fontFamily,
-                fontSize: 10.5,
-                fontWeight: FontWeight.w500,
-                color: AppColors.filmDim,
-                letterSpacing: 0.2,
-              ),
-            ),
-            const SizedBox(height: 6),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 180),
-              child: Text(
-                value,
-                key: ValueKey('mini-hero-$title-$value'),
-                style: TextStyle(
-                  fontFamily: AppText.brand.fontFamily,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  color: color,
-                  height: 1.0,
-                  letterSpacing: -0.6,
+            // HTML: 120px circle, white @ 6%, pushed into the top-right corner.
+            if (!noir) _cornerGlow(size: 120, top: -55, right: -50),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title.toUpperCase(),
+                  style: TextStyle(
+                    fontFamily: AppText.monoFontFamily,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: labelC,
+                    letterSpacing: 0.12 * 12,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 5),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 180),
+                  child: Text(
+                    value,
+                    key: ValueKey('mini-hero-$title-$value'),
+                    style: TextStyle(
+                      fontFamily: AppText.brandFontFamily,
+                      fontSize: 30,
+                      fontWeight: FontWeight.w800,
+                      color: figureColor,
+                      height: 1.0,
+                      letterSpacing: -0.03 * 30,
+                    ),
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontFamily: AppText.bodyFontFamily,
+                      fontSize: 13,
+                      color: subtitleC,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ],
         ),
@@ -934,6 +1021,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
+  // "+12 this month" caption for the Delivered strip. Reads the live
+  // this-month delivered count; hides the "+N" when nothing shipped yet.
+  String _deliveredThisMonthLabel() {
+    final n = ref.watch(deliveredThisMonthProvider);
+    return n > 0 ? '+$n this month' : 'this month';
+  }
+
   // ─── Delivered strip (number + mini bar chart) ──────────────────────
   Widget _buildDeliveredStrip() {
     final metricsAsync = ref.watch(dashboardMetricsProvider);
@@ -948,94 +1042,116 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         child: const LensLoader(size: 22),
       ),
       error: (_, stack) => const SizedBox.shrink(),
-      data: (m) => GestureDetector(
+      data: (m) {
+        final bool noir = AppColors.isDark;
+        return GestureDetector(
         onTap: () => _pushNamed(RouteNames.bookings),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: AppColors.green.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.green.withValues(alpha: 0.18)),
-          ),
-          child: Row(
+          clipBehavior: Clip.antiAlias,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+          // Light: solid sage-green (#397564) filled strip.
+          // Noir: plain dark `card` strip (spec §4.1) — number in text, "+N" green.
+          decoration: noir
+              ? AppColors.glassCardDecoration(radius: 18)
+              : BoxDecoration(
+                  color: AppColors.sageData,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+          child: Stack(
             children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: AppColors.green.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.check_circle_outline,
-                  color: AppColors.green,
-                  size: 15,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              if (!noir) _cornerGlow(size: 120, right: -50, top: -55),
+              Row(
                 children: [
-                  Text(
-                    'Delivered',
-                    style: TextStyle(
-                      fontFamily: AppText.body.fontFamily,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.filmDim,
-                      letterSpacing: 0.2,
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'DELIVERED',
+                        style: TextStyle(
+                          fontFamily: AppText.monoFontFamily,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: noir ? AppColors.filmMuted : AppColors.onAccent,
+                          letterSpacing: 0.12 * 12,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            '${m.successEvents}',
+                            style: TextStyle(
+                              fontFamily: AppText.brandFontFamily,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              color: noir ? AppColors.film : AppColors.onAccent,
+                              height: 1.0,
+                              letterSpacing: -0.03 * 28,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _deliveredThisMonthLabel(),
+                            style: TextStyle(
+                              fontFamily: AppText.bodyFontFamily,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: noir ? AppColors.green : Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${m.successEvents}',
-                    style: TextStyle(
-                      fontFamily: AppText.brand.fontFamily,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.green,
-                      height: 1.0,
-                    ),
-                  ),
+                  const Spacer(),
+                  // Mini bar chart — last 4 weeks of delivered/completed events.
+                  _miniBarChart(ref.watch(deliveredTrendProvider)),
                 ],
               ),
-              const Spacer(),
-              // Mini horizontal bar chart
-              _miniBarChart(),
             ],
           ),
         ),
-      ),
+      );
+      },
     );
   }
 
-  Widget _miniBarChart() {
-    // Static mini bar chart — 4 bars of varying heights, green/teal tones.
-    final bars = [
-      (h: 12.0, c: AppColors.green.withValues(alpha: 0.5)),
-      (h: 20.0, c: AppColors.teal.withValues(alpha: 0.6)),
-      (h: 16.0, c: AppColors.green.withValues(alpha: 0.7)),
-      (h: 24.0, c: AppColors.green),
-    ];
+  Widget _miniBarChart(List<int> trend) {
+    // Mini bar chart on the sage Delivered strip — one bar per week (oldest →
+    // newest). Heights scale to the busiest week; the newest bar is emphasised
+    // in brand orange, earlier ones in warm peach tints (design tokens).
+    const minH = 6.0;
+    const maxH = 40.0;
+    final peak = trend.fold<int>(0, (m, v) => v > m ? v : m);
+    final last = trend.length - 1;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
-      children: bars
-          .map(
-            (b) => Container(
-              width: 6,
-              height: b.h,
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              decoration: BoxDecoration(
-                color: b.c,
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
-          )
-          .toList(),
+      children: List.generate(trend.length, (i) {
+        final h = peak == 0
+            ? minH
+            : minH + (maxH - minH) * (trend[i] / peak);
+        // Newest = accent; earlier bars step down. Light uses warm peach tints;
+        // Noir uses the dark-green ramp from the dark spec (#5F7A2A / #2B3320).
+        final bool noir = AppColors.isDark;
+        final color = i == last
+            ? AppColors.orange
+            : i >= last - 1
+            ? (noir ? const Color(0xFF5F7A2A) : const Color(0xFFEFB68E))
+            : (noir ? const Color(0xFF2B3320) : const Color(0xFFF6D9C4));
+        return Container(
+          width: 7,
+          height: h,
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        );
+      }),
     );
   }
-
-  String _twoDigit(int v) => v < 10 ? '0$v' : '$v';
 
   Widget _buildSectionTitle(String title, {bool showMore = false}) {
     return Row(
@@ -1348,7 +1464,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     'Events with outstanding due',
                     style: TextStyle(
                       color: AppColors.film,
-                      fontFamily: 'Poppins',
+                      fontFamily: AppText.brandFontFamily,
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                     ),
@@ -1620,7 +1736,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 '🎉 ${DateFormat.MMMM().format(now)} — holidays this month',
                 style: TextStyle(
                   color: AppColors.film,
-                  fontFamily: 'Poppins',
+                  fontFamily: AppText.brandFontFamily,
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                 ),
@@ -1758,14 +1874,67 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     required bool isCancel,
     VoidCallback? onTap,
   }) {
+    // Design: Holiday card = white surface with emoji; Cancelled card = solid
+    // orange (#E2620E) fill with a mono "CANCELLED" caption and a dark figure.
+    if (isCancel) {
+      return GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
+          decoration: BoxDecoration(
+            color: AppColors.orange,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'CANCELLED',
+                style: TextStyle(
+                  fontFamily: AppText.monoFontFamily,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.onAccent,
+                  letterSpacing: 0.1 * 10,
+                ),
+              ),
+              const SizedBox(height: 5),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                child: Text(
+                  number,
+                  key: ValueKey('info-$label-$number'),
+                  style: TextStyle(
+                    fontFamily: AppText.brandFontFamily,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF1A1A18),
+                    height: 1,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'this month',
+                style: TextStyle(
+                  fontFamily: AppText.bodyFontFamily,
+                  fontSize: 10.5,
+                  color: AppColors.onAccent,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return GestureDetector(
       onTap: onTap,
       child: Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.line(0.14)),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.line(0.06)),
       ),
       child: Row(
         children: [
@@ -1780,10 +1949,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   number,
                   key: ValueKey('info-$label-$number'),
                   style: TextStyle(
-                    fontFamily: AppText.brand.fontFamily,
+                    fontFamily: AppText.brandFontFamily,
                     fontSize: 22,
-                    fontWeight: FontWeight.w600,
-                    color: isCancel ? AppColors.red : AppColors.film,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.film,
                     height: 1,
                   ),
                 ),
@@ -1792,9 +1961,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               Text(
                 label,
                 style: TextStyle(
-                  fontFamily: AppText.sectionTitle.fontFamily,
-                  fontSize: 10,
-                  letterSpacing: 0.5,
+                  fontFamily: AppText.bodyFontFamily,
+                  fontSize: 10.5,
                   color: AppColors.filmDim.withValues(alpha: 0.85),
                   height: 1.4,
                 ),
@@ -1937,7 +2105,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                     fontFamily: AppText.brand.fontFamily,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 16,
-                                    color: Colors.black,
+                                    color: AppColors.onAccent,
                                   ),
                                 ),
                         );
@@ -2585,7 +2753,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 ),
               ],
             ),
-            child: const Icon(Icons.add_rounded, color: Colors.white, size: 26),
+            child: Icon(Icons.add_rounded, color: AppColors.onAccent, size: 26),
           ),
         ),
       ),
@@ -2626,20 +2794,20 @@ class _AnimatedBrand extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             text: TextSpan(
+              // ClickerPro wordmark (spec): Hanken 800, tight tracking,
+              // "Pro" in brand orange — NOT italic.
               style: TextStyle(
-                fontFamily: AppText.brand.fontFamily,
+                fontFamily: AppText.brandFontFamily,
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
                 color: AppColors.film,
+                letterSpacing: -0.03 * 20,
               ),
               children: [
-                const TextSpan(text: 'Clicker '),
+                const TextSpan(text: 'Clicker'),
                 TextSpan(
                   text: 'Pro',
-                  style: TextStyle(
-                    color: AppColors.accent,
-                    fontStyle: FontStyle.italic,
-                  ),
+                  style: TextStyle(color: AppColors.accent),
                 ),
               ],
             ),

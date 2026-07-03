@@ -11,6 +11,7 @@ import '../../../core/providers.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_theme.dart';
 
 class DataExportScreen extends ConsumerStatefulWidget {
   const DataExportScreen({super.key});
@@ -62,7 +63,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
           'Data Export',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -116,7 +117,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
                         'Request your data',
                         style: TextStyle(
                           color: AppColors.film,
-                          fontFamily: 'Poppins',
+                          fontFamily: AppText.brandFontFamily,
                           fontSize: 22,
                           fontWeight: FontWeight.w600,
                         ),
@@ -156,11 +157,11 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
           ),
         ),
         onPressed: _submit,
-        icon: const Icon(Icons.outbox_outlined, color: Colors.white, size: 18),
+        icon: Icon(Icons.outbox_outlined, color: AppColors.onAccent, size: 18),
         label: Text(
           'Request Data Export',
           style: TextStyle(
-            color: Colors.white,
+            color: AppColors.onAccent,
             fontWeight: FontWeight.w600,
             fontSize: 14.5,
             letterSpacing: 0.3,
@@ -212,7 +213,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
               _downloadUrl!,
               style: TextStyle(
                 color: AppColors.gold,
-                fontFamily: 'Montserrat',
+                fontFamily: AppText.monoFontFamily,
                 fontSize: 12,
               ),
             ),

@@ -9,6 +9,7 @@ import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
 import '../data/followup_repository.dart';
 import '../domain/followup.dart';
+import '../../../theme/app_theme.dart';
 
 // ─── Followup Notifier ────────────────────────────────────────────────────────
 //
@@ -80,7 +81,7 @@ class FollowupScreen extends ConsumerWidget {
           'Client Follow-up',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontSize: 22,
             fontWeight: FontWeight.w600,
           ),
@@ -93,7 +94,7 @@ class FollowupScreen extends ConsumerWidget {
         icon: const Icon(Icons.add),
         label: Text(
           'Add Follow-up',
-          style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600),
+          style: TextStyle(fontFamily: AppText.brandFontFamily, fontWeight: FontWeight.w600),
         ),
       ),
       body: async.when(
@@ -200,7 +201,7 @@ class _AddFollowupSheetState extends State<_AddFollowupSheet> {
             'New Follow-up',
             style: TextStyle(
               color: AppColors.film,
-              fontFamily: 'Poppins',
+              fontFamily: AppText.brandFontFamily,
               fontSize: 18,
               fontWeight: FontWeight.w700,
             ),
@@ -332,7 +333,7 @@ class _AddFollowupSheetState extends State<_AddFollowupSheet> {
               child: Text(
                 'Add Follow-up',
                 style: TextStyle(
-                  fontFamily: 'Poppins',
+                  fontFamily: AppText.brandFontFamily,
                   fontWeight: FontWeight.w600,
                   fontSize: 15,
                 ),

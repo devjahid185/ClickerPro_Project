@@ -11,6 +11,7 @@ import '../../../core/providers.dart';
 import '../../../theme/app_colors.dart';
 import '../data/backup_service.dart';
 import '../domain/backup_record.dart';
+import '../../../theme/app_theme.dart';
 
 class BackupScreen extends ConsumerStatefulWidget {
   const BackupScreen({super.key});
@@ -70,13 +71,13 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
         backgroundColor: AppColors.voidElevated,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+          side: BorderSide(color: AppColors.line(0.08)),
         ),
         title: Text(
           'Restore Database',
           style: TextStyle(
-            color: Colors.white,
-            fontFamily: 'Poppins',
+            color: AppColors.film,
+            fontFamily: AppText.brandFontFamily,
           ),
         ),
         content: Text(
@@ -97,7 +98,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.teal),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text('Restore', style: TextStyle(color: Colors.black)),
+            child: Text('Restore', style: TextStyle(color: AppColors.onAccent)),
           ),
         ],
       ),
@@ -136,8 +137,8 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
         title: Text(
           'Backup & Restore',
           style: TextStyle(
-            color: Colors.white,
-            fontFamily: 'Poppins',
+            color: AppColors.film,
+            fontFamily: AppText.brandFontFamily,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -183,7 +184,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                               ? _formatDate(lastBackup.createdAt)
                               : 'No backups yet',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.film,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                           ),
@@ -314,7 +315,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
               const SizedBox(width: 12),
               Text(
                 label,
-                style: TextStyle(color: Colors.white, fontSize: 15),
+                style: TextStyle(color: AppColors.film, fontSize: 15),
               ),
             ],
           ),
@@ -354,7 +355,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
               children: [
                 Text(
                   '${record.type.name.toUpperCase()} Backup',
-                  style: TextStyle(color: Colors.white, fontSize: 13),
+                  style: TextStyle(color: AppColors.film, fontSize: 13),
                 ),
                 Text(
                   '${record.sizeLabel} · ${_formatDate(record.createdAt)}',
@@ -397,7 +398,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
           margin: const EdgeInsets.all(12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
-            side: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+            side: BorderSide(color: AppColors.line(0.08)),
           ),
           duration: const Duration(seconds: 2),
         ),

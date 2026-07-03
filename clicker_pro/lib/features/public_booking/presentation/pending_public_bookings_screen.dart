@@ -22,6 +22,7 @@ import '../../../theme/app_colors.dart';
 import '../../bookings/application/booking_providers.dart';
 import '../application/public_booking_providers.dart';
 import '../domain/public_booking_request.dart';
+import '../../../theme/app_theme.dart';
 
 class PendingPublicBookingsScreen extends ConsumerStatefulWidget {
   const PendingPublicBookingsScreen({super.key});
@@ -52,10 +53,11 @@ class _PendingPublicBookingsScreenState
     final pendingAsync = ref.watch(pendingPublicBookingsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.voidBlack,
+      backgroundColor: AppColors.appBg,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.appBg,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
@@ -64,9 +66,10 @@ class _PendingPublicBookingsScreenState
           'Pending requests',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
-            fontSize: 22,
-            fontWeight: FontWeight.w600,
+            fontFamily: AppText.brandFontFamily,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.03,
           ),
         ),
       ),
@@ -85,7 +88,7 @@ class _PendingPublicBookingsScreenState
                     )
                   : RefreshIndicator(
                       color: AppColors.orange,
-                      backgroundColor: AppColors.voidElevated,
+                      backgroundColor: AppColors.surface,
                       onRefresh: () => ref
                           .read(publicBookingRepositoryProvider)
                           .refreshPending(),
@@ -157,7 +160,7 @@ class _PendingPublicBookingsScreenState
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.voidElevated,
+        backgroundColor: AppColors.surface,
         title: Text(
           'Reject request?',
           style: TextStyle(color: AppColors.film),
@@ -217,8 +220,12 @@ class _RequestRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-      decoration: AppColors.glassCardDecoration(),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.line(0.06)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -232,37 +239,36 @@ class _RequestRow extends StatelessWidget {
                   style: TextStyle(
                     color: AppColors.film,
                     fontSize: 15,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.indigo.withValues(alpha: 0.18),
+                  color: AppColors.gold.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: AppColors.indigo.withValues(alpha: 0.45),
-                  ),
                 ),
                 child: Text(
                   'PENDING',
                   style: TextStyle(
-                    color: AppColors.indigo,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
+                    color: AppColors.gold,
+                    fontFamily: AppText.monoFontFamily,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
                     letterSpacing: 0.6,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 5),
           Text(
             '${DateFormat.yMMMEd().format(request.date)} · '
             '${request.startTime}–${request.endTime}',
             style: TextStyle(
-              color: AppColors.filmDim.withValues(alpha: 0.85),
+              color: AppColors.filmDim,
               fontSize: 12,
             ),
           ),
@@ -317,7 +323,10 @@ class _RequestRow extends StatelessWidget {
                     side: BorderSide(
                       color: AppColors.red.withValues(alpha: 0.4),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   onPressed: () => onReject(),
                 ),
@@ -326,11 +335,15 @@ class _RequestRow extends StatelessWidget {
               Expanded(
                 child: FilledButton.icon(
                   icon: const Icon(Icons.check_rounded, size: 16),
-                  label: Text('Approve'),
+                  label: const Text('Approve'),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.orange,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   onPressed: () => onApprove(),
                 ),

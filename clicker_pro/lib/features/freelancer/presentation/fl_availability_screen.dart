@@ -25,6 +25,7 @@ import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
 import '../application/fl_tools_providers.dart';
 import '../domain/fl_blackout_date.dart';
+import '../../../theme/app_theme.dart';
 
 class FlAvailabilityScreen extends ConsumerStatefulWidget {
   const FlAvailabilityScreen({super.key});
@@ -42,10 +43,11 @@ class _FlAvailabilityScreenState extends ConsumerState<FlAvailabilityScreen> {
     final async = ref.watch(flBlackoutControllerProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.voidBlack,
+      backgroundColor: AppColors.appBg,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.appBg,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
@@ -54,15 +56,16 @@ class _FlAvailabilityScreenState extends ConsumerState<FlAvailabilityScreen> {
           'Availability',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
-            fontSize: 22,
-            fontWeight: FontWeight.w600,
+            fontFamily: AppText.brandFontFamily,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.03,
           ),
         ),
       ),
       body: RefreshIndicator(
         color: AppColors.orange,
-        backgroundColor: AppColors.voidLight,
+        backgroundColor: AppColors.surface,
         onRefresh: () =>
             ref.read(flBlackoutControllerProvider.notifier).refresh(),
         child: CustomScrollView(
@@ -96,14 +99,25 @@ class _FlAvailabilityScreenState extends ConsumerState<FlAvailabilityScreen> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  'UPCOMING BLACKOUTS',
-                  style: TextStyle(
-                    color: AppColors.filmMuted,
-                    fontSize: 10,
-                    letterSpacing: 1.2,
-                    fontWeight: FontWeight.w600,
-                  ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 26,
+                      height: 1.5,
+                      color: AppColors.orange,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'UPCOMING BLACKOUTS',
+                      style: TextStyle(
+                        color: AppColors.filmMuted,
+                        fontFamily: AppText.monoFontFamily,
+                        fontSize: 10,
+                        letterSpacing: 0.16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -149,7 +163,7 @@ class _FlAvailabilityScreenState extends ConsumerState<FlAvailabilityScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppColors.orange,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.onAccent,
         onPressed: () => _onDateTap(DateTime.now()),
         icon: const Icon(Icons.add),
         label: Text('Add Blackout'),
@@ -164,7 +178,7 @@ class _FlAvailabilityScreenState extends ConsumerState<FlAvailabilityScreen> {
   void _showAddBlackoutSheet(DateTime initialDate) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.voidLight,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -201,7 +215,7 @@ class _FlAvailabilityScreenState extends ConsumerState<FlAvailabilityScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.voidLight,
+        backgroundColor: AppColors.surface,
         title: Text(
           'Remove Blackout?',
           style: TextStyle(color: AppColors.film),
@@ -281,7 +295,7 @@ class _CalendarHeader extends StatelessWidget {
             '${months[focusedMonth.month]} ${focusedMonth.year}',
             style: TextStyle(
               color: AppColors.film,
-              fontFamily: 'Poppins',
+              fontFamily: AppText.brandFontFamily,
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
@@ -362,13 +376,13 @@ class _CalendarGrid extends StatelessWidget {
               color: isBlackout
                   ? AppColors.red.withValues(alpha: 0.25)
                   : isToday
-                  ? AppColors.teal.withValues(alpha: 0.15)
+                  ? AppColors.orange.withValues(alpha: 0.15)
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(8),
               border: isBlackout
                   ? Border.all(color: AppColors.red.withValues(alpha: 0.5))
                   : isToday
-                  ? Border.all(color: AppColors.teal.withValues(alpha: 0.4))
+                  ? Border.all(color: AppColors.orange.withValues(alpha: 0.4))
                   : null,
             ),
             alignment: Alignment.center,
@@ -378,7 +392,7 @@ class _CalendarGrid extends StatelessWidget {
                 color: isBlackout
                     ? AppColors.red
                     : isToday
-                    ? AppColors.teal
+                    ? AppColors.orange
                     : AppColors.filmDim,
                 fontSize: 13,
                 fontWeight: isToday || isBlackout
@@ -420,16 +434,20 @@ class _BlackoutRow extends StatelessWidget {
         : '';
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
       padding: const EdgeInsets.all(14),
-      decoration: AppColors.glassCardDecoration(),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.line(0.06)),
+      ),
       child: Row(
         children: [
           Container(
             width: 40,
             height: 40,
             decoration: AppColors.iconWrapDecoration(
-              AppColors.red.withValues(alpha: 0.15),
+              AppColors.red.withValues(alpha: 0.14),
             ),
             child: Icon(
               Icons.event_busy_outlined,
@@ -447,7 +465,7 @@ class _BlackoutRow extends StatelessWidget {
                   style: TextStyle(
                     color: AppColors.film,
                     fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 if (item.reason != null) ...[
@@ -465,7 +483,7 @@ class _BlackoutRow extends StatelessWidget {
                   Text(
                     'Repeats ${item.recurrence.name}',
                     style: TextStyle(
-                      color: AppColors.teal,
+                      color: AppColors.orange,
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
                     ),
@@ -541,9 +559,10 @@ class _AddBlackoutSheetState extends State<_AddBlackoutSheet> {
             'Add Blackout Date',
             style: TextStyle(
               color: AppColors.film,
-              fontFamily: 'Poppins',
+              fontFamily: AppText.brandFontFamily,
               fontSize: 20,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.03,
             ),
           ),
           const SizedBox(height: 16),
@@ -562,34 +581,34 @@ class _AddBlackoutSheetState extends State<_AddBlackoutSheet> {
               hintText: 'Reason (optional)',
               hintStyle: TextStyle(color: AppColors.filmMuted),
               filled: true,
-              fillColor: AppColors.voidElevated,
+              fillColor: AppColors.surfaceAlt,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: AppColors.glassBorder),
+                borderSide: BorderSide(color: AppColors.line(0.06)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: AppColors.glassBorder),
+                borderSide: BorderSide(color: AppColors.line(0.06)),
               ),
             ),
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<RecurrencePattern>(
             initialValue: _recurrence,
-            dropdownColor: AppColors.voidElevated,
+            dropdownColor: AppColors.surfaceAlt,
             style: TextStyle(color: AppColors.film),
             decoration: InputDecoration(
               labelText: 'Recurrence',
               labelStyle: TextStyle(color: AppColors.filmMuted),
               filled: true,
-              fillColor: AppColors.voidElevated,
+              fillColor: AppColors.surfaceAlt,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: AppColors.glassBorder),
+                borderSide: BorderSide(color: AppColors.line(0.06)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: AppColors.glassBorder),
+                borderSide: BorderSide(color: AppColors.line(0.06)),
               ),
             ),
             items: const [
@@ -623,10 +642,11 @@ class _AddBlackoutSheetState extends State<_AddBlackoutSheet> {
             child: FilledButton(
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.orange,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                foregroundColor: AppColors.onAccent,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                 ),
               ),
               onPressed: _submitting
@@ -644,11 +664,14 @@ class _AddBlackoutSheetState extends State<_AddBlackoutSheet> {
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                        color: AppColors.film,
+                        color: AppColors.onAccent,
                         strokeWidth: 2,
                       ),
                     )
-                  : Text('Save Blackout'),
+                  : const Text(
+                      'Save Blackout',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
             ),
           ),
         ],
@@ -675,8 +698,8 @@ class _AddBlackoutSheetState extends State<_AddBlackoutSheet> {
             return Theme(
               data: Theme.of(context).copyWith(
                 colorScheme: ColorScheme.light(
-                  primary: AppColors.teal,
-                  surface: AppColors.voidElevated,
+                  primary: AppColors.orange,
+                  surface: AppColors.surfaceAlt,
                 ),
               ),
               child: child!,
@@ -688,9 +711,9 @@ class _AddBlackoutSheetState extends State<_AddBlackoutSheet> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.voidElevated,
+          color: AppColors.surfaceAlt,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppColors.glassBorder),
+          border: Border.all(color: AppColors.line(0.06)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

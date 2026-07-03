@@ -13,6 +13,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/states/lens_loader.dart';
 import '../../../../theme/app_colors.dart';
 import '../../application/expense_providers.dart';
+import '../../../../theme/app_theme.dart';
 
 class ProfitLossCard extends ConsumerWidget {
   const ProfitLossCard({super.key});
@@ -24,23 +25,23 @@ class ProfitLossCard extends ConsumerWidget {
     final async = ref.watch(profitLossProvider);
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      margin: const EdgeInsets.fromLTRB(18, 12, 18, 4),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.glass,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.glassBorder),
+        border: Border.all(color: AppColors.line(0.06)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            loc.expenses_pl_card_title,
+            loc.expenses_pl_card_title.toUpperCase(),
             style: TextStyle(
-              color: AppColors.gold,
-              fontFamily: 'Poppins',
-              fontSize: 14,
-              letterSpacing: 1.2,
+              color: AppColors.orange,
+              fontFamily: AppText.monoFontFamily,
+              fontSize: 10,
+              letterSpacing: 1.6,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -137,9 +138,9 @@ class _Metric extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
             color: colour,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontSize: 18,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w800,
           ),
         ),
       ],

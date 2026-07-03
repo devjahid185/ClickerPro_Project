@@ -27,6 +27,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/format/booking_format.dart';
 import '../../../../core/role/capability.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_theme.dart';
+
 import '../../../settings/application/language_controller.dart';
 import '../../../team/application/team_providers.dart';
 import '../../application/booking_edit_controller.dart';
@@ -367,7 +369,7 @@ class _AssignmentEditDialogState extends State<_AssignmentEditDialog> {
               isEdit ? 'Edit assignment' : 'Add assignment',
               style: TextStyle(
                 color: AppColors.film,
-                fontFamily: 'Poppins',
+                fontFamily: AppText.brandFontFamily,
                 fontSize: 22,
                 fontWeight: FontWeight.w600,
               ),

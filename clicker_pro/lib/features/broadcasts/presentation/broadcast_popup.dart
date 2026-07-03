@@ -272,7 +272,7 @@ class _BroadcastPopupDialogState extends State<_BroadcastPopupDialog>
                               onPressed: _openLink,
                               style: FilledButton.styleFrom(
                                 backgroundColor: accent,
-                                foregroundColor: Colors.white,
+                                foregroundColor: AppColors.onAccent,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 13,
                                 ),

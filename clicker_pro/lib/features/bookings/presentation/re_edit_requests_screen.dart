@@ -13,6 +13,8 @@ import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_theme.dart';
+
 import '../application/booking_providers.dart';
 import '../domain/re_edit_request.dart';
 import '../domain/re_edit_status.dart';
@@ -45,7 +47,7 @@ class ReEditRequestsScreen extends ConsumerWidget {
           'Re-edit Requests',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontWeight: FontWeight.w600,
             fontSize: 18,
           ),
@@ -136,7 +138,7 @@ class _SectionHeader extends StatelessWidget {
             fontSize: 11,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.2,
-            fontFamily: 'Montserrat',
+            fontFamily: AppText.bodyFontFamily,
           ),
         ),
         const SizedBox(width: 8),

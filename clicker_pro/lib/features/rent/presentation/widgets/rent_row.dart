@@ -6,6 +6,7 @@ import '../../../../core/format/booking_format.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_colors.dart';
 import '../../domain/rent_record.dart';
+import '../../../../theme/app_theme.dart';
 
 class RentRow extends StatelessWidget {
   const RentRow({
@@ -109,7 +110,7 @@ class RentRow extends StatelessWidget {
                 ),
                 style: TextStyle(
                   color: AppColors.gold,
-                  fontFamily: 'Poppins',
+                  fontFamily: AppText.brandFontFamily,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),

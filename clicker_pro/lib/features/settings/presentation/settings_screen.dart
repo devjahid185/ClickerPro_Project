@@ -1,9 +1,9 @@
 ﻿// lib/features/settings/presentation/settings_screen.dart
 //
-// Clicker Pro — Settings Screen (Dark Luxury Lens)
+// Clicker Pro — Settings Screen (Claude Design · light "paper" theme)
 //
-// Visual: PRESERVED from the legacy screen — Container(... AppColors.glass,
-// border ...), uppercase section header in orange, group cards, list/toggle
+// Visual: white surface group cards on the paper canvas, mono uppercase
+// section headers with the signature orange rule, colour-coded list/toggle
 // rows.
 //
 // Wiring (this slice):
@@ -24,8 +24,11 @@ import '../../../core/navigation/route_names.dart';
 import '../../../core/providers.dart';
 import '../../../core/role/capability.dart';
 import '../../../shared/states/offline_banner.dart';
+import '../../../shared/widgets/clicker_logo.dart';
+import '../../../shared/widgets/pill_toggle.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_strings.dart';
+import '../../../theme/app_theme.dart';
 import '../../../theme/app_theme_mode.dart';
 import '../../../theme/reduce_motion.dart';
 import '../../auth/application/session_controller.dart';
@@ -75,9 +78,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     String t(String key) => AppStrings.get(key, lang);
 
     return Scaffold(
+      backgroundColor: AppColors.appBg,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.appBg,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: AppColors.film),
           onPressed: () => Navigator.of(context).maybePop(),
@@ -86,8 +91,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           'Settings',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
-            fontWeight: FontWeight.w600,
+            fontFamily: AppText.brandFontFamily,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.03,
           ),
         ),
       ),
@@ -100,6 +107,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Profile hero (.dc.html): avatar + name + phone + role badge.
+                  if (user != null) ...[
+                    _buildProfileHero(user),
+                    const SizedBox(height: 24),
+                  ],
                   _sectionHeader('Preferences · System'),
                   _buildSettingsGroup([
                     _buildThemeToggle(lang, t),
@@ -439,7 +451,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.voidElevated,
+        backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
           side: BorderSide(color: AppColors.line(0.08)),
@@ -448,7 +460,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           'Sign out of Clicker Pro?',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
           ),
         ),
         content: Text(
@@ -489,15 +501,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // ── Visual primitives ─────────────────────────────────────────
   Widget _sectionHeader(String title) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10, top: 6, left: 4),
-      child: Text(
-        title.toUpperCase(),
-        style: TextStyle(
-          color: AppColors.filmDim.withValues(alpha: 0.75),
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.6,
-        ),
+      padding: const EdgeInsets.only(bottom: 12, top: 6, left: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 26,
+            height: 1.5,
+            color: AppColors.orange,
+          ),
+          const SizedBox(width: 10),
+          Text(
+            title.toUpperCase(),
+            style: TextStyle(
+              color: AppColors.filmMuted,
+              fontFamily: AppText.monoFontFamily,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.16,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -506,17 +529,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.glass,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.glassBorder),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.line(0.05),
-            blurRadius: 16,
-            spreadRadius: -4,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        border: Border.all(color: AppColors.line(0.06)),
       ),
       // ListTile children paint their ink/splash on the nearest Material.
       // Without this transparent Material they'd paint on the colored
@@ -595,17 +610,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: _themeCard(
-                  title: 'Sunset',
-                  subtitle: 'Warm · light',
-                  selected: currentMode == AppThemeMode.sunsetStudio,
+                  title: 'Noir',
+                  subtitle: 'Lime · dark',
+                  selected: currentMode == AppThemeMode.noirDark,
                   swatch: const [
-                    Color(0xFFF4EBDD),
-                    Color(0xFFFF6200),
-                    Color(0xFFB8893A),
+                    Color(0xFF060708),
+                    Color(0xFFC8F252),
+                    Color(0xFFEDF1EA),
                   ],
                   onTap: () => ref
                       .read(themeModeControllerProvider.notifier)
-                      .setThemeMode(AppThemeMode.sunsetStudio),
+                      .setThemeMode(AppThemeMode.noirDark),
                 ),
               ),
             ],
@@ -633,7 +648,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected ? AppColors.orange : AppColors.glassBorder,
+            color: selected ? AppColors.orange : AppColors.line(0.06),
             width: selected ? 2 : 1,
           ),
         ),
@@ -681,6 +696,98 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  /// Profile hero card (.dc.html): circular avatar (initials on the accent
+  /// fill), name + phone, and a role badge chip on the right.
+  Widget _buildProfileHero(dynamic user) {
+    final initials = user.avatarInitials as String? ?? '..';
+    final name = user.name as String? ?? 'User';
+    final phone = (user.phone as String?)?.trim();
+    final roleLabel = (user.studioLabel as String? ?? '').toUpperCase();
+
+    return GestureDetector(
+      onTap: () => Navigator.pushNamed(context, RouteNames.profile),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.line(0.06)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 54,
+              height: 54,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.accent,
+              ),
+              child: Text(
+                initials,
+                style: TextStyle(
+                  color: AppColors.onAccent,
+                  fontFamily: AppText.brandFontFamily,
+                  fontSize: 19,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: AppColors.film,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  if (phone != null && phone.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      phone,
+                      style: TextStyle(
+                        color: AppColors.filmMuted,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            if (roleLabel.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.orangeSoft,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  roleLabel,
+                  style: TextStyle(
+                    color: AppColors.orange,
+                    fontFamily: AppText.monoFontFamily,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildBoolRow({
     required String label,
     required IconData icon,
@@ -712,11 +819,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             )
           else
-            Switch(
-              value: value,
-              activeThumbColor: AppColors.accent,
-              onChanged: onChanged,
-            ),
+            PillToggle(value: value, onChanged: onChanged),
         ],
       ),
     );
@@ -745,7 +848,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         style: TextStyle(
           color: danger ? AppColors.red : AppColors.film,
           fontSize: 14.5,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
         ),
       ),
       trailing: Icon(Icons.chevron_right, color: AppColors.filmMuted, size: 20),
@@ -757,18 +860,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.voidElevated,
+        backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
           side: BorderSide(color: AppColors.line(0.08)),
         ),
         title: Row(
           children: [
-            Image.asset('assets/brand/logo_flower.png', width: 28, height: 28),
+            const ClickerLogo(size: 28),
             const SizedBox(width: 10),
             Text(
               'CLICKER PRO',
-              style: TextStyle(color: AppColors.film, fontFamily: 'Poppins'),
+              style: TextStyle(
+                color: AppColors.film,
+                fontFamily: AppText.bodyFontFamily,
+              ),
             ),
           ],
         ),
@@ -800,7 +906,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             message,
             style: TextStyle(color: AppColors.film, fontSize: 13),
           ),
-          backgroundColor: AppColors.voidElevated,
+          backgroundColor: AppColors.surface,
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(12),
           shape: RoundedRectangleBorder(

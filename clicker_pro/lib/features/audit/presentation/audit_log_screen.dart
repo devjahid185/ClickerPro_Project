@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../theme/app_colors.dart';
 import '../data/audit_repository_impl.dart';
 import '../domain/audit_log.dart';
+import '../../../theme/app_theme.dart';
 
 class AuditLogScreen extends ConsumerStatefulWidget {
   const AuditLogScreen({super.key});
@@ -66,7 +67,7 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
           'Audit Log',
           style: TextStyle(
             color: AppColors.film,
-            fontFamily: 'Poppins',
+            fontFamily: AppText.brandFontFamily,
             fontWeight: FontWeight.w600,
           ),
         ),

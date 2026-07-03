@@ -9,6 +9,7 @@ import '../../../../shared/states/lens_loader.dart';
 import '../../../../theme/app_colors.dart';
 import '../../application/rent_providers.dart';
 import '../../domain/rent_record.dart';
+import '../../../../theme/app_theme.dart';
 
 class AddRentSheet extends ConsumerStatefulWidget {
   const AddRentSheet._();
@@ -128,7 +129,7 @@ class _AddRentSheetState extends ConsumerState<AddRentSheet> {
                 loc.rent_add,
                 style: TextStyle(
                   color: AppColors.film,
-                  fontFamily: 'Poppins',
+                  fontFamily: AppText.brandFontFamily,
                   fontSize: 22,
                   fontWeight: FontWeight.w600,
                 ),

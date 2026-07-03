@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modify this file to customize your launch splash screen -->
+<!-- Native launch splash: black canvas + full-bleed brand splash image, so the
+     OS launch window shows the same artwork as the Dart SplashScreen — no white
+     flash before Flutter's first frame. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@android:color/white" />
-
-    <!-- You can insert your own image assets here -->
-    <!-- <item>
+    <item android:drawable="@color/launch_background" />
+    <item>
         <bitmap
-            android:gravity="center"
-            android:src="@mipmap/launch_image" />
-    </item> -->
+            android:gravity="fill"
+            android:src="@drawable/splash_img" />
+    </item>
 </layer-list>

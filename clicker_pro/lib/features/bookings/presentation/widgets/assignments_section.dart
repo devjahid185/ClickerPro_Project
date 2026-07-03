@@ -153,7 +153,7 @@ class _AssignmentRow extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: isChief ? AppColors.gold : Colors.white,
+                          color: isChief ? AppColors.gold : AppColors.film,
                           fontSize: 13.5,
                           fontWeight: FontWeight.w600,
                         ),

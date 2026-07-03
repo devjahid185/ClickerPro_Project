@@ -29,6 +29,9 @@ import '../../../core/navigation/route_names.dart';
 import '../../../core/providers.dart';
 import '../../../core/storage/kv_store.dart';
 import '../../../screens/dashboard_screen.dart';
+import '../../../shared/widgets/auth_glass_field.dart';
+import '../../../shared/widgets/clicker_logo.dart';
+import '../../../shared/widgets/video_backdrop.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_strings.dart';
 import '../../../theme/app_theme.dart';
@@ -254,49 +257,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     String t(String key) => AppStrings.get(key, lang);
 
     return Scaffold(
-      backgroundColor: AppColors.voidBlack,
+      // Full-bleed video backdrop → the scaffold sits on black so there is no
+      // paper-coloured seam behind the video / status bar.
+      backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // ─── WATERMARK LOGO (subtle brand backdrop) ───────────────
-          // The blade-flower brand mark — same motif as the landing page
-          // hero, so the app and site read as one product. IgnorePointer +
-          // low opacity: never blocks touches or hurts readability.
-          Positioned(
-            right: -90,
-            bottom: -70,
-            child: IgnorePointer(
-              child: Opacity(
-                opacity: 0.07,
-                child: Image.asset(
-                  'assets/brand/logo_flower.png',
-                  width: 380,
-                  height: 380,
+          // ─── FULL-SCREEN BRAND VIDEO ─────────────────────────────
+          // Looping, muted ambient clip. A dark gradient scrim keeps the
+          // wordmark + form legible over any frame.
+          Positioned.fill(
+            child: VideoBackdrop(
+              asset: 'assets/Login/Login.mp4',
+              fallbackColor: Colors.black,
+              scrim: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.55),
+                      Colors.black.withValues(alpha: 0.35),
+                      Colors.black.withValues(alpha: 0.70),
+                    ],
+                    stops: const [0.0, 0.45, 1.0],
+                  ),
                 ),
-              ),
-            ),
-          ),
-          // ─── BACKGROUND GLOW BLOBS ────────────────────────────────
-          Positioned(
-            top: -100,
-            right: -100,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.accent.withValues(alpha: 0.08),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -80,
-            left: -80,
-            child: Container(
-              width: 260,
-              height: 260,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.gold.withValues(alpha: 0.08),
               ),
             ),
           ),
@@ -330,21 +315,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         RichText(
                           textAlign: TextAlign.center,
                           text: TextSpan(
+                            // ClickerPro wordmark (spec): Hanken 800, tight
+                            // tracking, "Pro" in brand orange — NOT italic.
                             style: TextStyle(
-                              fontFamily: AppText.brand.fontFamily,
+                              fontFamily: AppText.clickerBrandFontFamily,
                               fontSize: 34,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.film,
-                              height: 1.1,
+                              fontWeight: FontWeight.w800,
+                              // Over the dark video scrim the wordmark is white.
+                              color: Colors.white,
+                              height: 1.0,
+                              letterSpacing: -0.04 * 34,
                             ),
                             children: [
-                              TextSpan(text: 'Clicker '),
+                              TextSpan(text: 'Clicker'),
                               TextSpan(
                                 text: 'Pro',
-                                style: TextStyle(
-                                  color: AppColors.accent,
-                                  fontStyle: FontStyle.italic,
-                                ),
+                                style: TextStyle(color: AppColors.accent),
                               ),
                             ],
                           ),
@@ -354,10 +340,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           'COMPANY MANAGEMENT',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontFamily: 'Montserrat',
+                            fontFamily: AppText.bodyFontFamily,
                             fontSize: 10.5,
                             letterSpacing: 2.5,
-                            color: AppColors.filmDim.withValues(alpha: 0.7),
+                            color: Colors.white.withValues(alpha: 0.75),
                           ),
                         ),
                         const SizedBox(height: 40),
@@ -368,22 +354,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         ],
 
                         // ── EMAIL FIELD ────────────────────────────
-                        _glassField(
+                        AuthGlassField(
                           controller: _emailController,
                           label: t('email'),
                           icon: Icons.mail_outline_rounded,
                           keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
                           validator: (v) =>
                               v == null || v.isEmpty ? "Enter email" : null,
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 16),
 
                         // ── PASSWORD FIELD ─────────────────────────
-                        _glassField(
+                        AuthGlassField(
                           controller: _passwordController,
                           label: t('password'),
                           icon: Icons.lock_outline_rounded,
                           isPassword: true,
+                          obscured: _obscurePassword,
+                          onToggleObscure: () =>
+                              setState(() => _obscurePassword = !_obscurePassword),
+                          textInputAction: TextInputAction.done,
                           validator: (v) => v == null || v.isEmpty
                               ? "Enter password"
                               : null,
@@ -434,7 +425,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                               Expanded(
                                 child: Container(
                                   height: 1,
-                                  color: Colors.white.withValues(alpha: 0.06),
+                                  color: Colors.white.withValues(alpha: 0.22),
                                 ),
                               ),
                               Padding(
@@ -444,19 +435,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                 child: Text(
                                   'OR',
                                   style: TextStyle(
-                                    fontFamily: 'Montserrat',
+                                    fontFamily: AppText.bodyFontFamily,
                                     fontSize: 9.5,
                                     letterSpacing: 1.5,
-                                    color: AppColors.filmDim.withValues(
-                                      alpha: 0.5,
-                                    ),
+                                    color: Colors.white.withValues(alpha: 0.6),
                                   ),
                                 ),
                               ),
                               Expanded(
                                 child: Container(
                                   height: 1,
-                                  color: Colors.white.withValues(alpha: 0.06),
+                                  color: Colors.white.withValues(alpha: 0.22),
                                 ),
                               ),
                             ],
@@ -479,7 +468,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             Text(
                               "${t('no_account')} ",
                               style: TextStyle(
-                                color: AppColors.filmDim.withValues(alpha: 0.7),
+                                color: Colors.white.withValues(alpha: 0.75),
                                 fontSize: 13,
                               ),
                             ),
@@ -507,7 +496,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           '${AppConfig.appName} ${AppConfig.appVersionLabel} · by ${AppConfig.companyName}',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: AppColors.filmMuted.withValues(alpha: 0.7),
+                            color: Colors.white.withValues(alpha: 0.55),
                             fontSize: 10,
                             letterSpacing: 0.6,
                             fontWeight: FontWeight.w500,
@@ -540,7 +529,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
               color: AppColors.accent.withValues(alpha: 0.08),
             ),
           ),
-          Image.asset('assets/brand/logo_flower.png', width: 104, height: 104),
+          const ClickerLogo(size: 88),
         ],
       ),
     );
@@ -589,86 +578,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  // ─── GLASS INPUT FIELD ─────────────────────────────────────────
-  Widget _glassField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    bool isPassword = false,
-    TextInputType? keyboardType,
-    String? Function(String?)? validator,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surfaceAlt,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.glassBorder),
-      ),
-      child: TextFormField(
-        controller: controller,
-        obscureText: isPassword && _obscurePassword,
-        keyboardType: keyboardType,
-        style: TextStyle(
-          color: AppColors.film,
-          fontSize: 14.5,
-          fontWeight: FontWeight.w500,
-        ),
-        validator: validator,
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(
-            color: AppColors.filmDim.withValues(alpha: 0.7),
-            fontSize: 13.5,
-          ),
-          floatingLabelStyle: TextStyle(
-            color: AppColors.accent,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-          prefixIcon: Padding(
-            padding: const EdgeInsets.only(left: 14, right: 10),
-            child: Icon(icon, color: AppColors.accent, size: 19),
-          ),
-          prefixIconConstraints: const BoxConstraints(
-            minWidth: 0,
-            minHeight: 0,
-          ),
-          suffixIcon: isPassword
-              ? IconButton(
-                  icon: Icon(
-                    _obscurePassword
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
-                    color: AppColors.filmDim,
-                    size: 19,
-                  ),
-                  onPressed: () =>
-                      setState(() => _obscurePassword = !_obscurePassword),
-                )
-              : null,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 16,
-          ),
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(
-              color: AppColors.accent.withValues(alpha: 0.5),
-              width: 1.5,
-            ),
-          ),
-          errorStyle: TextStyle(
-            color: Colors.redAccent,
-            fontSize: 11,
-            height: 0.8,
-          ),
-        ),
       ),
     );
   }

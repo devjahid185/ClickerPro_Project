@@ -11,6 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_theme.dart';
+
 import '../../application/booking_detail_controller.dart';
 
 /// The fixed set of delivery steps, in workflow order. Stored by stable key
@@ -117,7 +119,7 @@ class _DeliveryChecklistSheetState
                   'Delivery Checklist',
                   style: TextStyle(
                     color: AppColors.film,
-                    fontFamily: 'Poppins',
+                    fontFamily: AppText.brandFontFamily,
                     fontSize: 22,
                     fontWeight: FontWeight.w600,
                   ),
@@ -169,7 +171,7 @@ class _DeliveryChecklistSheetState
                 onPressed: _saving ? null : _save,
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.teal,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.onAccent,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -181,7 +183,7 @@ class _DeliveryChecklistSheetState
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Colors.white,
+                          color: AppColors.onAccent,
                         ),
                       )
                     : Text(
