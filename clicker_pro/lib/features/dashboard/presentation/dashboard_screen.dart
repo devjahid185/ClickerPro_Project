@@ -2040,7 +2040,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-  // ─── Weather card (visual unchanged) ───────────────────────────────
+  // ─── Weather card (strip + shoot advisory) ─────────────────────────
   Widget _buildWeatherCard() {
     final now = DateTime.now();
     final hour = now.hour;
@@ -2054,6 +2054,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         : hour < 18
         ? ('⛅', 'PARTLY CLOUDY', '30')
         : ('🌇', 'EVENING', '28');
+
+    // Is there an outdoor shoot today? Tailors the advisory.
+    final monthAsync = ref.watch(
+      calendarBookingsProvider((year: now.year, month: now.month)),
+    );
+    final hasOutdoorToday =
+        (monthAsync.valueOrNull ?? const []).any(
+          (b) =>
+              b.outdoor &&
+              b.date.year == now.year &&
+              b.date.month == now.month &&
+              b.date.day == now.day &&
+              b.status != BookingStatus.cancelled,
+        );
+    final advisory = _weatherAdvisory(condition, hasOutdoorToday);
+
     // Compact one-line strip — the old oversized emoji + 30px temperature
     // crowded the column and collided with neighbouring sections.
     return Container(
@@ -2063,49 +2079,123 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.indigo.withValues(alpha: 0.20)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(emoji, style: TextStyle(fontSize: 22)),
-          const SizedBox(width: 10),
-          RichText(
-            text: TextSpan(
-              style: TextStyle(
-                fontFamily: AppText.brand.fontFamily,
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: AppColors.film,
+          Row(
+            children: [
+              Text(emoji, style: TextStyle(fontSize: 22)),
+              const SizedBox(width: 10),
+              RichText(
+                text: TextSpan(
+                  style: TextStyle(
+                    fontFamily: AppText.brand.fontFamily,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.film,
+                  ),
+                  children: [
+                    TextSpan(text: temp),
+                    const TextSpan(text: '°', style: TextStyle(fontSize: 13)),
+                  ],
+                ),
               ),
-              children: [
-                TextSpan(text: temp),
-                const TextSpan(text: '°', style: TextStyle(fontSize: 13)),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              condition,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontFamily: AppText.sectionTitle.fontFamily,
-                fontSize: 9,
-                letterSpacing: 1,
-                color: AppColors.filmDim.withValues(alpha: 0.85),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  condition,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: AppText.sectionTitle.fontFamily,
+                    fontSize: 9,
+                    letterSpacing: 1,
+                    color: AppColors.filmDim.withValues(alpha: 0.85),
+                  ),
+                ),
               ),
-            ),
+              Text(
+                'Dhaka, BD',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.film,
+                ),
+              ),
+            ],
           ),
-          Text(
-            'Dhaka, BD',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.film,
-            ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(advisory.icon, size: 14, color: advisory.color),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  advisory.text,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: advisory.color,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
+  }
+
+  /// Turns the current condition into an actionable shoot advisory — "what to
+  /// do" — biased toward outdoor shoots when one is scheduled today.
+  ({String text, IconData icon, Color color}) _weatherAdvisory(
+    String condition,
+    bool hasOutdoorToday,
+  ) {
+    switch (condition) {
+      case 'MOSTLY SUNNY':
+        return hasOutdoorToday
+            ? (
+                text: 'Perfect for the outdoor shoot — carry a diffuser for harsh sun.',
+                icon: Icons.wb_sunny_outlined,
+                color: AppColors.green,
+              )
+            : (
+                text: 'Great light for outdoor shoots right now.',
+                icon: Icons.wb_sunny_outlined,
+                color: AppColors.green,
+              );
+      case 'PARTLY CLOUDY':
+        return (
+          text: 'Soft, even light — ideal for portraits. Keep a rain cover handy.',
+          icon: Icons.wb_cloudy_outlined,
+          color: AppColors.teal,
+        );
+      case 'MORNING SUN':
+        return (
+          text: 'Golden morning light — best window for outdoor frames.',
+          icon: Icons.wb_twilight_outlined,
+          color: AppColors.gold,
+        );
+      case 'EVENING':
+        return (
+          text: 'Golden hour — shoot now, then switch to lights after dusk.',
+          icon: Icons.wb_twilight_outlined,
+          color: AppColors.orange,
+        );
+      case 'CLEAR NIGHT':
+        return (
+          text: 'Clear night — plan lighting for any night shoot.',
+          icon: Icons.nightlight_outlined,
+          color: AppColors.indigo,
+        );
+      default:
+        return (
+          text: 'Check the sky before an outdoor shoot.',
+          icon: Icons.info_outline,
+          color: AppColors.filmDim,
+        );
+    }
   }
 
   // ─── Drawer ────────────────────────────────────────────────────────
