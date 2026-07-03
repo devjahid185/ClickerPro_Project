@@ -1100,10 +1100,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   // ─── Quick action row (role-adaptive) ─────────────────────────────
-  // Owner/Both/Manager: Calendar · Invoice · Chat · Team
-  // Freelancer: Calendar · Company · Chat · Expense
+  // Owner/Both/Manager: Calendar · Prayer · Calculator · Notes
+  // Freelancer:         Calendar · Prayer · Calculator · Notes
+  //
+  // Invoice (owner) and Expense (freelancer) were moved off the quick-action
+  // row per Heaven's request — both are still reachable from the sidebar —
+  // and replaced by the three offline utility tools (নামাজের সময় / Calculator
+  // / Notes).
   Widget _buildQuickActions(UserModel? user) {
-    final isFreelancer = user?.role == UserRole.freelancer;
     return Row(
       children: [
         _qaBtn(
@@ -1113,28 +1117,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           routeName: RouteNames.calendar,
         ),
         _qaBtn(
-          icon: isFreelancer
-              ? Icons.business_rounded
-              : Icons.receipt_long_rounded,
+          icon: Icons.mosque_rounded,
           color: AppColors.gold,
-          label: isFreelancer ? 'Company' : t('btn_invoice'),
-          routeName: isFreelancer
-              ? RouteNames.freelancerCompanies
-              : RouteNames.invoice,
+          label: 'Prayer',
+          routeName: RouteNames.prayerTimes,
         ),
         _qaBtn(
-          icon: Icons.chat_bubble_rounded,
+          icon: Icons.calculate_rounded,
           color: AppColors.indigo,
-          label: t('btn_chat'),
-          routeName: RouteNames.chat,
+          label: 'Calculator',
+          routeName: RouteNames.calculator,
         ),
         _qaBtn(
-          icon: isFreelancer
-              ? Icons.account_balance_wallet_rounded
-              : Icons.people_rounded,
+          icon: Icons.sticky_note_2_rounded,
           color: AppColors.green,
-          label: isFreelancer ? 'Expense' : t('btn_team'),
-          routeName: isFreelancer ? RouteNames.finance : RouteNames.team,
+          label: 'Notes',
+          routeName: RouteNames.notes,
         ),
       ],
     );

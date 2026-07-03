@@ -60,6 +60,9 @@ import '../../features/freelancer/presentation/fl_badges_screen.dart';
 import '../../features/team/presentation/salary_sheet_screen.dart';
 import '../../features/team/presentation/team_screen.dart';
 import '../../features/invoice/presentation/invoice_screen.dart';
+import '../../features/tools/presentation/prayer_times_screen.dart';
+import '../../features/tools/presentation/calculator_screen.dart';
+import '../../features/tools/presentation/notes_screen.dart';
 import '../../features/invoice/domain/invoice.dart';
 import '../../features/backup/presentation/backup_screen.dart';
 import '../../features/audit/presentation/audit_log_screen.dart';
@@ -371,6 +374,12 @@ class AppRouter {
         return lensPageRoute<void>(const CalendarSyncSettings());
       case RouteNames.paymentEntry:
         return lensPageRoute<void>(const PaymentEntryScreen());
+      case RouteNames.prayerTimes:
+        return lensPageRoute<void>(const PrayerTimesScreen());
+      case RouteNames.calculator:
+        return lensPageRoute<void>(const CalculatorScreen());
+      case RouteNames.notes:
+        return lensPageRoute<void>(const NotesScreen());
       case RouteNames.broadcasts:
         return lensPageRoute<void>(const BroadcastsScreen());
       case RouteNames.securitySettings:

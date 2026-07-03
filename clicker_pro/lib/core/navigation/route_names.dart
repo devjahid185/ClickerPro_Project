@@ -65,6 +65,11 @@ class RouteNames {
   // ─── Payments module ───
   static const String paymentEntry = '/payment/entry';
 
+  // ─── Tools (offline utilities on the dashboard) ───
+  static const String prayerTimes = '/tools/prayer-times';
+  static const String calculator = '/tools/calculator';
+  static const String notes = '/tools/notes';
+
   // ─── WhatsApp module ───
   static const String whatsappShare = '/whatsapp/share';
 
