@@ -75,12 +75,20 @@ class PaymentRecord {
   /// `kind`/`method`) and the older local camelCase shape (offline cache).
   factory PaymentRecord.fromJson(Map<String, dynamic> json) {
     final createdRaw = (json['created_at'] ?? json['createdAt'])?.toString();
+    final rawAmount = json['amount'];
     return PaymentRecord(
       id: (json['id'] ?? '').toString(),
       eventId: (json['event_id'] ?? json['eventId'] ?? '').toString(),
-      amount: (json['amount'] as num?)?.toDouble() ??
-          double.tryParse('${json['amount']}') ??
-          0,
+      // Laravel's `decimal:2` cast (see Payment::$casts) serializes `amount`
+      // as a JSON STRING (e.g. "5000.00"), not a number — this is deliberate
+      // on the PHP side to avoid float precision loss. `rawAmount as num?`
+      // threw a TypeError on every real payment row (a String can't cast to
+      // num), which crashed list() with an exception AppLogger never saw
+      // (it's not an ApiException) — the "Failed to load payments" screen
+      // with no server-side error to match. Parse it string-first.
+      amount: (rawAmount is num)
+          ? rawAmount.toDouble()
+          : double.tryParse('$rawAmount') ?? 0,
       method: ((json['method'] as String?) ?? 'cash').toLowerCase(),
       type: ((json['kind'] ?? json['type']) as String? ?? 'due').toLowerCase(),
       hidden: json['hidden'] as bool? ?? false,

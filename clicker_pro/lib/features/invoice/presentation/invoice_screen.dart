@@ -25,6 +25,7 @@ import '../../../core/pdf/pdf_export.dart';
 import '../../../core/format/booking_format.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
+import '../../bookings/application/booking_providers.dart';
 import '../application/invoice_providers.dart';
 import '../domain/invoice.dart';
 import '../../../theme/app_theme.dart';
@@ -76,7 +77,7 @@ class InvoiceScreen extends ConsumerWidget {
                 children: [
                   _InvoicePaper(invoice: inv),
                   const SizedBox(height: 14),
-                  _buildActionGrid(context, inv),
+                  _buildActionGrid(context, ref, inv),
                 ],
               ),
             ),
@@ -87,7 +88,7 @@ class InvoiceScreen extends ConsumerWidget {
   // Copy is a plain white tile, WhatsApp a green-tinted one, PDF the solid
   // orange primary. (The old Messenger button is gone per the design; the
   // system share sheet is still reachable from the exported PDF.)
-  Widget _buildActionGrid(BuildContext context, Invoice inv) {
+  Widget _buildActionGrid(BuildContext context, WidgetRef ref, Invoice inv) {
     return Row(
       children: [
         Expanded(
@@ -109,23 +110,7 @@ class InvoiceScreen extends ConsumerWidget {
             icon: Icons.chat_rounded,
             label: 'WhatsApp',
             style: _ActionStyle.whatsapp,
-            onTap: () {
-              Navigator.of(context).pushNamed(
-                RouteNames.whatsappShare,
-                arguments: <String, String>{
-                  'clientName': '',
-                  'clientPhone': '',
-                  'eventName': inv.packageName,
-                  'eventDate': '',
-                  'eventTime': '',
-                  'venue': '',
-                  'total': '৳${inv.total.toStringAsFixed(0)}',
-                  'advance': '৳${inv.advance.toStringAsFixed(0)}',
-                  'due': '৳${inv.due.toStringAsFixed(0)}',
-                  'packageName': inv.packageName,
-                },
-              );
-            },
+            onTap: () => _shareViaWhatsApp(context, ref, inv),
           ),
         ),
         const SizedBox(width: 9),
@@ -138,6 +123,50 @@ class InvoiceScreen extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  /// The [Invoice] model itself carries no client name/phone or event date/
+  /// time/venue — only `eventId`, the package, and the money totals. Those
+  /// fields live on the linked [Booking], so look it up (matched by the
+  /// invoice's `eventId` against the booking's server `remoteId`) before
+  /// opening the WhatsApp composer. Previously this always sent empty
+  /// strings, which rendered the message template's {name}/{date}/{venue}
+  /// placeholders blank — a WhatsApp message with nothing meaningful in it.
+  Future<void> _shareViaWhatsApp(
+    BuildContext context,
+    WidgetRef ref,
+    Invoice inv,
+  ) async {
+    final navigator = Navigator.of(context);
+    final booking = await ref
+        .read(bookingRepositoryProvider)
+        .getByRemoteId(inv.eventId);
+
+    navigator.pushNamed(
+      RouteNames.whatsappShare,
+      arguments: <String, String>{
+        'clientName': booking?.clientName ?? '',
+        'clientPhone': booking?.clientPhone ?? '',
+        'eventName': inv.packageName.isNotEmpty
+            ? inv.packageName
+            : (booking?.title ?? ''),
+        'eventDate': booking == null
+            ? ''
+            : BookingFormat.dateTime(booking.date, lang: 'en'),
+        'eventTime': booking == null
+            ? ''
+            : BookingFormat.clockRange(
+                booking.startTime,
+                booking.endTime,
+                lang: 'en',
+              ),
+        'venue': booking?.venue ?? '',
+        'total': '৳${inv.total.toStringAsFixed(0)}',
+        'advance': '৳${inv.advance.toStringAsFixed(0)}',
+        'due': '৳${inv.due.toStringAsFixed(0)}',
+        'packageName': inv.packageName,
+      },
     );
   }
 

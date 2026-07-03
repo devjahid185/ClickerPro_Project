@@ -98,18 +98,30 @@ class Invoice {
     };
   }
 
+  /// Laravel's `decimal:2` cast (Invoice::$casts — subtotal/tax_amount/total)
+  /// serializes those columns as JSON STRINGS ("5000.00"), not numbers — a
+  /// deliberate choice on the PHP side to avoid float precision loss. A bare
+  /// `as num` cast throws a TypeError on every real invoice, which crashed
+  /// invoice loading silently (a TypeError isn't an ApiException, so it never
+  /// reached the app's error logging). Same root cause as the payments
+  /// "Failed to load" bug in payment_record.dart.
+  static double _money(Object? v) {
+    if (v is num) return v.toDouble();
+    return double.tryParse('$v') ?? 0;
+  }
+
   factory Invoice.fromJson(Map<String, dynamic> json) {
     return Invoice(
-      id: json['id'] as String,
-      eventId: json['eventId'] as String,
+      id: (json['id'] ?? '').toString(),
+      eventId: (json['eventId'] ?? json['event_id'] ?? '').toString(),
       status: (json['status'] as String?) ?? 'draft',
       packageName: (json['packageName'] as String?) ?? '',
-      total: (json['total'] as num).toDouble(),
-      advance: (json['advance'] as num?)?.toDouble() ?? 0,
-      due: (json['due'] as num?)?.toDouble() ?? 0,
+      total: _money(json['total']),
+      advance: _money(json['advance']),
+      due: _money(json['due']),
       sentAt: json['sentAt'] == null
           ? null
-          : DateTime.parse(json['sentAt'] as String),
+          : DateTime.tryParse(json['sentAt'].toString()),
       teamNames:
           (json['teamNames'] as List?)?.cast<String>() ?? const <String>[],
       teamPhones:
