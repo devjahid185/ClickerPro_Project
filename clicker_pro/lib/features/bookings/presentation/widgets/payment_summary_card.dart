@@ -13,6 +13,7 @@
 // "Components and Interfaces". Validates Requirements 5.2, 12.4.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/format/booking_format.dart';
@@ -110,24 +111,47 @@ class PaymentSummaryCard extends ConsumerWidget {
               ],
               if (canEditPayments && hasOutstanding) ...[
                 const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.green,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                Row(
+                  children: [
+                    // Partial: record any amount the client actually paid now
+                    // (not the full due). "পার্শিয়াল পেমেন্ট অপশন".
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.gold,
+                          side: BorderSide(
+                            color: AppColors.gold.withValues(alpha: 0.5),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        icon: const Icon(Icons.add_card_outlined, size: 18),
+                        label: const Text('Partial'),
+                        onPressed: () =>
+                            _recordPartial(context, ref, outstanding),
                       ),
                     ),
-                    icon: const Icon(Icons.check_circle_outline, size: 18),
-                    label: Text(
-                      'Mark ৳${outstanding.toStringAsFixed(0)} due as received',
+                    const SizedBox(width: 10),
+                    // Full: clear the whole remaining due in one tap.
+                    Expanded(
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.green,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        icon: const Icon(Icons.check_circle_outline, size: 18),
+                        label: const Text('Full due'),
+                        onPressed: () =>
+                            _markDueReceived(context, ref, outstanding),
+                      ),
                     ),
-                    onPressed: () =>
-                        _markDueReceived(context, ref, outstanding),
-                  ),
+                  ],
                 ),
               ],
             ],
@@ -137,16 +161,14 @@ class PaymentSummaryCard extends ConsumerWidget {
     );
   }
 
-  /// Records the outstanding amount as a collected `due` payment, clearing
-  /// the booking's due. The dashboard's collection/due figures and the
-  /// finance screen pick it up because they read the same payment
-  /// aggregate.
+  /// Records the full outstanding amount as a collected `due` payment,
+  /// clearing the booking's due. The dashboard's collection/due figures and
+  /// the finance screen pick it up because they read the same aggregate.
   Future<void> _markDueReceived(
     BuildContext context,
     WidgetRef ref,
     double amount,
   ) async {
-    final messenger = ScaffoldMessenger.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -177,8 +199,115 @@ class PaymentSummaryCard extends ConsumerWidget {
         ],
       ),
     );
-    if (confirmed != true) return;
+    if (confirmed != true || !context.mounted) return;
+    await _savePayment(context, ref, amount, note: 'Due collected');
+  }
 
+  /// Records a PARTIAL payment — any amount the client paid now, up to the
+  /// outstanding [outstanding]. The remaining due stays open for later.
+  /// This is the "পার্শিয়াল পেমেন্ট" flow for clients who don't pay in full.
+  Future<void> _recordPartial(
+    BuildContext context,
+    WidgetRef ref,
+    double outstanding,
+  ) async {
+    final controller = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    final amount = await showDialog<double>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.voidElevated,
+        title: Text(
+          'Partial payment',
+          style: TextStyle(color: AppColors.film, fontSize: 18),
+        ),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Outstanding: ৳${outstanding.toStringAsFixed(0)}',
+                style: TextStyle(color: AppColors.filmDim, fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: controller,
+                autofocus: true,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                ],
+                style: TextStyle(color: AppColors.film),
+                decoration: InputDecoration(
+                  prefixText: '৳ ',
+                  prefixStyle: TextStyle(color: AppColors.gold),
+                  labelText: 'Amount received now',
+                  labelStyle: TextStyle(color: AppColors.filmDim),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: AppColors.line(0.2)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: AppColors.gold),
+                  ),
+                ),
+                validator: (raw) {
+                  final v = double.tryParse((raw ?? '').trim());
+                  if (v == null || v <= 0) return 'Enter a valid amount';
+                  if (v > outstanding + 0.5) {
+                    return 'Cannot exceed the ৳${outstanding.toStringAsFixed(0)} due';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text('Cancel', style: TextStyle(color: AppColors.filmDim)),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.gold,
+              foregroundColor: AppColors.voidBlack,
+            ),
+            onPressed: () {
+              if (!(formKey.currentState?.validate() ?? false)) return;
+              Navigator.of(ctx).pop(double.parse(controller.text.trim()));
+            },
+            child: Text('Record'),
+          ),
+        ],
+      ),
+    );
+
+    if (amount == null || !context.mounted) return;
+    await _savePayment(
+      context,
+      ref,
+      amount,
+      note: 'Partial payment',
+    );
+  }
+
+  /// Shared save path for both full and partial due collection: logs a
+  /// `due`-kind [amount] against the booking and refreshes the aggregate,
+  /// dashboard due figures, and pops the coin celebration.
+  Future<void> _savePayment(
+    BuildContext context,
+    WidgetRef ref,
+    double amount, {
+    required String note,
+  }) async {
+    final messenger = ScaffoldMessenger.of(context);
     final now = DateTime.now();
     final payment = Payment(
       id: 'p-${now.microsecondsSinceEpoch}',
@@ -186,7 +315,7 @@ class PaymentSummaryCard extends ConsumerWidget {
       kind: PaymentKind.due,
       amount: amount,
       method: 'cash',
-      note: 'Due collected',
+      note: note,
       paidAt: now,
       createdAt: now,
       updatedAt: now,
@@ -201,7 +330,7 @@ class PaymentSummaryCard extends ConsumerWidget {
       // 🪙 payment received — coin-pop celebration.
       if (context.mounted) Celebration.coinPop(context);
       messenger.showSnackBar(
-        SnackBar(content: Text('Due added to collection ✓')),
+        SnackBar(content: Text('৳${amount.toStringAsFixed(0)} added to collection ✓')),
       );
     } catch (e) {
       messenger.showSnackBar(
