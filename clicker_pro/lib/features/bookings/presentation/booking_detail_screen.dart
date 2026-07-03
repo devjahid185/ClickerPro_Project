@@ -260,10 +260,108 @@ class BookingDetailScreen extends ConsumerWidget {
           .transitionStatus(to);
       if (!context.mounted) return;
       _showSnack(context, 'Status updated to ${_titleCase(to.name)}.');
+      // On marking the shoot done, offer a "payment received" invoice the
+      // owner can hand the client — generated ONLY at/after completion, per
+      // Heaven's spec ("কমপ্লিট মার্ক করলেই জেনেরেট হবে তার আগে না").
+      if (to == BookingStatus.completed) {
+        await _offerPaymentReceivedInvoice(context, ref);
+      }
     } catch (e) {
       if (!context.mounted) return;
       _showSnack(context, 'Could not update status: $e');
     }
+  }
+
+  /// After a booking is marked completed, asks whether to share a payment-
+  /// received acknowledgement invoice with the client (Messenger / WhatsApp /
+  /// any share target). Builds a concise receipt from the booking total and
+  /// the payments recorded so far.
+  Future<void> _offerPaymentReceivedInvoice(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final envelope = ref
+        .read(bookingDetailControllerProvider(bookingId))
+        .valueOrNull;
+    if (envelope == null) return;
+    final booking = envelope.booking;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.voidElevated,
+        title: Text(
+          'Send payment receipt?',
+          style: TextStyle(color: AppColors.film, fontSize: 18),
+        ),
+        content: Text(
+          'The event is complete. Share a "payment received" invoice with the '
+          'client on Messenger / WhatsApp?',
+          style: TextStyle(color: AppColors.filmDim, fontSize: 13.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text('Not now', style: TextStyle(color: AppColors.filmDim)),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.orange,
+              foregroundColor: AppColors.onAccent,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text('Share receipt'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    final lang = ref
+        .read(languageControllerProvider)
+        .maybeWhen(data: (c) => c, orElse: () => 'en');
+    String money(double v) =>
+        BookingFormat.money(v, lang: lang, bnNumerals: lang == 'bn');
+
+    final total = booking.customPrice ?? envelope.package?.basePrice ?? 0.0;
+    final received = envelope.payments.fold<double>(0, (s, p) => s + p.amount);
+    final due = total - received;
+
+    final me = ref.read(currentUserProvider).valueOrNull;
+    final studioName = (me?.companyName?.trim().isNotEmpty ?? false)
+        ? me!.companyName!.trim()
+        : (me?.name ?? 'CLICKER PRO');
+    final studioPhone = (me?.phone ?? '').trim();
+
+    final clientLine = envelope.client?.name ?? booking.clientName ?? '—';
+    final dateStr = BookingFormat.dateTime(booking.date, lang: lang);
+    final idDigits = booking.id.replaceAll(RegExp(r'[^0-9]'), '');
+    final invoiceNo = idDigits.isEmpty
+        ? 'INV-0001'
+        : 'INV-${idDigits.substring(idDigits.length > 4 ? idDigits.length - 4 : 0).padLeft(4, '0')}';
+
+    final lines = <String>[
+      'PAYMENT RECEIVED',
+      'Receipt: $invoiceNo',
+      'Date: $dateStr',
+      'Event: ${_titleCase(booking.eventType.name)}',
+      'Client: $clientLine',
+      'Total: ${money(total)}',
+      'Received: ${money(received)}',
+      if (due > 0.5) 'Remaining due: ${money(due)}' else 'Status: Fully paid ✓',
+      '',
+      'Company name: $studioName',
+      if (studioPhone.isNotEmpty) 'Contact no: $studioPhone',
+      '',
+      'Thank you for choosing us.',
+    ];
+
+    await SharePlus.instance.share(
+      ShareParams(
+        text: lines.join('\n'),
+        subject: 'Payment receipt · $invoiceNo',
+      ),
+    );
   }
 
   Future<void> _handleCancel(BuildContext context, WidgetRef ref) async {
