@@ -582,16 +582,16 @@ class _DetailBody extends StatelessWidget {
                     ),
                     valueColor: AppColors.gold,
                   ),
-                if (booking.driveLink != null)
-                  DetailRow(
-                    icon: Icons.cloud_outlined,
-                    label: 'Drive link',
-                    value: booking.driveLink,
-                    valueColor: AppColors.indigo,
-                    onTap: () => _openLink(booking.driveLink!),
-                  ),
               ],
             ),
+          ),
+        // Delivery link box — appears once the shoot is done so the assigned
+        // freelancer / photographer can paste the Google Drive gallery link
+        // for this event ("ইভেন্ট কমপ্লিট মার্ক করার পর বক্স এড হবে").
+        if (_isShootDone(booking.status))
+          _DriveLinkSection(
+            bookingId: booking.id,
+            driveLink: booking.driveLink,
           ),
         if (showPayment)
           PaymentSummaryCard(
@@ -630,10 +630,182 @@ class _DetailBody extends StatelessWidget {
     );
   }
 
-  Future<void> _openLink(String url) async {
-    final uri = Uri.tryParse(url);
-    if (uri == null) return;
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+}
+
+/// The shoot is "done" (and thus deliverable) once it reaches Shot Complete or
+/// later. The Drive delivery-link box only shows for these states.
+bool _isShootDone(BookingStatus s) =>
+    s == BookingStatus.shotComplete ||
+    s == BookingStatus.delivered ||
+    s == BookingStatus.completed;
+
+Future<void> _openExternalLink(String url) async {
+  final uri = Uri.tryParse(url);
+  if (uri == null) return;
+  await launchUrl(uri, mode: LaunchMode.externalApplication);
+}
+
+/// Editable Google Drive / gallery delivery-link box for a completed shoot.
+/// Assigned freelancers & photographers paste the per-event link here; it
+/// saves through the booking detail controller (offline-first). When a link
+/// already exists it shows as a tappable row with an Edit affordance.
+class _DriveLinkSection extends ConsumerStatefulWidget {
+  const _DriveLinkSection({required this.bookingId, this.driveLink});
+
+  final String bookingId;
+  final String? driveLink;
+
+  @override
+  ConsumerState<_DriveLinkSection> createState() => _DriveLinkSectionState();
+}
+
+class _DriveLinkSectionState extends ConsumerState<_DriveLinkSection> {
+  late final TextEditingController _controller =
+      TextEditingController(text: widget.driveLink ?? '');
+  bool _editing = false;
+  bool _saving = false;
+
+  @override
+  void didUpdateWidget(covariant _DriveLinkSection old) {
+    super.didUpdateWidget(old);
+    // Reflect an externally-saved link when not mid-edit.
+    if (!_editing && old.driveLink != widget.driveLink) {
+      _controller.text = widget.driveLink ?? '';
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final value = _controller.text.trim();
+    if (value.isEmpty) {
+      setState(() => _editing = false);
+      return;
+    }
+    setState(() => _saving = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref
+          .read(bookingDetailControllerProvider(widget.bookingId).notifier)
+          .updateDriveLink(value);
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _editing = false;
+      });
+      messenger.showSnackBar(
+        SnackBar(content: Text('Delivery link saved ✓')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      messenger.showSnackBar(
+        SnackBar(content: Text('Could not save link: $e')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasLink = (widget.driveLink?.trim().isNotEmpty ?? false);
+    final showField = _editing || !hasLink;
+
+    return DetailSection(
+      title: 'Delivery link',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (showField) ...[
+            TextField(
+              controller: _controller,
+              keyboardType: TextInputType.url,
+              autofocus: _editing,
+              style: TextStyle(color: AppColors.film, fontSize: 14),
+              decoration: InputDecoration(
+                hintText: 'Paste the Google Drive gallery link',
+                hintStyle: TextStyle(
+                  color: AppColors.filmDim.withValues(alpha: 0.6),
+                ),
+                prefixIcon:
+                    Icon(Icons.cloud_upload_outlined, color: AppColors.indigo),
+                filled: true,
+                fillColor: AppColors.voidElevated,
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: AppColors.glassBorder),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: AppColors.indigo),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.indigo,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                icon: _saving
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.save_outlined, size: 18),
+                label: Text(_saving ? 'Saving…' : 'Save link'),
+                onPressed: _saving ? null : _save,
+              ),
+            ),
+          ] else ...[
+            InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () => _openExternalLink(widget.driveLink!),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  children: [
+                    Icon(Icons.cloud_done_outlined, color: AppColors.indigo),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        widget.driveLink!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: AppColors.indigo,
+                          fontSize: 14,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Edit link',
+                      icon: Icon(Icons.edit_outlined,
+                          color: AppColors.filmDim, size: 20),
+                      onPressed: () => setState(() => _editing = true),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }
 

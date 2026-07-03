@@ -137,6 +137,23 @@ class BookingDetailController
     state = AsyncValue.data(envelope);
   }
 
+  /// Saves the Google Drive / gallery link for this booking. Assigned
+  /// freelancers and photographers paste the delivery link here once the
+  /// shoot is done; it rides the same offline outbox as any other edit.
+  Future<void> updateDriveLink(String link) async {
+    final current = state.value;
+    if (current == null) return;
+    final trimmed = link.trim();
+    if (trimmed.isEmpty) return;
+    final policy = ref.read(bookingsPolicyProvider);
+
+    final updated = current.booking.copyWith(driveLink: trimmed);
+    await ref.read(bookingRepositoryProvider).save(updated, policy: policy);
+
+    final envelope = await ref.read(bookingRepositoryProvider).getDetail(arg);
+    state = AsyncValue.data(envelope);
+  }
+
   Future<void> _refreshFromRemote(
     BookingRepository repo,
     String remoteId,
