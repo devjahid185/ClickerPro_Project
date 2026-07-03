@@ -153,6 +153,20 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
       final issued = await repo.issueToken(
         policy: ref.read(bookingsPolicyProvider),
       );
+      // An empty token means the account has no public_booking_token yet
+      // (older accounts) — sharing would produce a dead ".../book/" link.
+      // Surface a clear message instead of a broken link.
+      if (issued.token.trim().isEmpty) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Your booking link isn\'t ready yet. Please sign out and back in, '
+              'then try again.',
+            ),
+          ),
+        );
+        return;
+      }
       await SharePlus.instance.share(
         ShareParams(
           text:

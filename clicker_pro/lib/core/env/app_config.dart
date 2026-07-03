@@ -64,8 +64,39 @@ class AppConfig {
 
   /// Public web app origin — used for client-facing share links
   /// (e.g. the self-booking page at `<webBaseUrl>/book/<token>`).
-  static String get webBaseUrl =>
-      _read('WEB_BASE_URL', 'http://127.0.0.1:3000');
+  ///
+  /// When `WEB_BASE_URL` is not explicitly provided (the common case — the
+  /// build scripts only ever set `API_BASE_URL`), we DERIVE it from the API
+  /// base instead of falling back to a useless `127.0.0.1:3000`, which made
+  /// every shared self-booking link dead on the client's phone ("link যায় না").
+  /// The deployed topology is `api.<domain>` ↔ `app.<domain>`, so we swap a
+  /// leading `api.` host segment for `app.`. A localhost API keeps the
+  /// localhost web default (dev machine runs both).
+  static String get webBaseUrl {
+    final explicit = _read('WEB_BASE_URL', '');
+    if (explicit.isNotEmpty) return explicit;
+    return _deriveWebBaseFromApi(baseUrl);
+  }
+
+  /// Derives the public web origin from the API [apiBase]. `https://api.x.com`
+  /// → `https://app.x.com`; a bare host with no `api.` prefix is returned as
+  /// its own origin; a localhost/loopback API yields the localhost web app.
+  static String _deriveWebBaseFromApi(String apiBase) {
+    final uri = Uri.tryParse(apiBase);
+    if (uri == null || uri.host.isEmpty) return 'http://127.0.0.1:3000';
+
+    final host = uri.host;
+    final isLocal =
+        host == 'localhost' || host == '127.0.0.1' || host == '10.0.2.2';
+    if (isLocal) return 'http://127.0.0.1:3000';
+
+    final webHost = host.startsWith('api.')
+        ? 'app.${host.substring(4)}'
+        : host;
+    final origin = StringBuffer('${uri.scheme}://$webHost');
+    if (uri.hasPort) origin.write(':${uri.port}');
+    return origin.toString();
+  }
 
   static String get jwtSecret => _read('JWT_SECRET', '');
 
