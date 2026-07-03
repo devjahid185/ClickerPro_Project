@@ -1,11 +1,22 @@
 // Clicker Pro — Generative Mountain Scene (vanilla Three.js port)
 //
-// Ported from the React/Three.js reference component. Renders a solid,
-// undulating Perlin-noise mountain landscape. Brand-tinted orange (the
-// reference used sky-blue #7dd3fc); everything else kept as the original.
+// Renders a solid, undulating Perlin-noise mountain landscape behind the
+// hero section. Brand-tinted orange (the reference used sky-blue #7dd3fc).
 //
-// Loaded as an ES module from a CDN so the Laravel landing stays build-free.
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+// Performance notes (this file previously made the landing page feel slow):
+//   • three.module.js is now self-hosted (three.module.min.js, same folder)
+//     instead of fetched from a CDN — no extra DNS/TLS round-trip and no
+//     dependency on a third party being up before the animation can start.
+//   • Mesh resolution dropped 128×128 → 48×48 segments (~7x fewer vertices
+//     for the shader to displace and light every frame) — visually near
+//     identical at hero-banner size, much cheaper per frame.
+//   • Render loop is capped to ~30fps via a timestamp gate instead of
+//     running the shader at full display refresh rate (60/90/120Hz) for a
+//     background element nobody is staring straight at.
+//   • An IntersectionObserver pauses the animation entirely once the hero
+//     scrolls out of view, and resumes it on scroll-back — no wasted GPU
+//     work for a canvas nobody can see.
+import * as THREE from './three.module.min.js';
 
 export function initMountainScene(mountEl, opts = {}) {
   if (!mountEl) return () => {};
@@ -26,10 +37,16 @@ export function initMountainScene(mountEl, opts = {}) {
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(mountEl.clientWidth, mountEl.clientHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  // Cap pixel ratio at 1.5 (not 2) — a background decoration doesn't need
+  // full Retina density, and this alone roughly halves fragment-shader cost
+  // on high-DPI phones/laptops.
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   mountEl.appendChild(renderer.domElement);
 
-  const geometry = new THREE.PlaneGeometry(12, 8, 128, 128);
+  // 48×48 segments (was 128×128) — ~7x fewer vertices for the noise
+  // displacement + lighting to run on every frame, visually near-identical
+  // at the size this renders on screen.
+  const geometry = new THREE.PlaneGeometry(12, 8, 48, 48);
 
   const material = new THREE.ShaderMaterial({
     side: THREE.DoubleSide,
@@ -129,13 +146,35 @@ export function initMountainScene(mountEl, opts = {}) {
   pointLight.position.set(0, 0, 5);
   scene.add(pointLight);
 
+  // Render loop capped to ~30fps — this is a background decoration, not
+  // something that benefits from matching a 90/120Hz display refresh rate.
+  const frameInterval = 1000 / 30;
+  let lastFrameTime = 0;
   let frameId;
+  let paused = false;
+
   const animate = (t) => {
+    frameId = requestAnimationFrame(animate);
+    if (paused) return;
+    if (t - lastFrameTime < frameInterval) return;
+    lastFrameTime = t;
     material.uniforms.time.value = t * 0.0003;
     renderer.render(scene, camera);
-    frameId = requestAnimationFrame(animate);
   };
-  animate(0);
+  frameId = requestAnimationFrame(animate);
+
+  // Stop rendering entirely once the hero scrolls off-screen (e.g. user has
+  // scrolled down to Features/Pricing) — resumes automatically on scroll-back.
+  let observer;
+  if ('IntersectionObserver' in window) {
+    observer = new IntersectionObserver(
+      (entries) => {
+        paused = !entries[0]?.isIntersecting;
+      },
+      { threshold: 0 }
+    );
+    observer.observe(mountEl);
+  }
 
   const handleResize = () => {
     camera.aspect = mountEl.clientWidth / mountEl.clientHeight;
@@ -157,6 +196,7 @@ export function initMountainScene(mountEl, opts = {}) {
   // Teardown
   return () => {
     cancelAnimationFrame(frameId);
+    observer?.disconnect();
     window.removeEventListener('resize', handleResize);
     window.removeEventListener('mousemove', handleMouseMove);
     if (mountEl.contains(renderer.domElement)) mountEl.removeChild(renderer.domElement);

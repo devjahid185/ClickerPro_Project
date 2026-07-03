@@ -29,6 +29,7 @@
     {{-- HERO --}}
     <header id="top" class="hero">
         <div class="hero__fallback"></div>
+        <div id="mountain-scene" class="hero__scene"></div>
         <div class="hero__overlay"></div>
 
         <div class="hero__content">
@@ -248,6 +249,7 @@
         </div>
     </footer>
 
+    <script type="module" src="{{ asset('landing/js/mountain-scene.js') }}"></script>
     <script src="{{ asset('landing/js/landing.js') }}"></script>
 </body>
 </html>
