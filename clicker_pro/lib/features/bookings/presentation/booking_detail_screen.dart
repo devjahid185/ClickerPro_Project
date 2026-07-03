@@ -323,7 +323,7 @@ class BookingDetailScreen extends ConsumerWidget {
     String money(double v) =>
         BookingFormat.money(v, lang: lang, bnNumerals: lang == 'bn');
 
-    final total = booking.customPrice ?? envelope.package?.basePrice ?? 0.0;
+    final total = booking.customPrice ?? envelope.package?.netPrice ?? 0.0;
     final received = envelope.payments.fold<double>(0, (s, p) => s + p.amount);
     final due = total - received;
 
@@ -576,7 +576,7 @@ class _DetailBody extends StatelessWidget {
                     icon: Icons.payments_outlined,
                     label: 'Price',
                     value: BookingFormat.money(
-                      envelope.package?.basePrice ?? booking.customPrice ?? 0,
+                      envelope.package?.netPrice ?? booking.customPrice ?? 0,
                       lang: lang,
                       bnNumerals: lang == 'bn',
                     ),
@@ -597,7 +597,7 @@ class _DetailBody extends StatelessWidget {
           PaymentSummaryCard(
             bookingId: booking.id,
             bookingTotal:
-                booking.customPrice ?? envelope.package?.basePrice,
+                booking.customPrice ?? envelope.package?.netPrice,
           ),
         AssignmentsSection(
           assignments: envelope.assignments,
@@ -1274,7 +1274,7 @@ class _InvoiceAction extends ConsumerWidget {
     final clientPhone =
         envelope.client?.phone ?? booking.clientPhone ?? '—';
 
-    final total = booking.customPrice ?? envelope.package?.basePrice ?? 0.0;
+    final total = booking.customPrice ?? envelope.package?.netPrice ?? 0.0;
     final advance = envelope.payments.fold<double>(0, (s, p) => s + p.amount);
     final due = total - advance;
 
@@ -1340,7 +1340,12 @@ class _InvoiceAction extends ConsumerWidget {
         'Client no: $clientPhone',
         'Venue: ${booking.venue ?? '—'}',
         if (chiefName != '—') 'Chief: $chiefName',
-        if (showPayment) 'Due: ${money(due)}',
+        // Money block mirrors the designed paper: total, advance, then due.
+        if (showPayment) ...[
+          'Total: ${money(total)}',
+          'Advance paid: ${money(advance)}',
+          'Due: ${money(due)}',
+        ],
       ];
     } else {
       // SHARE EVENT DETAILS — text-only, exact field order Heaven specified.

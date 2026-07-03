@@ -50,6 +50,8 @@ import '../domain/booking.dart';
 import '../domain/booking_filter.dart';
 import '../domain/event_type.dart';
 import '../domain/package.dart';
+import '../domain/payment.dart';
+import '../domain/payment_kind.dart';
 import '../domain/shift.dart';
 import 'widgets/assignments_editor.dart';
 import 'widgets/lens_form_fields.dart';
@@ -1323,7 +1325,9 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     final pkg = packagesAsync.value
         ?.where((p) => p.id == draft.packageId)
         .firstOrNull;
-    return pkg?.basePrice;
+    // Net of the package discount — the booking total must reflect what the
+    // client actually pays, not the pre-discount base.
+    return pkg?.netPrice;
   }
 
   // ────────────────────────── Pickers ──────────────────────────
@@ -1381,9 +1385,14 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
       _coverageCtrl.text = pkg.coverageHours?.toString() ?? '';
       _extraRateCtrl.text = pkg.extraHourRate?.toString() ?? '';
       // MOD-25 auto-fill: a package that designates a chief turns the
-      // Chief Photographer section on automatically.
+      // Chief Photographer section on AND immediately asks who the chief is
+      // (a package only says one is included, not which person) — without
+      // the prompt the section sat empty and nothing landed on the booking.
       if (pkg.includesChief) {
         setState(() => _chiefEnabled = true);
+        if (draft.chiefPhotographerUserId == null && mounted) {
+          await _pickChiefFromTeam(controller);
+        }
       }
       // Auto-fill the Client Requirements field with the package's print /
       // album details so the deliverables carry over — but only when the
@@ -1552,6 +1561,38 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
         startTime: saved.startTime,
         venue: saved.venue,
       );
+      // Persist the typed Advance as a real advance PAYMENT. The field used
+      // to be display-only — the amount was never stored anywhere, so the
+      // invoice showed no advance ("এডভান্স টাকা দেখায় না"). Recorded only
+      // when the booking has no advance yet, so re-saving can't duplicate.
+      final typedAdvance = double.tryParse(_advanceCtrl.text.trim()) ?? 0;
+      if (typedAdvance > 0) {
+        try {
+          final payRepo = ref.read(paymentRepositoryProvider);
+          final agg = await payRepo.aggregateForBooking(saved.id);
+          if (agg.advance <= 0.5) {
+            final now = DateTime.now();
+            await payRepo.add(
+              Payment(
+                id: 'p-${now.microsecondsSinceEpoch}',
+                bookingId: saved.id,
+                kind: PaymentKind.advance,
+                amount: typedAdvance,
+                method: 'cash',
+                note: 'Advance (booking form)',
+                paidAt: now,
+                createdAt: now,
+                updatedAt: now,
+                pending: true,
+              ),
+              policy: ref.read(bookingsPolicyProvider),
+            );
+          }
+        } catch (e) {
+          // The booking itself saved — surface but never roll back.
+          if (mounted) _showSnack('Booking saved, advance not recorded: $e');
+        }
+      }
       // MOD-61: a new booking is auto-added to the device calendar. When the
       // user has Auto-sync ON we ONLY do the silent device-calendar write —
       // no Google web page, no manual "Save" tap. With Auto-sync OFF we keep
@@ -1772,7 +1813,8 @@ class _PackagePickerSheet extends ConsumerWidget {
                       style: TextStyle(color: AppColors.film, fontSize: 14),
                     ),
                     subtitle: Text(
-                      'Base ${p.basePrice.toStringAsFixed(0)}'
+                      '৳${p.netPrice.toStringAsFixed(0)}'
+                      '${p.discount > 0 ? ' (${p.discount.toStringAsFixed(0)} off)' : ''}'
                       '${p.coverageHours == null ? '' : ' · ${p.coverageHours}h'}',
                       style: TextStyle(
                         color: AppColors.filmDim.withValues(alpha: 0.85),
