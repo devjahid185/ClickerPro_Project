@@ -64,6 +64,11 @@ android {
             applicationId = "com.clickerpro.app"
             manifestPlaceholders["appLabel"] = "CLICKER PRO"
         }
+        // IMPORTANT: this flavor alone does NOT select lib/main_admin.dart —
+        // Gradle flavors have no automatic per-flavor Dart entrypoint. Always
+        // build with the target flag explicit, or this flavor silently ships
+        // the full studio app under the PRO ADMIN name/icon:
+        //   flutter build apk --flavor proAdmin --release -t lib/main_admin.dart
         create("proAdmin") {
             dimension = "version"
             applicationId = "com.clickerpro.proadmin"
