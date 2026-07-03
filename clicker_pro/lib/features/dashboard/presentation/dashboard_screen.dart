@@ -57,6 +57,9 @@ import '../../auth/domain/user_role.dart';
 import '../../../core/role/capability.dart';
 import '../../../core/role/role_policy.dart';
 import '../../../core/booking_status/booking_status.dart';
+import '../../../core/format/booking_format.dart';
+import '../../home_widget/data/widget_refresher.dart';
+import '../../home_widget/domain/widget_data.dart';
 import '../../bookings/application/booking_providers.dart';
 import '../../broadcasts/presentation/broadcast_popup.dart';
 import '../../push/application/fcm_bootstrap.dart';
@@ -183,7 +186,42 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     await Future<void>.delayed(const Duration(milliseconds: 600));
   }
 
-  // ─── Build ──────────────────────────────────────────────────────────
+  /// Builds the home-widget snapshot from the fresh metrics + the current
+  /// month's calendar and hands it to [WidgetRefresher] (deduplicated,
+  /// fail-soft, Android-only effect).
+  void _pushHomeWidgetSnapshot(DashboardMetrics m) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final month = ref
+            .read(calendarBookingsProvider((year: now.year, month: now.month)))
+            .valueOrNull ??
+        const [];
+    final upcoming = month
+        .where((b) =>
+            b.status != BookingStatus.cancelled &&
+            !DateTime(b.date.year, b.date.month, b.date.day).isBefore(today))
+        .toList()
+      ..sort((a, b) {
+        final byDate = a.date.compareTo(b.date);
+        return byDate != 0 ? byDate : a.startTime.compareTo(b.startTime);
+      });
+    final next = upcoming.firstOrNull;
+
+    WidgetRefresher.push(WidgetData(
+      todayEventsCount: m.todayEvents,
+      dueAmount: m.pendingDue / 100, // minor units → taka
+      nextEventTitle: next == null
+          ? null
+          : (next.clientName?.trim().isNotEmpty == true
+              ? next.clientName!.trim()
+              : next.title),
+      nextEventTime: next == null
+          ? null
+          : '${BookingFormat.dateTime(next.date, lang: 'en')} · '
+              '${BookingFormat.clockTime(next.startTime)}',
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     // Watch connectivity so we can refresh on offline → online transitions.
@@ -196,6 +234,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         }
         _wasOnline = online;
       });
+    });
+
+    // Feed the Android home widget whenever the metrics recompute. Fail-soft
+    // and deduplicated inside WidgetRefresher; a no-op off Android.
+    ref.listen<AsyncValue<DashboardMetrics>>(dashboardMetricsProvider,
+        (prev, next) {
+      final m = next.valueOrNull;
+      if (m == null) return;
+      _pushHomeWidgetSnapshot(m);
     });
 
     final userAsync = ref.watch(currentUserProvider);
