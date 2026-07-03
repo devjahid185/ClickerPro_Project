@@ -109,6 +109,13 @@ class WebNavShell extends ConsumerWidget {
       _NavDest(Icons.camera_alt_rounded, 'Gear', RouteNames.gear),
       _NavDest(Icons.settings_rounded, 'Settings', RouteNames.settings),
     ]),
+    // Same offline utilities the mobile dashboard's quick-action row offers —
+    // web/mobile feature parity ("ওয়েব এপ এ সব ফিচার সেইম সেইম থাকবে").
+    _NavGroup('TOOLS', [
+      _NavDest(Icons.mosque_rounded, 'Prayer Times', RouteNames.prayerTimes),
+      _NavDest(Icons.calculate_rounded, 'Calculator', RouteNames.calculator),
+      _NavDest(Icons.sticky_note_2_rounded, 'Notes', RouteNames.notes),
+    ]),
   ];
 
   /// Filters [_groups] down to the destinations the given role may see, and
