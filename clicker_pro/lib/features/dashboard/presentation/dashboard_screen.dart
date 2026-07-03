@@ -1045,7 +1045,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       data: (m) {
         final bool noir = AppColors.isDark;
         return GestureDetector(
-        onTap: () => _pushNamed(RouteNames.bookings),
+        onTap: _openDeliveredEvents,
         child: Container(
           clipBehavior: Clip.antiAlias,
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
@@ -1859,11 +1859,30 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     _pushNamed(RouteNames.bookings);
   }
 
-  /// Opens the booking list showing ONLY cancelled events.
+  /// Opens the booking list showing ONLY delivered events (any date).
+  /// Clears any date range a previous card tap (Today/Upcoming) may have
+  /// left behind, otherwise Delivered would be silently scoped to that range.
+  void _openDeliveredEvents() {
+    ref.read(bookingFilterProvider.notifier).state = ref
+        .read(bookingFilterProvider)
+        .copyWith(
+          statuses: {BookingStatus.delivered},
+          clearFrom: true,
+          clearTo: true,
+        );
+    _pushNamed(RouteNames.bookings);
+  }
+
+  /// Opens the booking list showing ONLY cancelled events (any date).
+  /// Also clears any leftover date range so it isn't scoped to Today/Upcoming.
   void _openCancelledEvents() {
     ref.read(bookingFilterProvider.notifier).state = ref
         .read(bookingFilterProvider)
-        .copyWith(statuses: {BookingStatus.cancelled});
+        .copyWith(
+          statuses: {BookingStatus.cancelled},
+          clearFrom: true,
+          clearTo: true,
+        );
     _pushNamed(RouteNames.bookings);
   }
 
