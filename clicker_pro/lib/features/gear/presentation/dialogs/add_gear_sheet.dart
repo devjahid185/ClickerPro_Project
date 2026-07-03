@@ -1,7 +1,6 @@
 ﻿// lib/features/gear/presentation/dialogs/add_gear_sheet.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../l10n/app_localizations.dart';
@@ -39,16 +38,13 @@ class _AddGearSheetState extends ConsumerState<AddGearSheet> {
   final _formKey = GlobalKey<FormState>();
   final _nameCtl = TextEditingController();
   final _brandCtl = TextEditingController();
-  final _valueCtl = TextEditingController();
   String? _category;
-  String? _condition;
   bool _saving = false;
 
   @override
   void dispose() {
     _nameCtl.dispose();
     _brandCtl.dispose();
-    _valueCtl.dispose();
     super.dispose();
   }
 
@@ -73,8 +69,11 @@ class _AddGearSheetState extends ConsumerState<AddGearSheet> {
       name: _nameCtl.text.trim(),
       brand: _brandCtl.text.trim().isEmpty ? null : _brandCtl.text.trim(),
       category: _category ?? 'Other',
-      condition: _condition,
-      value: double.tryParse(_valueCtl.text.trim()) ?? 0,
+      // Value + condition were removed from the add form per Heaven's request;
+      // the fields stay on the model for backward compatibility with existing
+      // records and the API, defaulted here.
+      condition: null,
+      value: 0,
     );
     try {
       final saved = await ref
@@ -94,7 +93,6 @@ class _AddGearSheetState extends ConsumerState<AddGearSheet> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     final cats = _categories(loc);
-    final conditions = const ['New', 'Good', 'Fair', 'Repair'];
 
     return SafeArea(
       child: Padding(
@@ -141,18 +139,6 @@ class _AddGearSheetState extends ConsumerState<AddGearSheet> {
                 decoration: _decoration(loc.gear_brand),
               ),
               const SizedBox(height: 12),
-              TextFormField(
-                controller: _valueCtl,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                ],
-                style: TextStyle(color: AppColors.film),
-                decoration: _decoration(loc.gear_value),
-              ),
-              const SizedBox(height: 12),
               Text(
                 loc.gear_category,
                 style: TextStyle(color: AppColors.filmDim, fontSize: 12),
@@ -177,35 +163,6 @@ class _AddGearSheetState extends ConsumerState<AddGearSheet> {
                       side: BorderSide(
                         color: _category == c.key
                             ? AppColors.orange
-                            : AppColors.glassBorder,
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                loc.gear_condition,
-                style: TextStyle(color: AppColors.filmDim, fontSize: 12),
-              ),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 8,
-                children: [
-                  for (final c in conditions)
-                    ChoiceChip(
-                      label: Text(c),
-                      selected: _condition == c,
-                      onSelected: (_) => setState(() => _condition = c),
-                      selectedColor: AppColors.gold,
-                      backgroundColor: AppColors.voidElevated,
-                      labelStyle: TextStyle(
-                        color: _condition == c
-                            ? AppColors.voidBlack
-                            : AppColors.filmDim,
-                      ),
-                      side: BorderSide(
-                        color: _condition == c
-                            ? AppColors.gold
                             : AppColors.glassBorder,
                       ),
                     ),
