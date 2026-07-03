@@ -1299,7 +1299,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               isCollect: true,
               label: 'Received',
               amount: _formatBdt(m.todayCollection),
-              sub: 'today',
+              sub: 'tap for sources',
+              onTap: _showCollectionSheet,
             ),
           ),
           const SizedBox(width: 10),
@@ -1324,7 +1325,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             isCollect: true,
             label: 'Today\nCollection',
             amount: _formatBdt(m.todayCollection),
-            sub: 'today',
+            sub: 'tap for sources',
+            onTap: _showCollectionSheet,
           ),
         ),
         const SizedBox(width: 10),
@@ -1338,6 +1340,125 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           ),
         ),
       ],
+    );
+  }
+
+  /// Collection drill-down: today's collected money grouped by source
+  /// (cash / bKash / bank / …) — "কোন খাত থেকে কালেকশন হয়েছে".
+  void _showCollectionSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.voidElevated,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Consumer(
+        builder: (ctx, sheetRef, _) {
+          final async = sheetRef.watch(todayCollectionByMethodProvider);
+          return SafeArea(
+            child: Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(ctx).size.height * 0.7,
+              ),
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 14),
+                      decoration: BoxDecoration(
+                        color: AppColors.line(0.18),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    "Today's collection by source",
+                    style: TextStyle(
+                      color: AppColors.film,
+                      fontFamily: AppText.brandFontFamily,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  async.when(
+                    loading: () => const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 30),
+                      child: Center(child: LensLoader()),
+                    ),
+                    error: (_, _) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Text(
+                        'Could not load the breakdown.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: AppColors.filmDim),
+                      ),
+                    ),
+                    data: (entries) {
+                      if (entries.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 24),
+                          child: Text(
+                            'No payments collected today yet.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: AppColors.filmDim),
+                          ),
+                        );
+                      }
+                      final total =
+                          entries.fold<double>(0, (s, e) => s + e.amount);
+                      return Flexible(
+                        child: ListView(
+                          shrinkWrap: true,
+                          children: [
+                            for (final e in entries)
+                              _CollectionSourceRow(
+                                method: e.method,
+                                amount: e.amount,
+                              ),
+                            const Divider(height: 20),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      'Total',
+                                      style: TextStyle(
+                                        color: AppColors.film,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    '৳ ${total.toStringAsFixed(0)}',
+                                    style: TextStyle(
+                                      color: AppColors.teal,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -2845,6 +2966,99 @@ class _AnnouncementCardView extends StatelessWidget {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+/// One "collection by source" row: a method icon + label with today's summed
+/// amount, used in the Today Collection breakdown sheet.
+class _CollectionSourceRow extends StatelessWidget {
+  const _CollectionSourceRow({required this.method, required this.amount});
+
+  final String method;
+  final double amount;
+
+  ({IconData icon, Color color, String label}) get _meta {
+    switch (method) {
+      case 'bkash':
+        return (
+          icon: Icons.phone_android_outlined,
+          color: AppColors.purple,
+          label: 'bKash',
+        );
+      case 'nagad':
+        return (
+          icon: Icons.phone_android_outlined,
+          color: AppColors.orange,
+          label: 'Nagad',
+        );
+      case 'bank':
+        return (
+          icon: Icons.account_balance_outlined,
+          color: AppColors.teal,
+          label: 'Bank',
+        );
+      case 'card':
+        return (
+          icon: Icons.credit_card_outlined,
+          color: AppColors.indigo,
+          label: 'Card',
+        );
+      case 'cash':
+        return (
+          icon: Icons.payments_outlined,
+          color: AppColors.gold,
+          label: 'Cash',
+        );
+      default:
+        return (
+          icon: Icons.account_balance_wallet_outlined,
+          color: AppColors.filmDim,
+          label: method.isEmpty
+              ? 'Other'
+              : method[0].toUpperCase() + method.substring(1),
+        );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final m = _meta;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: m.color.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Icon(m.icon, color: m.color, size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              m.label,
+              style: TextStyle(
+                color: AppColors.film,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Text(
+            '৳ ${amount.toStringAsFixed(0)}',
+            style: TextStyle(
+              color: AppColors.film,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
         ],
       ),
     );

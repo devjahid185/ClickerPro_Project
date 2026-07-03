@@ -51,6 +51,31 @@ class PaymentsDao extends DatabaseAccessor<AppDatabase>
     await into(paymentsTable).insertOnConflictUpdate(row);
   }
 
+  /// Sum of payments collected in `[from, to)` grouped by payment method
+  /// (cash / bkash / bank / …). Powers the "which channel" breakdown on the
+  /// dashboard's Today Collection card. A null method is bucketed as 'cash'
+  /// (the historical default). Bucketed by `createdAt` — a payment is recorded
+  /// at the moment it's collected.
+  Future<Map<String, double>> collectionByMethodBetween(
+    DateTime from,
+    DateTime to,
+  ) async {
+    final when = paymentsTable.createdAt;
+    final sumExpr = paymentsTable.amount.sum();
+    final query = selectOnly(paymentsTable)
+      ..addColumns([paymentsTable.method, sumExpr])
+      ..where(when.isBiggerOrEqualValue(from) & when.isSmallerThanValue(to))
+      ..groupBy([paymentsTable.method]);
+
+    final result = <String, double>{};
+    for (final row in await query.get()) {
+      final method = (row.read(paymentsTable.method) ?? 'cash').toLowerCase();
+      final value = row.read<double>(sumExpr) ?? 0;
+      result[method] = (result[method] ?? 0) + value;
+    }
+    return result;
+  }
+
   Future<void> deleteById(String id) async {
     await (delete(paymentsTable)..where((t) => t.id.equals(id))).go();
   }

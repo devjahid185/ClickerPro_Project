@@ -263,3 +263,22 @@ final dueBreakdownProvider = FutureProvider<List<DueEntry>>((ref) async {
   entries.sort((a, b) => b.date.compareTo(a.date));
   return entries;
 });
+
+/// Today's collected amounts grouped by payment method (cash/bkash/bank/…),
+/// non-zero entries only, largest first. Feeds the "কোন খাত থেকে কালেকশন"
+/// breakdown shown when the Today Collection card is tapped.
+final todayCollectionByMethodProvider =
+    FutureProvider<List<({String method, double amount})>>((ref) async {
+  final now = DateTime.now();
+  final start = DateTime(now.year, now.month, now.day);
+  final end = start.add(const Duration(days: 1));
+  final byMethod = await ref
+      .read(paymentRepositoryProvider)
+      .collectionByMethodBetween(start, end);
+  final entries = byMethod.entries
+      .where((e) => e.value > 0.005)
+      .map((e) => (method: e.key, amount: e.value))
+      .toList()
+    ..sort((a, b) => b.amount.compareTo(a.amount));
+  return entries;
+});

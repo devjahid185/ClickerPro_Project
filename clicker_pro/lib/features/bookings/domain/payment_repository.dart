@@ -19,6 +19,13 @@ abstract class PaymentRepository {
   Future<({double advance, double due, double extra, double total})>
   aggregateForBooking(String bookingId);
 
+  /// Amounts collected in `[from, to)` grouped by payment method
+  /// (cash/bkash/bank/…). Powers the dashboard collection breakdown.
+  Future<Map<String, double>> collectionByMethodBetween(
+    DateTime from,
+    DateTime to,
+  );
+
   /// Adds a new payment. Verifies `editBookingPayments`.
   Future<void> add(Payment p, {required RolePolicy policy});
 

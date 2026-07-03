@@ -90,6 +90,14 @@ class PaymentRepositoryImpl implements PaymentRepository {
   }
 
   @override
+  Future<Map<String, double>> collectionByMethodBetween(
+    DateTime from,
+    DateTime to,
+  ) {
+    return _payments.collectionByMethodBetween(from, to);
+  }
+
+  @override
   Future<void> add(Payment p, {required RolePolicy policy}) async {
     _verify(policy);
     await _persist(p, op: 'create');
