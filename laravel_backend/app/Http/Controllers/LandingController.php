@@ -16,7 +16,6 @@ class LandingController extends Controller
     {
         $downloadUrl = $this->getValue('app.android_url', asset('ClickerPro.apk'));
         $webUrl = $this->getValue('app.web_url', url('/'));
-        $adminUrl = $this->getValue('app.admin_url', route('admin.login'));
 
         $details = [
             [
@@ -34,11 +33,18 @@ class LandingController extends Controller
                 'button' => $this->getValue('landing.detail_web_cta', 'Open Web App'),
             ],
             [
-                'icon' => '🛠️',
-                'title' => $this->getValue('landing.detail_admin_title', 'Admin Panel'),
-                'text' => $this->getValue('landing.detail_admin_text', 'Control app details, landing content and launch URLs from the admin console with one secure dashboard.'),
-                'link' => $adminUrl,
-                'button' => $this->getValue('landing.detail_admin_cta', 'Open Admin'),
+                'icon' => '👥',
+                'title' => $this->getValue('landing.detail_team_title', 'Team & Roles'),
+                'text' => $this->getValue('landing.detail_team_text', 'Invite managers and freelancers with a 6-digit passcode. Everyone sees exactly the bookings, payouts and permissions their role allows.'),
+                'link' => '#features',
+                'button' => $this->getValue('landing.detail_team_cta', 'See Features'),
+            ],
+            [
+                'icon' => '৳',
+                'title' => $this->getValue('landing.detail_finance_title', 'Built for BDT'),
+                'text' => $this->getValue('landing.detail_finance_text', 'Bookings, invoices, dues and payouts in Bangladeshi Taka — with bKash, bank transfer and cash all tracked in one finance dashboard.'),
+                'link' => '#screens',
+                'button' => $this->getValue('landing.detail_finance_cta', 'See Screens'),
             ],
         ];
 
@@ -63,14 +69,13 @@ class LandingController extends Controller
         return view('landing', [
             'heroTitle' => $this->getValue('landing.hero_title', 'Run Your Photography Business With Confidence.'),
             'heroSubtitle' => $this->getValue('landing.hero_subtitle', 'Built for Bangladesh studios that want bookings, teams and money managed in a single, modern platform.'),
-            'heroDescription' => $this->getValue('landing.hero_description', 'Clicker Pro gives you the mobile app, web dashboard and admin console to run your photography company like a pro.'),
+            'heroDescription' => $this->getValue('landing.hero_description', 'Clicker Pro gives you the mobile app and web dashboard to run your photography company like a pro.'),
             'featureHeadline' => $this->getValue('landing.feature_headline', 'Smart tools for booking, team, finance and delivery.'),
             'featureSubheadline' => $this->getValue('landing.feature_subheadline', 'Everything your photography company needs with a premium, professional user experience.'),
             'details' => $details,
             'reviews' => $reviews,
             'appDownloadUrl' => $downloadUrl,
             'appWebUrl' => $webUrl,
-            'appAdminUrl' => $adminUrl,
         ]);
     }
 }

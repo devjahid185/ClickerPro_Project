@@ -8,7 +8,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Outfit:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Outfit:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('landing/css/landing.css') }}">
 </head>
 <body>
@@ -19,9 +19,9 @@
         </a>
         <div class="nav__links">
             <a href="#features" class="nav__link">Features</a>
-            <a href="#why" class="nav__link">Why Us</a>
-            <a href="#download" class="nav__link">Download</a>
-            <a href="{{ $appAdminUrl }}" class="nav__cta">Admin Console</a>
+            <a href="#screens" class="nav__link">Screens</a>
+            <a href="#pricing" class="nav__link">Pricing</a>
+            <a href="{{ $appDownloadUrl }}" class="nav__cta">Download APK</a>
         </div>
         <button class="nav__menu" aria-label="Menu">☰</button>
     </nav>
@@ -29,7 +29,6 @@
     {{-- HERO --}}
     <header id="top" class="hero">
         <div class="hero__fallback"></div>
-        <div id="mountain-scene" class="hero__scene"></div>
         <div class="hero__overlay"></div>
 
         <div class="hero__content">
@@ -115,11 +114,11 @@
             <div class="visual-grid">
                 <article class="visual-card reveal">
                     <div class="visual-card__label">Mobile app preview</div>
-                    <img src="{{ asset('landing/img/mobile-app.jpg') }}" alt="Clicker Pro mobile app screenshot">
+                    <img src="{{ asset('landing/img/mobile-app.jpg') }}" alt="Clicker Pro mobile app screenshot" loading="lazy" width="720" height="1069">
                 </article>
                 <article class="visual-card reveal">
                     <div class="visual-card__label">Web dashboard preview</div>
-                    <img src="{{ asset('landing/img/web-app.jpg') }}" alt="Clicker Pro web dashboard screenshot">
+                    <img src="{{ asset('landing/img/web-app.jpg') }}" alt="Clicker Pro web dashboard screenshot" loading="lazy" width="1280" height="800">
                 </article>
             </div>
 
@@ -163,6 +162,38 @@
         </div>
     </section>
 
+    {{-- PRICING --}}
+    <section id="pricing" class="section section--dark">
+        <div class="container">
+            <div class="section--center">
+                <div class="section__eyebrow">Pricing</div>
+                <h2 class="section__title">Simple pricing, built for Bangladesh studios.</h2>
+                <p class="section__desc">Start free. Upgrade only when your studio is ready to scale the whole team.</p>
+            </div>
+
+            <div class="details-grid">
+                <article class="detail-card reveal">
+                    <div class="detail-card__icon">🆓</div>
+                    <h3 class="detail-card__title">Free</h3>
+                    <p class="detail-card__text">Unlimited bookings, one studio owner account, offline-first sync, and the core finance dashboard — ৳0, no card required.</p>
+                    <a href="{{ $appDownloadUrl }}" class="btn btn--ghost btn--small">Start Free</a>
+                </article>
+                <article class="detail-card reveal">
+                    <div class="detail-card__icon">⭐</div>
+                    <h3 class="detail-card__title">Pro</h3>
+                    <p class="detail-card__text">Everything in Free, plus unlimited team members, invoices, delivery tracking, and pre-event reminders for the whole crew.</p>
+                    <a href="{{ $appDownloadUrl }}" class="btn btn--ghost btn--small">Download APK</a>
+                </article>
+                <article class="detail-card reveal">
+                    <div class="detail-card__icon">🏢</div>
+                    <h3 class="detail-card__title">Studio</h3>
+                    <p class="detail-card__text">For larger teams — multiple managers, freelancer payouts, audit history and priority support. Contact us for a custom quote.</p>
+                    <a href="#download" class="btn btn--ghost btn--small">Get In Touch</a>
+                </article>
+            </div>
+        </div>
+    </section>
+
     {{-- REVIEWS --}}
     <section class="section">
         <div class="container">
@@ -197,7 +228,7 @@
                 </div>
                 <div class="cta-band__actions">
                     <a href="{{ $appDownloadUrl }}" class="btn btn--light">⬇ Download APK</a>
-                    <a href="{{ $appAdminUrl }}" class="btn btn--ghost">Admin Console</a>
+                    <a href="{{ $appWebUrl }}" class="btn btn--ghost">Open Web App</a>
                 </div>
             </div>
         </div>
@@ -211,14 +242,12 @@
                 <div class="footer__links">
                     <a href="#features" class="footer__link">Features</a>
                     <a href="#download" class="footer__link">Download</a>
-                    <a href="{{ $appAdminUrl }}" class="footer__link">Admin</a>
                 </div>
             </div>
             <div class="footer__copy">© {{ date('Y') }} Clicker Pro · Photography &amp; event management for Bangladesh.</div>
         </div>
     </footer>
 
-    <script type="module" src="{{ asset('landing/js/mountain-scene.js') }}"></script>
     <script src="{{ asset('landing/js/landing.js') }}"></script>
 </body>
 </html>

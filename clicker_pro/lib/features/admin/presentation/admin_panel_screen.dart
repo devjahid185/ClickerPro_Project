@@ -46,14 +46,14 @@ class AdminPanelScreen extends ConsumerWidget {
           children: [
             _buildHeroCard(name, roleLabel),
             const SizedBox(height: 24),
-            _buildSectionTitle('Quick controls'),
+            _buildSectionTitle('System tools'),
             const SizedBox(height: 16),
             _buildActionsGrid(context, policy),
             const SizedBox(height: 24),
-            _buildSectionTitle('Studio operations'),
-            const SizedBox(height: 16),
             _buildInfoCard(
-              'Use this screen to access bookings, team members, finance, broadcasts and system settings from a single place.',
+              'This screen is for system-level tools only — bookings, team and '
+              'finance stay on the main dashboard. User accounts, plans and '
+              'platform broadcasts are managed from the web admin console.',
             ),
           ],
         ),
@@ -101,7 +101,7 @@ class AdminPanelScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Your mobile admin dashboard for bookings, team, finance, broadcasts and app settings.',
+            'System tools for this device — diagnostics, activity history and local backups.',
             style: TextStyle(
               color: AppColors.filmDim,
               fontFamily: AppText.body.fontFamily,
@@ -130,53 +130,9 @@ class AdminPanelScreen extends ConsumerWidget {
   Widget _buildActionsGrid(BuildContext context, RolePolicy policy) {
     final items = <_AdminActionItem>[
       _AdminActionItem(
-        icon: Icons.event_note_outlined,
-        label: 'Bookings',
-        description: 'View and manage studio bookings.',
-        routeName: RouteNames.bookings,
-      ),
-      _AdminActionItem(
-        icon: Icons.people_outline,
-        label: 'Team & Staff',
-        description: 'Manage staff, invites and permissions.',
-        routeName: RouteNames.team,
-        visible: policy.can(Capability.accessTeam),
-      ),
-      _AdminActionItem(
-        icon: Icons.campaign_outlined,
-        label: 'Announcements',
-        description: 'Publish team announcements.',
-        routeName: RouteNames.announcements,
-        visible: policy.can(Capability.viewAnnouncements),
-      ),
-      _AdminActionItem(
-        icon: Icons.paid_outlined,
-        label: 'Finance',
-        description: 'Open payments, invoices and reports.',
-        routeName: RouteNames.finance,
-      ),
-      _AdminActionItem(
-        icon: Icons.bar_chart_outlined,
-        label: 'Reports',
-        description: 'Review studio analytics and cash flow.',
-        routeName: RouteNames.reports,
-      ),
-      _AdminActionItem(
-        icon: Icons.broadcast_on_personal_outlined,
-        label: 'Broadcasts',
-        description: 'Create and review platform updates.',
-        routeName: RouteNames.broadcasts,
-      ),
-      _AdminActionItem(
-        icon: Icons.settings_outlined,
-        label: 'Settings',
-        description: 'Update app and studio configuration.',
-        routeName: RouteNames.settings,
-      ),
-      _AdminActionItem(
         icon: Icons.history_edu_outlined,
         label: 'Audit Log',
-        description: 'Inspect recent admin activity.',
+        description: 'Inspect recent account activity.',
         routeName: RouteNames.auditLog,
         visible: policy.can(Capability.viewFinancials),
       ),
@@ -186,6 +142,19 @@ class AdminPanelScreen extends ConsumerWidget {
         description: 'Monitor app stability and issues.',
         routeName: RouteNames.crashSettings,
         visible: policy.can(Capability.viewFinancials),
+      ),
+      _AdminActionItem(
+        icon: Icons.backup_outlined,
+        label: 'Backup & Restore',
+        description: 'Export or restore your studio data.',
+        routeName: RouteNames.backup,
+        visible: policy.can(Capability.viewFinancials),
+      ),
+      _AdminActionItem(
+        icon: Icons.settings_outlined,
+        label: 'Settings',
+        description: 'App preferences and studio configuration.',
+        routeName: RouteNames.settings,
       ),
     ];
 
