@@ -59,10 +59,6 @@ final dashboardMetricsProvider = StreamProvider<DashboardMetrics>((ref) {
     data: (bookings) {
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
-      // Rolling 6-month window for "Upcoming" — every event from tomorrow
-      // up to 6 months ahead. As one day passes, the window naturally
-      // shifts forward by a day ("একদিন গেলে একদিন যোগ হবে").
-      final sixMonthsAhead = DateTime(now.year, now.month + 6, now.day);
 
       int todayEvents = 0;
       int todayDayEvents = 0;
@@ -92,10 +88,13 @@ final dashboardMetricsProvider = StreamProvider<DashboardMetrics>((ref) {
           final price = b.customPrice ?? 0;
           todayRevenue += (price * 100).round();
         }
-        // "Upcoming" = ALL non-cancelled events within the next 6 months.
+        // "Upcoming" = every future event that is NOT yet finished, however
+        // far ahead ("১ দিন হোক বা ১০ বছর"). Finished = delivered/completed;
+        // cancelled events never count. No upper date bound.
         if (bDate.isAfter(today) &&
-            !bDate.isAfter(sixMonthsAhead) &&
-            b.status != BookingStatus.cancelled) {
+            b.status != BookingStatus.cancelled &&
+            b.status != BookingStatus.completed &&
+            b.status != BookingStatus.delivered) {
           upcomingEvents++;
         }
         if (b.status == BookingStatus.completed ||

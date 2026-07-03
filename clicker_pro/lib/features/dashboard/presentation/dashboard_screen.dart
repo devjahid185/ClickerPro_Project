@@ -1840,14 +1840,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     _pushNamed(RouteNames.bookings);
   }
 
-  /// Upcoming = tomorrow → 6 months ahead (matches the dashboard count).
+  /// Upcoming = every future event still to be done, however far ahead
+  /// ("১ দিন হোক বা ১০ বছর"). No upper date bound; only incomplete statuses
+  /// (delivered/completed/cancelled are excluded) so finished shoots drop off.
   void _openUpcomingEvents() {
     final now = DateTime.now();
     final tomorrow = DateTime(now.year, now.month, now.day + 1);
-    final sixMonths = DateTime(now.year, now.month + 6, now.day);
     ref.read(bookingFilterProvider.notifier).state = ref
         .read(bookingFilterProvider)
-        .copyWith(from: tomorrow, to: sixMonths, statuses: {});
+        .copyWith(
+          from: tomorrow,
+          clearTo: true,
+          statuses: {
+            BookingStatus.pending,
+            BookingStatus.confirmed,
+            BookingStatus.inProgress,
+            BookingStatus.shotComplete,
+          },
+        );
     _pushNamed(RouteNames.bookings);
   }
 
