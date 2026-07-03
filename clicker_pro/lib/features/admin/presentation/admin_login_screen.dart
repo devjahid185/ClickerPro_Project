@@ -10,11 +10,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../theme/app_colors.dart';
 import '../../../theme/app_theme.dart';
 import '../../auth/application/session_controller.dart';
 import '../../auth/domain/user_role.dart';
 import 'admin_home_screen.dart';
+
+/// This screen is deliberately always-dark regardless of the studio app's
+/// active theme — it must never resolve through `AppColors`. Those getters
+/// are palette-dependent (`AppColors.voidBlack` resolves to warm off-white
+/// under the default ClickerPro palette, not black), which made every
+/// white-on-"black" label here invisible.
+const _kAdminBg = Color(0xFF0A0A0F);
+const _kAdminOrange = Color(0xFFE2620E);
 
 class AdminLoginScreen extends ConsumerStatefulWidget {
   const AdminLoginScreen({super.key});
@@ -83,7 +90,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.voidBlack,
+      backgroundColor: _kAdminBg,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -98,7 +105,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                     width: 72,
                     height: 72,
                     decoration: BoxDecoration(
-                      color: AppColors.orange,
+                      color: _kAdminOrange,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     alignment: Alignment.center,
@@ -179,7 +186,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                     child: ElevatedButton(
                       onPressed: _submitting ? null : _submit,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.orange,
+                        backgroundColor: _kAdminOrange,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -228,7 +235,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColors.orange),
+        borderSide: BorderSide(color: _kAdminOrange),
       ),
     );
   }
