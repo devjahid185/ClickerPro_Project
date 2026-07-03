@@ -58,7 +58,6 @@ import '../../../core/role/capability.dart';
 import '../../../core/role/role_policy.dart';
 import '../../../core/booking_status/booking_status.dart';
 import '../../bookings/application/booking_providers.dart';
-import '../../bookings/domain/event_type_vibe.dart';
 import '../../broadcasts/presentation/broadcast_popup.dart';
 import '../../push/application/fcm_bootstrap.dart';
 import '../../announcements/application/announcement_providers.dart';
@@ -412,10 +411,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 96),
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
-        // Today's occasion vibe — a coloured chip showing the type of the
-        // shoot happening today (Wedding / Birthday / …). Hidden when there is
-        // no booking today.
-        _buildTodayVibe(),
         // Platform broadcasts now arrive as the 10s popup + the drawer's
         // "Platform Updates" screen — the persistent welcome banner was
         // removed per design feedback.
@@ -424,84 +419,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           _stagger(i, _buildSection(enabled[i].type, user)),
         ],
       ],
-    );
-  }
-
-  /// A coloured "occasion vibe" chip for today's shoot, shown at the top of the
-  /// dashboard. Resolves today's bookings from the current-month calendar
-  /// stream and renders the vibe of the first one. Renders nothing when there
-  /// is no booking today.
-  Widget _buildTodayVibe() {
-    final now = DateTime.now();
-    final monthAsync = ref.watch(
-      calendarBookingsProvider((year: now.year, month: now.month)),
-    );
-    final bookings = monthAsync.value;
-    if (bookings == null || bookings.isEmpty) return const SizedBox.shrink();
-
-    final todays = bookings
-        .where((b) =>
-            b.date.year == now.year &&
-            b.date.month == now.month &&
-            b.date.day == now.day)
-        .toList();
-    if (todays.isEmpty) return const SizedBox.shrink();
-
-    final vibe = todays.first.eventType.vibe;
-    final extra = todays.length > 1 ? '  +${todays.length - 1} more' : '';
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            vibe.color.withValues(alpha: 0.22),
-            vibe.color.withValues(alpha: 0.08),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: vibe.color.withValues(alpha: 0.35)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: vibe.color,
-              borderRadius: BorderRadius.circular(11),
-            ),
-            child: Icon(vibe.icon, color: Colors.white, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Today's vibe",
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.4,
-                    color: AppColors.filmMuted,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '${vibe.emoji}  ${vibe.label}$extra',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.film,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 
