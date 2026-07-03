@@ -48,6 +48,8 @@ class UserApi {
       if (partial['logoUrl'] != null) 'logo_url': partial['logoUrl'],
       if (partial['signatureUrl'] != null)
         'signature_url': partial['signatureUrl'],
+      // Owner's own uploaded invoice / letterhead image.
+      if (partial['invoiceUrl'] != null) 'invoice_url': partial['invoiceUrl'],
       // Payout details — persisted so a team owner can see how to pay this
       // member from the member-profile sheet.
       if (partial['bkash'] != null) 'bkash_number': partial['bkash'],

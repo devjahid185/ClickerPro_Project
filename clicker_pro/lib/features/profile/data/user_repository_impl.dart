@@ -46,6 +46,7 @@ class UserRepositoryImpl implements UserRepository {
     bankDetails: row.bankDetails,
     signatureUrl: row.signatureUrl,
     logoUrl: row.logoUrl,
+    invoiceUrl: row.invoiceUrl,
     companyName: row.companyName,
     deletedAt: row.deletedAt,
   );
@@ -77,6 +78,7 @@ class UserRepositoryImpl implements UserRepository {
     bankDetails: Value(u.bankDetails),
     signatureUrl: Value(u.signatureUrl),
     logoUrl: Value(u.logoUrl),
+    invoiceUrl: Value(u.invoiceUrl),
     companyName: Value(u.companyName),
     deletedAt: Value(u.deletedAt),
     updatedAt: Value(DateTime.now()),
@@ -113,6 +115,7 @@ class UserRepositoryImpl implements UserRepository {
               bankDetails: server.bankDetails ?? row.bankDetails,
               signatureUrl: server.signatureUrl ?? row.signatureUrl,
               logoUrl: server.logoUrl ?? row.logoUrl,
+              invoiceUrl: server.invoiceUrl ?? row.invoiceUrl,
               avatarUrl: server.avatarUrl ?? row.avatarUrl,
               phone: server.phone ?? row.phone,
               bio: server.bio ?? row.bio,

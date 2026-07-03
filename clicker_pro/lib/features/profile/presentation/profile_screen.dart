@@ -351,6 +351,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   successMessage: 'Signature uploaded — tap Save to keep it.',
                 ),
               ),
+              // Owner's own invoice / letterhead image — uploaded like the
+              // signature and attached to the client invoice they share.
+              _buildInfoField(
+                label: 'Invoice / Letterhead',
+                value:
+                    (view.invoiceUrl != null && view.invoiceUrl!.isNotEmpty)
+                    ? 'Uploaded'
+                    : 'Not set',
+                icon: Icons.receipt_long_outlined,
+                onChanged: null,
+                isUpload: true,
+                onUpload: () => _pickAndUploadImage(
+                  (url) => _updateDraft((d) => d.copyWith(invoiceUrl: url)),
+                  successMessage: 'Invoice uploaded — tap Save to keep it.',
+                ),
+              ),
             ]),
           ],
 

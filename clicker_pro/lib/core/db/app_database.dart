@@ -97,7 +97,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -165,6 +165,12 @@ class AppDatabase extends _$AppDatabase {
       // details. Default false — shared details hide money unless turned on.
       if (from <= 8 && to >= 9) {
         await m.addColumn(bookingsTable, bookingsTable.showPaymentInShare);
+      }
+      // v9 → v10: owner-uploaded invoice / letterhead image (like the
+      // signature). Without a local column the uploaded invoice would vanish
+      // after every profile refresh.
+      if (from <= 9 && to >= 10) {
+        await m.addColumn(usersTable, usersTable.invoiceUrl);
       }
     },
   );

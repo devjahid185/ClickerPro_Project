@@ -1378,6 +1378,7 @@ class _InvoiceAction extends ConsumerWidget {
       studioAddress: studioAddress,
       logoUrl: me?.logoUrl,
       signatureUrl: me?.signatureUrl,
+      invoiceUrl: me?.invoiceUrl,
       invoiceNo: invoiceNo,
       dateStr: dateStr,
       timeStr: timeRange,
@@ -1455,6 +1456,7 @@ class _InvoiceData {
     required this.studioAddress,
     required this.logoUrl,
     required this.signatureUrl,
+    this.invoiceUrl,
     required this.invoiceNo,
     required this.dateStr,
     required this.shiftLabel,
@@ -1482,6 +1484,10 @@ class _InvoiceData {
   final String studioAddress;
   final String? logoUrl;
   final String? signatureUrl;
+
+  /// Owner-uploaded invoice / letterhead image, shown as a banner atop the
+  /// invoice when the owner has added their own.
+  final String? invoiceUrl;
   final String invoiceNo;
   final String dateStr;
   final String shiftLabel;
@@ -1608,6 +1614,19 @@ class _InvoiceSheet extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Owner's own uploaded invoice / letterhead image, shown as a banner
+          // atop the generated document when they've added one in their profile.
+          if (data.invoiceUrl != null && data.invoiceUrl!.isNotEmpty) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.network(
+                data.invoiceUrl!,
+                fit: BoxFit.fitWidth,
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
           _paperHeader(),
           const SizedBox(height: 16),
           _detailGrid(clientTitle),

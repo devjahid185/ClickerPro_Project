@@ -24,6 +24,7 @@ class UserModel {
     this.bankDetails,
     this.signatureUrl,
     this.logoUrl,
+    this.invoiceUrl,
     this.ownerId,
     this.totalEvents = 0,
     this.totalRevenueMinor = 0,
@@ -49,6 +50,10 @@ class UserModel {
   final String? bankDetails;
   final String? signatureUrl;
   final String? logoUrl;
+
+  /// Owner-uploaded invoice / letterhead image (like [signatureUrl]). When
+  /// set, it's attached to the client invoice the owner shares.
+  final String? invoiceUrl;
   final String? ownerId;
   final int totalEvents;
   final int totalRevenueMinor;
@@ -120,6 +125,7 @@ class UserModel {
       bankDetails: json['bankDetails'] as String?,
       signatureUrl: (json['signatureUrl'] ?? json['signature_url']) as String?,
       logoUrl: (json['logoUrl'] ?? json['logo_url']) as String?,
+      invoiceUrl: (json['invoiceUrl'] ?? json['invoice_url']) as String?,
       ownerId: (json['ownerId'] ?? json['owner_id'])?.toString(),
       totalEvents: (json['totalEvents'] as num?)?.toInt() ?? 0,
       totalRevenueMinor: (json['totalRevenueMinor'] as num?)?.toInt() ?? 0,
@@ -147,6 +153,7 @@ class UserModel {
     if (bankDetails != null) 'bankDetails': bankDetails,
     if (signatureUrl != null) 'signatureUrl': signatureUrl,
     if (logoUrl != null) 'logoUrl': logoUrl,
+    if (invoiceUrl != null) 'invoiceUrl': invoiceUrl,
     if (ownerId != null) 'ownerId': ownerId,
     if (deletedAt != null) 'deletedAt': deletedAt!.toIso8601String(),
   };
@@ -169,6 +176,7 @@ class UserModel {
     String? bankDetails,
     String? signatureUrl,
     String? logoUrl,
+    String? invoiceUrl,
     String? ownerId,
     int? totalEvents,
     int? totalRevenueMinor,
@@ -194,6 +202,7 @@ class UserModel {
       bankDetails: bankDetails ?? this.bankDetails,
       signatureUrl: signatureUrl ?? this.signatureUrl,
       logoUrl: logoUrl ?? this.logoUrl,
+      invoiceUrl: invoiceUrl ?? this.invoiceUrl,
       ownerId: ownerId ?? this.ownerId,
       totalEvents: totalEvents ?? this.totalEvents,
       totalRevenueMinor: totalRevenueMinor ?? this.totalRevenueMinor,
