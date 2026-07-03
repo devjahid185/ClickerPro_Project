@@ -55,62 +55,99 @@ class SalarySheetScreen extends ConsumerWidget {
             onPressed: () {
               final sheet = async.valueOrNull;
               if (sheet != null && sheet.members.isNotEmpty) {
-                _exportPdf(context, sheet);
+                exportStaffPayoutsPdf(context, sheet);
               }
             },
           ),
         ],
       ),
-      body: RefreshIndicator(
-        color: AppColors.teal,
-        backgroundColor: AppColors.voidLight,
-        onRefresh: () async => ref.invalidate(staffPayoutsProvider),
-        child: async.when(
-          loading: () => const Center(child: LensLoader()),
-          error: (_, _) => Center(
-            child: ErrorState(
-              message: 'Could not load staff payments.',
-              onRetry: () => ref.invalidate(staffPayoutsProvider),
-            ),
+      body: const StaffPayoutsBody(),
+    );
+  }
+}
+
+/// The staff/freelancer payout list — summary header, per-member cards and the
+/// per-event breakdown/settle flow. Extracted from [SalarySheetScreen] so the
+/// unified Payments screen can host it as its "Payouts" tab without duplicating
+/// any of the mark-paid logic. Reads `staffPayoutsProvider` (GET
+/// /api/team/payouts); pull-to-refresh re-fetches.
+class StaffPayoutsBody extends ConsumerWidget {
+  const StaffPayoutsBody({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(staffPayoutsProvider);
+
+    return RefreshIndicator(
+      color: AppColors.teal,
+      backgroundColor: AppColors.voidLight,
+      onRefresh: () async => ref.invalidate(staffPayoutsProvider),
+      child: async.when(
+        loading: () => const Center(child: LensLoader()),
+        error: (_, _) => Center(
+          child: ErrorState(
+            message: 'Could not load staff payments.',
+            onRetry: () => ref.invalidate(staffPayoutsProvider),
           ),
-          data: (sheet) {
-            if (sheet.members.isEmpty) {
-              return ListView(
-                children: const [
-                  SizedBox(height: 120),
-                  EmptyState(
-                    icon: Icons.payments_outlined,
-                    message:
-                        'No staff payouts yet\nAssign team members to events with a payout',
-                  ),
-                ],
-              );
-            }
+        ),
+        data: (sheet) {
+          if (sheet.members.isEmpty) {
             return ListView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-              children: [
-                _SummaryHeader(sheet: sheet),
-                const SizedBox(height: 20),
-                _sectionHeader('TEAM MEMBERS'),
-                const SizedBox(height: 10),
-                ...sheet.members.map(
-                  (m) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: _StaffPayoutCard(payout: m),
-                  ),
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: const [
+                SizedBox(height: 120),
+                EmptyState(
+                  icon: Icons.payments_outlined,
+                  message:
+                      'No staff payouts yet\nAssign team members to events with a payout',
                 ),
               ],
             );
-          },
-        ),
+          }
+          return ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+            children: [
+              _SummaryHeader(sheet: sheet),
+              const SizedBox(height: 20),
+              _sectionHeaderText('TEAM MEMBERS'),
+              const SizedBox(height: 10),
+              ...sheet.members.map(
+                (m) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _StaffPayoutCard(payout: m),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
+}
 
-  static String _money(double v) =>
-      BookingFormat.money(v, lang: 'en', bnNumerals: false);
+String _money(double v) =>
+    BookingFormat.money(v, lang: 'en', bnNumerals: false);
 
-  Future<void> _exportPdf(BuildContext context, StaffPayoutSheet sheet) async {
+Widget _sectionHeaderText(String title) {
+  return Text(
+    title,
+    style: TextStyle(
+      fontFamily: AppText.brandFontFamily,
+      fontSize: 12,
+      letterSpacing: 1.2,
+      fontWeight: FontWeight.w600,
+      color: AppColors.filmMuted,
+    ),
+  );
+}
+
+/// Shares the staff-payout sheet as a PDF. Public so both the standalone
+/// [SalarySheetScreen] app-bar action and the Payments screen can call it.
+Future<void> exportStaffPayoutsPdf(
+  BuildContext context,
+  StaffPayoutSheet sheet,
+) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
       await PdfExporter.share(
@@ -151,20 +188,6 @@ class SalarySheetScreen extends ConsumerWidget {
       );
     }
   }
-
-  Widget _sectionHeader(String title) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontFamily: AppText.brandFontFamily,
-        fontSize: 12,
-        letterSpacing: 1.2,
-        fontWeight: FontWeight.w600,
-        color: AppColors.filmMuted,
-      ),
-    );
-  }
-}
 
 class _SummaryHeader extends StatelessWidget {
   const _SummaryHeader({required this.sheet});

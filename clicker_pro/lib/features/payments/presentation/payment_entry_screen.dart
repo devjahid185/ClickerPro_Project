@@ -1,7 +1,14 @@
 ﻿// lib/features/payments/presentation/payment_entry_screen.dart
 //
-// Standalone Payment Entry screen — lists all payment records and allows
-// recording new payments via the PaymentEntrySheet bottom-sheet.
+// Unified Payments screen with two tabs:
+//   • Receipts — money received FROM clients (advance / due / extra), recorded
+//     via the PaymentEntrySheet bottom-sheet. "Client থেকে কীভাবে receive".
+//   • Payouts  — money the owner owes TO staff/freelancers per assignment, with
+//     a per-event breakdown and mark-paid. "কাকে কাকে payment করতে হবে".
+//
+// The Payouts tab reuses the existing StaffPayoutsBody (GET /api/team/payouts)
+// so there is a single source of truth for the settle flow — this screen only
+// adds the tab shell and PDF export around it.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,17 +17,40 @@ import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
+import '../../team/application/team_providers.dart';
+import '../../team/presentation/salary_sheet_screen.dart';
 import '../application/payment_providers.dart';
 import '../domain/payment_record.dart';
 import 'payment_entry_sheet.dart';
 import '../../../theme/app_theme.dart';
 
-class PaymentEntryScreen extends ConsumerWidget {
+class PaymentEntryScreen extends ConsumerStatefulWidget {
   const PaymentEntryScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(paymentListControllerProvider);
+  ConsumerState<PaymentEntryScreen> createState() => _PaymentEntryScreenState();
+}
+
+class _PaymentEntryScreenState extends ConsumerState<PaymentEntryScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabs = TabController(length: 2, vsync: this);
+
+  @override
+  void initState() {
+    super.initState();
+    // Rebuild on tab change so the FAB (Receipts-only) shows/hides.
+    _tabs.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _tabs.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final onReceipts = _tabs.index == 0;
 
     return Scaffold(
       backgroundColor: AppColors.voidBlack,
@@ -32,7 +62,7 @@ class PaymentEntryScreen extends ConsumerWidget {
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
-          'Payment Records',
+          'Payments',
           style: TextStyle(
             color: AppColors.film,
             fontFamily: AppText.brandFontFamily,
@@ -40,58 +70,109 @@ class PaymentEntryScreen extends ConsumerWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.teal,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_rounded),
-        label: Text(
-          'Record Payment',
-          style: TextStyle(fontFamily: AppText.brandFontFamily, fontWeight: FontWeight.w600),
-        ),
-        onPressed: () async {
-          await PaymentEntrySheet.show(context, eventId: '');
-          ref.invalidate(paymentListControllerProvider);
-        },
-      ),
-      body: RefreshIndicator(
-        color: AppColors.teal,
-        backgroundColor: AppColors.voidLight,
-        onRefresh: () =>
-            ref.read(paymentListControllerProvider.notifier).refresh(),
-        child: async.when(
-          loading: () => const Center(child: LensLoader()),
-          error: (_, _) => Center(
-            child: ErrorState(
-              message: 'Failed to load payments',
-              onRetry: () => ref.invalidate(paymentListControllerProvider),
-            ),
-          ),
-          data: (records) {
-            if (records.isEmpty) {
-              return ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                children: const [
-                  SizedBox(height: 120),
-                  EmptyState(
-                    icon: Icons.payments_outlined,
-                    message: 'No payment records yet.\nTap + to add one.',
-                  ),
-                ],
-              );
-            }
-            final total = records.fold<double>(0, (s, r) => s + r.amount);
-            return ListView.builder(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-              itemCount: records.length + 1,
-              itemBuilder: (_, i) {
-                if (i == 0) return _SummaryCard(total: total);
-                return _PaymentRow(record: records[i - 1]);
+        actions: [
+          // PDF export is only meaningful on the Payouts (staff sheet) tab.
+          if (!onReceipts)
+            IconButton(
+              icon: Icon(Icons.picture_as_pdf_outlined, color: AppColors.gold),
+              onPressed: () {
+                final sheet = ref.read(staffPayoutsProvider).valueOrNull;
+                if (sheet != null && sheet.members.isNotEmpty) {
+                  exportStaffPayoutsPdf(context, sheet);
+                }
               },
-            );
-          },
+            ),
+        ],
+        bottom: TabBar(
+          controller: _tabs,
+          indicatorColor: AppColors.teal,
+          labelColor: AppColors.film,
+          unselectedLabelColor: AppColors.filmDim,
+          labelStyle: TextStyle(
+            fontFamily: AppText.brandFontFamily,
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+          tabs: const [
+            Tab(text: 'Receipts'),
+            Tab(text: 'Payouts'),
+          ],
         ),
+      ),
+      floatingActionButton: onReceipts
+          ? FloatingActionButton.extended(
+              backgroundColor: AppColors.teal,
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.add_rounded),
+              label: Text(
+                'Record Payment',
+                style: TextStyle(
+                  fontFamily: AppText.brandFontFamily,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              onPressed: () async {
+                await PaymentEntrySheet.show(context, eventId: '');
+                ref.invalidate(paymentListControllerProvider);
+              },
+            )
+          : null,
+      body: TabBarView(
+        controller: _tabs,
+        children: const [
+          _ReceiptsTab(),
+          StaffPayoutsBody(),
+        ],
+      ),
+    );
+  }
+}
+
+/// Client receipts tab — the recorded payments list with a running total.
+class _ReceiptsTab extends ConsumerWidget {
+  const _ReceiptsTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(paymentListControllerProvider);
+
+    return RefreshIndicator(
+      color: AppColors.teal,
+      backgroundColor: AppColors.voidLight,
+      onRefresh: () =>
+          ref.read(paymentListControllerProvider.notifier).refresh(),
+      child: async.when(
+        loading: () => const Center(child: LensLoader()),
+        error: (_, _) => Center(
+          child: ErrorState(
+            message: 'Failed to load payments',
+            onRetry: () => ref.invalidate(paymentListControllerProvider),
+          ),
+        ),
+        data: (records) {
+          if (records.isEmpty) {
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: const [
+                SizedBox(height: 120),
+                EmptyState(
+                  icon: Icons.payments_outlined,
+                  message: 'No payment records yet.\nTap + to add one.',
+                ),
+              ],
+            );
+          }
+          final total = records.fold<double>(0, (s, r) => s + r.amount);
+          return ListView.builder(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+            itemCount: records.length + 1,
+            itemBuilder: (_, i) {
+              if (i == 0) return _SummaryCard(total: total);
+              return _PaymentRow(record: records[i - 1]);
+            },
+          );
+        },
       ),
     );
   }
