@@ -2306,29 +2306,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     color: AppColors.line(0.05),
                   ),
                   _sbGroup('ACCOUNT'),
-                  _sbItem(Icons.person_outline, 'Profile', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.profile);
-                  }),
+                  // Profile, Security, Privacy, Terms and Help are all reachable
+                  // from inside Settings (and Profile) — removed here per
+                  // Heaven's request to stop the sidebar duplicating them. Only
+                  // the Settings entry point and Logout stay for quick access.
                   _sbItem(Icons.settings_outlined, 'Settings', () {
                     Navigator.pop(context);
                     _pushNamed(RouteNames.settings);
-                  }),
-                  _sbItem(Icons.security_outlined, 'Security', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.securitySettings);
-                  }),
-                  _sbItem(Icons.privacy_tip_outlined, 'Privacy Policy', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.privacy);
-                  }),
-                  _sbItem(Icons.description_outlined, 'Terms of Service', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.terms);
-                  }),
-                  _sbItem(Icons.help_outline, 'Help & Support', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.help);
                   }),
                   _sbItem(Icons.logout, 'Logout', () async {
                     Navigator.pop(context);
