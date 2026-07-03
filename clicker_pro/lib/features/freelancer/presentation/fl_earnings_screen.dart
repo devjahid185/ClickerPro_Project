@@ -137,6 +137,18 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
             ),
           ),
         ],
+        // Which specific events still owe this freelancer money.
+        if (overview.pendingEvents.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          _buildSectionHeader('Events Awaiting Payment'),
+          const SizedBox(height: 10),
+          ...overview.pendingEvents.map(
+            (e) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _PendingEventRow(event: e, lang: lang),
+            ),
+          ),
+        ],
         const SizedBox(height: 10),
         _buildSectionHeader('Monthly Chart'),
         const SizedBox(height: 10),
@@ -944,6 +956,100 @@ class _RecapStat extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// One unpaid event row — which shoot still owes the freelancer, for which
+/// studio, in what role, and how much.
+class _PendingEventRow extends StatelessWidget {
+  const _PendingEventRow({required this.event, required this.lang});
+
+  final FlPendingEvent event;
+  final String lang;
+
+  @override
+  Widget build(BuildContext context) {
+    final dateStr = event.date == null
+        ? ''
+        : BookingFormat.dateTime(event.date!, lang: lang);
+    final meta = <String>[
+      if (event.ownerName.isNotEmpty) event.ownerName,
+      if (event.role.isNotEmpty)
+        event.role[0].toUpperCase() + event.role.substring(1),
+      if (dateStr.isNotEmpty) dateStr,
+    ].join(' · ');
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.line(0.06)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: AppColors.gold.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.event_note_outlined,
+              color: AppColors.gold,
+              size: 16,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  event.eventTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: AppText.brandFontFamily,
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.film,
+                  ),
+                ),
+                if (meta.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    meta,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: AppText.brandFontFamily,
+                      fontSize: 11,
+                      color: AppColors.filmDim.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            BookingFormat.money(
+              event.amount,
+              lang: lang,
+              bnNumerals: lang == 'bn',
+            ),
+            style: TextStyle(
+              fontFamily: AppText.brandFontFamily,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.gold,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

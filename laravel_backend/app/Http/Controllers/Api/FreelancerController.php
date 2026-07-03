@@ -188,7 +188,7 @@ class FreelancerController extends Controller
         // Every assignment for this freelancer, joined to its event + owner,
         // so we can group payouts by the studio owner who booked them.
         $assignments = \App\Models\Assignment::where('user_id', $userId)
-            ->with(['event:id,owner_id,date,event_type', 'event.owner:id,name,phone'])
+            ->with(['event:id,owner_id,date,event_type,title', 'event.owner:id,name,phone'])
             ->get();
 
         $earned = (float) $assignments->sum('payout');
@@ -239,6 +239,25 @@ class FreelancerController extends Controller
             })
             ->values();
 
+        // ── Per-event unpaid payouts ("কোন কোন ইভেন্টের পেমেন্ট পাবে") ──
+        $pendingEvents = $assignments
+            ->where('payout_paid', false)
+            ->filter(fn ($a) => $a->event)
+            ->map(function ($a) {
+                return [
+                    'eventId' => (string) $a->event_id,
+                    'eventTitle' => $a->event->title
+                        ?? $a->event->event_type
+                        ?? 'Event',
+                    'date' => $a->event->date,
+                    'ownerName' => optional($a->event->owner)->name ?? '',
+                    'role' => $a->role,
+                    'amount' => (float) $a->payout,
+                ];
+            })
+            ->sortBy('date')
+            ->values();
+
         // ── 6-month chart + yearly recap (FL-04) ──
         $monthly = [];
         for ($i = 5; $i >= 0; $i--) {
@@ -259,6 +278,7 @@ class FreelancerController extends Controller
                 'pendingAmount' => $pending,
                 'owners' => $owners,
                 'pendingPayments' => $pendingPayments,
+                'pendingEvents' => $pendingEvents,
                 'yearlyRecap' => [
                     'monthly' => $monthly,
                     'bestMonth' => ($bestMonth && $bestMonth['amount'] > 0)

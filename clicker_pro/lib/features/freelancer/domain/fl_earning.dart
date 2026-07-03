@@ -27,6 +27,11 @@ class FlEarningsOverview {
   /// Pending payments list (FL-03).
   final List<FlPendingPayment> pendingPayments;
 
+  /// Per-event unpaid payouts — which specific shoots still owe this
+  /// freelancer money ("কোন কোন ইভেন্টের পেমেন্ট পাবে"). Empty when the
+  /// server predates the field.
+  final List<FlPendingEvent> pendingEvents;
+
   /// Monthly chart + yearly recap (FL-04).
   final FlYearlyRecap yearlyRecap;
 
@@ -36,6 +41,7 @@ class FlEarningsOverview {
     required this.pendingAmount,
     required this.owners,
     required this.pendingPayments,
+    this.pendingEvents = const <FlPendingEvent>[],
     required this.yearlyRecap,
   });
 
@@ -56,6 +62,12 @@ class FlEarningsOverview {
               .map(FlPendingPayment.fromJson)
               .toList(growable: false) ??
           const <FlPendingPayment>[],
+      pendingEvents:
+          (json['pendingEvents'] as List?)
+              ?.cast<Map<String, dynamic>>()
+              .map(FlPendingEvent.fromJson)
+              .toList(growable: false) ??
+          const <FlPendingEvent>[],
       yearlyRecap: json['yearlyRecap'] is Map<String, dynamic>
           ? FlYearlyRecap.fromJson(json['yearlyRecap'] as Map<String, dynamic>)
           : const FlYearlyRecap(monthly: [], bestMonth: null, bestOwner: null),
@@ -80,6 +92,38 @@ class FlEarningsOverview {
     owners.length,
     pendingPayments.length,
   );
+}
+
+/// One unpaid per-event payout — which shoot still owes the freelancer.
+class FlPendingEvent {
+  final String eventId;
+  final String eventTitle;
+  final DateTime? date;
+  final String ownerName;
+  final String role;
+  final double amount;
+
+  const FlPendingEvent({
+    required this.eventId,
+    required this.eventTitle,
+    this.date,
+    required this.ownerName,
+    required this.role,
+    required this.amount,
+  });
+
+  factory FlPendingEvent.fromJson(Map<String, dynamic> json) {
+    return FlPendingEvent(
+      eventId: (json['eventId'] ?? '').toString(),
+      eventTitle: (json['eventTitle'] ?? 'Event').toString(),
+      date: json['date'] == null
+          ? null
+          : DateTime.tryParse(json['date'].toString()),
+      ownerName: (json['ownerName'] ?? '').toString(),
+      role: (json['role'] ?? '').toString(),
+      amount: (json['amount'] as num?)?.toDouble() ?? 0,
+    );
+  }
 }
 
 /// FL-02 — Per-owner breakdown card.
