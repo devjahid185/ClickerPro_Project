@@ -149,6 +149,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
           onSelected: _onMenuSelected,
           itemBuilder: (context) => <PopupMenuEntry<String>>[
+            // Edit lives in the three-dot menu (Heaven's request) instead of a
+            // standalone button. Hidden while an edit session is already open.
+            if (!_isEditing)
+              const PopupMenuItem<String>(
+                value: 'edit_profile',
+                child: _MenuRow(
+                  icon: Icons.edit_rounded,
+                  label: 'Edit Profile',
+                ),
+              ),
             if (policy.can(Capability.changeRole))
               const PopupMenuItem<String>(
                 value: 'change_role',
@@ -181,6 +191,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Future<void> _onMenuSelected(String value) async {
     switch (value) {
+      case 'edit_profile':
+        final user = ref.read(currentUserProvider).valueOrNull;
+        if (user != null) {
+          setState(() {
+            _isEditing = true;
+            _draft = user.copyWith();
+          });
+        }
+        break;
       case 'change_role':
         await _handleChangeRole();
         break;
@@ -296,13 +315,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             const SizedBox(height: 25),
             _buildSectionTitle('Company & Business'),
             _buildProfileCard([
-              _buildInfoField(
-                label: 'Company Name',
-                value: view.companyName ?? '',
-                icon: Icons.business,
-                onChanged: (val) =>
-                    _updateDraft((d) => d.copyWith(companyName: val)),
-              ),
+              // Company Name is captured once at registration — the duplicate
+              // editable field here was removed per Heaven's request.
               _buildInfoField(
                 label: t('vat_bin'),
                 value: view.vatBin ?? '',
@@ -1326,32 +1340,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   // ── Edit / Save / Cancel buttons ──────────────────────────────
   Widget _buildEditActions(UserModel user) {
-    if (!_isEditing) {
-      return SizedBox(
-        width: double.infinity,
-        height: 50,
-        child: ElevatedButton.icon(
-          onPressed: () => setState(() {
-            _isEditing = true;
-            _draft = user.copyWith();
-          }),
-          icon: Icon(Icons.edit_rounded, color: AppColors.film, size: 18),
-          label: Text(
-            t('edit_profile'),
-            style: TextStyle(
-              color: AppColors.film,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.accent,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        ),
-      );
-    }
+    // Edit is now started from the three-dot menu, so outside an edit session
+    // there is no bottom action button — only the Save/Cancel row shows while
+    // editing.
+    if (!_isEditing) return const SizedBox.shrink();
     return Row(
       children: [
         Expanded(
