@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/network/api_exception.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
 import '../../bookings/application/booking_providers.dart';
@@ -102,11 +103,15 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
           .read(paymentListControllerProvider.notifier)
           .add(draft);
       if (mounted) Navigator.of(context).pop(saved);
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to save payment')));
+      // Surface the real reason (validation / auth / network) — the generic
+      // "Failed to save payment" hid the actual server error and made the
+      // bug undiagnosable from the device.
+      final reason = e is ApiException ? e.message : e.toString();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not save payment: $reason')),
+      );
       setState(() => _saving = false);
     }
   }

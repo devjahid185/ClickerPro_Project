@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/format/booking_format.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../core/pdf/pdf_export.dart';
 import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
@@ -509,11 +510,13 @@ class _PayoutBreakdownSheet extends ConsumerWidget {
           backgroundColor: AppColors.green,
         ),
       );
-    } catch (_) {
+    } catch (e) {
+      // Show the real reason — the generic message hid the server error.
+      final reason = e is ApiException ? e.message : e.toString();
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            'Could not record payment — try again.',
+            'Could not record payment: $reason',
             style: TextStyle(color: AppColors.film),
           ),
           backgroundColor: AppColors.voidElevated,
@@ -626,11 +629,12 @@ class _PayButton extends StatelessWidget {
         final messenger = ScaffoldMessenger.of(context);
         try {
           await onTap();
-        } catch (_) {
+        } catch (e) {
+          final reason = e is ApiException ? e.message : e.toString();
           messenger.showSnackBar(
             SnackBar(
               content: Text(
-                'Could not record payment — try again.',
+                'Could not record payment: $reason',
                 style: TextStyle(color: AppColors.film),
               ),
               backgroundColor: AppColors.voidElevated,

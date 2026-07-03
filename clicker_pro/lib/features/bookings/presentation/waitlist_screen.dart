@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/network/api_exception.dart';
 import '../../../core/providers.dart';
 import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
@@ -229,11 +230,13 @@ class WaitlistScreen extends ConsumerWidget {
                           await ref.read(waitlistApiProvider).create(entry);
                           ref.invalidate(waitlistProvider);
                           if (ctx.mounted) Navigator.of(ctx).pop();
-                        } catch (_) {
+                        } catch (e) {
                           if (ctx.mounted) {
+                            final reason =
+                                e is ApiException ? e.message : e.toString();
                             ScaffoldMessenger.of(ctx).showSnackBar(
                               SnackBar(
-                                content: Text('Failed to save. Check your connection.'),
+                                content: Text('Could not save: $reason'),
                               ),
                             );
                           }

@@ -2,9 +2,20 @@ import '../../../core/network/api_client.dart';
 import '../domain/waitlist_entry.dart';
 
 /// Waitlist REST client — talks to `/api/waitlist` (owner-scoped on the
-/// server). The backend stores status as an uppercase enum (WAITING/…);
-/// [WaitlistEntry.fromJson] expects the lowercase Dart enum name, so we
-/// lower-case `status` on the way in.
+/// server).
+///
+/// Laravel contract (WaitlistController):
+///   POST  /api/waitlist   validates `name` (required), `phone`, `email`,
+///                          `date_requested` (date), `notes`
+///   GET   /api/waitlist   → { data: [ {id, owner_id, name, phone,
+///                          date_requested, notes, created_at, …} ] }
+///
+/// The app model still speaks the older camelCase shape (clientName /
+/// preferredDate / note), so [_normalize] translates each server row. The
+/// old client sent that camelCase shape on POST too — the server's required
+/// `name` was never present, so every add failed 422 ("Waitlist এ বুকিং এড
+/// করা যায় না"). Status is a local display concept; the server doesn't
+/// store one, so rows default to `waiting`.
 class WaitlistApi {
   WaitlistApi(this._client);
 
@@ -22,41 +33,39 @@ class WaitlistApi {
     final r = await _client.post(
       '/api/waitlist',
       body: <String, dynamic>{
-        'clientName': draft.clientName,
+        'name': draft.clientName,
         'phone': draft.phone,
-        'preferredDate': draft.preferredDate.toIso8601String(),
-        if (draft.note != null) 'note': draft.note,
-        'status': draft.status.name.toUpperCase(),
+        // Laravel's `date` rule accepts a plain calendar date; the time part
+        // is meaningless for a waitlist wish-date.
+        'date_requested':
+            draft.preferredDate.toIso8601String().split('T').first,
+        if (draft.note != null && draft.note!.trim().isNotEmpty)
+          'notes': draft.note,
       },
     ) as Map<String, dynamic>;
     return WaitlistEntry.fromJson(_normalize(r['data']));
-  }
-
-  Future<void> update(WaitlistEntry entry) async {
-    await _client.patch(
-      '/api/waitlist/${entry.id}',
-      body: <String, dynamic>{
-        'clientName': entry.clientName,
-        'phone': entry.phone,
-        'preferredDate': entry.preferredDate.toIso8601String(),
-        'note': entry.note,
-        'status': entry.status.name.toUpperCase(),
-      },
-    );
   }
 
   Future<void> delete(String id) async {
     await _client.delete('/api/waitlist/$id');
   }
 
-  /// Coerce the server row into the shape [WaitlistEntry.fromJson] wants
-  /// (lowercase status enum name).
+  /// Coerce a Laravel waitlist row into the shape [WaitlistEntry.fromJson]
+  /// wants: string id, camelCase keys, lowercase status with a `waiting`
+  /// default (the server does not persist a status).
   Map<String, dynamic> _normalize(Object? raw) {
     final m = (raw as Map).cast<String, dynamic>();
     final status = m['status'];
+    final date = m['date_requested'] ?? m['preferredDate'] ?? m['created_at'];
     return <String, dynamic>{
-      ...m,
-      if (status is String) 'status': status.toLowerCase(),
+      'id': '${m['id']}',
+      'ownerId': '${m['owner_id'] ?? m['ownerId'] ?? ''}',
+      'clientName': (m['name'] ?? m['clientName'] ?? '—').toString(),
+      'phone': (m['phone'] ?? '').toString(),
+      'preferredDate': (date ?? DateTime.now().toIso8601String()).toString(),
+      if (m['notes'] != null || m['note'] != null)
+        'note': (m['notes'] ?? m['note']).toString(),
+      'status': status is String ? status.toLowerCase() : 'waiting',
     };
   }
 }
