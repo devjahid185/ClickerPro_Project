@@ -103,6 +103,24 @@ class BookingRepositoryImpl implements BookingRepository {
   }
 
   @override
+  Stream<List<Booking>> watchAll(
+    BookingFilter filter, {
+    required RolePolicy policy,
+    required String currentUserId,
+  }) async* {
+    final studioId = await _resolveStudioId(policy.role, currentUserId);
+    final query = _filterToQuery(filter, page: 0, pageSize: 0);
+    yield* _bookings
+        .watchAllForRole(
+          query,
+          role: policy.role,
+          studioId: studioId,
+          currentUserId: currentUserId,
+        )
+        .map((rows) => rows.map(_rowToBooking).toList(growable: false));
+  }
+
+  @override
   Stream<List<Booking>> watchMonth(
     int year,
     int month, {

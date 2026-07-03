@@ -12,7 +12,7 @@ class ClientController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Client::where('owner_id', $request->user()->id)->orderBy('name');
+        $query = Client::where('owner_id', $request->user()->studioId())->orderBy('name');
 
         if ($request->has('search') && $request->search) {
             $search = $request->search;
@@ -28,7 +28,7 @@ class ClientController extends Controller
 
     public function show(Request $request, $id)
     {
-        $client = Client::where('owner_id', $request->user()->id)->find($id);
+        $client = Client::where('owner_id', $request->user()->studioId())->find($id);
 
         if (!$client) {
             return response()->json(['message' => 'Not found'], 404);
@@ -37,7 +37,7 @@ class ClientController extends Controller
         // The events table has no client_name column — bookings link to a
         // client via client_id. (The old query referenced client_name and
         // 500'd on Postgres every time this endpoint was hit.)
-        $bookings = Event::where('owner_id', $request->user()->id)
+        $bookings = Event::where('owner_id', $request->user()->studioId())
             ->where('client_id', $client->id)
             ->orderBy('date', 'desc')
             ->get(['id', 'title', 'date', 'status', 'price']);
@@ -49,7 +49,7 @@ class ClientController extends Controller
     {
         $data = $request->validated();
 
-        $data['owner_id'] = $request->user()->id;
+        $data['owner_id'] = $request->user()->studioId();
         $client = Client::create($data);
 
         return response()->json(['data' => $client], 201);
@@ -57,7 +57,7 @@ class ClientController extends Controller
 
     public function update(ClientRequest $request, $id)
     {
-        $client = Client::where('owner_id', $request->user()->id)->find($id);
+        $client = Client::where('owner_id', $request->user()->studioId())->find($id);
 
         if (!$client) {
             return response()->json(['message' => 'Not found'], 404);
@@ -72,7 +72,7 @@ class ClientController extends Controller
 
     public function destroy(Request $request, $id)
     {
-        $client = Client::where('owner_id', $request->user()->id)->find($id);
+        $client = Client::where('owner_id', $request->user()->studioId())->find($id);
 
         if (!$client) {
             return response()->json(['message' => 'Not found'], 404);

@@ -69,6 +69,14 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _searchController.dispose();
+    // `bookingFilterProvider` is shared app-wide so a dashboard card (Today /
+    // Upcoming / Delivered / Cancelled) can preset it before navigating here.
+    // Left in place after the screen closes, it silently scoped the NEXT
+    // visit to whatever the last card tap set — a newly created booking
+    // outside that date/status window then looked like it "didn't save"
+    // until the filter was noticed and cleared by hand. Reset on the way
+    // out so every fresh entry starts unfiltered unless a card sets it again.
+    ref.read(bookingFilterProvider.notifier).state = const BookingFilter();
     super.dispose();
   }
 

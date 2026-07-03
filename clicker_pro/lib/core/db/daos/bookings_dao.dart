@@ -83,6 +83,29 @@ class BookingsDao extends DatabaseAccessor<AppDatabase>
     return select.watch();
   }
 
+  /// Unlimited variant of [watchList] — every row matching the filter +
+  /// role scope, no page window. Used by aggregate consumers (dashboard
+  /// metrics, finance, due totals, the double-booking conflict guard) that
+  /// must see the studio's ENTIRE booking set, not just the first page the
+  /// list screen has scrolled to. Reusing the paginated stream there used
+  /// to silently cap every one of those calculations at 20 bookings.
+  Stream<List<BookingRow>> watchAllForRole(
+    BookingsListQuery query, {
+    required UserRole role,
+    required String studioId,
+    required String currentUserId,
+  }) {
+    final select = _baseSelect(query);
+    _applyRoleScope(
+      select,
+      role: role,
+      studioId: studioId,
+      currentUserId: currentUserId,
+    );
+    _applyOrdering(select, query.sort);
+    return select.watch();
+  }
+
   Stream<BookingRow?> watchById(String id) {
     return (select(
       bookingsTable,

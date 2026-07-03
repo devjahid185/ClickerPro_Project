@@ -193,6 +193,21 @@ final bookingListProvider = StreamProvider.family<List<Booking>, BookingFilter>(
   },
 );
 
+/// Unpaginated stream of EVERY booking matching `filter` + role scope.
+/// Dashboard metrics, finance totals, due calculations, and the
+/// double-booking conflict guard must all read the studio's entire booking
+/// set — reusing the paginated [bookingListProvider] (capped at 20 rows)
+/// silently corrupted every one of those once a studio passed 20 bookings.
+final bookingListAllProvider =
+    StreamProvider.family<List<Booking>, BookingFilter>((ref, filter) {
+      final user = ref.watch(currentUserProvider).value;
+      if (user == null) return const Stream<List<Booking>>.empty();
+      final policy = ref.watch(rolePolicyProvider);
+      return ref
+          .read(bookingRepositoryProvider)
+          .watchAll(filter, policy: policy, currentUserId: user.id);
+    });
+
 /// Convenience: returns the `currentUserId` or `null` when the session is
 /// unauthenticated. Centralized so screens / controllers don't repeat the
 /// AsyncValue unwrapping logic.

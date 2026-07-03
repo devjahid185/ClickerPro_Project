@@ -4,6 +4,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/logging/app_logger.dart';
 import '../../../core/providers.dart';
 import '../../bookings/application/booking_providers.dart';
 import '../../dashboard/application/dashboard_providers.dart';
@@ -29,7 +30,32 @@ class SessionController extends AsyncNotifier<Session?> {
     });
     ref.onDispose(() => _forceLogoutSub?.cancel());
 
-    return repo.restoreSession();
+    final session = await repo.restoreSession();
+    if (session != null) _syncStudioDataInBackground();
+    return session;
+  }
+
+  /// Pulls bookings + clients + packages from the server without blocking
+  /// the caller. This is the ONLY place bookings created on another device
+  /// (the web app, admin panel, teammate's phone) get pulled onto this
+  /// device — without it they stay invisible until the user manually
+  /// pulls-to-refresh the booking list. Fires on cold start (session
+  /// restore) and after every successful login/verify/invite-accept below.
+  void _syncStudioDataInBackground() {
+    Future<void>(() async {
+      try {
+        await Future.wait([
+          ref.read(bookingRepositoryProvider).refreshFromRemote(),
+          ref.read(clientRepositoryProvider).refreshFromRemote(),
+          ref.read(packageRepositoryProvider).refreshFromRemote(),
+        ]);
+      } catch (e, st) {
+        // Best-effort — cached local data stays authoritative until the
+        // next successful sync (pull-to-refresh, reconnect, next launch).
+        AppLogger.w('session', 'background studio sync failed: $e');
+        AppLogger.e('session', e, st);
+      }
+    });
   }
 
   Future<void> login(String email, String password) async {
@@ -39,6 +65,7 @@ class SessionController extends AsyncNotifier<Session?> {
           .read(authRepositoryProvider)
           .login(email: email, password: password),
     );
+    if (state.hasValue && state.value != null) _syncStudioDataInBackground();
   }
 
   /// Registers a new account. Does NOT log the user in — registration no longer
@@ -74,6 +101,7 @@ class SessionController extends AsyncNotifier<Session?> {
           .read(authRepositoryProvider)
           .verifyOtp(identifier: identifier, code: code, purpose: purpose),
     );
+    if (state.hasValue && state.value != null) _syncStudioDataInBackground();
   }
 
   Future<void> acceptInvite({
@@ -93,6 +121,7 @@ class SessionController extends AsyncNotifier<Session?> {
             password: password,
           ),
     );
+    if (state.hasValue && state.value != null) _syncStudioDataInBackground();
   }
 
   Future<void> loginWithGoogle(String idToken) async {
@@ -102,6 +131,7 @@ class SessionController extends AsyncNotifier<Session?> {
           .read(authRepositoryProvider)
           .loginWithGoogle(idToken: idToken),
     );
+    if (state.hasValue && state.value != null) _syncStudioDataInBackground();
   }
 
   Future<void> loginWithApple(String identityToken) async {
@@ -111,6 +141,7 @@ class SessionController extends AsyncNotifier<Session?> {
           .read(authRepositoryProvider)
           .loginWithApple(identityToken: identityToken),
     );
+    if (state.hasValue && state.value != null) _syncStudioDataInBackground();
   }
 
   Future<void> changeRole(UserRole newRole) async {
@@ -136,6 +167,7 @@ class SessionController extends AsyncNotifier<Session?> {
   /// stream the persisted user), so they're not listed here.
   void _invalidateRoleScopedData() {
     ref.invalidate(bookingListProvider);
+    ref.invalidate(bookingListAllProvider);
     ref.invalidate(dashboardMetricsProvider);
     ref.invalidate(dueBreakdownProvider);
     ref.invalidate(teamMembersProvider);

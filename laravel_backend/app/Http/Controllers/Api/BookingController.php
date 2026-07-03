@@ -25,7 +25,7 @@ class BookingController extends Controller
             return;
         }
 
-        $ownerId = $request->user()->id;
+        $ownerId = $request->user()->studioId();
         $client = Client::where('owner_id', $ownerId)
             ->whereRaw('LOWER(name) = ?', [strtolower($name)])
             ->first();
@@ -58,7 +58,7 @@ class BookingController extends Controller
     }
     public function index(Request $request)
     {
-        $query = Event::where('owner_id', $request->user()->id)
+        $query = Event::where('owner_id', $request->user()->studioId())
             ->with('client')
             ->orderBy('date', 'desc');
 
@@ -91,7 +91,7 @@ class BookingController extends Controller
             ->except(['client_name', 'client_phone'])
             ->all();
 
-        $data['owner_id'] = $request->user()->id;
+        $data['owner_id'] = $request->user()->studioId();
         $data['shift'] = $data['shift'] ?? 'DAY';
         $data['status'] = $data['status'] ?? 'PENDING';
         $this->resolveClientId($request, $data);
@@ -142,7 +142,7 @@ class BookingController extends Controller
 
     public function show(Request $request, $id)
     {
-        $event = Event::where('owner_id', $request->user()->id)
+        $event = Event::where('owner_id', $request->user()->studioId())
             ->with(['client', 'assignments.user', 'payments', 'statusHistories', 'package'])
             ->find($id);
 
@@ -155,7 +155,7 @@ class BookingController extends Controller
 
     public function update(BookingRequest $request, $id)
     {
-        $event = Event::where('owner_id', $request->user()->id)->find($id);
+        $event = Event::where('owner_id', $request->user()->studioId())->find($id);
 
         if (!$event) {
             return response()->json(['message' => 'Not found'], 404);
@@ -173,7 +173,7 @@ class BookingController extends Controller
 
     public function updateStatus(Request $request, $id)
     {
-        $event = Event::where('owner_id', $request->user()->id)->find($id);
+        $event = Event::where('owner_id', $request->user()->studioId())->find($id);
 
         if (!$event) {
             return response()->json(['message' => 'Not found'], 404);
@@ -212,7 +212,7 @@ class BookingController extends Controller
 
     public function destroy(Request $request, $id)
     {
-        $event = Event::where('owner_id', $request->user()->id)->find($id);
+        $event = Event::where('owner_id', $request->user()->studioId())->find($id);
 
         if (!$event) {
             return response()->json(['message' => 'Not found'], 404);

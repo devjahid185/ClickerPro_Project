@@ -1666,7 +1666,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     if (draft != null) {
       final policy = ref.read(bookingsPolicyProvider);
       final existing =
-          ref.read(bookingListProvider(const BookingFilter())).valueOrNull ??
+          ref.read(bookingListAllProvider(const BookingFilter())).valueOrNull ??
           const [];
       // Distribution mode lives in the per-user preferences (Settings).
       final userId = ref.read(currentUserProvider).valueOrNull?.id;

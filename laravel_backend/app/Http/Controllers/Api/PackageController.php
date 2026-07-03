@@ -10,7 +10,7 @@ class PackageController extends Controller
 {
     public function index(Request $request)
     {
-        $packages = Package::where('owner_id', $request->user()->id)
+        $packages = Package::where('owner_id', $request->user()->studioId())
             ->orderBy('name')
             ->get();
 
@@ -59,7 +59,7 @@ class PackageController extends Controller
         ]);
 
         [$columns, $meta] = $this->splitPayload($request);
-        $columns['owner_id'] = $request->user()->id;
+        $columns['owner_id'] = $request->user()->studioId();
         $columns['base_price'] = $columns['base_price'] ?? 0;
         $columns['meta'] = $meta;
 
@@ -70,7 +70,7 @@ class PackageController extends Controller
 
     public function update(Request $request, $id)
     {
-        $package = Package::where('owner_id', $request->user()->id)->find($id);
+        $package = Package::where('owner_id', $request->user()->studioId())->find($id);
 
         if (!$package) {
             return response()->json(['message' => 'Not found'], 404);
@@ -89,7 +89,7 @@ class PackageController extends Controller
 
     public function destroy(Request $request, $id)
     {
-        $package = Package::where('owner_id', $request->user()->id)->find($id);
+        $package = Package::where('owner_id', $request->user()->studioId())->find($id);
 
         if (!$package) {
             return response()->json(['message' => 'Not found'], 404);

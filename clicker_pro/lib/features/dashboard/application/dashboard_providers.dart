@@ -52,7 +52,7 @@ class DashboardMetrics {
 
 /// Derives dashboard metrics from the live booking stream.
 final dashboardMetricsProvider = StreamProvider<DashboardMetrics>((ref) {
-  final bookingsAsync = ref.watch(bookingListProvider(const BookingFilter()));
+  final bookingsAsync = ref.watch(bookingListAllProvider(const BookingFilter()));
   return bookingsAsync.when(
     loading: () => Stream.value(DashboardMetrics.placeholder),
     error: (_, _) => Stream.value(DashboardMetrics.placeholder),
@@ -143,7 +143,7 @@ final dashboardSelectedDayProvider = StateProvider<DateTime>((ref) {
 /// real bookings instead of a hardcoded pattern.
 final weekEventCountsProvider = Provider<List<int>>((ref) {
   final bookings = ref
-      .watch(bookingListProvider(const BookingFilter()))
+      .watch(bookingListAllProvider(const BookingFilter()))
       .valueOrNull;
   final counts = List<int>.filled(7, 0);
   if (bookings == null) return counts;
@@ -166,7 +166,7 @@ final weekEventCountsProvider = Provider<List<int>>((ref) {
 /// calendar month. Feeds the Delivered strip's "+N this month" caption.
 final deliveredThisMonthProvider = Provider<int>((ref) {
   final bookings = ref
-      .watch(bookingListProvider(const BookingFilter()))
+      .watch(bookingListAllProvider(const BookingFilter()))
       .valueOrNull;
   if (bookings == null) return 0;
 
@@ -187,7 +187,7 @@ final deliveredThisMonthProvider = Provider<int>((ref) {
 /// bars reflect a real recent trend rather than fixed decorative heights.
 final deliveredTrendProvider = Provider<List<int>>((ref) {
   final bookings = ref
-      .watch(bookingListProvider(const BookingFilter()))
+      .watch(bookingListAllProvider(const BookingFilter()))
       .valueOrNull;
   final buckets = List<int>.filled(4, 0);
   if (bookings == null) return buckets;
@@ -237,7 +237,7 @@ class DueEntry {
 /// whose payments don't cover the total yet, newest event first.
 final dueBreakdownProvider = FutureProvider<List<DueEntry>>((ref) async {
   final bookings = await ref.watch(
-    bookingListProvider(const BookingFilter()).future,
+    bookingListAllProvider(const BookingFilter()).future,
   );
   final payRepo = ref.read(paymentRepositoryProvider);
 

@@ -313,7 +313,7 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
   /// attached to the right event. Uses the booking's server id (remoteId)
   /// because the payments API keys on the backend event id.
   Widget _buildBookingPicker() {
-    final async = ref.watch(bookingListProvider(const BookingFilter()));
+    final async = ref.watch(bookingListAllProvider(const BookingFilter()));
     return async.when(
       loading: () => const Padding(
         padding: EdgeInsets.symmetric(vertical: 8),

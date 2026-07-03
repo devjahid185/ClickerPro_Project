@@ -65,7 +65,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         '';
 
     final bookings =
-        ref.watch(bookingListProvider(const BookingFilter())).valueOrNull ??
+        ref.watch(bookingListAllProvider(const BookingFilter())).valueOrNull ??
         const <Booking>[];
     final expenses =
         ref.watch(expenseListControllerProvider).valueOrNull ??

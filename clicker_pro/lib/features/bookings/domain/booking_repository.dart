@@ -30,6 +30,19 @@ abstract class BookingRepository {
   /// Watch a single booking by local id.
   Stream<Booking?> watch(String localId);
 
+  /// Watch EVERY booking matching `filter` + role scope, unpaginated.
+  ///
+  /// For aggregate consumers (dashboard metrics, finance totals, the
+  /// double-booking conflict guard) that must reason over the studio's
+  /// entire booking set rather than whatever page the list screen has
+  /// scrolled to. Prefer [watchList] for anything that renders a
+  /// scrollable list.
+  Stream<List<Booking>> watchAll(
+    BookingFilter filter, {
+    required RolePolicy policy,
+    required String currentUserId,
+  });
+
   /// Watch bookings for a specific month (year + month).
   Stream<List<Booking>> watchMonth(
     int year,

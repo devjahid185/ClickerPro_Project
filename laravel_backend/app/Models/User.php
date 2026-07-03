@@ -108,6 +108,28 @@ class User extends Authenticatable
         return in_array($this->role, ['OWNER', 'BOTH']);
     }
 
+    /**
+     * Resolves the id of the studio (owner account) this user's bookings,
+     * clients, packages, etc. belong to.
+     *
+     * OWNER/BOTH accounts own their studio outright — their own id IS the
+     * studio id. MANAGER/FREELANCER accounts are linked to a studio via
+     * `manager_permissions.ownerId` (set by TeamController::attachToTeam
+     * when they join via invite code / email invite); falls back to their
+     * own id when unlinked so an unattached account still resolves to
+     * itself rather than throwing.
+     */
+    public function studioId(): int
+    {
+        if ($this->isOwner()) {
+            return (int) $this->id;
+        }
+        $linked = is_array($this->manager_permissions)
+            ? ($this->manager_permissions['ownerId'] ?? null)
+            : null;
+        return $linked !== null ? (int) $linked : (int) $this->id;
+    }
+
     public function isPro(): bool
     {
         return $this->plan === 'PRO';

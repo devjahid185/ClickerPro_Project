@@ -38,7 +38,7 @@ class _MonthFlow {
 /// Derives the last 6 months of cash-flow from the live booking stream,
 /// overlaying petty-cash spending so added cash is visible on the timeline.
 final _cashFlowProvider = StreamProvider<List<_MonthFlow>>((ref) {
-  final bookingsAsync = ref.watch(bookingListProvider(const BookingFilter()));
+  final bookingsAsync = ref.watch(bookingListAllProvider(const BookingFilter()));
   final pettyCash =
       ref.watch(pettyCashListProvider).valueOrNull ??
       const <PettyCashEntry>[];

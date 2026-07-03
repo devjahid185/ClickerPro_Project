@@ -73,7 +73,7 @@ class PerformanceScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(bookingListProvider(const BookingFilter()));
+    final async = ref.watch(bookingListAllProvider(const BookingFilter()));
 
     return Scaffold(
       backgroundColor: AppColors.voidBlack,
@@ -98,7 +98,7 @@ class PerformanceScreen extends ConsumerWidget {
         loading: () => const Center(child: LensLoader()),
         error: (_, _) => ErrorState(
           message: 'Failed to load performance data',
-          onRetry: () => ref.invalidate(bookingListProvider),
+          onRetry: () => ref.invalidate(bookingListAllProvider),
         ),
         data: (bookings) {
           final metrics = _StudioMetrics.from(bookings);
