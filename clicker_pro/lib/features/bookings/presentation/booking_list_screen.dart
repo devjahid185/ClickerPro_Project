@@ -319,11 +319,20 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
               _SearchBar(
                 controller: _searchController,
                 onChanged: (value) {
+                  // Searching means "find it anywhere" — drop any date range
+                  // or status scope a dashboard card tap (Today/Upcoming/
+                  // Delivered) left on the shared filter. Keeping them made
+                  // search silently return only today's events.
                   ref.read(bookingFilterProvider.notifier).state = ref
                       .read(bookingFilterProvider)
                       .copyWith(
                         search: value.isEmpty ? null : value,
                         clearSearch: value.isEmpty,
+                        clearFrom: value.isNotEmpty,
+                        clearTo: value.isNotEmpty,
+                        statuses: value.isNotEmpty
+                            ? const <BookingStatus>{}
+                            : null,
                       );
                 },
               ),

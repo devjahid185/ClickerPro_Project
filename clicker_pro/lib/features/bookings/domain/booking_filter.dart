@@ -55,7 +55,11 @@ class BookingFilter {
   /// Free-text search applied across booking title and client name.
   final String? search;
 
-  /// Sort order applied to the result. Defaults to [BookingSort.dateDesc].
+  /// Sort order applied to the result. Defaults to [BookingSort.dateAsc] so
+  /// the list reads chronologically ("14th before 15th") and the pagination
+  /// window slices the same order the screen displays — a dateDesc window
+  /// re-sorted ascending on screen made the list look booking-order, not
+  /// date-order.
   final BookingSort sort;
 
   const BookingFilter({
@@ -66,7 +70,7 @@ class BookingFilter {
     this.shift,
     this.clientId,
     this.search,
-    this.sort = BookingSort.dateDesc,
+    this.sort = BookingSort.dateAsc,
   });
 
   /// True iff every field is at its default / empty value.
@@ -82,7 +86,7 @@ class BookingFilter {
       shift == null &&
       clientId == null &&
       (search == null || search!.isEmpty) &&
-      sort == BookingSort.dateDesc;
+      sort == BookingSort.dateAsc;
 
   /// Returns a copy of this filter with the given fields replaced.
   ///

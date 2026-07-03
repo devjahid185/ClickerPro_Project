@@ -183,22 +183,64 @@ class BookingsDao extends DatabaseAccessor<AppDatabase>
     }
     final search = query.search?.trim();
     if (search != null && search.isNotEmpty) {
-      // Photographers search by who/where, not the internal booking title.
-      // Match title, client name/phone, venue and the bride/groom names so a
-      // name or number actually finds the event. LIKE is case-insensitive for
-      // ASCII in SQLite; the leading/trailing % make it a "contains" match.
+      // Photographers search by who/where/when, not the internal booking
+      // title. Match title, client name/phone, venue and the bride/groom
+      // names so a name or number actually finds the event. LIKE is
+      // case-insensitive for ASCII in SQLite; the leading/trailing % make it
+      // a "contains" match. A query that reads as a date (5/7/2026,
+      // 2026-07-05, 5-7-2026) additionally matches that calendar day.
       final like = '%$search%';
-      q.where(
-        (t) =>
+      final searchDay = _parseSearchDate(search);
+      q.where((t) {
+        var expr =
             t.title.like(like) |
             t.clientName.like(like) |
             t.clientPhone.like(like) |
             t.venue.like(like) |
             t.brideName.like(like) |
-            t.groomName.like(like),
-      );
+            t.groomName.like(like);
+        if (searchDay != null) {
+          final next = searchDay.add(const Duration(days: 1));
+          expr = expr |
+              (t.date.isBiggerOrEqualValue(searchDay) &
+                  t.date.isSmallerThanValue(next));
+        }
+        return expr;
+      });
     }
     return q;
+  }
+
+  /// Reads a search string as a calendar date. Accepts the Bangladeshi
+  /// day-first forms `d/m/yyyy` and `d-m-yyyy` (also `d/m` = current year)
+  /// plus ISO `yyyy-mm-dd`. Returns local midnight, or null when the text
+  /// isn't a date.
+  static DateTime? _parseSearchDate(String raw) {
+    final s = raw.trim();
+    final iso = RegExp(r'^(\d{4})-(\d{1,2})-(\d{1,2})$').firstMatch(s);
+    if (iso != null) {
+      return _validDay(
+        int.parse(iso.group(1)!),
+        int.parse(iso.group(2)!),
+        int.parse(iso.group(3)!),
+      );
+    }
+    final dmy = RegExp(r'^(\d{1,2})[/-](\d{1,2})(?:[/-](\d{2,4}))?$')
+        .firstMatch(s);
+    if (dmy != null) {
+      final yearRaw = dmy.group(3);
+      var year = yearRaw == null ? DateTime.now().year : int.parse(yearRaw);
+      if (year < 100) year += 2000;
+      return _validDay(year, int.parse(dmy.group(2)!), int.parse(dmy.group(1)!));
+    }
+    return null;
+  }
+
+  static DateTime? _validDay(int y, int m, int d) {
+    if (m < 1 || m > 12 || d < 1 || d > 31) return null;
+    final date = DateTime(y, m, d);
+    // Reject rollovers like 31/2 → 2/3.
+    return (date.month == m && date.day == d) ? date : null;
   }
 
   void _applyRoleScope(
@@ -243,12 +285,20 @@ class BookingsDao extends DatabaseAccessor<AppDatabase>
     SimpleSelectStatement<$BookingsTableTable, BookingRow> q,
     BookingsListSort sort,
   ) {
+    // startTime is the tiebreak within a day — without it same-day bookings
+    // fall back to rowid (creation) order, which read as "not date-wise".
     switch (sort) {
       case BookingsListSort.dateDesc:
-        q.orderBy([(t) => OrderingTerm.desc(t.date)]);
+        q.orderBy([
+          (t) => OrderingTerm.desc(t.date),
+          (t) => OrderingTerm.asc(t.startTime),
+        ]);
         break;
       case BookingsListSort.dateAsc:
-        q.orderBy([(t) => OrderingTerm.asc(t.date)]);
+        q.orderBy([
+          (t) => OrderingTerm.asc(t.date),
+          (t) => OrderingTerm.asc(t.startTime),
+        ]);
         break;
       case BookingsListSort.createdAtDesc:
         q.orderBy([(t) => OrderingTerm.desc(t.createdAt)]);
