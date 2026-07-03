@@ -29,7 +29,10 @@ class AdminApi {
     if (r is Map) {
       final d = r['data'];
       if (d is List) {
-        return d.whereType<Map>().map((e) => e.cast<String, dynamic>()).toList(growable: false);
+        return d
+            .whereType<Map>()
+            .map((e) => e.cast<String, dynamic>())
+            .toList(growable: false);
       }
     }
     return const [];
@@ -38,6 +41,22 @@ class AdminApi {
   Future<AdminStats> stats() async {
     final r = await _client.get('/api/admin/stats');
     return AdminStats.fromJson(_map(r));
+  }
+
+  /// Uploads an image via the shared `/api/files/upload` endpoint (the same
+  /// one the studio app uses for logos/avatars) and returns its public URL,
+  /// ready to pass as `imageUrl` to [createBroadcast] / [updateBroadcast].
+  Future<String> uploadImage(String filePath) async {
+    final r = await _client.postMultipart(
+      '/api/files/upload',
+      filePath: filePath,
+      field: 'file',
+    );
+    final url = _map(r)['url'];
+    if (url is! String || url.isEmpty) {
+      throw StateError('Upload succeeded but returned no url');
+    }
+    return url;
   }
 
   Future<List<AdminBroadcast>> broadcasts() async {
@@ -54,6 +73,7 @@ class AdminApi {
     String? type,
     String? link,
     String? buttonLabel,
+    String? imageUrl,
     int? timesPerDay,
   }) async {
     final r = await _client.post(
@@ -61,13 +81,14 @@ class AdminApi {
       body: {
         'title': title,
         'body': body,
-        if (targetRole != null) 'target_role': targetRole,
+        'target_role': ?targetRole,
         'is_active': isActive,
-        if (priority != null) 'priority': priority,
-        if (type != null) 'type': type,
-        if (link != null) 'link': link,
-        if (buttonLabel != null) 'button_label': buttonLabel,
-        if (timesPerDay != null) 'times_per_day': timesPerDay,
+        'priority': ?priority,
+        'type': ?type,
+        'link': ?link,
+        'button_label': ?buttonLabel,
+        'image_url': ?imageUrl,
+        'times_per_day': ?timesPerDay,
       },
     );
     return AdminBroadcast.fromJson(_map(r));
@@ -83,20 +104,22 @@ class AdminApi {
     String? type,
     String? link,
     String? buttonLabel,
+    String? imageUrl,
     int? timesPerDay,
   }) async {
     final r = await _client.patch(
       '/api/admin/broadcasts/$id',
       body: {
-        if (title != null) 'title': title,
-        if (body != null) 'body': body,
-        if (targetRole != null) 'target_role': targetRole,
-        if (isActive != null) 'is_active': isActive,
-        if (priority != null) 'priority': priority,
-        if (type != null) 'type': type,
-        if (link != null) 'link': link,
-        if (buttonLabel != null) 'button_label': buttonLabel,
-        if (timesPerDay != null) 'times_per_day': timesPerDay,
+        'title': ?title,
+        'body': ?body,
+        'target_role': ?targetRole,
+        'is_active': ?isActive,
+        'priority': ?priority,
+        'type': ?type,
+        'link': ?link,
+        'button_label': ?buttonLabel,
+        'image_url': ?imageUrl,
+        'times_per_day': ?timesPerDay,
       },
     );
     return AdminBroadcast.fromJson(_map(r));

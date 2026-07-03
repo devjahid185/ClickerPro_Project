@@ -5,8 +5,11 @@
 // Destroy) — the same rows the studio app's read-only "Platform Updates"
 // feed (features/broadcasts) displays.
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../shared/states/empty_state.dart';
 import '../../../../shared/states/error_state.dart';
@@ -219,7 +222,14 @@ class _BroadcastComposerSheetState extends ConsumerState<_BroadcastComposerSheet
   late final TextEditingController _linkCtrl;
   String _priority = 'Normal';
   bool _submitting = false;
+  bool _uploadingImage = false;
   String? _error;
+
+  /// Newly picked file staged for upload on submit. `null` while nothing new
+  /// has been picked — [_existingImageUrl] still shows if editing a
+  /// broadcast that already has one.
+  File? _pickedImage;
+  String? _existingImageUrl;
 
   static const _priorities = ['Normal', 'Important', 'Emergency'];
 
@@ -230,6 +240,7 @@ class _BroadcastComposerSheetState extends ConsumerState<_BroadcastComposerSheet
     _titleCtrl = TextEditingController(text: e?.title ?? '');
     _bodyCtrl = TextEditingController(text: e?.body ?? '');
     _linkCtrl = TextEditingController(text: e?.link ?? '');
+    _existingImageUrl = e?.imageUrl;
     if (e != null && _priorities.contains(e.priority)) _priority = e.priority;
   }
 
@@ -239,6 +250,26 @@ class _BroadcastComposerSheetState extends ConsumerState<_BroadcastComposerSheet
     _bodyCtrl.dispose();
     _linkCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1600,
+      imageQuality: 85,
+    );
+    if (picked == null) return;
+    setState(() {
+      _pickedImage = File(picked.path);
+      _existingImageUrl = null; // the new pick replaces whatever was there
+    });
+  }
+
+  void _removeImage() {
+    setState(() {
+      _pickedImage = null;
+      _existingImageUrl = null;
+    });
   }
 
   Future<void> _submit() async {
@@ -256,12 +287,24 @@ class _BroadcastComposerSheetState extends ConsumerState<_BroadcastComposerSheet
     try {
       final api = ref.read(adminApiProvider);
       final link = _linkCtrl.text.trim();
+
+      // Upload the picked image first (if any) so its URL is ready to save
+      // alongside the broadcast in one go.
+      String? imageUrl = _existingImageUrl;
+      if (_pickedImage != null) {
+        setState(() => _uploadingImage = true);
+        imageUrl = await api.uploadImage(_pickedImage!.path);
+        if (!mounted) return;
+        setState(() => _uploadingImage = false);
+      }
+
       if (widget.existing == null) {
         await api.createBroadcast(
           title: title,
           body: body,
           priority: _priority,
           link: link.isEmpty ? null : link,
+          imageUrl: imageUrl,
         );
       } else {
         await api.updateBroadcast(
@@ -270,6 +313,7 @@ class _BroadcastComposerSheetState extends ConsumerState<_BroadcastComposerSheet
           body: body,
           priority: _priority,
           link: link.isEmpty ? null : link,
+          imageUrl: imageUrl,
         );
       }
       ref.invalidate(adminBroadcastsProvider);
@@ -278,9 +322,61 @@ class _BroadcastComposerSheetState extends ConsumerState<_BroadcastComposerSheet
     } catch (e) {
       setState(() {
         _submitting = false;
+        _uploadingImage = false;
         _error = 'Could not save — please try again.';
       });
     }
+  }
+
+  Widget _buildImagePicker() {
+    final hasImage = _pickedImage != null || _existingImageUrl != null;
+
+    if (!hasImage) {
+      return OutlinedButton.icon(
+        onPressed: _uploadingImage ? null : _pickImage,
+        icon: const Icon(Icons.image_outlined, size: 18),
+        label: const Text('Add Image (optional)'),
+      );
+    }
+
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: SizedBox(
+            width: double.infinity,
+            height: 160,
+            child: _pickedImage != null
+                ? Image.file(_pickedImage!, fit: BoxFit.cover)
+                : Image.network(_existingImageUrl!, fit: BoxFit.cover),
+          ),
+        ),
+        if (_uploadingImage)
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              ),
+            ),
+          ),
+        Positioned(
+          top: 6,
+          right: 6,
+          child: Material(
+            color: Colors.black.withValues(alpha: 0.55),
+            shape: const CircleBorder(),
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.white, size: 18),
+              onPressed: _uploadingImage ? null : _removeImage,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -343,6 +439,8 @@ class _BroadcastComposerSheetState extends ConsumerState<_BroadcastComposerSheet
                 );
               }).toList(growable: false),
             ),
+            const SizedBox(height: 16),
+            _buildImagePicker(),
             if (_error != null) ...[
               const SizedBox(height: 12),
               Text(_error!, style: const TextStyle(color: Colors.redAccent)),

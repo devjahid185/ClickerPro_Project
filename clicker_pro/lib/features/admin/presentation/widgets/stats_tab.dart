@@ -62,7 +62,9 @@ class _StatsGrid extends StatelessWidget {
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 1.3,
+        // 1.3 clipped the label under the number on real devices (the card
+        // wasn't tall enough for icon + number + label at this padding).
+        childAspectRatio: 1.0,
       ),
       itemCount: tiles.length,
       itemBuilder: (context, i) => _StatCard(tile: tiles[i]),
@@ -92,32 +94,35 @@ class _StatCard extends StatelessWidget {
         border: Border.all(color: AppColors.line(0.08)),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 38,
-            height: 38,
+            width: 34,
+            height: 34,
             decoration: BoxDecoration(
               color: tile.color.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(11),
             ),
             alignment: Alignment.center,
-            child: Icon(tile.icon, color: tile.color, size: 20),
+            child: Icon(tile.icon, color: tile.color, size: 18),
           ),
-          const Spacer(),
+          const SizedBox(height: 14),
           Text(
             '${tile.value}',
             style: TextStyle(
               fontFamily: AppText.brandFontFamily,
-              fontSize: 28,
+              fontSize: 26,
               fontWeight: FontWeight.w800,
               color: AppColors.film,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             tile.label,
-            style: TextStyle(color: AppColors.filmDim, fontSize: 12.5),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(color: AppColors.filmDim, fontSize: 12),
           ),
         ],
       ),
