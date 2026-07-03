@@ -103,6 +103,13 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
   /// of the full Owner form. Only relevant when role is `UserRole.both`.
   bool _showFreelancerForm = false;
 
+  /// Multi-day / multi-event booking (a toggle like Outdoor). Each extra
+  /// (date, package) entry becomes its OWN booking on save — same client,
+  /// its own date and package price — so the calendar, reminders and
+  /// due/collection math all keep working per event.
+  bool _multiEventOn = false;
+  final List<({DateTime date, Package package})> _extraEvents = [];
+
   /// Whether the hide-payment eye is toggled on.
   bool _hidePaymentVisible = true;
 
@@ -521,6 +528,9 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
             onChanged: (_) => _markDirty(),
           ),
         ],
+        // 7c. Multi-day / multi-event booking — extra (date, package) days,
+        // each saved as its own booking. Only offered on NEW bookings.
+        if (widget.bookingId == null) _buildMultiEventSection(draft),
         // 8. Chief Photographer toggle (gold accent)
         _buildChiefSection(draft, controller),
         // 9. Quick-add team section
@@ -1319,6 +1329,149 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     );
   }
 
+  /// Multi-day / multi-event section: a toggle like Outdoor; when ON, extra
+  /// (date, package) days can be added below and the running grand total
+  /// counts every day's package price ("যতদিন বা যত প্যাকেজ এড করবে টুটাল
+  /// পেমেন্ট কাউন্ট হবে").
+  Widget _buildMultiEventSection(BookingDraft draft) {
+    final primary = _resolvePackagePrice(draft) ?? draft.customPrice ?? 0;
+    final extrasTotal =
+        _extraEvents.fold<double>(0, (s, e) => s + e.package.netPrice);
+    final grand = primary + extrasTotal;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        LensSwitchTile(
+          label: 'Multi-day booking',
+          subtitle: 'Book more days / packages for this client.',
+          value: _multiEventOn,
+          onChanged: (v) {
+            _markDirty();
+            setState(() {
+              _multiEventOn = v;
+              if (!v) _extraEvents.clear();
+            });
+          },
+        ),
+        if (_multiEventOn) ...[
+          for (var i = 0; i < _extraEvents.length; i++)
+            Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.voidElevated,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.glassBorder),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.event_outlined,
+                      color: AppColors.orange, size: 18),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      '${_extraEvents[i].date.day}/${_extraEvents[i].date.month}/${_extraEvents[i].date.year}'
+                      ' · ${_extraEvents[i].package.name}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: AppColors.film, fontSize: 13.5),
+                    ),
+                  ),
+                  Text(
+                    '৳${_extraEvents[i].package.netPrice.toStringAsFixed(0)}',
+                    style: TextStyle(
+                      color: AppColors.gold,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    icon: Icon(Icons.close_rounded,
+                        color: AppColors.filmDim, size: 18),
+                    onPressed: () {
+                      _markDirty();
+                      setState(() => _extraEvents.removeAt(i));
+                    },
+                  ),
+                ],
+              ),
+            ),
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.orange,
+              side: BorderSide(
+                color: AppColors.orange.withValues(alpha: 0.5),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            icon: const Icon(Icons.add_rounded, size: 18),
+            label: const Text('Add day & package'),
+            onPressed: () => _addExtraEvent(draft),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Total · ${1 + _extraEvents.length} '
+                    '${_extraEvents.isEmpty ? 'day' : 'days'}',
+                    style: TextStyle(
+                      color: AppColors.filmDim,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Text(
+                  '৳${grand.toStringAsFixed(0)}',
+                  style: TextStyle(
+                    color: AppColors.orange,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ],
+    );
+  }
+
+  /// Picks a date + package for one extra day of a multi-day booking.
+  Future<void> _addExtraEvent(BookingDraft draft) async {
+    final base = draft.date ?? DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: base.add(const Duration(days: 1)),
+      firstDate: DateTime(2010),
+      lastDate: DateTime(2100),
+    );
+    if (picked == null || !mounted) return;
+
+    final result = await _PackagePickerSheet.show(
+      context,
+      ref: ref,
+      currentSelection: null,
+    );
+    if (result == null || !mounted) return;
+    final pkg = result.package;
+    if (pkg == null) {
+      _showSnack('Pick a package for the extra day.');
+      return;
+    }
+    _markDirty();
+    setState(() => _extraEvents.add((date: picked, package: pkg)));
+  }
+
   double? _resolvePackagePrice(BookingDraft draft) {
     if (draft.packageId == null) return null;
     final packagesAsync = ref.watch(packagesProvider);
@@ -1594,6 +1747,71 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
         } catch (e) {
           // The booking itself saved — surface but never roll back.
           if (mounted) _showSnack('Booking saved, advance not recorded: $e');
+        }
+      }
+      // Multi-day booking: create one booking per extra (date, package)
+      // entry — same client, its own date and package price — so each day
+      // gets its own calendar slot, reminder and due/collection math.
+      // New bookings only; the section is hidden when editing.
+      if (isNewBooking && _multiEventOn && _extraEvents.isNotEmpty) {
+        try {
+          final repo = ref.read(bookingRepositoryProvider);
+          final policy = ref.read(bookingsPolicyProvider);
+          for (var i = 0; i < _extraEvents.length; i++) {
+            final e = _extraEvents[i];
+            final now = DateTime.now();
+            final clone = Booking(
+              // +i keeps ids unique even inside one microsecond tick.
+              id: 'b-${now.microsecondsSinceEpoch + i}',
+              studioId: saved.studioId,
+              createdByUserId: saved.createdByUserId,
+              title: saved.title,
+              eventType: saved.eventType,
+              date: e.date,
+              startTime: saved.startTime,
+              endTime: saved.endTime,
+              shift: saved.shift,
+              venue: saved.venue,
+              outdoor: saved.outdoor,
+              brideName: saved.brideName,
+              groomName: saved.groomName,
+              clientId: saved.clientId,
+              clientName: saved.clientName,
+              clientPhone: saved.clientPhone,
+              packageId: e.package.id,
+              coverageHours: e.package.coverageHours,
+              extraHourRate: e.package.extraHourRate,
+              notes: saved.notes,
+              chiefPhotographerUserId: saved.chiefPhotographerUserId,
+              hidePaymentFromTeam: saved.hidePaymentFromTeam,
+              showPaymentInShare: saved.showPaymentInShare,
+              status: saved.status,
+              createdAt: now,
+              updatedAt: now,
+              pending: true,
+            );
+            final savedClone = await repo.save(clone, policy: policy);
+            EventReminderService.instance.scheduleForBooking(
+              bookingId: savedClone.id,
+              title: savedClone.clientName?.trim().isNotEmpty == true
+                  ? savedClone.clientName!.trim()
+                  : savedClone.title,
+              eventDate: savedClone.date,
+              startTime: savedClone.startTime,
+              endTime: savedClone.endTime,
+              venue: savedClone.venue,
+              clientName: savedClone.clientName,
+              clientPhone: savedClone.clientPhone,
+            );
+          }
+          if (mounted) {
+            _showSnack(
+              '+${_extraEvents.length} more '
+              '${_extraEvents.length == 1 ? 'day' : 'days'} booked ✓',
+            );
+          }
+        } catch (e) {
+          if (mounted) _showSnack('Extra days not saved: $e');
         }
       }
       // MOD-61: a new booking is auto-added to the device calendar. When the
