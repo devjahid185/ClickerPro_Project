@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers.dart';
 import '../data/admin_api.dart';
 import '../domain/admin_broadcast.dart';
+import '../domain/admin_setting.dart';
 import '../domain/admin_stats.dart';
 import '../domain/admin_ticket.dart';
 import '../domain/admin_user.dart';
@@ -61,4 +62,12 @@ final adminTicketsProvider = FutureProvider.autoDispose<List<AdminTicket>>(
 /// on launch. Kept as a raw map: the shape is owned by AppVersionController.
 final adminAppVersionProvider = FutureProvider.autoDispose<Map<String, dynamic>>(
   (ref) => ref.read(adminApiProvider).appVersion(),
+);
+
+/// All AppSetting rows grouped by key prefix (`landing`, `app`, `smtp`, …).
+/// The landing page renders directly from the `landing`/`app` groups, so a
+/// save through [AdminApi.updateSettings] changes the live site immediately.
+final adminSettingsProvider =
+    FutureProvider.autoDispose<Map<String, List<AdminSetting>>>(
+  (ref) => ref.read(adminApiProvider).settings(),
 );

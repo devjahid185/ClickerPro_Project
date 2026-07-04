@@ -9,6 +9,7 @@
 
 import '../../../core/network/api_client.dart';
 import '../domain/admin_broadcast.dart';
+import '../domain/admin_setting.dart';
 import '../domain/admin_stats.dart';
 import '../domain/admin_ticket.dart';
 import '../domain/admin_user.dart';
@@ -198,5 +199,27 @@ class AdminApi {
       },
     );
     return _map(r);
+  }
+
+  // ── AppSetting key/value store (SettingsController) ──
+  // The landing page (LandingController) renders every text from these keys,
+  // so saving here changes the live site on the next page load.
+
+  /// Grouped by key prefix: `{"landing": [...], "app": [...], ...}`.
+  Future<Map<String, List<AdminSetting>>> settings() async {
+    final r = await _client.get('/api/admin/settings');
+    final data = _map(r);
+    return {
+      for (final entry in data.entries)
+        if (entry.value is List)
+          entry.key: (entry.value as List)
+              .whereType<Map>()
+              .map((e) => AdminSetting.fromJson(e.cast<String, dynamic>()))
+              .toList(growable: false),
+    };
+  }
+
+  Future<void> updateSettings(Map<String, String> changes) async {
+    await _client.post('/api/admin/settings', body: {'settings': changes});
   }
 }

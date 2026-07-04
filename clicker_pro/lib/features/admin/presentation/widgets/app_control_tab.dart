@@ -12,7 +12,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/states/error_state.dart';
 import '../../../../shared/states/lens_loader.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_theme.dart';
 import '../../application/admin_providers.dart';
+import '../admin_landing_editor_screen.dart';
 
 class AppControlTab extends ConsumerWidget {
   const AppControlTab({super.key});
@@ -126,6 +128,62 @@ class _VersionFormState extends ConsumerState<_VersionForm> {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
+        Material(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => Navigator.push<void>(
+              context,
+              MaterialPageRoute(builder: (_) => const AdminLandingEditorScreen()),
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.line(0.08)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.teal.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(Icons.language_outlined, color: AppColors.teal, size: 20),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Landing Page',
+                          style: TextStyle(
+                            fontFamily: AppText.brandFontFamily,
+                            fontSize: 15.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.film,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Edit hero, features, reviews & links on the live site',
+                          style: TextStyle(color: AppColors.filmDim, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.chevron_right, color: AppColors.filmDim),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
