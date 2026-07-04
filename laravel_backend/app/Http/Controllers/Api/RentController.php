@@ -32,11 +32,13 @@ class RentController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'gear_item_id' => 'required|integer|exists:gear_items,id',
+            'gear_item_id' => 'nullable|integer|exists:gear_items,id',
             'direction' => 'required|string|in:IN,OUT',
             'rented_to' => 'nullable|string|max:255',
+            'counterparty_phone' => 'nullable|string|max:32',
             'amount' => 'nullable|numeric|min:0',
             'rented_at' => 'required|date',
+            'return_by' => 'nullable|date',
             'returned_at' => 'nullable|date',
             'notes' => 'nullable|string',
         ]);
@@ -46,9 +48,11 @@ class RentController extends Controller
         $record = RentRecord::create($data);
 
         // Update gear availability
-        $gear = GearItem::find($data['gear_item_id']);
-        if ($gear) {
-            $gear->update(['is_available' => $data['direction'] === 'IN']);
+        if (!empty($data['gear_item_id'])) {
+            $gear = GearItem::find($data['gear_item_id']);
+            if ($gear) {
+                $gear->update(['is_available' => $data['direction'] === 'IN']);
+            }
         }
 
         return response()->json(['data' => $record], 201);

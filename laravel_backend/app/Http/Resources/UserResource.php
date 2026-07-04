@@ -40,6 +40,10 @@ class UserResource extends JsonResource
             'bio' => $this->bio,
             'avatar' => $this->avatar,
 
+            // Office staff position (Photo Editor / HR / Office Boy / …)
+            'staff_position' => $this->staff_position,
+            'staffPosition' => $this->staff_position,
+
             // Studio logo + digital signature (snake_case + camelCase aliases).
             'logo_url' => $this->logo_url,
             'logoUrl' => $this->logo_url,

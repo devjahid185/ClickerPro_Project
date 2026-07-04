@@ -12,7 +12,12 @@ class ReEditRequest extends Model
     protected $table = 're_edit_requests';
 
     protected $fillable = [
-        'event_id', 'requested_by', 'description', 'status', 'admin_note',
+        'event_id', 'requested_by', 'description', 'attachments',
+        'status', 'admin_note',
+    ];
+
+    protected $casts = [
+        'attachments' => 'array',
     ];
 
     public function event()

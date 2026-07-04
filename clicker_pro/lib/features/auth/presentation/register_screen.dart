@@ -28,6 +28,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/navigation/route_names.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/providers.dart';
+import '../../../core/validation/phone_validator.dart';
 import '../../../shared/widgets/auth_glass_field.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_theme.dart';
@@ -112,12 +113,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     return null;
   }
 
-  String? _validatePhone(String? v) {
-    final t = (v ?? '').trim();
-    if (t.isEmpty) return 'Enter phone number';
-    if (!RegExp(r'^\d{10,}$').hasMatch(t)) return 'At least 10 digits';
-    return null;
-  }
+  String? _validatePhone(String? v) => PhoneValidator.validate(v);
 
   String? _validatePassword(String? v) {
     final t = v ?? '';
@@ -576,6 +572,7 @@ class _RolePill extends StatelessWidget {
     UserRole.owner,
     UserRole.freelancer,
     UserRole.both,
+    UserRole.officeStaff,
   ];
 
   String _label(UserRole r) {
@@ -588,6 +585,8 @@ class _RolePill extends StatelessWidget {
         return 'Both';
       case UserRole.manager:
         return 'Manager';
+      case UserRole.officeStaff:
+        return 'Staff';
       case UserRole.webAdmin:
         return 'Web Admin';
     }

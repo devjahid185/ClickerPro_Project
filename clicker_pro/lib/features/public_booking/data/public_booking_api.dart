@@ -3,20 +3,23 @@
 // Public Booking endpoints against the Laravel backend.
 //
 // Laravel contract (routes/api.php + PublicBookingController):
-//   GET  /api/public-booking/{token}  → { data: { studio, packages } }
-//   POST /api/public-booking/{token}  → { data: event } (201)
+//   GET  /api/public-booking/{token}            → { data: { studio, packages } }
+//   POST /api/public-booking/{token}            → { data: request } (201)
+//   GET  /api/public-booking-requests           → { data: [request…] } (owner)
+//   POST /api/public-booking-requests/{id}/approve → { data: event } (owner)
+//   POST /api/public-booking-requests/{id}/reject  → { data: request } (owner)
 //
 // The owner's share link uses the `public_booking_token` already issued
 // on the user account (UserResource exposes it as bookingToken). Visitor
-// submissions become PENDING bookings directly server-side, so they show
-// up in the normal bookings list — there is no separate pending-requests
-// queue on this backend, and [listPending] reflects that by returning
-// empty.
+// submissions land in the owner's pending-requests queue (with a push
+// notification); approving one creates the PENDING event.
 
 import '../../../core/env/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../bookings/domain/event_type.dart';
+import '../../bookings/domain/shift.dart';
 import '../domain/public_booking_request.dart';
+import '../domain/public_booking_request_status.dart';
 import '../domain/public_booking_token.dart';
 
 class PublicBookingApi {
@@ -60,28 +63,70 @@ class PublicBookingApi {
     );
   }
 
-  /// Visitor submissions become PENDING bookings directly on this
-  /// backend — they appear in the main bookings list, so the separate
-  /// pending queue is always empty.
+  /// `GET /api/public-booking-requests` — the owner's review queue of
+  /// visitor submissions awaiting approve/reject.
   Future<List<PublicBookingRequest>> listPending() async {
-    return const [];
+    final r = await _client.get('/api/public-booking-requests');
+    final raw = (r is Map ? r['data'] : null) as List? ?? const [];
+    return raw
+        .whereType<Map>()
+        .map((e) => _requestFromServer(e.cast<String, dynamic>()))
+        .toList(growable: false);
   }
 
-  /// Not applicable on this backend (submissions are already bookings) —
-  /// kept for interface compatibility; never reachable while
-  /// [listPending] returns empty.
+  /// `POST /api/public-booking-requests/{id}/approve` — promotes the
+  /// request to a PENDING event server-side and returns the event row.
   Future<Map<String, dynamic>> approve(String requestId) async {
-    throw UnsupportedError(
-      'Public submissions are created as PENDING bookings directly.',
+    final r = await _client.post(
+      '/api/public-booking-requests/$requestId/approve',
     );
+    return _data(r);
   }
 
   Future<PublicBookingRequest> reject(
     String requestId, {
     String? reason,
   }) async {
-    throw UnsupportedError(
-      'Public submissions are created as PENDING bookings directly.',
+    final r = await _client.post(
+      '/api/public-booking-requests/$requestId/reject',
+    );
+    return _requestFromServer(_data(r));
+  }
+
+  /// Maps a Laravel `public_booking_requests` row onto the richer local
+  /// domain model. The public form doesn't collect times/shift, so those
+  /// fall back to the day-shift defaults; unknown event types coerce to
+  /// [EventType.other] rather than throwing on foreign data.
+  PublicBookingRequest _requestFromServer(Map<String, dynamic> j) {
+    EventType eventType;
+    try {
+      eventType = EventType.fromString((j['event_type'] ?? '').toString());
+    } on ArgumentError {
+      eventType = EventType.other;
+    }
+    final name = (j['name'] ?? j['clientName'] ?? '—').toString();
+    final submitted = DateTime.tryParse((j['created_at'] ?? '').toString());
+    final updated = DateTime.tryParse((j['updated_at'] ?? '').toString());
+    return PublicBookingRequest(
+      id: (j['id'] ?? '').toString(),
+      studioId: (j['owner_id'] ?? '').toString(),
+      title: '${eventType.name} - $name',
+      eventType: eventType,
+      date:
+          DateTime.tryParse((j['date'] ?? '').toString()) ?? DateTime.now(),
+      startTime: '12:00',
+      endTime: '17:00',
+      shift: Shift.day,
+      venue: j['venue'] as String?,
+      clientName: name,
+      clientPhone: (j['phone'] ?? '').toString(),
+      clientEmail: j['email'] as String?,
+      notes: j['notes'] as String?,
+      status: PublicBookingRequestStatus.fromString(
+        (j['status'] as String?)?.toLowerCase(),
+      ),
+      submittedAt: submitted ?? DateTime.now(),
+      updatedAt: updated ?? submitted ?? DateTime.now(),
     );
   }
 

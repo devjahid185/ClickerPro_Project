@@ -31,20 +31,13 @@ class PublicBookingRepositoryImpl implements PublicBookingRepository {
     required PublicBookingApi api,
     required AppDatabase db,
     required BookingRepository bookingRepo,
-    required RolePolicy ownerPolicy,
   }) : _api = api,
        _db = db,
-       _bookingRepo = bookingRepo,
-       _ownerPolicy = ownerPolicy;
+       _bookingRepo = bookingRepo;
 
   final PublicBookingApi _api;
   final AppDatabase _db;
   final BookingRepository _bookingRepo;
-
-  /// Stashed RolePolicy used when materializing approved bookings via
-  /// `BookingRepository.save`. The owner-policy is the only role that
-  /// can land here, so we capture it once at construction time.
-  final RolePolicy _ownerPolicy;
 
   PublicBookingRequestsDao get _pending => _db.publicBookingRequestsDao;
 
@@ -160,17 +153,18 @@ class PublicBookingRepositoryImpl implements PublicBookingRepository {
     }
 
     final eventJson = await _api.approve(requestId);
-    final booking = Booking.fromJson(eventJson);
-    // Materialize the booking locally via the booking repository so the
-    // standard upsert + cascading-cache path applies. The server has
-    // already created the row; we tag it `pending: false` since the
-    // remote state is canonical.
-    final saved = await _bookingRepo.save(
-      booking.copyWith(pending: false),
-      policy: _ownerPolicy,
-    );
+    final eventId = (eventJson['id'] ?? '').toString();
+    // The server has already created the event — pull it into the local
+    // Drift mirror through the standard sync path instead of save(),
+    // which would POST a duplicate event.
+    await _bookingRepo.refreshFromRemote(singleEventId: eventId);
     await _pending.removeById(requestId);
-    return saved;
+    final booking = await _bookingRepo.getByRemoteId(eventId);
+    if (booking != null) return booking;
+    throw StateError(
+      'Approved request $requestId (event $eventId) but the booking did '
+      'not appear in the local mirror after sync.',
+    );
   }
 
   @override

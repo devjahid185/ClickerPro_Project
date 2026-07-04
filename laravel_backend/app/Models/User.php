@@ -20,7 +20,7 @@ class User extends Authenticatable
     // authorized code paths (admin endpoints, invite flow) using forceFill(),
     // so unfiltered input can never escalate a user's role/plan.
     protected $fillable = [
-        'name', 'email', 'phone', 'password',
+        'name', 'email', 'phone', 'password', 'staff_position',
         'business_name', 'bio', 'avatar',
         'logo_url', 'signature_url',
         'bkash_number', 'bank_details',

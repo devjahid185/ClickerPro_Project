@@ -56,10 +56,15 @@ class RoleChangeDialog extends StatefulWidget {
 class _RoleChangeDialogState extends State<RoleChangeDialog> {
   UserRole? _selected;
 
-  /// All roles a user can pick — exclude the current role and Manager
-  /// (Manager is invite-bound, not selectable).
+  /// All roles a user can pick — exclude the current role, Manager
+  /// (invite-bound) and Web Admin (platform-internal).
   List<UserRole> get _targets => UserRole.values
-      .where((r) => r != widget.currentRole && r != UserRole.manager)
+      .where(
+        (r) =>
+            r != widget.currentRole &&
+            r != UserRole.manager &&
+            r != UserRole.webAdmin,
+      )
       .toList(growable: false);
 
   /// Capabilities the user currently has but would lose under [target].
@@ -378,6 +383,9 @@ class _RoleOption extends StatelessWidget {
         return 'Hybrid. Inherits Owner and Freelancer capabilities.';
       case UserRole.manager:
         return 'Invite-only. Cannot self-register.';
+      case UserRole.officeStaff:
+        return 'Office staff — editor, HR, manager. Set your position '
+            'from Profile after signing in.';
       case UserRole.webAdmin:
         return 'Platform administrator. Full system access.';
     }

@@ -33,12 +33,15 @@ class ReEditController extends Controller
 
         $data = $request->validate([
             'description' => 'required|string',
+            'attachments' => 'nullable|array|max:10',
+            'attachments.*' => 'string|max:2048',
         ]);
 
         $reEdit = ReEditRequest::create([
             'event_id' => $eventId,
             'requested_by' => $request->user()->id,
             'description' => $data['description'],
+            'attachments' => $data['attachments'] ?? null,
             'status' => 'PENDING',
         ]);
 

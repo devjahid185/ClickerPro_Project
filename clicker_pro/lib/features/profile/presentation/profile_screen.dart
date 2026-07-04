@@ -24,16 +24,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../core/format/number_format.dart';
 import '../../../core/navigation/route_names.dart';
 import '../../../core/providers.dart';
 import '../../../core/role/capability.dart';
+import '../../../core/validation/phone_validator.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../shared/states/offline_banner.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_strings.dart';
 import '../../auth/application/session_controller.dart';
+import '../../auth/domain/user_role.dart';
 import '../../auth/presentation/role_change_dialog.dart';
 import '../../settings/application/language_controller.dart';
 import '../../team/application/team_providers.dart';
@@ -62,11 +63,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // One-shot lifetime-stats refresh per Req 3.8. Fire-and-forget.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      // Triggers /api/profile/lifetime-stats and updates the local cache.
-      ref.read(userRepositoryProvider).getLifetimeStats();
       ref.read(userRepositoryProvider).refreshFromRemote();
     });
   }
@@ -247,6 +245,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               onChanged: (val) =>
                   _updateDraft((d) => d.copyWith(whatsapp: val)),
             ),
+            // Office staff set what they do — Photo Editor, Video Editor,
+            // HR, Office Boy, Manager, … (free text).
+            if (view.role == UserRole.officeStaff)
+              _buildInfoField(
+                label: 'Position (e.g. Photo Editor, HR)',
+                value: view.specialization ?? '',
+                icon: Icons.badge_outlined,
+                onChanged: (val) =>
+                    _updateDraft((d) => d.copyWith(specialization: val)),
+              ),
             _buildInfoField(
               label: 'Email',
               value: view.email,
@@ -376,9 +384,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             _buildSectionTitle('Team Invite'),
             _buildInviteCard(),
           ],
-
-          const SizedBox(height: 25),
-          _buildLifetimeStats(user),
 
           const SizedBox(height: 32),
           _buildEditActions(user),
@@ -1253,107 +1258,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  // ── Lifetime stats card ───────────────────────────────────────
-  Widget _buildLifetimeStats(UserModel user) {
-    final loading = user.statsRefreshedAt == null;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionTitle(t('lifetime_stats')),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.line(0.06)),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: _statTile(
-                  icon: Icons.event_available_rounded,
-                  label: 'Events',
-                  value: loading ? null : user.totalEvents.toString(),
-                ),
-              ),
-              _vDivider(),
-              Expanded(
-                child: _statTile(
-                  icon: Icons.payments_rounded,
-                  label: 'Revenue',
-                  value: loading
-                      ? null
-                      : formatCurrencyBdt(
-                          user.totalRevenueMinor / 100,
-                          lang: _lang,
-                        ),
-                ),
-              ),
-              _vDivider(),
-              Expanded(
-                child: _statTile(
-                  icon: Icons.people_alt_rounded,
-                  label: 'Clients',
-                  value: loading ? null : user.totalClients.toString(),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _statTile({
-    required IconData icon,
-    required String label,
-    required String? value,
-  }) {
-    return Column(
-      children: [
-        Icon(icon, color: AppColors.gold, size: 18),
-        const SizedBox(height: 6),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 200),
-          child: value == null
-              ? const Padding(
-                  key: ValueKey('loading'),
-                  padding: EdgeInsets.symmetric(vertical: 4),
-                  child: LensLoader(size: 16),
-                )
-              : Text(
-                  value,
-                  key: ValueKey(value),
-                  style: TextStyle(
-                    color: AppColors.film,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: TextStyle(
-            color: AppColors.filmMuted,
-            fontSize: 11,
-            letterSpacing: 0.4,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _vDivider() => Container(
-    width: 1,
-    height: 32,
-    color: AppColors.line(0.06),
-    margin: const EdgeInsets.symmetric(horizontal: 4),
-  );
-
   // ── Edit / Save / Cancel buttons ──────────────────────────────
   Widget _buildEditActions(UserModel user) {
     // Edit is now started from the three-dot menu, so outside an edit session
@@ -1482,8 +1386,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       return 'Enter a valid email';
     }
     final phone = draft.phone?.trim() ?? '';
-    if (phone.isNotEmpty && !RegExp(r'^[0-9+\- ]+$').hasMatch(phone)) {
-      return 'Enter a valid phone number';
+    if (phone.isNotEmpty && !PhoneValidator.isValid(phone)) {
+      return 'Enter a valid 11-digit phone number (01XXXXXXXXX)';
+    }
+    final whatsapp = draft.whatsapp?.trim() ?? '';
+    if (whatsapp.isNotEmpty && !PhoneValidator.isValid(whatsapp)) {
+      return 'Enter a valid 11-digit WhatsApp number (01XXXXXXXXX)';
+    }
+    final bkash = draft.bkash?.trim() ?? '';
+    if (bkash.isNotEmpty && !PhoneValidator.isValid(bkash)) {
+      return 'Enter a valid 11-digit bKash number (01XXXXXXXXX)';
     }
     return null;
   }

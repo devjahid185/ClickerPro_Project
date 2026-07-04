@@ -160,14 +160,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         // Center FAB handled in `_navFab`.
         break;
       case 3:
-        // Freelancer's "Finance" is their earnings view — they have no
-        // studio income/expense data to show.
-        final role = ref.read(currentUserProvider).valueOrNull?.role;
-        _pushNamed(
-          role == UserRole.freelancer
-              ? RouteNames.freelancerEarnings
-              : RouteNames.finance,
-        );
+        // Finance adapts per role: freelancers get the earnings face,
+        // owners the studio face (FinanceScreen decides internally).
+        _pushNamed(RouteNames.finance);
         break;
       case 4:
         _pushNamed(RouteNames.settings);
@@ -1037,7 +1032,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'DELIVERED',
+                          'COMPLETE',
                           style: TextStyle(
                             fontFamily: AppText.monoFontFamily,
                             fontSize: 12,
@@ -1990,14 +1985,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     _pushNamed(RouteNames.bookings);
   }
 
-  /// Opens the booking list showing ONLY delivered events (any date).
+  /// Opens the booking list showing every event whose shoot happened —
+  /// the Complete card (shotComplete + delivered + completed, any date).
   /// Clears any date range a previous card tap (Today/Upcoming) may have
-  /// left behind, otherwise Delivered would be silently scoped to that range.
+  /// left behind, otherwise it would be silently scoped to that range.
   void _openDeliveredEvents() {
     ref.read(bookingFilterProvider.notifier).state = ref
         .read(bookingFilterProvider)
         .copyWith(
-          statuses: {BookingStatus.delivered},
+          statuses: {
+            BookingStatus.shotComplete,
+            BookingStatus.delivered,
+            BookingStatus.completed,
+          },
           clearFrom: true,
           clearTo: true,
         );
@@ -2493,10 +2493,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   if (policy.can(Capability.accessDelivery))
                     _sbItem(
                       Icons.local_shipping_outlined,
-                      'Delivery System',
+                      'Delivery',
                       () {
                         Navigator.pop(context);
-                        _pushNamed(RouteNames.bookings);
+                        _pushNamed(RouteNames.delivery);
                       },
                     ),
                   if (policy.can(Capability.accessPackages))
@@ -2541,37 +2541,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       color: AppColors.line(0.05),
                     ),
                     _sbGroup('FREELANCER'),
-                    _sbItem(
-                      Icons.account_balance_wallet_outlined,
-                      'My Earnings',
-                      () {
-                        Navigator.pop(context);
-                        _pushNamed(RouteNames.freelancerEarnings);
-                      },
-                    ),
-                    _sbItem(Icons.military_tech_outlined, 'My Badges', () {
-                      Navigator.pop(context);
-                      _pushNamed(RouteNames.freelancerBadges);
-                    }),
-                    _sbItem(
-                      Icons.event_available_outlined,
-                      'My Availability',
-                      () {
-                        Navigator.pop(context);
-                        _pushNamed(RouteNames.freelancerAvailability);
-                      },
-                    ),
-                    _sbItem(Icons.login_outlined, 'Check-In', () {
-                      Navigator.pop(context);
-                      _pushNamed(RouteNames.freelancerCheckin);
-                    }),
                     _sbItem(Icons.beach_access_outlined, 'Leave Request', () {
                       Navigator.pop(context);
                       _pushNamed(RouteNames.freelancerLeave);
-                    }),
-                    _sbItem(Icons.history_outlined, 'Work History', () {
-                      Navigator.pop(context);
-                      _pushNamed(RouteNames.freelancerWorkHistory);
                     }),
                   ],
                   if (policy.can(Capability.viewFinancials)) ...[
@@ -2584,14 +2556,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       color: AppColors.line(0.05),
                     ),
                     _sbGroup('ADMIN'),
-                    _sbItem(
-                      Icons.admin_panel_settings_outlined,
-                      'Admin Panel',
-                      () {
-                        Navigator.pop(context);
-                        _pushNamed(RouteNames.adminPanel);
-                      },
-                    ),
                     _sbItem(Icons.backup_outlined, 'Backup & Restore', () {
                       Navigator.pop(context);
                       _pushNamed(RouteNames.backup);

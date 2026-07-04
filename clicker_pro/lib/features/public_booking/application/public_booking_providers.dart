@@ -14,7 +14,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers.dart';
 import '../../bookings/application/booking_providers.dart';
-import '../../profile/application/profile_controllers.dart';
 import '../data/public_booking_api.dart';
 import '../data/public_booking_repository_impl.dart';
 import '../domain/public_booking_repository.dart';
@@ -32,7 +31,6 @@ final publicBookingRepositoryProvider = Provider<PublicBookingRepository>((
     api: ref.read(publicBookingApiProvider),
     db: ref.read(appDatabaseProvider),
     bookingRepo: ref.read(bookingRepositoryProvider),
-    ownerPolicy: ref.read(rolePolicyProvider),
   );
 });
 

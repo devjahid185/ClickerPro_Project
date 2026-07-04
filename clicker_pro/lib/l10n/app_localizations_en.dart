@@ -737,6 +737,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rent_amount => 'Amount';
 
   @override
+  String get rent_date => 'Rent date';
+
+  @override
   String get rent_return_by => 'Return by';
 
   @override

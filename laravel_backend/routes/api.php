@@ -228,6 +228,11 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::post('bookings/{eventId}/extra-time', [ExtraTimeController::class, 'store']);
 
     // Waitlist
+    // Owner review queue for client self-booking submissions.
+    Route::get('public-booking-requests', [PublicBookingController::class, 'index']);
+    Route::post('public-booking-requests/{id}/approve', [PublicBookingController::class, 'approve']);
+    Route::post('public-booking-requests/{id}/reject', [PublicBookingController::class, 'reject']);
+
     Route::get('waitlist', [WaitlistController::class, 'index']);
     Route::post('waitlist', [WaitlistController::class, 'store']);
     Route::delete('waitlist/{id}', [WaitlistController::class, 'destroy']);

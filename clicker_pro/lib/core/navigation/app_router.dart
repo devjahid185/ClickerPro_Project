@@ -33,12 +33,8 @@ import '../../features/announcements/presentation/announcements_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/dashboard/presentation/dashboard_customize_screen.dart';
 import '../../features/expenses/presentation/expenses_screen.dart';
-import '../../features/freelancer/presentation/fl_availability_screen.dart';
-import '../../features/freelancer/presentation/fl_checkin_screen.dart';
 import '../../features/freelancer/presentation/fl_companies_screen.dart';
-import '../../features/freelancer/presentation/fl_earnings_screen.dart';
 import '../../features/freelancer/presentation/fl_leave_request_screen.dart';
-import '../../features/freelancer/presentation/fl_work_history_screen.dart';
 import '../../features/gear/presentation/gear_screen.dart';
 import '../../features/help/presentation/help_screen.dart';
 import '../../features/legal/presentation/data_export_screen.dart';
@@ -50,14 +46,13 @@ import '../../features/onboarding/presentation/onboarding_intro_screen.dart';
 import '../../features/onboarding/presentation/splash_screen.dart';
 import '../../features/profile/presentation/delete_account_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
-import '../../features/admin/presentation/admin_panel_screen.dart';
+import '../../features/bookings/presentation/delivery_screen.dart';
 import '../../features/public_booking/presentation/pending_public_bookings_screen.dart';
 import '../../features/public_booking/presentation/public_booking_form_screen.dart';
 import '../../features/public_booking/presentation/public_booking_success_screen.dart';
 import '../../features/rent/presentation/rent_screen.dart';
 import '../../features/reports/presentation/reports_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
-import '../../features/freelancer/presentation/fl_badges_screen.dart';
 import '../../features/team/presentation/salary_sheet_screen.dart';
 import '../../features/team/presentation/team_screen.dart';
 import '../../features/invoice/presentation/invoice_screen.dart';
@@ -177,14 +172,6 @@ class AppRouter {
         return lensPageRoute<void>(const ProfileScreen());
       case RouteNames.settings:
         return lensPageRoute<void>(const SettingsScreen());
-      case RouteNames.adminPanel:
-        return lensPageRoute<void>(
-          const RoleGatedScreen(
-            capability: Capability.viewFinancials,
-            title: 'Admin Panel',
-            child: AdminPanelScreen(),
-          ),
-        );
       case RouteNames.privacy:
         return lensPageRoute<void>(const PrivacyScreen());
       case RouteNames.terms:
@@ -225,20 +212,10 @@ class AppRouter {
         );
       case RouteNames.announcements:
         return lensPageRoute<void>(const AnnouncementsScreen());
-      case RouteNames.freelancerEarnings:
-        return lensPageRoute<void>(const FlEarningsScreen());
       case RouteNames.freelancerCompanies:
         return lensPageRoute<void>(const FlCompaniesScreen());
-      case RouteNames.freelancerBadges:
-        return lensPageRoute<void>(const FlBadgesScreen());
-      case RouteNames.freelancerAvailability:
-        return lensPageRoute<void>(const FlAvailabilityScreen());
-      case RouteNames.freelancerCheckin:
-        return lensPageRoute<void>(const FlCheckinScreen());
       case RouteNames.freelancerLeave:
         return lensPageRoute<void>(const FlLeaveRequestScreen());
-      case RouteNames.freelancerWorkHistory:
-        return lensPageRoute<void>(const FlWorkHistoryScreen());
       case RouteNames.teamSalarySheet:
         return lensPageRoute<void>(
           const RoleGatedScreen(
@@ -265,6 +242,14 @@ class AppRouter {
         );
       case RouteNames.pendingPublicBookings:
         return lensPageRoute<void>(const PendingPublicBookingsScreen());
+      case RouteNames.delivery:
+        return lensPageRoute<void>(
+          const RoleGatedScreen(
+            capability: Capability.accessDelivery,
+            title: 'Delivery',
+            child: DeliveryScreen(),
+          ),
+        );
       case RouteNames.packages:
         return lensPageRoute<void>(
           const RoleGatedScreen(

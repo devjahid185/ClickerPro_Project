@@ -62,6 +62,11 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    // Pull fresh self-booking requests so the pending badge is accurate
+    // as soon as the list opens (fail-soft inside refreshPending).
+    Future.microtask(
+      () => ref.read(publicBookingRepositoryProvider).refreshPending(),
+    );
   }
 
   @override
@@ -248,9 +253,20 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
             ),
             IconButton(
               tooltip: 'Pending requests',
-              icon: Icon(
-                Icons.mark_email_unread_outlined,
-                color: AppColors.gold,
+              icon: Badge(
+                isLabelVisible:
+                    (ref.watch(pendingPublicBookingsProvider).valueOrNull ??
+                            const [])
+                        .isNotEmpty,
+                label: Text(
+                  '${(ref.watch(pendingPublicBookingsProvider).valueOrNull ?? const []).length}',
+                ),
+                backgroundColor: AppColors.orange,
+                textColor: Colors.white,
+                child: Icon(
+                  Icons.mark_email_unread_outlined,
+                  color: AppColors.gold,
+                ),
               ),
               onPressed: () => Navigator.of(
                 context,

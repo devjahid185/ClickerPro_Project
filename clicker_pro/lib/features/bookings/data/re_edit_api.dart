@@ -62,7 +62,11 @@ class ReEditApi {
       editorUserId: fallback?.editorUserId,
       deadline:
           fallback?.deadline ?? DateTime.now().add(const Duration(days: 7)),
-      referenceImageUrls: fallback?.referenceImageUrls,
+      referenceImageUrls: j['attachments'] is List
+          ? (j['attachments'] as List)
+                .map((e) => e.toString())
+                .toList(growable: false)
+          : fallback?.referenceImageUrls,
       notes: serverString(j, ['description']) ?? fallback?.notes,
       status: _statusFromServer(j['status'], fallback: fallback?.status),
       requestedByUserId:
@@ -101,7 +105,11 @@ class ReEditApi {
         : 'Re-edit request (round ${request.round})';
     final r = await _client.post(
       '/api/bookings/$bookingRemoteId/reedits',
-      body: {'description': description},
+      body: {
+        'description': description,
+        if (request.referenceImageUrls?.isNotEmpty ?? false)
+          'attachments': request.referenceImageUrls,
+      },
     );
     return _fromServer(
       unwrapServerMap(r),

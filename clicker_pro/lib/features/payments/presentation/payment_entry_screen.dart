@@ -13,6 +13,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/network/api_exception.dart';
 import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
@@ -143,9 +144,13 @@ class _ReceiptsTab extends ConsumerWidget {
           ref.read(paymentListControllerProvider.notifier).refresh(),
       child: async.when(
         loading: () => const Center(child: LensLoader()),
-        error: (_, _) => Center(
+        // Surface the real reason so a field report of "failed to load"
+        // pinpoints the server/parse error instead of hiding it.
+        error: (e, _) => Center(
           child: ErrorState(
-            message: 'Failed to load payments',
+            message: e is ApiException
+                ? 'Failed to load payments\n(${e.statusCode}: ${e.message})'
+                : 'Failed to load payments\n($e)',
             onRetry: () => ref.invalidate(paymentListControllerProvider),
           ),
         ),

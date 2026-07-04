@@ -18,8 +18,11 @@ import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
+import '../../expenses/application/expense_providers.dart';
+import '../../expenses/domain/expense.dart';
 import '../application/team_providers.dart';
 import '../domain/staff_payout.dart';
+import '../domain/team_member.dart';
 import '../../../theme/app_theme.dart';
 
 class SalarySheetScreen extends ConsumerWidget {
@@ -95,13 +98,16 @@ class StaffPayoutsBody extends ConsumerWidget {
           if (sheet.members.isEmpty) {
             return ListView(
               physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
               children: const [
-                SizedBox(height: 120),
+                SizedBox(height: 80),
                 EmptyState(
                   icon: Icons.payments_outlined,
                   message:
                       'No staff payouts yet\nAssign team members to events with a payout',
                 ),
+                SizedBox(height: 24),
+                _OfficeStaffSalarySection(),
               ],
             );
           }
@@ -119,11 +125,246 @@ class StaffPayoutsBody extends ConsumerWidget {
                   child: _StaffPayoutCard(payout: m),
                 ),
               ),
+              const SizedBox(height: 20),
+              const _OfficeStaffSalarySection(),
             ],
           );
         },
       ),
     );
+  }
+}
+
+// ─── Office staff monthly salary ─────────────────────────────────────
+//
+// Lists every OFFICE_STAFF team member (editors, HR, office boys…) with a
+// "Pay Salary" action. A payment is recorded as a normal Expense
+// (category "Salary"), so it flows into profit and cash-flow like every
+// other expense — per Heaven's spec.
+class _OfficeStaffSalarySection extends ConsumerWidget {
+  const _OfficeStaffSalarySection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final membersAsync = ref.watch(teamMembersProvider);
+    final staff = (membersAsync.valueOrNull ?? const <TeamMember>[])
+        .where((m) => m.role.toUpperCase() == 'OFFICE_STAFF')
+        .toList(growable: false);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeaderText('OFFICE STAFF — MONTHLY SALARY'),
+        const SizedBox(height: 10),
+        if (membersAsync.isLoading && staff.isEmpty)
+          const Center(child: LensLoader(size: 20))
+        else if (staff.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.glass,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.glassBorder),
+            ),
+            child: Text(
+              'No office staff in the team yet. Staff who register with '
+              'the Office Staff role and join via invite code appear here.',
+              style: TextStyle(color: AppColors.filmDim, fontSize: 12.5),
+            ),
+          )
+        else
+          ...staff.map(
+            (m) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _OfficeStaffRow(member: m),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _OfficeStaffRow extends ConsumerWidget {
+  const _OfficeStaffRow({required this.member});
+
+  final TeamMember member;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.glass,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.glassBorder),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: AppColors.indigoSoft,
+            child: Text(
+              member.fullName.isNotEmpty
+                  ? member.fullName[0].toUpperCase()
+                  : '?',
+              style: TextStyle(
+                color: AppColors.film,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  member.fullName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.film,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  member.email,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: AppColors.filmDim, fontSize: 11.5),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          FilledButton(
+            onPressed: () => _PaySalaryDialog.show(context, ref, member),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.orange,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 8,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text('Pay Salary', style: TextStyle(fontSize: 12.5)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PaySalaryDialog {
+  const _PaySalaryDialog._();
+
+  static Future<void> show(
+    BuildContext context,
+    WidgetRef ref,
+    TeamMember member,
+  ) async {
+    final amountCtl = TextEditingController();
+    final noteCtl = TextEditingController();
+    final now = DateTime.now();
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
+    ];
+    final monthLabel = '${monthNames[now.month - 1]} ${now.year}';
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.voidElevated,
+        title: Text(
+          'Pay salary — ${member.fullName}',
+          style: TextStyle(color: AppColors.film, fontSize: 17),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: amountCtl,
+              autofocus: true,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              style: TextStyle(color: AppColors.film),
+              decoration: InputDecoration(
+                labelText: 'Amount (৳) — $monthLabel',
+                labelStyle: TextStyle(color: AppColors.filmDim),
+              ),
+            ),
+            TextField(
+              controller: noteCtl,
+              style: TextStyle(color: AppColors.film),
+              decoration: InputDecoration(
+                labelText: 'Note (optional)',
+                labelStyle: TextStyle(color: AppColors.filmDim),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text('Cancel', style: TextStyle(color: AppColors.filmDim)),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.orange,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Pay'),
+          ),
+        ],
+      ),
+    );
+
+    final amount = double.tryParse(amountCtl.text.trim()) ?? 0;
+    if (confirmed != true || amount <= 0) {
+      amountCtl.dispose();
+      noteCtl.dispose();
+      return;
+    }
+
+    final extraNote = noteCtl.text.trim();
+    final localId =
+        'local_${DateTime.now().microsecondsSinceEpoch}_salary';
+    final draft = Expense(
+      id: localId,
+      category: 'Salary',
+      amount: amount,
+      note: [
+        'Salary — ${member.fullName} — $monthLabel',
+        if (extraNote.isNotEmpty) extraNote,
+      ].join(' · '),
+      incurredAt: DateTime.now(),
+    );
+    amountCtl.dispose();
+    noteCtl.dispose();
+
+    try {
+      await ref.read(expenseListControllerProvider.notifier).add(draft);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Salary recorded as expense — ${member.fullName} ($monthLabel)',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not record salary: $e')));
+    }
   }
 }
 

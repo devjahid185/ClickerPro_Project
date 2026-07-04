@@ -55,6 +55,10 @@ class UserApi {
       if (partial['bkash'] != null) 'bkash_number': partial['bkash'],
       if (partial['bankDetails'] != null)
         'bank_details': partial['bankDetails'],
+      // Office staff position (Photo Editor / HR / …) — stored locally as
+      // `specialization`, server column is `staff_position`.
+      if (partial['specialization'] != null)
+        'staff_position': partial['specialization'],
     };
     final r = await _client.patch('/api/profile', body: body);
     return _user(r);

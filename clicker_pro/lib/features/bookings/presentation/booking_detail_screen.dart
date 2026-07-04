@@ -55,6 +55,7 @@ import '../domain/shift.dart';
 import 'booking_list_screen.dart'
     show shouldShowPayment, shouldShowPaymentInShare;
 import 'widgets/assignments_section.dart';
+import 'widgets/distributor_panel.dart';
 import 'widgets/detail_section.dart';
 import 'widgets/payment_summary_card.dart';
 import 'widgets/re_edit_section.dart';
@@ -170,14 +171,25 @@ class BookingDetailScreen extends ConsumerWidget {
         ),
         floatingActionButton: detailAsync.maybeWhen(
           data: (envelope) {
-            final next = BookingStatusMachine.nextForward(
-              envelope.booking.status,
-            );
+            final status = envelope.booking.status;
+            // Freelancers get exactly one action — "Mark Shoot Complete" —
+            // available from confirmed or inProgress (the machine's
+            // confirmed → shotComplete shortcut). Owners/managers keep the
+            // normal step-by-step forward chain.
+            final next = policy.role == UserRole.freelancer
+                ? (BookingStatusMachine.canTransition(
+                        policy.role,
+                        status,
+                        BookingStatus.shotComplete,
+                      )
+                      ? BookingStatus.shotComplete
+                      : null)
+                : BookingStatusMachine.nextForward(status);
             if (next == null) return null;
             if (!policy.can(Capability.advanceBookingStatus)) return null;
-            if (!BookingStatusMachine.canRoleApply(
+            if (!BookingStatusMachine.canTransition(
               policy.role,
-              envelope.booking.status,
+              status,
               next,
             )) {
               return null;
@@ -185,8 +197,16 @@ class BookingDetailScreen extends ConsumerWidget {
             return FloatingActionButton.extended(
               backgroundColor: AppColors.orange,
               foregroundColor: AppColors.onAccent,
-              icon: const Icon(Icons.arrow_forward_rounded),
-              label: Text('Move to ${_titleCase(next.name)}'),
+              icon: Icon(
+                next == BookingStatus.shotComplete
+                    ? Icons.check_circle_outline_rounded
+                    : Icons.arrow_forward_rounded,
+              ),
+              label: Text(
+                next == BookingStatus.shotComplete
+                    ? 'Mark Shoot Complete'
+                    : 'Move to ${_titleCase(next.name)}',
+              ),
               onPressed: () => _handleAdvance(context, ref, next),
             );
           },
@@ -605,6 +625,13 @@ class _DetailBody extends StatelessWidget {
           currentRole: policy.role as UserRole,
           showPayout: showPayment,
           chiefUserId: booking.chiefPhotographerUserId,
+        ),
+        // Distributor tools — only renders for an assigned freelancer with
+        // Distribution mode ON (add same-role crew / step aside).
+        DistributorPanel(
+          booking: booking,
+          assignments: envelope.assignments,
+          currentUserId: currentUserId,
         ),
         TaskProgressSection(
           bookingId: booking.id,

@@ -40,6 +40,12 @@ class BookingStatusMachine {
   /// rejected per Requirement 3.3.
   static bool isAllowedTransition(BookingStatus from, BookingStatus to) {
     if (to == BookingStatus.cancelled) return _cancellableFrom.contains(from);
+    // Shortcut: most shoots go straight from confirmed to done without
+    // anyone toggling inProgress on the day — the crew marks "Shoot
+    // Complete" right after the event (Heaven feedback 2026-07).
+    if (from == BookingStatus.confirmed && to == BookingStatus.shotComplete) {
+      return true;
+    }
     return _forward[from] == to;
   }
 
@@ -48,13 +54,19 @@ class BookingStatusMachine {
   ///
   /// - Owner / Both: every transition (Requirement 3.4).
   /// - Manager: forward transitions only — never cancel (Requirement 3.6).
-  /// - Freelancer: no event-level transitions at all (Requirement 3.7).
+  /// - Freelancer: may only mark the shoot complete. Any one assigned
+  ///   photographer/cinematographer taps "Shoot Complete" after the event
+  ///   and the whole event flips for everyone (Heaven feedback 2026-07).
+  ///   The server re-checks that the caller is actually assigned to the
+  ///   event before accepting the transition.
   static bool canRoleApply(
     UserRole role,
     BookingStatus from,
     BookingStatus to,
   ) {
-    if (role == UserRole.freelancer) return false;
+    if (role == UserRole.freelancer) {
+      return to == BookingStatus.shotComplete;
+    }
     if (to == BookingStatus.cancelled && role == UserRole.manager) return false;
     return true;
   }

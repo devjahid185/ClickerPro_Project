@@ -40,6 +40,38 @@ class AssignmentController extends Controller
             'notes' => 'nullable|string',
         ]);
 
+        // Distributor rule: a FREELANCER may add crew to an event only when
+        // they are assigned to it themselves, and only in the SAME role they
+        // were given (assigned as cinematographer → may add cinematographers
+        // only). Owners/managers are unrestricted.
+        $caller = $request->user();
+        if ($caller->role === 'FREELANCER') {
+            $own = Assignment::where('event_id', $eventId)
+                ->where('user_id', $caller->id)
+                ->first();
+            if (!$own) {
+                return response()->json([
+                    'message' => 'You are not assigned to this event.',
+                ], 403);
+            }
+            // chiefPhotographer distributes photographers, so photographer
+            // variants collapse to one bucket for the comparison.
+            $norm = function (string $r): string {
+                $r = strtoupper($r);
+                return str_contains($r, 'PHOTOGRAPHER') ? 'PHOTOGRAPHER' : $r;
+            };
+            $ownRole = $norm((string) $own->role);
+            $newRole = $norm((string) ($data['role'] ?? ''));
+            if ($ownRole !== '' && $newRole !== $ownRole) {
+                return response()->json([
+                    'message' => 'You can only add people in your own role ('
+                        . strtolower($ownRole) . ').',
+                ], 403);
+            }
+            // Distributors hand out work; they don't set someone else's pay.
+            unset($data['payout'], $data['payout_paid']);
+        }
+
         $data['event_id'] = $eventId;
 
         $assignment = Assignment::create($data);
@@ -86,6 +118,16 @@ class AssignmentController extends Controller
 
         if (!$assignment) {
             return response()->json(['message' => 'Not found'], 404);
+        }
+
+        // A freelancer distributor may only remove THEMSELVES (stepping
+        // aside after re-assigning the shoot) — never another crew member.
+        $caller = $request->user();
+        if ($caller->role === 'FREELANCER'
+            && (int) $assignment->user_id !== (int) $caller->id) {
+            return response()->json([
+                'message' => 'You can only remove your own assignment.',
+            ], 403);
         }
 
         $assignment->delete();

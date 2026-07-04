@@ -22,6 +22,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/booking_status/booking_status.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/role/role_policy.dart';
+import '../../../core/validation/phone_validator.dart';
 import '../../auth/domain/user_role.dart';
 import '../../profile/application/profile_controllers.dart';
 import '../domain/assignment.dart';
@@ -593,6 +594,9 @@ class BookingEditController
       }
       if (draft.clientPhone == null || draft.clientPhone!.trim().isEmpty) {
         errors[BookingField.clientPhone] = 'Client phone is required.';
+      } else if (!PhoneValidator.isValid(draft.clientPhone!)) {
+        errors[BookingField.clientPhone] =
+            'Enter a valid 11-digit number (01XXXXXXXXX).';
       }
     }
 

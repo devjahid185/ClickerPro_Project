@@ -29,6 +29,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/format/booking_format.dart';
+import '../../../core/navigation/route_names.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
@@ -37,14 +38,19 @@ import '../application/fl_earning_providers.dart';
 import '../domain/fl_earning.dart';
 import '../../../theme/app_theme.dart';
 
-class FlEarningsScreen extends ConsumerStatefulWidget {
-  const FlEarningsScreen({super.key});
+/// Freelancer finance body — embedded inside FinanceScreen (pure
+/// Freelancer role, and the Freelancer tab of the Both role). This used
+/// to be a standalone "My Earnings" screen; per Heaven's feedback the
+/// freelancer's money view lives in Finance now, so this widget carries
+/// no Scaffold/AppBar of its own.
+class FlEarningsBody extends ConsumerStatefulWidget {
+  const FlEarningsBody({super.key});
 
   @override
-  ConsumerState<FlEarningsScreen> createState() => _FlEarningsScreenState();
+  ConsumerState<FlEarningsBody> createState() => _FlEarningsBodyState();
 }
 
-class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
+class _FlEarningsBodyState extends ConsumerState<FlEarningsBody> {
   bool _isYearly = false;
 
   @override
@@ -52,47 +58,25 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
     final lang = 'en';
     final async = ref.watch(flEarningOverviewControllerProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.surfaceAlt,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.film),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
-        titleSpacing: 0,
-        title: Text(
-          'Payout',
-          style: TextStyle(
-            color: AppColors.film,
-            fontFamily: AppText.brandFontFamily,
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.02 * 20,
+    return RefreshIndicator(
+      color: AppColors.orange,
+      backgroundColor: AppColors.surface,
+      onRefresh: () =>
+          ref.read(flEarningOverviewControllerProvider.notifier).refresh(),
+      child: async.when(
+        loading: () => const Center(child: LensLoader()),
+        error: (_, _) => Center(
+          child: ErrorState(
+            message: 'Failed to load earnings',
+            onRetry: () => ref
+                .read(flEarningOverviewControllerProvider.notifier)
+                .refresh(),
           ),
         ),
-      ),
-      body: RefreshIndicator(
-        color: AppColors.orange,
-        backgroundColor: AppColors.surface,
-        onRefresh: () =>
-            ref.read(flEarningOverviewControllerProvider.notifier).refresh(),
-        child: async.when(
-          loading: () => const Center(child: LensLoader()),
-          error: (_, _) => Center(
-            child: ErrorState(
-              message: 'Failed to load earnings',
-              onRetry: () => ref
-                  .read(flEarningOverviewControllerProvider.notifier)
-                  .refresh(),
-            ),
-          ),
-          // Always render the full dashboard — when there are no earnings yet
-          // the summary cards simply read ৳0 (a clean premium "00" template)
-          // instead of a bare empty page.
-          data: (overview) => _buildContent(context, overview, lang),
-        ),
+        // Always render the full dashboard — when there are no earnings yet
+        // the summary cards simply read ৳0 (a clean premium "00" template)
+        // instead of a bare empty page.
+        data: (overview) => _buildContent(context, overview, lang),
       ),
     );
   }
@@ -159,6 +143,24 @@ class _FlEarningsScreenState extends ConsumerState<FlEarningsScreen> {
           _buildYearlyRecap(overview.yearlyRecap, lang),
         const SizedBox(height: 24),
         _buildRequestPaymentButton(context),
+        const SizedBox(height: 10),
+        // Which teams this freelancer belongs to — payments above are
+        // broken down per-owner, this is the roster view.
+        OutlinedButton.icon(
+          onPressed: () => Navigator.of(
+            context,
+          ).pushNamed(RouteNames.freelancerCompanies),
+          icon: const Icon(Icons.business_outlined, size: 18),
+          label: const Text('My Teams'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.orange,
+            side: BorderSide(color: AppColors.orange.withValues(alpha: 0.5)),
+            padding: const EdgeInsets.symmetric(vertical: 15),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+        ),
       ],
     );
   }

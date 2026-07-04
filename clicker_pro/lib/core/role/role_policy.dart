@@ -61,10 +61,14 @@ class RolePolicy {
     },
     Capability.editBooking: {UserRole.owner, UserRole.both, UserRole.manager},
     Capability.deleteBooking: {UserRole.owner, UserRole.both},
+    // Freelancer inclusion is narrow: BookingStatusMachine.canRoleApply
+    // only lets them apply the → shotComplete step ("Shoot Complete"),
+    // and the server checks they are assigned to the event.
     Capability.advanceBookingStatus: {
       UserRole.owner,
       UserRole.both,
       UserRole.manager,
+      UserRole.freelancer,
     },
     Capability.cancelBooking: {UserRole.owner, UserRole.both},
     Capability.viewBookingPayments: {
@@ -78,10 +82,15 @@ class RolePolicy {
       UserRole.manager,
     },
     Capability.editBookingPayments: {UserRole.owner, UserRole.both},
+    // Freelancer inclusion is the distributor flow: an assigned freelancer
+    // with Distribution mode ON may add same-role crew / remove themselves.
+    // The DistributorPanel gates the UI and the server enforces both rules
+    // (must be assigned; may only add their own role; may only delete self).
     Capability.editAssignment: {
       UserRole.owner,
       UserRole.both,
       UserRole.manager,
+      UserRole.freelancer,
     },
     Capability.toggleHidePayment: {UserRole.owner, UserRole.both},
     Capability.generatePublicBookingToken: {UserRole.owner, UserRole.both},

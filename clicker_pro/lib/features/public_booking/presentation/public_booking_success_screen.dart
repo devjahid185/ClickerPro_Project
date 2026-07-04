@@ -9,6 +9,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../core/navigation/route_names.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_theme.dart';
 
@@ -123,7 +124,22 @@ class PublicBookingSuccessScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  onPressed: () => Navigator.of(context).maybePop(),
+                  onPressed: () {
+                    // The form pushReplace()s into this screen, so when the
+                    // flow was opened from a deep link there is nothing left
+                    // to pop and Done used to silently do nothing. Fall back
+                    // to the splash route, which forwards to dashboard or
+                    // login based on the current session.
+                    final nav = Navigator.of(context);
+                    if (nav.canPop()) {
+                      nav.pop();
+                    } else {
+                      nav.pushNamedAndRemoveUntil(
+                        RouteNames.splash,
+                        (route) => false,
+                      );
+                    }
+                  },
                   child: const Text(
                     'Done',
                     style: TextStyle(

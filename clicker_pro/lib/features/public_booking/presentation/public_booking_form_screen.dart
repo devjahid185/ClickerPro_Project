@@ -31,6 +31,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/format/booking_format.dart';
 import '../../../core/navigation/route_names.dart';
+import '../../../core/validation/phone_validator.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
@@ -376,9 +377,9 @@ class _FormState extends ConsumerState<_Form> {
     if (_clientNameCtrl.text.trim().isEmpty) {
       errors['clientName'] = 'Your name is required.';
     }
-    final phone = _clientPhoneCtrl.text.trim();
-    if (phone.isEmpty || !RegExp(r'^\+?\d+$').hasMatch(phone)) {
-      errors['clientPhone'] = 'Phone must be digits.';
+    final phoneError = PhoneValidator.validate(_clientPhoneCtrl.text);
+    if (phoneError != null) {
+      errors['clientPhone'] = phoneError;
     }
     return errors;
   }

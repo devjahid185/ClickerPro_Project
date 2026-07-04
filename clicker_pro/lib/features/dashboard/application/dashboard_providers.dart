@@ -97,8 +97,11 @@ final dashboardMetricsProvider = StreamProvider<DashboardMetrics>((ref) {
             b.status != BookingStatus.delivered) {
           upcomingEvents++;
         }
+        // "Complete" card = every event whose shoot has happened
+        // (shotComplete and beyond), per Heaven feedback 2026-07.
         if (b.status == BookingStatus.completed ||
-            b.status == BookingStatus.delivered) {
+            b.status == BookingStatus.delivered ||
+            b.status == BookingStatus.shotComplete) {
           successEvents++;
         }
         if (b.status == BookingStatus.cancelled) cancelledEvents++;
@@ -162,8 +165,8 @@ final weekEventCountsProvider = Provider<List<int>>((ref) {
   return counts;
 });
 
-/// Count of delivered/completed events whose date falls in the current
-/// calendar month. Feeds the Delivered strip's "+N this month" caption.
+/// Count of shot/delivered/completed events whose date falls in the current
+/// calendar month. Feeds the Complete strip's "+N this month" caption.
 final deliveredThisMonthProvider = Provider<int>((ref) {
   final bookings = ref
       .watch(bookingListAllProvider(const BookingFilter()))
@@ -174,7 +177,8 @@ final deliveredThisMonthProvider = Provider<int>((ref) {
   var count = 0;
   for (final b in bookings) {
     if (b.status != BookingStatus.completed &&
-        b.status != BookingStatus.delivered) {
+        b.status != BookingStatus.delivered &&
+        b.status != BookingStatus.shotComplete) {
       continue;
     }
     if (b.date.year == now.year && b.date.month == now.month) count++;
@@ -199,7 +203,8 @@ final deliveredTrendProvider = Provider<List<int>>((ref) {
 
   for (final b in bookings) {
     if (b.status != BookingStatus.completed &&
-        b.status != BookingStatus.delivered) {
+        b.status != BookingStatus.delivered &&
+        b.status != BookingStatus.shotComplete) {
       continue;
     }
     final bDate = DateTime(b.date.year, b.date.month, b.date.day);

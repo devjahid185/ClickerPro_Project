@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../../../core/providers.dart';
+import '../../../core/validation/phone_validator.dart';
 import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/widgets/motion.dart';
@@ -98,10 +99,12 @@ class WaitlistScreen extends ConsumerWidget {
   }
 
   void _showAddSheet(BuildContext context, WidgetRef ref) {
+    final formKey = GlobalKey<FormState>();
     final nameCtrl = TextEditingController();
     final phoneCtrl = TextEditingController();
     final noteCtrl = TextEditingController();
     DateTime preferredDate = DateTime.now().add(const Duration(days: 7));
+    var saving = false;
 
     InputDecoration deco(String label) => InputDecoration(
       labelText: label,
@@ -135,7 +138,9 @@ class WaitlistScreen extends ConsumerWidget {
           child: SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-              child: Column(
+              child: Form(
+                key: formKey,
+                child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -161,17 +166,23 @@ class WaitlistScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  TextField(
+                  TextFormField(
                     controller: nameCtrl,
                     style: TextStyle(color: AppColors.film),
                     decoration: deco('Client name'),
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Client name is required'
+                        : null,
                   ),
                   const SizedBox(height: 12),
-                  TextField(
+                  TextFormField(
                     controller: phoneCtrl,
                     keyboardType: TextInputType.phone,
                     style: TextStyle(color: AppColors.film),
                     decoration: deco('Phone'),
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    validator: (v) => PhoneValidator.validate(v),
                   ),
                   const SizedBox(height: 12),
                   InkWell(
@@ -209,39 +220,54 @@ class WaitlistScreen extends ConsumerWidget {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton(
-                      onPressed: () async {
-                        final name = nameCtrl.text.trim();
-                        final phone = phoneCtrl.text.trim();
-                        if (name.isEmpty || phone.isEmpty) return;
-                        final ownerId =
-                            ref.read(sessionControllerProvider).value?.user.id ??
-                            '';
-                        final entry = WaitlistEntry(
-                          id: DateTime.now().millisecondsSinceEpoch.toString(),
-                          ownerId: ownerId,
-                          clientName: name,
-                          phone: phone,
-                          preferredDate: preferredDate,
-                          note: noteCtrl.text.trim().isEmpty
-                              ? null
-                              : noteCtrl.text.trim(),
-                        );
-                        try {
-                          await ref.read(waitlistApiProvider).create(entry);
-                          ref.invalidate(waitlistProvider);
-                          if (ctx.mounted) Navigator.of(ctx).pop();
-                        } catch (e) {
-                          if (ctx.mounted) {
-                            final reason =
-                                e is ApiException ? e.message : e.toString();
-                            ScaffoldMessenger.of(ctx).showSnackBar(
-                              SnackBar(
-                                content: Text('Could not save: $reason'),
-                              ),
-                            );
-                          }
-                        }
-                      },
+                      onPressed: saving
+                          ? null
+                          : () async {
+                              if (!(formKey.currentState?.validate() ??
+                                  false)) {
+                                return;
+                              }
+                              setSheetState(() => saving = true);
+                              final ownerId = ref
+                                      .read(sessionControllerProvider)
+                                      .value
+                                      ?.user
+                                      .id ??
+                                  '';
+                              final entry = WaitlistEntry(
+                                id: DateTime.now()
+                                    .millisecondsSinceEpoch
+                                    .toString(),
+                                ownerId: ownerId,
+                                clientName: nameCtrl.text.trim(),
+                                phone: PhoneValidator.normalize(
+                                  phoneCtrl.text,
+                                ),
+                                preferredDate: preferredDate,
+                                note: noteCtrl.text.trim().isEmpty
+                                    ? null
+                                    : noteCtrl.text.trim(),
+                              );
+                              try {
+                                await ref
+                                    .read(waitlistApiProvider)
+                                    .create(entry);
+                                ref.invalidate(waitlistProvider);
+                                if (ctx.mounted) Navigator.of(ctx).pop();
+                              } catch (e) {
+                                if (ctx.mounted) {
+                                  setSheetState(() => saving = false);
+                                  final reason = e is ApiException
+                                      ? e.message
+                                      : e.toString();
+                                  ScaffoldMessenger.of(ctx).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Could not save: $reason'),
+                                    ),
+                                  );
+                                }
+                              }
+                            },
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.orange,
                         foregroundColor: Colors.white,
@@ -251,13 +277,16 @@ class WaitlistScreen extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                      child: const Text(
-                        'Add',
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
+                      child: saving
+                          ? const LensLoader(size: 18)
+                          : const Text(
+                              'Add',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
                     ),
                   ),
                 ],
+                ),
               ),
             ),
           ),

@@ -19,6 +19,7 @@ class ProfileController extends Controller
             'name' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:30',
             'bio' => 'nullable|string',
+            'staff_position' => 'nullable|string|max:100',
             'business_name' => 'nullable|string|max:255',
             'avatar' => 'nullable|string',
             // Studio logo + digital signature (remote URL or base64 data-URI).
@@ -47,7 +48,7 @@ class ProfileController extends Controller
         ]);
 
         $requested = strtoupper($data['newRole'] ?? $data['role'] ?? '');
-        if (!in_array($requested, ['OWNER', 'FREELANCER', 'BOTH'], true)) {
+        if (!in_array($requested, ['OWNER', 'FREELANCER', 'BOTH', 'OFFICE_STAFF'], true)) {
             return response()->json(['message' => 'Invalid role'], 422);
         }
 

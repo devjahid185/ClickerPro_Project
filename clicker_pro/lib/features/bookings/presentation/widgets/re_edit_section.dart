@@ -16,11 +16,15 @@
 // Source of truth: `.kiro/specs/bookings-module/design.md` →
 // "Re-edit Section". Validates Requirements 7.1–7.10, 11.6.
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/booking_status/booking_status.dart';
+import '../../../../core/providers.dart';
 import '../../../../core/role/capability.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_theme.dart';
@@ -111,12 +115,21 @@ class ReEditSection extends ConsumerWidget {
     try {
       final session = ref.read(bookingsCurrentUserIdProvider);
       if (session == null) return;
+      // Upload any picked reference images first; the request then carries
+      // their URLs so the editor sees exactly which shots need fixing.
+      List<String>? referenceUrls;
+      if (result.imagePaths.isNotEmpty) {
+        final api = ref.read(userApiProvider);
+        referenceUrls = [
+          for (final path in result.imagePaths) await api.uploadImage(path),
+        ];
+      }
       await repo.request(
         bookingId: booking.id,
         round: result.round,
         editorUserId: result.editorUserId,
         deadline: result.deadline,
-        referenceImageUrls: null,
+        referenceImageUrls: referenceUrls,
         notes: result.notes,
         requestedByUserId: session,
         policy: ref.read(bookingsPolicyProvider),
@@ -227,6 +240,50 @@ class _ReEditRow extends ConsumerWidget {
                       color: AppColors.film.withValues(alpha: 0.9),
                       fontSize: 12.5,
                       fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+                if (request.referenceImageUrls?.isNotEmpty ?? false) ...[
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    height: 48,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: request.referenceImageUrls!.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 6),
+                      itemBuilder: (ctx, i) {
+                        final url = request.referenceImageUrls![i];
+                        return GestureDetector(
+                          onTap: () => showDialog<void>(
+                            context: ctx,
+                            builder: (_) => Dialog(
+                              backgroundColor: Colors.black,
+                              child: InteractiveViewer(
+                                child: Image.network(url),
+                              ),
+                            ),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Image.network(
+                              url,
+                              width: 48,
+                              height: 48,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) => Container(
+                                width: 48,
+                                height: 48,
+                                color: AppColors.voidElevated,
+                                child: Icon(
+                                  Icons.broken_image_outlined,
+                                  size: 18,
+                                  color: AppColors.filmMuted,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -398,11 +455,16 @@ class _RequestReEditResult {
     required this.deadline,
     this.editorUserId,
     this.notes,
+    this.imagePaths = const [],
   });
   final int round;
   final DateTime deadline;
   final String? editorUserId;
   final String? notes;
+
+  /// Local file paths of reference images picked in the dialog; uploaded
+  /// by the caller before the request is filed.
+  final List<String> imagePaths;
 }
 
 class _RequestReEditDialog extends StatefulWidget {
@@ -428,6 +490,22 @@ class _RequestReEditDialogState extends State<_RequestReEditDialog> {
   late final TextEditingController _notesCtrl;
   DateTime? _deadline;
   String? _deadlineError;
+  final List<String> _imagePaths = [];
+
+  Future<void> _pickImages() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickMultiImage(
+      imageQuality: 80,
+      maxWidth: 1920,
+    );
+    if (picked.isEmpty || !mounted) return;
+    setState(() {
+      // Server caps attachments at 10 per request.
+      _imagePaths.addAll(
+        picked.map((x) => x.path).take(10 - _imagePaths.length),
+      );
+    });
+  }
 
   @override
   void initState() {
@@ -490,6 +568,67 @@ class _RequestReEditDialogState extends State<_RequestReEditDialog> {
               maxLines: 3,
               maxLength: 2000,
             ),
+            const SizedBox(height: 8),
+            // Reference images — screenshots of the shots that need fixing.
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: _imagePaths.length >= 10 ? null : _pickImages,
+                icon: Icon(
+                  Icons.add_photo_alternate_outlined,
+                  size: 18,
+                  color: AppColors.orange,
+                ),
+                label: Text(
+                  _imagePaths.isEmpty
+                      ? 'Attach photos (optional)'
+                      : 'Add more photos (${_imagePaths.length}/10)',
+                  style: TextStyle(color: AppColors.orange, fontSize: 13),
+                ),
+              ),
+            ),
+            if (_imagePaths.isNotEmpty)
+              SizedBox(
+                height: 64,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _imagePaths.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
+                  itemBuilder: (_, i) => Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(
+                          File(_imagePaths[i]),
+                          width: 64,
+                          height: 64,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: GestureDetector(
+                          onTap: () =>
+                              setState(() => _imagePaths.removeAt(i)),
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: Colors.black54,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.close,
+                              size: 14,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -563,6 +702,7 @@ class _RequestReEditDialogState extends State<_RequestReEditDialog> {
         deadline: _deadline!,
         editorUserId: editor.isEmpty ? null : editor,
         notes: notes.isEmpty ? null : notes,
+        imagePaths: List.of(_imagePaths),
       ),
     );
   }

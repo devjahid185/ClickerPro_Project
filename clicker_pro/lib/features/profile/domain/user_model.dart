@@ -88,6 +88,8 @@ class UserModel {
         return 'Freelancer · $firstName';
       case UserRole.manager:
         return 'Manager · $firstName';
+      case UserRole.officeStaff:
+        return 'Staff · $firstName';
       case UserRole.webAdmin:
         return 'Admin · $firstName';
     }
@@ -114,7 +116,11 @@ class UserModel {
       // Laravel UserResource sends snake_case (`avatar`, `business_name`)
       // alongside some camelCase aliases — accept both spellings.
       avatarUrl: (json['avatarUrl'] ?? json['avatar']) as String?,
-      specialization: json['specialization'] as String?,
+      specialization:
+          (json['specialization'] ??
+                  json['staff_position'] ??
+                  json['staffPosition'])
+              as String?,
       companyName:
           json['companyName'] as String? ??
           json['businessName'] as String? ??

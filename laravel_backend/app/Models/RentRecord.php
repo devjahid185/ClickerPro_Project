@@ -11,12 +11,14 @@ class RentRecord extends Model
 
     protected $fillable = [
         'gear_item_id', 'owner_id', 'direction', 'rented_to',
-        'amount', 'rented_at', 'returned_at', 'notes',
+        'counterparty_phone', 'amount', 'rented_at', 'return_by',
+        'returned_at', 'notes',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
         'rented_at' => 'datetime',
+        'return_by' => 'datetime',
         'returned_at' => 'datetime',
     ];
 

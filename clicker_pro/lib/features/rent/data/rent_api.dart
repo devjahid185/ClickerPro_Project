@@ -7,10 +7,12 @@
 //   POST   /api/rent        → { data: record } (201)
 //   PATCH  /api/rent/:id    → { data: record }     (mark returned)
 //
-// Column map: counterpartyName ⇄ rented_to · actualReturnDate ⇄
-// returned_at · status is DERIVED (returned_at set → RETURNED, else
-// ACTIVE; OVERDUE is computed locally from returnBy, which has no server
-// column yet and stays device-local).
+// Column map: counterpartyName ⇄ rented_to · counterpartyPhone ⇄
+// counterparty_phone · returnBy ⇄ return_by · actualReturnDate ⇄
+// returned_at · createdAt ⇄ rented_at (the rent date shown in the form) ·
+// status is DERIVED (returned_at set → RETURNED, else ACTIVE; OVERDUE is
+// computed locally from returnBy). gear_item_id is optional — standalone
+// rentals from the Rent page have no gear item.
 
 import '../../../core/network/api_client.dart';
 import '../domain/rent_record.dart';
@@ -28,11 +30,12 @@ class RentApi {
       direction: RentDirection.fromWire(j['direction'] as String?),
       counterpartyName: (j['rented_to'] ?? j['counterpartyName'] ?? '')
           .toString(),
-      counterpartyPhone: j['counterpartyPhone'] as String?,
+      counterpartyPhone:
+          (j['counterparty_phone'] ?? j['counterpartyPhone']) as String?,
       amount: double.tryParse((j['amount'] ?? '0').toString()) ?? 0,
-      returnBy: j['returnBy'] == null
+      returnBy: (j['return_by'] ?? j['returnBy']) == null
           ? null
-          : DateTime.tryParse(j['returnBy'].toString()),
+          : DateTime.tryParse((j['return_by'] ?? j['returnBy']).toString()),
       actualReturnDate: returnedAt == null
           ? null
           : DateTime.tryParse(returnedAt.toString()),
@@ -69,8 +72,10 @@ class RentApi {
             .toIso8601String()
             .split('T')
             .first,
+        if (draft.returnBy != null)
+          'return_by': draft.returnBy!.toIso8601String().split('T').first,
         if (draft.counterpartyPhone != null)
-          'notes': 'Phone: ${draft.counterpartyPhone}',
+          'counterparty_phone': draft.counterpartyPhone,
       },
     );
     final d = (r is Map && r['data'] is Map)

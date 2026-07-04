@@ -1514,6 +1514,12 @@ abstract class AppLocalizations {
   /// **'Amount'**
   String get rent_amount;
 
+  /// No description provided for @rent_date.
+  ///
+  /// In en, this message translates to:
+  /// **'Rent date'**
+  String get rent_date;
+
   /// No description provided for @rent_return_by.
   ///
   /// In en, this message translates to:

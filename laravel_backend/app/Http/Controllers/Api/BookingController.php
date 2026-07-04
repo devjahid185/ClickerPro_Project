@@ -184,6 +184,26 @@ class BookingController extends Controller
             'note' => 'nullable|string',
         ]);
 
+        // Freelancers may only flip an event to SHOT_COMPLETE, and only on
+        // events they are actually assigned to. One assignee marking the
+        // shoot done completes it for the whole crew.
+        $user = $request->user();
+        if ($user->role === 'FREELANCER') {
+            if (strtoupper($data['status']) !== 'SHOT_COMPLETE') {
+                return response()->json([
+                    'message' => 'Freelancers can only mark the shoot complete.',
+                ], 403);
+            }
+            $assigned = \App\Models\Assignment::where('event_id', $event->id)
+                ->where('user_id', $user->id)
+                ->exists();
+            if (!$assigned) {
+                return response()->json([
+                    'message' => 'You are not assigned to this event.',
+                ], 403);
+            }
+        }
+
         // Chronology guard: a shoot can't be "done" before it happens.
         // Post-event statuses unlock from the event DAY onward (the app
         // additionally enforces the end-time on-device).

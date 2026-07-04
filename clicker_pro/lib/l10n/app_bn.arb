@@ -268,6 +268,7 @@
   "rent_counterparty_name": "পক্ষের নাম",
   "rent_counterparty_phone": "ফোন (ঐচ্ছিক)",
   "rent_amount": "পরিমাণ",
+  "rent_date": "ভাড়ার তারিখ",
   "rent_return_by": "ফেরত দিতে হবে",
   "rent_save": "সেভ",
   "rent_cancel": "বাতিল",

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/validation/phone_validator.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/states/lens_loader.dart';
 import '../../../../theme/app_colors.dart';
@@ -41,6 +42,7 @@ class _AddRentSheetState extends ConsumerState<AddRentSheet> {
   final _phoneCtl = TextEditingController();
   final _amountCtl = TextEditingController();
   RentDirection _direction = RentDirection.out_;
+  DateTime _rentDate = DateTime.now();
   DateTime? _returnBy;
   bool _saving = false;
 
@@ -52,12 +54,16 @@ class _AddRentSheetState extends ConsumerState<AddRentSheet> {
     super.dispose();
   }
 
-  Future<void> _pickDate() async {
-    final picked = await showDatePicker(
+  Future<DateTime?> _showLensDatePicker({
+    required DateTime initialDate,
+    required DateTime firstDate,
+    required DateTime lastDate,
+  }) {
+    return showDatePicker(
       context: context,
-      initialDate: _returnBy ?? DateTime.now().add(const Duration(days: 7)),
-      firstDate: DateTime.now().subtract(const Duration(days: 1)),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
           colorScheme: ColorScheme.light(
@@ -69,8 +75,30 @@ class _AddRentSheetState extends ConsumerState<AddRentSheet> {
         child: child!,
       ),
     );
+  }
+
+  Future<void> _pickRentDate() async {
+    final picked = await _showLensDatePicker(
+      initialDate: _rentDate,
+      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) setState(() => _rentDate = picked);
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await _showLensDatePicker(
+      initialDate: _returnBy ?? DateTime.now().add(const Duration(days: 7)),
+      firstDate: DateTime.now().subtract(const Duration(days: 1)),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
     if (picked != null) setState(() => _returnBy = picked);
   }
+
+  String _formatDate(DateTime d) =>
+      '${d.year}-'
+      '${d.month.toString().padLeft(2, '0')}-'
+      '${d.day.toString().padLeft(2, '0')}';
 
   Future<void> _save() async {
     final loc = AppLocalizations.of(context);
@@ -86,6 +114,7 @@ class _AddRentSheetState extends ConsumerState<AddRentSheet> {
       amount: double.tryParse(_amountCtl.text.trim()) ?? 0,
       returnBy: _returnBy,
       status: RentStatus.active,
+      createdAt: _rentDate,
     );
     try {
       final saved = await ref
@@ -180,6 +209,8 @@ class _AddRentSheetState extends ConsumerState<AddRentSheet> {
                 keyboardType: TextInputType.phone,
                 style: TextStyle(color: AppColors.film),
                 decoration: _decoration(loc.rent_counterparty_phone),
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                validator: (v) => PhoneValidator.validate(v, required: false),
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -195,46 +226,21 @@ class _AddRentSheetState extends ConsumerState<AddRentSheet> {
               ),
               const SizedBox(height: 12),
 
+              // Rent date (when the gear was handed over / received)
+              _dateRow(
+                icon: Icons.event_outlined,
+                label: '${loc.rent_date}: ${_formatDate(_rentDate)}',
+                onTap: _pickRentDate,
+              ),
+              const SizedBox(height: 12),
+
               // Return-by date
-              InkWell(
+              _dateRow(
+                icon: Icons.calendar_today_outlined,
+                label: _returnBy == null
+                    ? loc.rent_return_by
+                    : '${loc.rent_return_by}: ${_formatDate(_returnBy!)}',
                 onTap: _pickDate,
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.voidElevated,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.glassBorder),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today_outlined,
-                        color: AppColors.gold,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          _returnBy == null
-                              ? loc.rent_return_by
-                              : '${loc.rent_return_by}: '
-                                    '${_returnBy!.year}-'
-                                    '${_returnBy!.month.toString().padLeft(2, '0')}-'
-                                    '${_returnBy!.day.toString().padLeft(2, '0')}',
-                          style: TextStyle(color: AppColors.film),
-                        ),
-                      ),
-                      Icon(
-                        Icons.chevron_right,
-                        color: AppColors.filmMuted,
-                      ),
-                    ],
-                  ),
-                ),
               ),
               const SizedBox(height: 20),
 
@@ -272,6 +278,35 @@ class _AddRentSheetState extends ConsumerState<AddRentSheet> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _dateRow({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.voidElevated,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.glassBorder),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: AppColors.gold, size: 18),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(label, style: TextStyle(color: AppColors.film)),
+            ),
+            Icon(Icons.chevron_right, color: AppColors.filmMuted),
+          ],
         ),
       ),
     );

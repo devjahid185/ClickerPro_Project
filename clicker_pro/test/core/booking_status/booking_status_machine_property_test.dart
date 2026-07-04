@@ -56,11 +56,19 @@ bool _expectedStructurallyAllowed(BookingStatus from, BookingStatus to) {
   if (to == BookingStatus.cancelled) {
     return _expectedCancellableFrom.contains(from);
   }
+  // Same-day shortcut mirrored from the machine: confirmed → shotComplete
+  // without an explicit inProgress step.
+  if (from == BookingStatus.confirmed && to == BookingStatus.shotComplete) {
+    return true;
+  }
   return _expectedForward[from] == to;
 }
 
 bool _expectedRoleAllowed(UserRole role, BookingStatus from, BookingStatus to) {
-  if (role == UserRole.freelancer) return false;
+  // Freelancers hold exactly one transition right: marking the shoot
+  // complete on events they are assigned to (assignment is enforced
+  // server-side; the machine only sees the role).
+  if (role == UserRole.freelancer) return to == BookingStatus.shotComplete;
   if (to == BookingStatus.cancelled && role == UserRole.manager) return false;
   return true;
 }
@@ -198,22 +206,29 @@ void main() {
     });
 
     // ─────────────────────────────────────────────────────────────
-    // Property 1e — Freelancer is fully locked out (Requirement 3.7).
-    // Iterates the 49 (from, to) pairs and asserts that
-    // `canTransition(freelancer, ...)` always returns false, regardless
-    // of structural validity.  Catches the easy-to-introduce bug
-    // where someone bolts on a "freelancer can advance their own
-    // booking" exception without updating the matrix doc.
+    // Property 1e — Freelancer may ONLY mark the shoot complete
+    // (Heaven feedback 2026-07: any assigned photographer or
+    // cinematographer taps "Shoot Complete" and the event flips for
+    // the whole crew). Every other (from, to) pair stays locked, and
+    // the only structurally valid path is inProgress → shotComplete.
     // ─────────────────────────────────────────────────────────────
-    test('freelancer cannot apply any transition (49 pairs)', () {
+    test('freelancer can only reach shotComplete (49 pairs)', () {
       for (final from in BookingStatus.values) {
         for (final to in BookingStatus.values) {
+          final allowed = BookingStatusMachine.canTransition(
+            UserRole.freelancer,
+            from,
+            to,
+          );
+          final expected =
+              to == BookingStatus.shotComplete &&
+              _expectedStructurallyAllowed(from, to);
           expect(
-            BookingStatusMachine.canTransition(UserRole.freelancer, from, to),
-            isFalse,
+            allowed,
+            expected,
             reason:
-                'Freelancer must not be able to apply ($from -> $to), '
-                'but canTransition returned true',
+                'Freelancer ($from -> $to): expected $expected '
+                'but canTransition returned $allowed',
           );
         }
       }

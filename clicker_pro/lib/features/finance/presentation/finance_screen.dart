@@ -30,6 +30,7 @@ import '../../bookings/domain/booking_filter.dart';
 import '../../dashboard/application/dashboard_providers.dart';
 import '../../expenses/application/expense_providers.dart';
 import '../../expenses/domain/expense.dart';
+import '../../freelancer/presentation/fl_earnings_screen.dart';
 import '../../petty_cash/domain/petty_cash_entry.dart';
 import '../../petty_cash/presentation/petty_cash_screen.dart';
 import '../../profile/application/profile_controllers.dart';
@@ -53,8 +54,17 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   @override
   Widget build(BuildContext context) {
     final policy = ref.watch(bookingsPolicyProvider);
-    final isManager = policy.role == UserRole.manager;
+    // Office staff get the same locked finance view as managers — dues
+    // and client names only, no studio income/profit figures.
+    final isManager =
+        policy.role == UserRole.manager ||
+        policy.role == UserRole.officeStaff;
     final isBoth = policy.role == UserRole.both;
+    final isFreelancer = policy.role == UserRole.freelancer;
+    // Pure freelancers always see the earnings face of Finance; Both-role
+    // users flip between the studio and freelancer sides with the tabs.
+    final showFreelancerFace =
+        isFreelancer || (isBoth && _showFreelancerSide);
     final firstName = ref
             .watch(currentUserProvider)
             .valueOrNull
@@ -145,7 +155,18 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
           ],
         ),
       ),
-      body: RefreshIndicator(
+      body: showFreelancerFace
+          ? Column(
+              children: [
+                if (isBoth)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
+                    child: _buildBothRoleTabs(),
+                  ),
+                const Expanded(child: FlEarningsBody()),
+              ],
+            )
+          : RefreshIndicator(
         color: AppColors.orange,
         backgroundColor: AppColors.surface,
         onRefresh: () async {
@@ -161,9 +182,6 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
               _FadeUp(order: 0, child: _buildBothRoleTabs()),
               const SizedBox(height: 14),
             ],
-            if (isBoth && _showFreelancerSide) ...[
-              _FadeUp(order: 1, child: _buildFreelancerSide()),
-            ] else ...[
             _FadeUp(order: 0, child: _buildPeriodToggle()),
             const SizedBox(height: 14),
             if (isManager) ...[
@@ -205,7 +223,6 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
               const SizedBox(height: 22),
             ],
             _FadeUp(order: 6, child: _buildActivityLog(periodDueEntries)),
-            ], // end studio-side (both-role) branch
           ],
         ),
       ),
@@ -263,81 +280,6 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
           tab('Freelancer', Icons.camera_alt_rounded, true),
         ],
       ),
-    );
-  }
-
-  // ── Both-role: Freelancer side — entry to the full earnings dashboard ─
-  Widget _buildFreelancerSide() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: AppColors.drawerHeaderGradient,
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.camera_alt_rounded, color: Colors.white, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Freelancer Earnings',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Your payouts across every studio you work with — '
-                'received, pending, and per-owner breakdown.',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.9),
-                  fontSize: 12.5,
-                  height: 1.45,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 14),
-        FilledButton.icon(
-          onPressed: () =>
-              Navigator.of(context).pushNamed(RouteNames.freelancerEarnings),
-          icon: const Icon(Icons.open_in_new_rounded, size: 18),
-          label: const Text('Open Earnings Dashboard'),
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.orange,
-            foregroundColor: AppColors.onAccent,
-            padding: const EdgeInsets.symmetric(vertical: 15),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        OutlinedButton.icon(
-          onPressed: () =>
-              Navigator.of(context).pushNamed(RouteNames.freelancerCompanies),
-          icon: const Icon(Icons.business_outlined, size: 18),
-          label: const Text('My Companies'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.orange,
-            side: BorderSide(color: AppColors.orange.withValues(alpha: 0.5)),
-            padding: const EdgeInsets.symmetric(vertical: 15),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ),
-        ),
-      ],
     );
   }
 

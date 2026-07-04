@@ -90,7 +90,7 @@ class AuthApi {
         'password': password,
         // Laravel validates role against OWNER / FREELANCER / BOTH
         // (uppercase). Anything else is rejected with a 422.
-        'role': role.wireName.toUpperCase(),
+        'role': role.serverName,
         if (companyName != null && companyName.trim().isNotEmpty)
           'business_name': companyName.trim(),
       },
@@ -205,7 +205,7 @@ class AuthApi {
   Future<Map<String, dynamic>> changeRole(UserRole newRole) async {
     final r = await _client.post(
       '/api/profile/role',
-      body: {'newRole': newRole.wireName},
+      body: {'newRole': newRole.serverName},
     );
     return _user(r);
   }

@@ -289,6 +289,7 @@
   "rent_counterparty_name": "Counterparty name",
   "rent_counterparty_phone": "Phone (optional)",
   "rent_amount": "Amount",
+  "rent_date": "Rent date",
   "rent_return_by": "Return by",
   "rent_save": "Save",
   "rent_cancel": "Cancel",

@@ -141,10 +141,17 @@ class RentRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              if (record.returnBy != null)
+              if (record.createdAt != null || record.returnBy != null)
                 Expanded(
                   child: Text(
-                    BookingFormat.dateTime(record.returnBy!, lang: lang),
+                    [
+                      if (record.createdAt != null)
+                        '${loc.rent_date}: '
+                            '${BookingFormat.dateTime(record.createdAt!, lang: lang)}',
+                      if (record.returnBy != null)
+                        '${loc.rent_return_by}: '
+                            '${BookingFormat.dateTime(record.returnBy!, lang: lang)}',
+                    ].join(' · '),
                     style: TextStyle(
                       color: AppColors.filmMuted,
                       fontSize: 11,

@@ -27,7 +27,11 @@ class AuthController extends Controller
             // MANAGER are privileged and must NEVER be assignable from public
             // registration (MANAGER comes via the invite flow). Anything else
             // falls back to OWNER.
-            'role' => 'nullable|string|in:OWNER,FREELANCER,BOTH',
+            'role' => 'nullable|string|in:OWNER,FREELANCER,BOTH,OFFICE_STAFF',
+            // Owner/Both provide the company name at registration so they
+            // never have to re-enter it — the app was sending this all
+            // along but it was silently dropped here.
+            'business_name' => 'nullable|string|max:255',
         ]);
 
         // Privilege fields (role/plan/is_active) are guarded, so set them
@@ -37,6 +41,7 @@ class AuthController extends Controller
             'email' => $data['email'],
             'phone' => $data['phone'] ?? null,
             'password' => $data['password'],
+            'business_name' => $data['business_name'] ?? null,
             'public_booking_token' => Str::uuid(),
         ]);
         // SECURITY / OTP GATE: a freshly registered account is created but NOT

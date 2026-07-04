@@ -742,6 +742,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get rent_amount => 'পরিমাণ';
 
   @override
+  String get rent_date => 'ভাড়ার তারিখ';
+
+  @override
   String get rent_return_by => 'ফেরত দিতে হবে';
 
   @override

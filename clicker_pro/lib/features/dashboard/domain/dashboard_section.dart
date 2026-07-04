@@ -55,7 +55,7 @@ class DashboardSection {
     ),
     DashboardSection(
       type: DashboardSectionType.deliveredBar,
-      label: 'Delivered',
+      label: 'Complete',
       enabled: true,
       order: 2,
     ),

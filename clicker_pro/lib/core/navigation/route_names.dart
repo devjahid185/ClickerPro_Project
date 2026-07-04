@@ -31,6 +31,7 @@ class RouteNames {
   static const String publicBookingSuccess = '/public/booking/success';
   static const String pendingPublicBookings = '/bookings/pending-public';
   static const String packages = '/bookings/packages';
+  static const String delivery = '/delivery';
 
   static const String finance = '/finance';
   static const String financeExpenses = '/finance/expenses';
@@ -42,17 +43,11 @@ class RouteNames {
   static const String chat = '/chat';
   static const String team = '/team';
   static const String announcements = '/announcements';
-  static const String freelancerEarnings = '/freelancer/earnings';
   static const String freelancerCompanies = '/freelancer/companies';
-  static const String freelancerBadges = '/freelancer/badges';
-  static const String freelancerAvailability = '/freelancer/availability';
-  static const String freelancerCheckin = '/freelancer/checkin';
   static const String freelancerLeave = '/freelancer/leave';
-  static const String freelancerWorkHistory = '/freelancer/work-history';
   static const String teamSalarySheet = '/team/salary-sheet';
   static const String profile = '/profile';
   static const String settings = '/settings';
-  static const String adminPanel = '/admin-panel';
 
   // ─── Dashboard Customize module (MOD-62) ───
   static const String dashboardCustomize = '/dashboard/customize';
