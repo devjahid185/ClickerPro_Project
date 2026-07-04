@@ -10,6 +10,8 @@
 import '../../../core/network/api_client.dart';
 import '../domain/admin_broadcast.dart';
 import '../domain/admin_stats.dart';
+import '../domain/admin_ticket.dart';
+import '../domain/admin_user.dart';
 
 class AdminApi {
   AdminApi(this._client);
@@ -127,5 +129,74 @@ class AdminApi {
 
   Future<void> deleteBroadcast(String id) async {
     await _client.delete('/api/admin/broadcasts/$id');
+  }
+
+  /// [role] filters server-side (e.g. `'OWNER'`, `'FREELANCER'`, `'ADMIN'`).
+  /// Owners/freelancers who also hold the other role are stored as `'BOTH'`
+  /// and won't match a single-role filter — callers that need "all owners"
+  /// should also query `'BOTH'` and merge/dedupe if that distinction matters.
+  Future<List<AdminUser>> users({String? role}) async {
+    final r = await _client.get(
+      '/api/admin/users',
+      query: role == null ? null : {'role': role},
+    );
+    return _list(r).map(AdminUser.fromJson).toList(growable: false);
+  }
+
+  Future<List<AdminTicket>> tickets() async {
+    final r = await _client.get('/api/admin/tickets');
+    return _list(r).map(AdminTicket.fromJson).toList(growable: false);
+  }
+
+  Future<void> replyToTicket(String id, {required String reply, String status = 'CLOSED'}) async {
+    await _client.patch(
+      '/api/admin/tickets/$id',
+      body: {'admin_reply': reply, 'status': status},
+    );
+  }
+
+  // ── Per-user admin actions (AdminController::setRole/setPlan/setSuspend) ──
+
+  Future<void> setUserRole(String id, String role) async {
+    await _client.patch('/api/admin/users/$id/role', body: {'role': role});
+  }
+
+  Future<void> setUserPlan(String id, String plan) async {
+    await _client.patch('/api/admin/users/$id/plan', body: {'plan': plan});
+  }
+
+  Future<void> setUserSuspended(String id, bool suspended) async {
+    await _client.patch(
+      '/api/admin/users/$id/suspend',
+      body: {'suspended': suspended},
+    );
+  }
+
+  // ── OTA app-version channel (AppVersionController) ──
+  // GET is public (the studio app polls it on launch); PATCH is admin-only.
+
+  Future<Map<String, dynamic>> appVersion() async {
+    final r = await _client.get('/api/app/version');
+    return _map(r);
+  }
+
+  Future<Map<String, dynamic>> updateAppVersion({
+    int? versionCode,
+    String? versionName,
+    String? apkUrl,
+    bool? forceUpdate,
+    String? releaseNotes,
+  }) async {
+    final r = await _client.patch(
+      '/api/admin/app/version',
+      body: {
+        'versionCode': ?versionCode,
+        'versionName': ?versionName,
+        'apkUrl': ?apkUrl,
+        'forceUpdate': ?forceUpdate,
+        'releaseNotes': ?releaseNotes,
+      },
+    );
+    return _map(r);
   }
 }

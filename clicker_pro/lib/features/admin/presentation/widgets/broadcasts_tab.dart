@@ -117,91 +117,102 @@ class _BroadcastCard extends ConsumerWidget {
     ref.invalidate(adminBroadcastsProvider);
   }
 
+  void _openEditor(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.voidLight,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => _BroadcastComposerSheet(existing: broadcast),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.line(0.08)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+        onTap: () => _openEditor(context),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.line(0.08)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  broadcast.title,
-                  style: TextStyle(
-                    fontFamily: AppText.brandFontFamily,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15.5,
-                    color: AppColors.film,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      broadcast.title,
+                      style: TextStyle(
+                        fontFamily: AppText.brandFontFamily,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15.5,
+                        color: AppColors.film,
+                      ),
+                    ),
                   ),
-                ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: (broadcast.isActive ? AppColors.teal : AppColors.filmDim)
+                          .withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      broadcast.isActive ? 'ACTIVE' : 'ARCHIVED',
+                      style: TextStyle(
+                        fontFamily: AppText.monoFontFamily,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: broadcast.isActive ? AppColors.teal : AppColors.filmDim,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                decoration: BoxDecoration(
-                  color: (broadcast.isActive ? AppColors.teal : AppColors.filmDim)
-                      .withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  broadcast.isActive ? 'ACTIVE' : 'ARCHIVED',
-                  style: TextStyle(
-                    fontFamily: AppText.monoFontFamily,
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w700,
-                    color: broadcast.isActive ? AppColors.teal : AppColors.filmDim,
+              const SizedBox(height: 8),
+              Text(
+                broadcast.body,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: AppColors.filmDim, fontSize: 13, height: 1.4),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(Icons.visibility_outlined, size: 14, color: AppColors.filmDim),
+                  const SizedBox(width: 4),
+                  Text('${broadcast.viewCount}', style: TextStyle(color: AppColors.filmDim, fontSize: 12)),
+                  const SizedBox(width: 14),
+                  Icon(Icons.touch_app_outlined, size: 14, color: AppColors.filmDim),
+                  const SizedBox(width: 4),
+                  Text('${broadcast.clickCount}', style: TextStyle(color: AppColors.filmDim, fontSize: 12)),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () => _toggleActive(ref),
+                    child: Text(broadcast.isActive ? 'Archive' : 'Activate'),
                   ),
-                ),
+                  IconButton(
+                    icon: Icon(Icons.edit_outlined, size: 20, color: AppColors.filmDim),
+                    onPressed: () => _openEditor(context),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, size: 20, color: Colors.redAccent),
+                    onPressed: () => _delete(context, ref),
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            broadcast.body,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(color: AppColors.filmDim, fontSize: 13, height: 1.4),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Icon(Icons.visibility_outlined, size: 14, color: AppColors.filmDim),
-              const SizedBox(width: 4),
-              Text('${broadcast.viewCount}', style: TextStyle(color: AppColors.filmDim, fontSize: 12)),
-              const SizedBox(width: 14),
-              Icon(Icons.touch_app_outlined, size: 14, color: AppColors.filmDim),
-              const SizedBox(width: 4),
-              Text('${broadcast.clickCount}', style: TextStyle(color: AppColors.filmDim, fontSize: 12)),
-              const Spacer(),
-              TextButton(
-                onPressed: () => _toggleActive(ref),
-                child: Text(broadcast.isActive ? 'Archive' : 'Activate'),
-              ),
-              IconButton(
-                icon: Icon(Icons.edit_outlined, size: 20, color: AppColors.filmDim),
-                onPressed: () => showModalBottomSheet<void>(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: AppColors.voidLight,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                  ),
-                  builder: (_) => _BroadcastComposerSheet(existing: broadcast),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete_outline, size: 20, color: Colors.redAccent),
-                onPressed: () => _delete(context, ref),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }

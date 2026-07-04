@@ -12,6 +12,7 @@ import '../../../theme/app_theme.dart';
 import '../../auth/application/session_controller.dart';
 import '../../profile/application/profile_controllers.dart';
 import 'admin_login_screen.dart';
+import 'widgets/app_control_tab.dart';
 import 'widgets/broadcasts_tab.dart';
 import 'widgets/stats_tab.dart';
 
@@ -45,7 +46,11 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
         elevation: 0,
         automaticallyImplyLeading: false,
         title: Text(
-          _tab == 0 ? 'Platform Stats' : 'Broadcasts',
+          switch (_tab) {
+            0 => 'Platform Stats',
+            1 => 'Broadcasts',
+            _ => 'App Control',
+          },
           style: TextStyle(
             color: AppColors.film,
             fontFamily: AppText.brandFontFamily,
@@ -73,7 +78,11 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
       ),
       body: IndexedStack(
         index: _tab,
-        children: const [StatsTab(), BroadcastsTab()],
+        children: [
+          StatsTab(onOpenBroadcasts: () => setState(() => _tab = 1)),
+          const BroadcastsTab(),
+          const AppControlTab(),
+        ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,
@@ -88,6 +97,11 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
             icon: Icon(Icons.campaign_outlined),
             selectedIcon: Icon(Icons.campaign),
             label: 'Broadcasts',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.tune_outlined),
+            selectedIcon: Icon(Icons.tune),
+            label: 'Control',
           ),
         ],
       ),
