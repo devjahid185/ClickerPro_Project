@@ -7,11 +7,10 @@
 // buttons, dialogs, snackbars…) so they match the web design language driven
 // by WebTheme tokens — NOT the mobile cream/terracotta look.
 //
-// STATUS: NEUTRAL PLACEHOLDER — see web_theme.dart. The colours here resolve
-// to a calm slate/grey scaffold until the new Claude Design theme lands. When
-// it does, the WebTheme token values update and this ThemeData follows along
-// automatically (it reads from WebTheme), so most of this file should not need
-// to change.
+// STATUS: CLICKERPRO DESIGN — reads from WebTheme, so it inherited the Signal
+// Orange / warm off-white palette automatically when those token values were
+// swapped. Body font is Hanken Grotesk to match the design source
+// (ClickerPro Web.dc.html).
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -23,7 +22,8 @@ class AppThemeWeb {
 
   static ThemeData theme() {
     final base = ThemeData.light();
-    final textTheme = GoogleFonts.outfitTextTheme(base.textTheme);
+    // Hanken Grotesk is the design source's UI typeface (ClickerPro Web.dc.html).
+    final textTheme = GoogleFonts.hankenGroteskTextTheme(base.textTheme);
 
     return ThemeData(
       brightness: Brightness.light,
