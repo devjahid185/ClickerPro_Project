@@ -68,8 +68,13 @@ void main() {
     expect(find.text('Calendar'), findsOneWidget);
     expect(find.byTooltip('Previous month'), findsOneWidget);
     expect(find.byTooltip('Next month'), findsOneWidget);
-    expect(find.text('SUN'), findsOneWidget);
-    expect(find.text('SAT'), findsOneWidget);
+    // Weekday strip is now single mono letters (S M T W T F S). 'S' (Sun +
+    // Sat) and 'T' (Tue + Thu) appear twice; M/W/F once each.
+    expect(find.text('M'), findsOneWidget);
+    expect(find.text('W'), findsOneWidget);
+    expect(find.text('F'), findsOneWidget);
+    expect(find.text('S'), findsNWidgets(2));
+    expect(find.text('T'), findsNWidgets(2));
 
     await db.close();
   });

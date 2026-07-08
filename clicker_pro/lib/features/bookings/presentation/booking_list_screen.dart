@@ -58,10 +58,17 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
   bool _showSearch = false;
   final TextEditingController _searchController = TextEditingController();
 
+  // Captured in initState so `dispose()` can reset the shared filter without
+  // touching `ref` — `ref` is invalid once the element is being finalized
+  // (e.g. when the whole tree is torn down), which throws "Cannot use ref
+  // after the widget was disposed". The StateController itself stays alive.
+  late final StateController<BookingFilter> _filterController;
+
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _filterController = ref.read(bookingFilterProvider.notifier);
     // Pull fresh self-booking requests so the pending badge is accurate
     // as soon as the list opens (fail-soft inside refreshPending).
     Future.microtask(
@@ -81,7 +88,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
     // outside that date/status window then looked like it "didn't save"
     // until the filter was noticed and cleared by hand. Reset on the way
     // out so every fresh entry starts unfiltered unless a card sets it again.
-    ref.read(bookingFilterProvider.notifier).state = const BookingFilter();
+    _filterController.state = const BookingFilter();
     super.dispose();
   }
 

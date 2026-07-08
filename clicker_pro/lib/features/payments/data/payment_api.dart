@@ -1,7 +1,11 @@
 // lib/features/payments/data/payment_api.dart
 //
-// Wire-level methods for the payment tracking endpoints.
-// Stub implementation — endpoints to be wired when the backend lands.
+// Wire-level methods for the payment tracking endpoints. Fully wired to the
+// Laravel routes in `laravel_backend/routes/api.php` (PaymentController):
+// GET/POST /api/payments, GET /api/payments/event/{id}, DELETE /api/payments/{id}.
+// A "Failed to load payments" in the app means the *deployed* server is behind
+// the repo (route/migration not yet `git pull`ed + migrated on cPanel), not a
+// missing client wiring.
 
 import '../../../core/network/api_client.dart';
 import '../domain/payment_record.dart';

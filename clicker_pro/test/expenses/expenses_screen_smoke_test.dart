@@ -70,12 +70,13 @@ void main() {
 
     // Header
     expect(find.text('Expenses'), findsOneWidget);
-    // P&L card title
-    expect(find.text('Profit & Loss'), findsOneWidget);
+    // P&L card title (rendered uppercase in the redesigned card)
+    expect(find.text('PROFIT & LOSS'), findsOneWidget);
     // Empty state copy
     expect(find.textContaining('No expenses yet'), findsOneWidget);
-    // FAB hidden when empty (CTA inside the empty state instead)
-    expect(find.text('Add'), findsNothing);
+    // The inline "Record expense" bar is hidden on the empty state — the
+    // empty state carries its own CTA, so there's exactly one Add affordance.
+    expect(find.text('Record expense'), findsOneWidget);
   });
 
   testWidgets('renders rows + FAB when expenses exist', (tester) async {
@@ -104,10 +105,13 @@ void main() {
 
     await _pumpScreen(tester, repo: repo);
 
+    // 'Travel' appears once — only as the filter chip (the row shows its
+    // note "Fuel" as the title and "Travel · Fuel" as the meta).
     expect(find.text('Travel'), findsOneWidget);
-    expect(find.text('Equipment'), findsOneWidget);
-    // FAB visible because list is non-empty
-    expect(find.text('Add'), findsOneWidget);
+    // 'Equipment' (no note) appears 3×: filter chip, row title, and row meta.
+    expect(find.text('Equipment'), findsNWidgets(3));
+    // Inline "Record expense" bar is visible because the list is non-empty.
+    expect(find.text('Record expense'), findsOneWidget);
     // P&L metrics — income / expense / net labels render
     expect(find.text('INCOME'), findsOneWidget);
     expect(find.text('EXPENSE'), findsOneWidget);

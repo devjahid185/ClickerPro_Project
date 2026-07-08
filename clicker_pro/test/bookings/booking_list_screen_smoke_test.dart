@@ -12,12 +12,18 @@
 
 import 'package:clicker_pro/core/db/app_database.dart';
 import 'package:clicker_pro/core/providers.dart';
+import 'package:clicker_pro/core/role/role_policy.dart';
 import 'package:clicker_pro/features/auth/application/session_controller.dart';
 import 'package:clicker_pro/features/auth/domain/session.dart';
 import 'package:clicker_pro/features/auth/domain/user_role.dart';
+import 'package:clicker_pro/features/bookings/domain/booking.dart';
 import 'package:clicker_pro/features/bookings/presentation/booking_list_screen.dart';
 import 'package:clicker_pro/features/profile/application/profile_controllers.dart';
 import 'package:clicker_pro/features/profile/domain/user_model.dart';
+import 'package:clicker_pro/features/public_booking/application/public_booking_providers.dart';
+import 'package:clicker_pro/features/public_booking/domain/public_booking_repository.dart';
+import 'package:clicker_pro/features/public_booking/domain/public_booking_request.dart';
+import 'package:clicker_pro/features/public_booking/domain/public_booking_token.dart';
 import 'package:clicker_pro/l10n/app_localizations.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
@@ -64,6 +70,12 @@ void main() {
           currentUserProvider.overrideWith(
             (ref) => Stream<UserModel?>.value(user),
           ),
+          // The screen fires a fail-soft `refreshPending()` in initState; a
+          // real repo would hit the network and leave a pending request
+          // timer live past dispose. Stub it out.
+          publicBookingRepositoryProvider.overrideWithValue(
+            _FakePublicBookingRepository(),
+          ),
         ],
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -107,4 +119,38 @@ class _FakeSessionController extends SessionController {
 
   @override
   Future<Session?> build() async => initial;
+}
+
+/// No-op public-booking repository so the screen's initState `refreshPending`
+/// stays offline (no network, no leaked request timer). The list surface
+/// only touches `refreshPending` / `watchPending`; the rest is unused here.
+class _FakePublicBookingRepository implements PublicBookingRepository {
+  @override
+  Future<void> refreshPending() async {}
+
+  @override
+  Stream<List<PublicBookingRequest>> watchPending() =>
+      Stream<List<PublicBookingRequest>>.value(const []);
+
+  @override
+  Future<({String url, String token, DateTime expiresAt})> issueToken({
+    required RolePolicy policy,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<PublicBookingToken> peek(String token) => throw UnimplementedError();
+
+  @override
+  Future<String> submit({
+    required String token,
+    required PublicBookingRequest payload,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<Booking> approve(String requestId, {required RolePolicy policy}) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> reject(String requestId, {required RolePolicy policy}) =>
+      throw UnimplementedError();
 }

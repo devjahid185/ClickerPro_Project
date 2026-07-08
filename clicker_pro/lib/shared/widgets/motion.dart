@@ -7,6 +7,8 @@
 //   • FadeUpIn  — staggered "develop" entrance (fade + slide up).
 //   • TapScale  — press-to-shrink micro-interaction for cards / buttons.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 /// Fades + slides a child up into place once, [order] frames after mount.
@@ -38,16 +40,23 @@ class FadeUpIn extends StatefulWidget {
 class _FadeUpInState extends State<FadeUpIn> {
   bool _shown = false;
   bool _scheduled = false;
+  Timer? _revealTimer;
 
   void _scheduleReveal() {
     if (_scheduled) return;
     _scheduled = true;
-    Future.delayed(
+    _revealTimer = Timer(
       Duration(milliseconds: 60 + widget.order * 70),
       () {
         if (mounted) setState(() => _shown = true);
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _revealTimer?.cancel();
+    super.dispose();
   }
 
   @override
