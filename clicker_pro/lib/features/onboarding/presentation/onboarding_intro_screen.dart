@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../screens/login_screen.dart';
+import '../../../shared/widgets/web_shell.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_theme.dart';
 import '../../settings/application/language_controller.dart';
@@ -142,7 +143,10 @@ class _OnboardingIntroScreenState extends ConsumerState<OnboardingIntroScreen> {
               alignment: Alignment.bottomCenter,
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(34, 0, 34, 30),
-                child: isLast ? _lastControls() : _pagerControls(),
+                child: WebFormWidth(
+                  maxWidth: 560,
+                  child: isLast ? _lastControls() : _pagerControls(),
+                ),
               ),
             ),
           ),
@@ -335,11 +339,15 @@ class _Slide extends StatelessWidget {
             ),
           ),
         ),
-        // Copy pinned to the lower area, above the controls.
+        // Copy pinned to the lower area, above the controls. On web the copy
+        // column is capped to a comfortable reading width and centred so it
+        // does not stretch across a wide desktop window.
         SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(34, 0, 34, 118),
-            child: Column(
+            child: WebFormWidth(
+              maxWidth: 560,
+              child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -382,6 +390,7 @@ class _Slide extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
             ),
           ),
         ),

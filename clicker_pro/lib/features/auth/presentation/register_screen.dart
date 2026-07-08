@@ -30,6 +30,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/providers.dart';
 import '../../../core/validation/phone_validator.dart';
 import '../../../shared/widgets/auth_glass_field.dart';
+import '../../../shared/widgets/web_shell.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_theme.dart';
 import '../application/session_controller.dart';
@@ -246,7 +247,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   horizontal: 28,
                   vertical: 24,
                 ),
-                child: Form(
+                child: WebFormWidth(
+                  child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -432,6 +434,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       ),
                     ],
                   ),
+                ),
                 ),
               ),
             ),

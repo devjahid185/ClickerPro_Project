@@ -32,6 +32,7 @@ import '../../../screens/dashboard_screen.dart';
 import '../../../shared/widgets/auth_glass_field.dart';
 import '../../../shared/widgets/clicker_logo.dart';
 import '../../../shared/widgets/video_backdrop.dart';
+import '../../../shared/widgets/web_shell.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_strings.dart';
 import '../../../theme/app_theme.dart';
@@ -283,7 +284,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                   horizontal: 28,
                   vertical: 32,
                 ),
-                child: Form(
+                child: WebFormWidth(
+                  child: Form(
                   key: _formKey,
                   child: AnimatedBuilder(
                     animation: _shake,
@@ -494,6 +496,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       ],
                     ),
                   ),
+                ),
                 ),
               ),
             ),
