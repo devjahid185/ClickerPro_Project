@@ -12,6 +12,7 @@
 //   • PageView next/back         : 320ms cubic-bezier(0.2, 0.8, 0.2, 1)
 //   • Login fade route           : 320ms
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -104,7 +105,7 @@ class _OnboardingIntroScreenState extends ConsumerState<OnboardingIntroScreen> {
             controller: _pageCtrl,
             onPageChanged: (i) => setState(() => _index = i),
             itemCount: _slides.length,
-            itemBuilder: (_, i) => _Slide(data: _slides[i]),
+            itemBuilder: (_, i) => _Slide(data: _slides[i], index: i),
           ),
 
           // Skip — top right (hidden on the last slide where CTA takes over).
@@ -289,21 +290,36 @@ class _OnboardingIntroScreenState extends ConsumerState<OnboardingIntroScreen> {
 }
 
 class _Slide extends StatelessWidget {
-  const _Slide({required this.data});
+  const _Slide({required this.data, required this.index});
   final _SlideData data;
+  final int index;
+
+  // Signal-Orange ramp used for the web backdrop (no photos on web — the
+  // onboarding reads as pure theme). Each slide picks a different pair so the
+  // three pages feel distinct while staying on-brand.
+  static const List<List<Color>> _webRamps = [
+    [Color(0xFFF9A52E), Color(0xFFE2620E)], // amber → signal orange
+    [Color(0xFFF4881C), Color(0xFFB84E0A)], // bright → deep
+    [Color(0xFFEA7414), Color(0xFFC0530B)], // mid → dark
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Background photo.
-        Image.asset(
-          data.image,
-          fit: BoxFit.cover,
-          errorBuilder: (_, _, _) => ColoredBox(color: AppColors.orange),
-        ),
-        // Dark bottom scrim so the copy stays legible over any photo.
+        // Backdrop. On WEB: a Signal-Orange gradient with a soft radial glow
+        // (theme-driven, no photo/video per Heaven's brief). On MOBILE: the
+        // original full-bleed photo slide, untouched.
+        if (kIsWeb)
+          _WebBackdrop(colors: _webRamps[index % _webRamps.length])
+        else
+          Image.asset(
+            data.image,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => ColoredBox(color: AppColors.orange),
+          ),
+        // Dark bottom scrim so the copy stays legible over any backdrop.
         const DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -366,6 +382,43 @@ class _Slide extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Web-only onboarding backdrop: a Signal-Orange diagonal gradient with a
+/// soft off-centre radial glow, echoing the warm depth of the palm-shadow
+/// login art without any photo. Pure theme, per Heaven's brief.
+class _WebBackdrop extends StatelessWidget {
+  const _WebBackdrop({required this.colors});
+  final List<Color> colors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: colors,
+            ),
+          ),
+        ),
+        // Warm highlight bloom, top-right — gives the flat gradient depth.
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: RadialGradient(
+              center: Alignment(0.7, -0.6),
+              radius: 1.1,
+              colors: [Color(0x66FFD9A8), Color(0x00FFD9A8)],
+              stops: [0.0, 0.7],
             ),
           ),
         ),
