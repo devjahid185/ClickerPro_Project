@@ -1,11 +1,11 @@
 // lib/features/dashboard/presentation/web_dashboard.dart
 //
-// Clicker Pro — WEB-ONLY dashboard (v18 "Studio Sage").
+// Clicker Pro — WEB-ONLY dashboard (ClickerPro Design).
 //
 // A proper desktop dashboard layout, rendered ONLY on wide web. The mobile
 // dashboard body is 100% untouched (DashboardScreen routes to this widget only
-// when kIsWeb && width >= 900). Heaven's brief: Sales-Dashboard structure —
-// sage-green chrome, orange action, crisp white cards — laid out as:
+// when kIsWeb && width >= 900). Structure — near-black sidebar chrome (in
+// WebNavShell), Signal Orange action, warm off-white cards — laid out as:
 //
 //   ┌──────────────────────────────────────────────────────────────┐
 //   │  Greeting header  +  primary CTA (New Booking, orange)        │

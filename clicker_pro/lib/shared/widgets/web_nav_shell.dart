@@ -1,12 +1,12 @@
 // lib/shared/widgets/web_nav_shell.dart
 //
-// Clicker Pro — Web navigation shell (v18 "Studio Sage", premium).
+// Clicker Pro — Web navigation shell (ClickerPro Design, premium).
 //
 // On wide web screens this wraps the routed app in a permanent left sidebar —
-// a calm sage-green chrome carrying the orange brand mark, grouped nav with
+// a near-black chrome carrying the Signal-Orange brand mark, grouped nav with
 // hover/active motion, and a profile footer — then renders the screen in a
-// full-height white content panel on the right. A slim top bar carries the
-// page title and a sage tick. Chrome = sage; action = orange.
+// full-height warm-white content panel on the right. A slim top bar carries
+// the page title and an orange tick. Chrome = near-black; action = orange.
 //
 //   • Mobile + narrow web are untouched (returns the child as-is).
 //   • Auth / fullscreen routes (splash, login, register, onboarding, otp) get
@@ -294,7 +294,7 @@ class _Sidebar extends StatelessWidget {
           colors: [WebTheme.sidebar, WebTheme.sidebarDeep],
         ),
         border: Border(
-          right: BorderSide(color: WebTheme.sageLine, width: 1),
+          right: BorderSide(color: WebTheme.chromeLine, width: 1),
         ),
       ),
       child: Column(
@@ -325,25 +325,35 @@ class _Sidebar extends StatelessWidget {
                 const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      'Clicker Pro',
-                      style: TextStyle(
+                  children: [
+                    // Wordmark on the dark chrome: white "Clicker" + orange
+                    // "Pro", matching the .dc.html sidebar brand.
+                    Text.rich(
+                      const TextSpan(
+                        children: [
+                          TextSpan(text: 'Clicker'),
+                          TextSpan(
+                            text: 'Pro',
+                            style: TextStyle(color: WebTheme.orangeLight),
+                          ),
+                        ],
+                      ),
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.3,
-                        color: WebTheme.ink,
+                        color: WebTheme.chromeInk,
                         height: 1.05,
                       ),
                     ),
-                    SizedBox(height: 1),
-                    Text(
-                      'Studio Suite',
+                    const SizedBox(height: 2),
+                    const Text(
+                      'Studio Workspace',
                       style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.3,
-                        color: WebTheme.sageMid,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 1.4,
+                        color: WebTheme.chromeInkMuted,
                       ),
                     ),
                   ],
@@ -366,7 +376,7 @@ class _Sidebar extends StatelessWidget {
                         fontSize: 10.5,
                         letterSpacing: 1.2,
                         fontWeight: FontWeight.w800,
-                        color: WebTheme.sageMid,
+                        color: WebTheme.chromeInkFaint,
                       ),
                     ),
                   ),
@@ -382,7 +392,7 @@ class _Sidebar extends StatelessWidget {
             ),
           ),
 
-          const Divider(height: 1, color: WebTheme.sageLine),
+          const Divider(height: 1, color: WebTheme.chromeLine),
 
           // ── Footer (profile) ──────────────────────────────────────────
           Padding(
@@ -419,20 +429,21 @@ class _SidebarItem extends StatelessWidget {
         onTap: onTap,
         borderRadius: WebTheme.rButton,
         builder: (context, hovering) {
-          // Chrome = sage. Active = crisp white pill with a sage shadow (lifts
-          // off the green sidebar) + an orange accent bar (action). Hover =
-          // faint sage tint. This keeps the green calm and the orange loud.
+          // Dark chrome. Active = a soft orange-tinted fill with white text and
+          // an orange icon + accent bar (the action reads loud on near-black).
+          // Hover = faint white wash + brighter text. Default = muted chrome
+          // ink so the rail stays calm.
           final Color bg = active
-              ? Colors.white
+              ? WebTheme.orange.withValues(alpha: 0.16)
               : hovering
-                  ? Colors.white.withValues(alpha: 0.55)
+                  ? Colors.white.withValues(alpha: 0.06)
                   : Colors.transparent;
           final Color fg = active
-              ? WebTheme.sageDark
+              ? WebTheme.chromeInk
               : hovering
-                  ? WebTheme.sageDeep
-                  : WebTheme.inkSoft;
-          final Color iconColor = active ? WebTheme.orange : fg;
+                  ? WebTheme.chromeInk
+                  : WebTheme.chromeInkMuted;
+          final Color iconColor = active ? WebTheme.orangeLight : fg;
 
           return AnimatedContainer(
             duration: WebTheme.fast,
@@ -442,14 +453,11 @@ class _SidebarItem extends StatelessWidget {
             decoration: BoxDecoration(
               color: bg,
               borderRadius: BorderRadius.circular(WebTheme.rButton),
-              boxShadow: active
-                  ? const [
-                      BoxShadow(
-                        color: Color(0x145B7B6A),
-                        blurRadius: 10,
-                        offset: Offset(0, 3),
-                      ),
-                    ]
+              border: active
+                  ? Border.all(
+                      color: WebTheme.orange.withValues(alpha: 0.24),
+                      width: 1,
+                    )
                   : null,
             ),
             child: Row(
