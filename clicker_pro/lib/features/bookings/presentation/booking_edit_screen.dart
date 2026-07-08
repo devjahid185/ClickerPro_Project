@@ -36,6 +36,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../shared/widgets/celebration.dart';
+import '../../../shared/widgets/web_shell.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_theme.dart';
 
@@ -385,7 +386,9 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     // short form (no picker — they have only the one mode).
     final showFreelancer = isFreelancer || (isBothRole && _showFreelancerForm);
 
-    return ListView(
+    return WebFormWidth(
+      maxWidth: 560,
+      child: ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
       children: [
         if (isBothRole) ...[_buildModePicker(), const SizedBox(height: 12)],
@@ -394,6 +397,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
         else
           _buildOwnerForm(context, draft, policy),
       ],
+      ),
     );
   }
 

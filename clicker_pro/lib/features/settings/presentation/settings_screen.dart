@@ -27,6 +27,7 @@ import '../../../core/role/capability.dart';
 import '../../../shared/states/offline_banner.dart';
 import '../../../shared/widgets/clicker_logo.dart';
 import '../../../shared/widgets/pill_toggle.dart';
+import '../../../shared/widgets/web_shell.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_strings.dart';
 import '../../../theme/app_theme.dart';
@@ -104,7 +105,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
-              child: Column(
+              child: WebFormWidth(
+                maxWidth: 620,
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Profile hero (.dc.html): avatar + name + phone + role badge.
@@ -299,6 +302,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ]),
                   const SizedBox(height: 30),
                 ],
+              ),
               ),
             ),
           ),

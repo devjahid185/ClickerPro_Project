@@ -43,6 +43,7 @@ import '../domain/public_booking_request.dart';
 import '../domain/public_booking_request_status.dart';
 import '../domain/public_booking_token.dart';
 import '../../../theme/app_theme.dart';
+import '../../../shared/widgets/web_shell.dart';
 
 class PublicBookingFormScreen extends ConsumerWidget {
   const PublicBookingFormScreen({super.key, required this.token});
@@ -141,7 +142,9 @@ class _FormState extends ConsumerState<_Form> {
         ? EventType.values
         : widget.meta.supportedEventTypes.toList(growable: false);
 
-    return ListView(
+    return WebFormWidth(
+      maxWidth: 560,
+      child: ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
       children: [
         _Header(meta: widget.meta),
@@ -293,6 +296,7 @@ class _FormState extends ConsumerState<_Form> {
                 ),
         ),
       ],
+      ),
     );
   }
 

@@ -42,6 +42,7 @@ import '../application/profile_controllers.dart';
 import '../domain/gear_item.dart';
 import '../domain/user_model.dart';
 import '../../../theme/app_theme.dart';
+import '../../../shared/widgets/web_shell.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -217,7 +218,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
-      child: Column(
+      child: WebFormWidth(
+        maxWidth: 620,
+        child: Column(
         children: [
           _buildHeader(view),
           const SizedBox(height: 30),
@@ -389,6 +392,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           _buildEditActions(user),
           const SizedBox(height: 24),
         ],
+      ),
       ),
     );
   }
