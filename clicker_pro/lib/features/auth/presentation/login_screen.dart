@@ -17,7 +17,7 @@
 //   • Page slide-out: Curves.easeIn over 200ms
 
 import 'package:flutter/foundation.dart'
-    show defaultTargetPlatform, TargetPlatform;
+    show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -75,6 +75,13 @@ PageRouteBuilder<T> slideFromRightRoute<T>(Widget page) {
 /// Firebase (Authentication → Google enabled) and a refreshed
 /// google-services.json — see the deploy notes.
 const bool kSocialLoginEnabled = true;
+
+/// Web login backdrop artwork. On the web the looping brand video is skipped
+/// (autoplay is unreliable and the clip is heavy to ship), so a still hero
+/// image is used instead. Drop the artwork at this exact path — the folder
+/// `assets/Login/` is already declared in pubspec, so no manifest change is
+/// needed. Until the file exists the backdrop falls back to solid black.
+const String kWebLoginImage = 'assets/Login/login_web_bg.jpg';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -262,29 +269,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // ─── FULL-SCREEN BRAND VIDEO ─────────────────────────────
-          // Looping, muted ambient clip. A dark gradient scrim keeps the
-          // wordmark + form legible over any frame.
-          Positioned.fill(
-            child: VideoBackdrop(
-              asset: 'assets/Login/Login.mp4',
-              fallbackColor: Colors.black,
-              scrim: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withValues(alpha: 0.55),
-                      Colors.black.withValues(alpha: 0.35),
-                      Colors.black.withValues(alpha: 0.70),
-                    ],
-                    stops: const [0.0, 0.45, 1.0],
-                  ),
-                ),
-              ),
-            ),
-          ),
+          // ─── FULL-SCREEN BRAND BACKDROP ──────────────────────────
+          // Mobile: a looping, muted ambient clip. Web: a still hero image
+          // (see [kWebLoginImage]). Either way a dark gradient scrim keeps the
+          // wordmark + form legible over it.
+          const Positioned.fill(child: _LoginBackdrop()),
 
           // ─── MAIN CONTENT ────────────────────────────────────────
           SafeArea(
@@ -638,6 +627,49 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           ),
         ),
       ),
+    );
+  }
+}
+
+// ─── Login backdrop (video on mobile, still image on web) ──────────────────
+class _LoginBackdrop extends StatelessWidget {
+  const _LoginBackdrop();
+
+  // Dark gradient scrim shared by both treatments — darker at the top and
+  // bottom edges (behind the wordmark and footer) and lighter through the
+  // middle so the artwork still reads behind the glass form.
+  static const _scrim = DecoratedBox(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0x8C000000), Color(0x59000000), Color(0xB3000000)],
+        stops: [0.0, 0.45, 1.0],
+      ),
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    if (kIsWeb) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(
+            kWebLoginImage,
+            fit: BoxFit.cover,
+            // Degrade to solid black (never a broken-image glyph) until the
+            // artwork file is dropped into assets/Login/.
+            errorBuilder: (_, _, _) => const ColoredBox(color: Colors.black),
+          ),
+          const Positioned.fill(child: _scrim),
+        ],
+      );
+    }
+    return const VideoBackdrop(
+      asset: 'assets/Login/Login.mp4',
+      fallbackColor: Colors.black,
+      scrim: _scrim,
     );
   }
 }
