@@ -16,15 +16,45 @@ import '../../../theme/app_theme.dart';
 import '../application/admin_providers.dart';
 import '../domain/admin_user.dart';
 
-class AdminUserListScreen extends ConsumerWidget {
+class AdminUserListScreen extends ConsumerStatefulWidget {
   const AdminUserListScreen({super.key, required this.title, required this.role});
 
   final String title;
   final String? role;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AdminUserListScreen> createState() =>
+      _AdminUserListScreenState();
+}
+
+class _AdminUserListScreenState extends ConsumerState<AdminUserListScreen> {
+  final _searchCtrl = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  /// Case-insensitive match across the fields an admin would search by:
+  /// name, email, business name and phone.
+  bool _matches(AdminUser u, String q) {
+    if (q.isEmpty) return true;
+    final hay = [
+      u.fullName,
+      u.email,
+      u.businessName ?? '',
+      u.phone ?? '',
+    ].join(' ').toLowerCase();
+    return hay.contains(q);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final role = widget.role;
     final async = ref.watch(adminUsersProvider(role));
+    final q = _query.trim().toLowerCase();
 
     return Scaffold(
       backgroundColor: AppColors.appBg,
@@ -32,7 +62,7 @@ class AdminUserListScreen extends ConsumerWidget {
         backgroundColor: AppColors.appBg,
         elevation: 0,
         title: Text(
-          title,
+          widget.title,
           style: TextStyle(
             color: AppColors.film,
             fontFamily: AppText.brandFontFamily,
@@ -41,37 +71,90 @@ class AdminUserListScreen extends ConsumerWidget {
           ),
         ),
       ),
-      body: RefreshIndicator(
-        onRefresh: () => ref.refresh(adminUsersProvider(role).future),
-        child: async.when(
-          loading: () => const Center(child: LensLoader()),
-          error: (err, _) => ListView(
-            children: [
-              const SizedBox(height: 120),
-              ErrorState(
-                message: 'Failed to load users',
-                onRetry: () => ref.invalidate(adminUsersProvider(role)),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+            child: TextField(
+              controller: _searchCtrl,
+              onChanged: (v) => setState(() => _query = v),
+              style: TextStyle(color: AppColors.film, fontSize: 14),
+              decoration: InputDecoration(
+                isDense: true,
+                hintText: 'Search name, email, phone, business…',
+                hintStyle: TextStyle(color: AppColors.filmDim, fontSize: 13.5),
+                prefixIcon: Icon(Icons.search, color: AppColors.filmDim, size: 20),
+                suffixIcon: _query.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: Icon(Icons.close, color: AppColors.filmDim, size: 18),
+                        onPressed: () {
+                          _searchCtrl.clear();
+                          setState(() => _query = '');
+                        },
+                      ),
+                filled: true,
+                fillColor: AppColors.surface,
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.line(0.08)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.line(0.08)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.orange),
+                ),
               ),
-            ],
+            ),
           ),
-          data: (users) => users.isEmpty
-              ? ListView(
-                  children: const [
-                    SizedBox(height: 120),
-                    EmptyState(
-                      icon: Icons.people_outline,
-                      message: 'No accounts found.',
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () => ref.refresh(adminUsersProvider(role).future),
+              child: async.when(
+                loading: () => const Center(child: LensLoader()),
+                error: (err, _) => ListView(
+                  children: [
+                    const SizedBox(height: 120),
+                    ErrorState(
+                      message: 'Failed to load users',
+                      onRetry: () => ref.invalidate(adminUsersProvider(role)),
                     ),
                   ],
-                )
-              : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                  itemCount: users.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 10),
-                  itemBuilder: (context, i) =>
-                      _UserCard(user: users[i], listRole: role),
                 ),
-        ),
+                data: (users) {
+                  final filtered = [
+                    for (final u in users)
+                      if (_matches(u, q)) u,
+                  ];
+                  if (filtered.isEmpty) {
+                    return ListView(
+                      children: [
+                        const SizedBox(height: 120),
+                        EmptyState(
+                          icon: Icons.people_outline,
+                          message: q.isEmpty
+                              ? 'No accounts found.'
+                              : 'No accounts match “${_query.trim()}”.',
+                        ),
+                      ],
+                    );
+                  }
+                  return ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                    itemCount: filtered.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
+                    itemBuilder: (context, i) =>
+                        _UserCard(user: filtered[i], listRole: role),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
