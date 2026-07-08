@@ -57,7 +57,6 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // Cached one-shot values for prefs that don't have a stream yet.
   bool? _distributionEnabled;
-  bool? _vatEnabled;
   bool? _bengaliNumerals;
   String? _initializedForUserId;
 
@@ -72,7 +71,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (user != null && _initializedForUserId != user.id) {
       _initializedForUserId = user.id;
       _distributionEnabled = null;
-      _vatEnabled = null;
       _bengaliNumerals = null;
       _loadOneShotPrefs(user.id);
     }
@@ -140,7 +138,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ]),
 
                   if (policy.can(Capability.toggleDistribution) ||
-                      policy.can(Capability.toggleVat) ||
                       policy.can(Capability.editStudioBranding)) ...[
                     const SizedBox(height: 30),
                     _sectionHeader('Business'),
@@ -172,15 +169,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               ? null
                               : (v) => _setDistribution(user.id, v),
                         ),
-                      if (policy.can(Capability.toggleVat))
-                        _buildBoolRow(
-                          label: t('biz_vat'),
-                          icon: Icons.receipt_long_rounded,
-                          value: _vatEnabled,
-                          onChanged: user == null
-                              ? null
-                              : (v) => _setVat(user.id, v),
-                        ),
+                      // (The old standalone "VAT (15% NBR)" toggle was removed —
+                      // it was redundant with the richer Tax/VAT setup above,
+                      // which is what actually drives invoice tax lines.)
                       // Studio/company details (name, VAT BIN, logo, address,
                       // signature) only exist for studio owners. A pure
                       // Freelancer runs no studio, so the "Company" entry is
@@ -321,19 +312,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final repo = ref.read(preferencesRepositoryProvider);
     try {
       final dist = await repo.getDistributionEnabled(userId);
-      final vat = await repo.getVatEnabled(userId);
       final bn = await repo.getBengaliNumerals(userId);
       if (!mounted) return;
       setState(() {
         _distributionEnabled = dist;
-        _vatEnabled = vat;
         _bengaliNumerals = bn;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _distributionEnabled = false;
-        _vatEnabled = false;
         _bengaliNumerals = false;
       });
     }
@@ -349,20 +337,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _distributionEnabled = prev);
-      _showSnack('Could not save preference');
-    }
-  }
-
-  Future<void> _setVat(String userId, bool value) async {
-    final prev = _vatEnabled;
-    setState(() => _vatEnabled = value);
-    try {
-      await ref
-          .read(preferencesRepositoryProvider)
-          .setVatEnabled(userId, value);
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _vatEnabled = prev);
       _showSnack('Could not save preference');
     }
   }
