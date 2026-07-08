@@ -13,6 +13,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/format/currency.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
@@ -220,7 +221,7 @@ class _SummaryCard extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                '৳ ${total.toStringAsFixed(2)}',
+                ActiveCurrency.value.wrap(total.toStringAsFixed(2), spaced: true),
                 style: TextStyle(
                   color: AppColors.teal,
                   fontSize: 22,
@@ -298,7 +299,7 @@ class _PaymentRow extends StatelessWidget {
           child: Icon(_methodIcon(), color: methodColor, size: 20),
         ),
         title: Text(
-          '৳ ${record.amount.toStringAsFixed(2)}',
+          ActiveCurrency.value.wrap(record.amount.toStringAsFixed(2), spaced: true),
           style: TextStyle(
             color: AppColors.film,
             fontSize: 15,

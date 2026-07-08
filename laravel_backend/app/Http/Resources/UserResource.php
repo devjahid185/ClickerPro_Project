@@ -50,6 +50,20 @@ class UserResource extends JsonResource
             'signature_url' => $this->signature_url,
             'signatureUrl' => $this->signature_url,
 
+            // Studio money settings (snake_case + camelCase aliases).
+            'currency_code' => $this->currency_code,
+            'currencyCode' => $this->currency_code,
+            'vat_enabled' => (bool) $this->vat_enabled,
+            'vatEnabled' => (bool) $this->vat_enabled,
+            'vat_rate_pct' => $this->vat_rate_pct === null
+                ? null
+                : (float) $this->vat_rate_pct,
+            'vatRatePct' => $this->vat_rate_pct === null
+                ? null
+                : (float) $this->vat_rate_pct,
+            'vat_label' => $this->vat_label,
+            'vatLabel' => $this->vat_label,
+
             // Owner's own public booking link (needed by Settings).
             'public_booking_token' => $this->public_booking_token,
             'publicToken' => $this->public_booking_token,

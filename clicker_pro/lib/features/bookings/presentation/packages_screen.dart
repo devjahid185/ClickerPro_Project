@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/format/currency.dart';
 import '../../../core/role/capability.dart';
 import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
@@ -342,9 +343,10 @@ class _PriceRow extends StatelessWidget {
   final Package package;
   final Color accentColor;
 
-  // ৳ with thousands grouping — the .dc.html package cards read "৳85,000".
+  // Active-currency symbol with thousands grouping — package cards read
+  // "৳85,000" for BDT, "$85,000" for USD, etc.
   static final NumberFormat _money = NumberFormat.decimalPattern('en');
-  static String _fmt(num v) => '৳${_money.format(v.round())}';
+  static String _fmt(num v) => ActiveCurrency.value.wrap(_money.format(v.round()));
 
   @override
   Widget build(BuildContext context) {

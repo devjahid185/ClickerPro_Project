@@ -307,6 +307,7 @@ class AppRouter {
               venue: args['venue'] ?? '',
               amount: args['amount'] ?? '',
               total: args['total'] ?? '',
+              vat: args['vat'] ?? '',
               advance: args['advance'] ?? '',
               due: args['due'] ?? '',
               packageName: args['packageName'] ?? '',

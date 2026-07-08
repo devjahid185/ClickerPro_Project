@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/booking_status/booking_status.dart';
+import '../../../core/format/currency.dart';
 import '../../../core/pdf/pdf_export.dart';
 import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/lens_loader.dart';
@@ -14,9 +15,9 @@ import '../../petty_cash/domain/petty_cash_entry.dart';
 import '../../petty_cash/presentation/petty_cash_screen.dart';
 import '../../../theme/app_theme.dart';
 
-/// BDT money — "৳1,86,500" (Bangladeshi grouping, no decimals).
+/// Active-currency money with South-Asian grouping — "৳1,86,500" / "$1,86,500".
 String _money(double v) =>
-    '৳${NumberFormat('#,##,##0', 'en_IN').format(v.round())}';
+    ActiveCurrency.value.wrap(NumberFormat('#,##,##0', 'en_IN').format(v.round()));
 
 /// One month's cash-flow figures derived from real booking data.
 class _MonthFlow {

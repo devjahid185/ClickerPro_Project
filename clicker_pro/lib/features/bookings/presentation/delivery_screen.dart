@@ -362,7 +362,7 @@ class _DeliveryRowState extends ConsumerState<_DeliveryRow> {
                         [
                           if ((booking.clientName ?? '').isNotEmpty)
                             booking.clientName!,
-                          BookingFormat.dateTime(booking.date, lang: 'en'),
+                          BookingFormat.dateOnly(booking.date, lang: 'en'),
                         ].join(' · '),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

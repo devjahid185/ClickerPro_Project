@@ -974,7 +974,7 @@ class _PendingEventRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final dateStr = event.date == null
         ? ''
-        : BookingFormat.dateTime(event.date!, lang: lang);
+        : BookingFormat.dateOnly(event.date!, lang: lang);
     final meta = <String>[
       if (event.ownerName.isNotEmpty) event.ownerName,
       if (event.role.isNotEmpty)

@@ -26,6 +26,7 @@ class User extends Authenticatable
         'bkash_number', 'bank_details',
         'public_booking_token',
         'totp_secret', 'totp_enabled',
+        'currency_code', 'vat_enabled', 'vat_rate_pct', 'vat_label',
     ];
 
     // Privilege fields — never mass-assignable.
@@ -40,6 +41,8 @@ class User extends Authenticatable
         'manager_permissions' => 'array',
         'totp_enabled' => 'boolean',
         'is_active' => 'boolean',
+        'vat_enabled' => 'boolean',
+        'vat_rate_pct' => 'decimal:2',
         'password' => 'hashed',
     ];
 

@@ -17,6 +17,7 @@ class WhatsAppShareSheet extends StatefulWidget {
     this.venue = '',
     this.amount = '',
     this.total = '',
+    this.vat = '',
     this.advance = '',
     this.due = '',
     this.packageName = '',
@@ -30,6 +31,10 @@ class WhatsAppShareSheet extends StatefulWidget {
   final String venue;
   final String amount;
   final String total;
+
+  /// Pre-rendered tax line for the invoice template's `{vat}` slot, e.g.
+  /// `"VAT 15%: ৳750\n"`, or empty when the studio has tax off.
+  final String vat;
   final String advance;
   final String due;
   final String packageName;
@@ -57,6 +62,7 @@ class _WhatsAppShareSheetState extends State<WhatsAppShareSheet> {
       'venue': widget.venue,
       'amount': widget.amount,
       'total': widget.total,
+      'vat': widget.vat,
       'advance': widget.advance,
       'due': widget.due,
       'package': widget.packageName,

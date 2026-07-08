@@ -89,6 +89,21 @@ DateTime? serverDate(Object? v) {
   return DateTime.tryParse(v.toString());
 }
 
+/// The event `date` column is a calendar date (the shoot day), not an instant.
+/// Laravel's `date` cast serializes it as an ISO instant at UTC midnight
+/// ("2026-07-08T00:00:00.000000Z"). If that is parsed and later converted to
+/// local time for display it bleeds a spurious clock offset onto the date
+/// (e.g. "06:00" in Bangladesh) and, in negative-offset zones, can even shift
+/// the day. Collapse it back to a pure local calendar date so every surface
+/// renders the same, time-free day. The DateTime's own components already hold
+/// the intended day (UTC fields for a "…Z" value, local fields for a naive
+/// one), so reading them directly is correct either way.
+DateTime? serverEventDate(Object? v) {
+  final d = serverDate(v);
+  if (d == null) return null;
+  return DateTime(d.year, d.month, d.day);
+}
+
 String _normalizeEnum(String s) =>
     s.toLowerCase().replaceAll('_', '').replaceAll('-', '');
 
@@ -201,7 +216,7 @@ Booking bookingFromServer(Map<String, dynamic> j, {Booking? fallback}) {
             fallback: fallback?.eventType ?? EventType.other,
           )
         : fallback?.eventType ?? EventType.other,
-    date: serverDate(j['date']) ?? fallback?.date ?? DateTime.now(),
+    date: serverEventDate(j['date']) ?? fallback?.date ?? DateTime.now(),
     startTime:
         serverString(j, ['start_time', 'startTime']) ??
         fallback?.startTime ??

@@ -17,6 +17,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/format/booking_format.dart';
+import '../../../../core/format/currency.dart';
 import '../../../../core/role/capability.dart';
 import '../../../../features/settings/application/language_controller.dart';
 import '../../../../shared/widgets/celebration.dart';
@@ -244,7 +245,7 @@ class PaymentSummaryCard extends ConsumerWidget {
                 ],
                 style: TextStyle(color: AppColors.film),
                 decoration: InputDecoration(
-                  prefixText: '৳ ',
+                  prefixText: '${ActiveCurrency.value.symbol} ',
                   prefixStyle: TextStyle(color: AppColors.gold),
                   labelText: 'Amount received now',
                   labelStyle: TextStyle(color: AppColors.filmDim),
@@ -330,7 +331,7 @@ class PaymentSummaryCard extends ConsumerWidget {
       // 🪙 payment received — coin-pop celebration.
       if (context.mounted) Celebration.coinPop(context);
       messenger.showSnackBar(
-        SnackBar(content: Text('৳${amount.toStringAsFixed(0)} added to collection ✓')),
+        SnackBar(content: Text('${ActiveCurrency.value.wrap(amount.toStringAsFixed(0))} added to collection ✓')),
       );
     } catch (e) {
       messenger.showSnackBar(

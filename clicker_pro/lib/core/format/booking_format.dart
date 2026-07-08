@@ -13,6 +13,7 @@
 
 import 'package:intl/intl.dart';
 
+import 'currency.dart';
 import 'number_format.dart';
 
 class BookingFormat {
@@ -26,13 +27,22 @@ class BookingFormat {
     num amount, {
     required String lang,
     required bool bnNumerals,
-    String currencySymbol = '\u09F3', // ৳
+    String? currencySymbol,
   }) {
+    // Symbol + position come from the studio's active currency (defaults to
+    // BDT until the signed-in preference loads), so a studio in any country
+    // sees its own money sign. An explicit [currencySymbol] still wins.
+    final cur = ActiveCurrency.value;
+    final symbol = currencySymbol ?? cur.symbol;
     final base = NumberFormat.decimalPattern(lang).format(amount);
     final digitsApplied = (lang == 'bn' && bnNumerals)
         ? toBengaliDigits(base)
         : base;
-    return '$currencySymbol $digitsApplied';
+    // Most currencies read "<sym> 1,500"; right-symbol currencies (e.g. VND)
+    // read "1,500 <sym>". An explicit override always sits before the amount.
+    return (cur.symbolBefore || currencySymbol != null)
+        ? '$symbol $digitsApplied'
+        : '$digitsApplied $symbol';
   }
 
   /// Percentage rendering, e.g. `"65%"` for en or `"৬৫%"` for bn+bnNumerals.
@@ -77,6 +87,18 @@ class BookingFormat {
     String separator = ' – ',
   }) =>
       '${clockTime(startHhmm, lang: lang)}$separator${clockTime(endHhmm, lang: lang)}';
+
+  /// Event/calendar date WITHOUT a time, e.g. `"Jan 5, 2025"`.
+  ///
+  /// Use this for date-only values (the shoot day). The event's real clock
+  /// time lives in `startTime`/`endTime` and is rendered separately via
+  /// [clockRange]; passing an event date through [dateTime] would append a
+  /// spurious reading (e.g. "06:00") that is just the UTC→local offset of a
+  /// midnight value. When `lang == 'bn'` Bengali numerals are applied.
+  static String dateOnly(DateTime dt, {required String lang}) {
+    final formatted = DateFormat.yMMMd(lang).format(dt.toLocal());
+    return lang == 'bn' ? toBengaliDigits(formatted) : formatted;
+  }
 
   /// Date+time render for booking timeline, e.g. `"Jan 5, 2025 17:30"`.
   ///

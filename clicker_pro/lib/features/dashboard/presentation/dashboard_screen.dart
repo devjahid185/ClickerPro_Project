@@ -58,6 +58,7 @@ import '../../../core/role/capability.dart';
 import '../../../core/role/role_policy.dart';
 import '../../../core/booking_status/booking_status.dart';
 import '../../../core/format/booking_format.dart';
+import '../../../core/format/currency.dart';
 import '../../home_widget/data/widget_refresher.dart';
 import '../../home_widget/domain/widget_data.dart';
 import '../../bookings/application/booking_providers.dart';
@@ -221,7 +222,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   : next.title),
         nextEventTime: next == null
             ? null
-            : '${BookingFormat.dateTime(next.date, lang: 'en')} · '
+            : '${BookingFormat.dateOnly(next.date, lang: 'en')} · '
                   '${BookingFormat.clockTime(next.startTime)}',
       ),
     );
@@ -782,7 +783,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                         title: 'Upcoming',
                         value: '${m.upcomingEvents}',
                         color: AppColors.infoTeal,
-                        subtitle: 'next 7 days',
+                        subtitle: 'not yet shot',
                         labelColor: Colors.black,
                         subtitleColor: Colors.black,
                         onTap: _openUpcomingEvents,
@@ -1520,7 +1521,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                     ),
                                   ),
                                   Text(
-                                    '৳ ${total.toStringAsFixed(0)}',
+                                    ActiveCurrency.value.wrap(total.toStringAsFixed(0), spaced: true),
                                     style: TextStyle(
                                       color: AppColors.teal,
                                       fontWeight: FontWeight.w700,
@@ -1668,7 +1669,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                 ),
                               ),
                               trailing: Text(
-                                '৳${e.due.toStringAsFixed(0)}',
+                                ActiveCurrency.value.wrap(e.due.toStringAsFixed(0)),
                                 style: TextStyle(
                                   color: AppColors.coral,
                                   fontSize: 15,
@@ -1698,7 +1699,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   String _formatBdt(int minor) {
-    // Compact BDT formatter for tile display. minor units = paisa.
+    // Compact active-currency formatter for tile display. minor units = paisa.
     final taka = (minor / 100).round();
     final s = taka.toString();
     // Bangladesh-style grouping (last 3, then 2-2-…). Simple version:
@@ -1708,7 +1709,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       if (i == 3 || (i > 3 && (i - 3) % 2 == 0)) buf.write(',');
       buf.write(reversed[i]);
     }
-    return '৳${buf.toString().split('').reversed.join()}';
+    return ActiveCurrency.value.wrap(buf.toString().split('').reversed.join());
   }
 
   Widget _buildPayCard({
@@ -3198,7 +3199,7 @@ class _CollectionSourceRow extends StatelessWidget {
             ),
           ),
           Text(
-            '৳ ${amount.toStringAsFixed(0)}',
+            ActiveCurrency.value.wrap(amount.toStringAsFixed(0), spaced: true),
             style: TextStyle(
               color: AppColors.film,
               fontSize: 14,

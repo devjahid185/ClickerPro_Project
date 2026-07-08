@@ -776,7 +776,7 @@ class _PayoutItemRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dateStr = item.date == null
         ? ''
-        : BookingFormat.dateTime(item.date!, lang: 'en');
+        : BookingFormat.dateOnly(item.date!, lang: 'en');
     String m(double v) => BookingFormat.money(v, lang: 'en', bnNumerals: false);
 
     return Container(

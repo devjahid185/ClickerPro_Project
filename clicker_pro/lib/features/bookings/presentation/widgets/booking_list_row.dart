@@ -69,7 +69,7 @@ class BookingListRow extends ConsumerWidget {
         .watch(languageControllerProvider)
         .maybeWhen(data: (c) => c, orElse: () => 'en');
 
-    final dateLine = BookingFormat.dateTime(booking.date, lang: lang);
+    final dateLine = BookingFormat.dateOnly(booking.date, lang: lang);
     final timeLine =
         BookingFormat.clockRange(booking.startTime, booking.endTime, lang: lang);
 

@@ -59,6 +59,13 @@ class UserApi {
       // `specialization`, server column is `staff_position`.
       if (partial['specialization'] != null)
         'staff_position': partial['specialization'],
+      // Studio money settings — persisted so currency + tax survive a reinstall
+      // and stay in sync across the owner's devices and the web app.
+      if (partial['currencyCode'] != null)
+        'currency_code': partial['currencyCode'],
+      if (partial['vatEnabled'] != null) 'vat_enabled': partial['vatEnabled'],
+      if (partial['vatRatePct'] != null) 'vat_rate_pct': partial['vatRatePct'],
+      if (partial['vatLabel'] != null) 'vat_label': partial['vatLabel'],
     };
     final r = await _client.patch('/api/profile', body: body);
     return _user(r);

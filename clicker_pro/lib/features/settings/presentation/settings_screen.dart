@@ -20,6 +20,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/format/currency.dart';
 import '../../../core/navigation/route_names.dart';
 import '../../../core/providers.dart';
 import '../../../core/role/capability.dart';
@@ -34,6 +35,7 @@ import '../../../theme/reduce_motion.dart';
 import '../../auth/application/session_controller.dart';
 import '../../auth/presentation/login_screen.dart';
 import '../../profile/application/profile_controllers.dart';
+import '../application/currency_controller.dart';
 import '../application/language_controller.dart';
 import '../domain/preferences_repository.dart';
 
@@ -138,10 +140,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ]),
 
                   if (policy.can(Capability.toggleDistribution) ||
-                      policy.can(Capability.toggleVat)) ...[
+                      policy.can(Capability.toggleVat) ||
+                      policy.can(Capability.editStudioBranding)) ...[
                     const SizedBox(height: 30),
                     _sectionHeader('Business'),
                     _buildSettingsGroup([
+                      // Studio currency — drives every money symbol across the
+                      // app. Owner-set so a studio in any country sees its own.
+                      if (policy.can(Capability.editStudioBranding))
+                        _buildListItem(
+                          label:
+                              'Currency · '
+                              '${ref.watch(activeCurrencyProvider).code}',
+                          icon: Icons.payments_outlined,
+                          onTap: _showCurrencyPicker,
+                        ),
+                      // Tax / VAT setup — rate + label used on invoices. Each
+                      // country's system differs, so both are configurable.
+                      if (policy.can(Capability.editStudioBranding))
+                        _buildListItem(
+                          label: _vatSummaryLabel(),
+                          icon: Icons.receipt_long_rounded,
+                          onTap: _showVatSetup,
+                        ),
                       if (policy.can(Capability.toggleDistribution))
                         _buildBoolRow(
                           label: t('pref_dist'),
@@ -344,6 +365,223 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       setState(() => _vatEnabled = prev);
       _showSnack('Could not save preference');
     }
+  }
+
+  /// Bottom-sheet currency picker. Writes the choice through the currency
+  /// controller, which updates ActiveCurrency so every money render switches.
+  Future<void> _showCurrencyPicker() async {
+    final current = ref.read(activeCurrencyProvider);
+    final picked = await showModalBottomSheet<Currency>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.line(0.15),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                child: Row(
+                  children: [
+                    Text(
+                      'CURRENCY',
+                      style: TextStyle(
+                        fontFamily: AppText.monoFontFamily,
+                        fontSize: 11,
+                        letterSpacing: 1.4,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.orange,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: kCurrencies.length,
+                  itemBuilder: (_, i) {
+                    final c = kCurrencies[i];
+                    final selected = c.code == current.code;
+                    return ListTile(
+                      dense: true,
+                      leading: SizedBox(
+                        width: 34,
+                        child: Text(
+                          c.symbol,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.film,
+                          ),
+                        ),
+                      ),
+                      title: Text(
+                        '${c.code} · ${c.name}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: selected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: AppColors.film,
+                        ),
+                      ),
+                      trailing: selected
+                          ? Icon(Icons.check_rounded, color: AppColors.orange)
+                          : null,
+                      onTap: () => Navigator.of(sheetCtx).pop(c),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+    if (picked != null && picked.code != current.code) {
+      await ref.read(currencyControllerProvider.notifier).setCurrency(picked);
+      if (mounted) _showSnack('Currency set to ${picked.code}');
+    }
+  }
+
+  /// Summary shown on the Business "Tax / VAT" row, e.g. "Tax · VAT 15%" or
+  /// "Tax · Off".
+  String _vatSummaryLabel() {
+    final cfg = ref.watch(currencyControllerProvider).valueOrNull;
+    if (cfg == null || !cfg.vatEnabled) return 'Tax · Off';
+    final rate = cfg.vatRatePct;
+    final rateStr = rate % 1 == 0 ? rate.toStringAsFixed(0) : rate.toString();
+    return 'Tax · ${cfg.vatLabel} $rateStr%';
+  }
+
+  /// Tax/VAT setup sheet: enable, rate %, and label (VAT / GST / Tax / SST).
+  Future<void> _showVatSetup() async {
+    final cfg = ref.read(currencyControllerProvider).valueOrNull ??
+        const CurrencyConfig(currency: kDefaultCurrency);
+    bool enabled = cfg.vatEnabled;
+    final rateCtl = TextEditingController(
+      text: cfg.vatRatePct == 0
+          ? ''
+          : (cfg.vatRatePct % 1 == 0
+                ? cfg.vatRatePct.toStringAsFixed(0)
+                : cfg.vatRatePct.toString()),
+    );
+    final labelCtl = TextEditingController(text: cfg.vatLabel);
+
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) {
+        return StatefulBuilder(
+          builder: (sheetCtx, setSheet) => Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 18,
+              bottom: MediaQuery.of(sheetCtx).viewInsets.bottom + 20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'TAX / VAT',
+                  style: TextStyle(
+                    fontFamily: AppText.monoFontFamily,
+                    fontSize: 11,
+                    letterSpacing: 1.4,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.orange,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  activeThumbColor: AppColors.orange,
+                  title: Text(
+                    'Add a tax line to invoices',
+                    style: TextStyle(color: AppColors.film, fontSize: 14),
+                  ),
+                  value: enabled,
+                  onChanged: (v) => setSheet(() => enabled = v),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: labelCtl,
+                  enabled: enabled,
+                  textCapitalization: TextCapitalization.characters,
+                  decoration: const InputDecoration(
+                    labelText: 'Tax name (VAT / GST / Tax / SST)',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: rateCtl,
+                  enabled: enabled,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'Rate %',
+                    hintText: 'e.g. 15',
+                  ),
+                ),
+                const SizedBox(height: 18),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.orange,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    onPressed: () => Navigator.of(sheetCtx).pop(true),
+                    child: const Text('Save'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (saved == true) {
+      final rate = double.tryParse(rateCtl.text.trim()) ?? 0;
+      final label = labelCtl.text.trim().isEmpty
+          ? 'VAT'
+          : labelCtl.text.trim();
+      await ref.read(currencyControllerProvider.notifier).setVat(
+            enabled: enabled,
+            ratePct: rate,
+            label: label,
+          );
+      if (mounted) _showSnack('Tax settings saved');
+    }
+    rateCtl.dispose();
+    labelCtl.dispose();
   }
 
   Future<void> _setBengaliNumerals(String userId, bool value) async {

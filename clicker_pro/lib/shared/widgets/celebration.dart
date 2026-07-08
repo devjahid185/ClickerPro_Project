@@ -13,6 +13,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../core/format/currency.dart';
 import '../../theme/app_colors.dart';
 
 class Celebration {
@@ -145,10 +146,10 @@ class _CoinPainter extends CustomPainter {
     canvas.drawCircle(Offset.zero, r * 0.78, ring);
     canvas.restore();
 
-    // ৳ symbol stays upright (drawn after the squash restore).
+    // Currency symbol stays upright (drawn after the squash restore).
     final tp = TextPainter(
       text: TextSpan(
-        text: '৳',
+        text: ActiveCurrency.value.symbol,
         style: TextStyle(
           color: const Color(0xFF5C4410).withValues(alpha: fade),
           fontSize: r * 0.9,

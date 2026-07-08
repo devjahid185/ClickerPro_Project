@@ -10,6 +10,7 @@ import 'core/navigation/route_observer.dart';
 import 'core/providers.dart';
 import 'features/bookings/application/booking_providers.dart';
 import 'features/onboarding/presentation/splash_screen.dart';
+import 'features/settings/application/currency_controller.dart';
 import 'features/settings/application/language_controller.dart';
 import 'l10n/app_localizations.dart';
 import 'shared/widgets/web_nav_shell.dart';
@@ -27,6 +28,9 @@ class ClickerProApp extends ConsumerWidget {
     final locale = ref.watch(activeLocaleProvider);
     final activeTheme = ref.watch(activeThemeModeProvider);
     final reduceMotion = ref.watch(reduceMotionProvider);
+    // Eagerly load the studio's currency preference so ActiveCurrency is set
+    // before the first money render; rebuilds the tree when it resolves.
+    ref.watch(currencyControllerProvider);
 
     // Sync the static palette so every custom-painted surface reads the active
     // theme's colours without needing a BuildContext. Web has its own theme and

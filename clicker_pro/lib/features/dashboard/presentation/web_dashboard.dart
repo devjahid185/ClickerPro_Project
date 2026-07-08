@@ -26,6 +26,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/format/bd_holidays.dart';
 import '../../../core/format/booking_format.dart';
+import '../../../core/format/currency.dart';
 import '../../../core/navigation/route_names.dart';
 import '../../../theme/web_theme.dart';
 import '../../../shared/widgets/web_motion.dart';
@@ -1354,8 +1355,9 @@ class _TableEmpty extends StatelessWidget {
 }
 
 // ───────────────────────────────────────────────────────────── HELPERS
-/// Compact BDT formatter (paisa → ৳ with Bangladeshi grouping). Mirrors the
-/// mobile dashboard's formatter so totals read identically across platforms.
+/// Compact active-currency formatter (paisa → symbol with South-Asian
+/// grouping). Mirrors the mobile dashboard's formatter so totals read
+/// identically across platforms.
 String _formatBdt(int minor) {
   final taka = (minor / 100).round();
   final s = taka.toString();
@@ -1365,5 +1367,5 @@ String _formatBdt(int minor) {
     if (i == 3 || (i > 3 && (i - 3) % 2 == 0)) buf.write(',');
     buf.write(reversed[i]);
   }
-  return '৳${buf.toString().split('').reversed.join()}';
+  return ActiveCurrency.value.wrap(buf.toString().split('').reversed.join());
 }

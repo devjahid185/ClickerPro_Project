@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/format/currency.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_theme.dart';
 import '../data/widget_service.dart';
@@ -158,7 +159,8 @@ class _WidgetSettingsScreenState extends State<WidgetSettingsScreen> {
                 if (_showEventsCount)
                   _buildPreviewRow(Icons.event, 'Events today', '3'),
                 if (_showDueAmount)
-                  _buildPreviewRow(Icons.payments, 'Due', '৳2,400'),
+                  _buildPreviewRow(
+                    Icons.payments, 'Due', ActiveCurrency.value.wrap('2,400')),
                 if (_showNextEvent)
                   _buildPreviewRow(
                     Icons.arrow_forward_ios,

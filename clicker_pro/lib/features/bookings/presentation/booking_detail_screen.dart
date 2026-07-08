@@ -44,6 +44,7 @@ import '../../../theme/app_theme.dart';
 
 import '../../auth/domain/user_role.dart';
 import '../../profile/application/profile_controllers.dart';
+import '../../settings/application/currency_controller.dart';
 import '../../settings/application/language_controller.dart';
 import '../../team/application/team_providers.dart';
 import '../../team/domain/team_member.dart';
@@ -354,7 +355,7 @@ class BookingDetailScreen extends ConsumerWidget {
     final studioPhone = (me?.phone ?? '').trim();
 
     final clientLine = envelope.client?.name ?? booking.clientName ?? '—';
-    final dateStr = BookingFormat.dateTime(booking.date, lang: lang);
+    final dateStr = BookingFormat.dateOnly(booking.date, lang: lang);
     final idDigits = booking.id.replaceAll(RegExp(r'[^0-9]'), '');
     final invoiceNo = idDigits.isEmpty
         ? 'INV-0001'
@@ -546,7 +547,7 @@ class _DetailBody extends StatelessWidget {
               DetailRow(
                 icon: Icons.event_outlined,
                 label: 'Date',
-                value: BookingFormat.dateTime(booking.date, lang: lang),
+                value: BookingFormat.dateOnly(booking.date, lang: lang),
               ),
               DetailRow(
                 icon: Icons.schedule_outlined,
@@ -943,7 +944,7 @@ class _HeaderCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${BookingFormat.dateTime(booking.date, lang: lang)} · '
+                  '${BookingFormat.dateOnly(booking.date, lang: lang)} · '
                   '${BookingFormat.clockRange(booking.startTime, booking.endTime, lang: lang, separator: '–')}',
                   style: TextStyle(
                     color: AppColors.onAccent.withValues(alpha: 0.85),
@@ -1301,11 +1302,20 @@ class _InvoiceAction extends ConsumerWidget {
     final clientPhone =
         envelope.client?.phone ?? booking.clientPhone ?? '—';
 
-    final total = booking.customPrice ?? envelope.package?.netPrice ?? 0.0;
+    // Studio currency + VAT config drives the tax line on the invoice. Every
+    // country's tax differs, so the rate + label (VAT / GST / Tax) are set by
+    // the studio; when disabled the invoice reads exactly as before.
+    final cfg = ref.read(currencyControllerProvider).valueOrNull;
+    final subtotal = booking.customPrice ?? envelope.package?.netPrice ?? 0.0;
+    final vat = cfg?.vatOn(subtotal) ?? 0.0;
+    final showVat = (cfg?.vatEnabled ?? false) && vat > 0.005;
+    final vatLabel = cfg?.vatLabel ?? 'VAT';
+    final vatRate = cfg?.vatRatePct ?? 0;
+    final total = subtotal + vat;
     final advance = envelope.payments.fold<double>(0, (s, p) => s + p.amount);
     final due = total - advance;
 
-    final dateStr = BookingFormat.dateTime(booking.date, lang: lang);
+    final dateStr = BookingFormat.dateOnly(booking.date, lang: lang);
     String money(double v) =>
         BookingFormat.money(v, lang: lang, bnNumerals: lang == 'bn');
 
@@ -1367,8 +1377,13 @@ class _InvoiceAction extends ConsumerWidget {
         'Client no: $clientPhone',
         'Venue: ${booking.venue ?? '—'}',
         if (chiefName != '—') 'Chief: $chiefName',
-        // Money block mirrors the designed paper: total, advance, then due.
+        // Money block mirrors the designed paper: (subtotal + VAT) total,
+        // advance, then due.
         if (showPayment) ...[
+          if (showVat) 'Subtotal: ${money(subtotal)}',
+          if (showVat)
+            '$vatLabel (${vatRate.toStringAsFixed(vatRate % 1 == 0 ? 0 : 2)}%): '
+                '${money(vat)}',
           'Total: ${money(total)}',
           'Advance paid: ${money(advance)}',
           'Due: ${money(due)}',
@@ -1434,6 +1449,11 @@ class _InvoiceAction extends ConsumerWidget {
       advanceText: money(advance),
       dueText: money(due),
       dueIsZero: due <= 0.5,
+      showVat: showVat,
+      subtotalText: money(subtotal),
+      vatText: money(vat),
+      vatLabel:
+          '$vatLabel (${vatRate.toStringAsFixed(vatRate % 1 == 0 ? 0 : 2)}%)',
     );
 
     showModalBottomSheet<void>(
@@ -1507,6 +1527,10 @@ class _InvoiceData {
     required this.advanceText,
     required this.dueText,
     required this.dueIsZero,
+    this.showVat = false,
+    this.subtotalText = '',
+    this.vatText = '',
+    this.vatLabel = 'VAT',
     this.teamEntries = const <({String name, String phone})>[],
   });
 
@@ -1538,6 +1562,13 @@ class _InvoiceData {
   final String advanceText;
   final String dueText;
   final bool dueIsZero;
+
+  /// VAT/tax line — shown only when the studio enabled it. [vatLabel] already
+  /// carries the rate, e.g. "VAT (15%)".
+  final bool showVat;
+  final String subtotalText;
+  final String vatText;
+  final String vatLabel;
 
   /// Structured team rows for the designed paper — "Name · Role" ↔ phone.
   final List<({String name, String phone})> teamEntries;
@@ -1884,6 +1915,40 @@ class _InvoiceSheet extends StatelessWidget {
     );
   }
 
+  /// One label↔value line in the invoice money block. [muted] dims it (tax
+  /// line); [bold] emphasises it (grand total).
+  Widget _paperMoneyRow(
+    String label,
+    String value, {
+    bool muted = false,
+    bool bold = false,
+  }) {
+    final color = muted ? AppColors.filmMuted : AppColors.film;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 9),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: color, fontSize: 13),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 13,
+              fontWeight: bold ? FontWeight.w800 : FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // Money block: package/total · advance · big due over a 2px orange rule.
   Widget _moneyBlock() {
     final lineLabel = (data.packageName?.trim().isNotEmpty ?? false)
@@ -1896,29 +1961,16 @@ class _InvoiceSheet extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 9),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    lineLabel,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: AppColors.film, fontSize: 13),
-                  ),
-                ),
-                Text(
-                  data.totalText,
-                  style: TextStyle(
-                    color: AppColors.film,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
+          // Subtotal (pre-tax) when VAT is shown, else the plain total.
+          _paperMoneyRow(
+            lineLabel,
+            data.showVat ? data.subtotalText : data.totalText,
           ),
+          // VAT / tax line + grand total, only when the studio enabled tax.
+          if (data.showVat) ...[
+            _paperMoneyRow(data.vatLabel, data.vatText, muted: true),
+            _paperMoneyRow('Total', data.totalText, bold: true),
+          ],
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Row(
@@ -2146,6 +2198,8 @@ class _InvoiceSheet extends StatelessWidget {
               ),
         summary: data.showPayment
             ? [
+                if (data.showVat) PdfRow('Subtotal', data.subtotalText),
+                if (data.showVat) PdfRow(data.vatLabel, data.vatText),
                 PdfRow('Total', data.totalText),
                 PdfRow('Advance', data.advanceText),
                 PdfRow('Due', data.dueText, emphasize: true),

@@ -33,22 +33,6 @@ String formatNumber(
   return raw;
 }
 
-String formatCurrencyBdt(
-  num value, {
-  required String lang,
-  bool bengaliNumerals = false,
-}) {
-  final f = NumberFormat.currency(
-    locale: 'en_BD',
-    symbol: '৳ ',
-  );
-  final raw = f.format(value);
-  if (lang == 'bn' && bengaliNumerals) {
-    return toBengaliDigits(raw);
-  }
-  return raw;
-}
-
 String formatDate(DateTime date, {required String lang}) {
   return DateFormat.yMMMMd(lang).format(date);
 }

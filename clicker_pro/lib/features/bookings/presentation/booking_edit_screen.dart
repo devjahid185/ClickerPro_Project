@@ -28,6 +28,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/format/currency.dart';
 import '../../../core/notifications/event_reminder_service.dart';
 import '../../../core/role/capability.dart';
 import '../../../core/role/role_policy.dart';
@@ -1379,7 +1380,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                     ),
                   ),
                   Text(
-                    '৳${_extraEvents[i].package.netPrice.toStringAsFixed(0)}',
+                    ActiveCurrency.value.wrap(_extraEvents[i].package.netPrice.toStringAsFixed(0)),
                     style: TextStyle(
                       color: AppColors.gold,
                       fontSize: 13,
@@ -1430,7 +1431,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                   ),
                 ),
                 Text(
-                  '৳${grand.toStringAsFixed(0)}',
+                  ActiveCurrency.value.wrap(grand.toStringAsFixed(0)),
                   style: TextStyle(
                     color: AppColors.orange,
                     fontSize: 15,
@@ -2034,7 +2035,7 @@ class _PackagePickerSheet extends ConsumerWidget {
                       style: TextStyle(color: AppColors.film, fontSize: 14),
                     ),
                     subtitle: Text(
-                      '৳${p.netPrice.toStringAsFixed(0)}'
+                      '${ActiveCurrency.value.wrap(p.netPrice.toStringAsFixed(0))}'
                       '${p.discount > 0 ? ' (${p.discount.toStringAsFixed(0)} off)' : ''}'
                       '${p.coverageHours == null ? '' : ' · ${p.coverageHours}h'}',
                       style: TextStyle(

@@ -23,6 +23,7 @@ import '../../../theme/app_colors.dart';
 import '../../../core/navigation/route_names.dart';
 import '../../../core/pdf/pdf_export.dart';
 import '../../../core/format/booking_format.dart';
+import '../../../core/format/currency.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../bookings/application/booking_providers.dart';
@@ -154,6 +155,10 @@ class InvoiceScreen extends ConsumerWidget {
         .read(bookingRepositoryProvider)
         .getByRemoteId(inv.eventId);
 
+    String money(double v) => ActiveCurrency.value.wrap(v.toStringAsFixed(0));
+    final vat = ActiveVat.on(inv.total);
+    final due = ActiveVat.applies ? inv.total + vat - inv.advance : inv.due;
+
     navigator.pushNamed(
       RouteNames.whatsappShare,
       arguments: <String, String>{
@@ -164,7 +169,7 @@ class InvoiceScreen extends ConsumerWidget {
             : (booking?.title ?? ''),
         'eventDate': booking == null
             ? ''
-            : BookingFormat.dateTime(booking.date, lang: 'en'),
+            : BookingFormat.dateOnly(booking.date, lang: 'en'),
         'eventTime': booking == null
             ? ''
             : BookingFormat.clockRange(
@@ -173,9 +178,10 @@ class InvoiceScreen extends ConsumerWidget {
                 lang: 'en',
               ),
         'venue': booking?.venue ?? '',
-        'total': '৳${inv.total.toStringAsFixed(0)}',
-        'advance': '৳${inv.advance.toStringAsFixed(0)}',
-        'due': '৳${inv.due.toStringAsFixed(0)}',
+        'total': money(inv.total),
+        'vat': ActiveVat.applies ? '${ActiveVat.lineLabel}: ${money(vat)}\n' : '',
+        'advance': money(inv.advance),
+        'due': money(due),
         'packageName': inv.packageName,
       },
     );
@@ -240,6 +246,10 @@ class InvoiceScreen extends ConsumerWidget {
           i < inv.teamPhones.length ? inv.teamPhones[i] : '—',
         ],
     ];
+    String money(double v) =>
+        ActiveCurrency.value.wrap(v.toStringAsFixed(0), spaced: true);
+    final vat = ActiveVat.on(inv.total);
+    final due = ActiveVat.applies ? inv.total + vat - inv.advance : inv.due;
     try {
       await PdfExporter.share(
         PdfDocumentData(
@@ -252,9 +262,10 @@ class InvoiceScreen extends ConsumerWidget {
               : '${inv.packageName} · ${inv.status}',
           summary: [
             PdfRow('Package', inv.packageName.isEmpty ? '—' : inv.packageName),
-            PdfRow('Total', '৳ ${inv.total.toStringAsFixed(0)}'),
-            PdfRow('Advance', '৳ ${inv.advance.toStringAsFixed(0)}'),
-            PdfRow('Due', '৳ ${inv.due.toStringAsFixed(0)}', emphasize: true),
+            PdfRow(ActiveVat.applies ? 'Subtotal' : 'Total', money(inv.total)),
+            if (ActiveVat.applies) PdfRow(ActiveVat.lineLabel, money(vat)),
+            PdfRow('Advance', money(inv.advance)),
+            PdfRow('Due', money(due), emphasize: true),
           ],
           table: team.isEmpty
               ? null
@@ -270,13 +281,18 @@ class InvoiceScreen extends ConsumerWidget {
   }
 
   String _invoiceText(Invoice inv) {
+    String money(double v) => ActiveCurrency.value.wrap(v.toStringAsFixed(0));
+    final vat = ActiveVat.on(inv.total);
+    final due = ActiveVat.applies ? inv.total + vat - inv.advance : inv.due;
     final buf = StringBuffer()
       ..writeln('INVOICE')
       ..writeln('Package: ${inv.packageName}')
       ..writeln('Status: ${inv.status}')
-      ..writeln('Total: ৳${inv.total.toStringAsFixed(0)}')
-      ..writeln('Advance: ৳${inv.advance.toStringAsFixed(0)}')
-      ..writeln('Due: ৳${inv.due.toStringAsFixed(0)}');
+      ..writeln('${ActiveVat.applies ? 'Subtotal' : 'Total'}: ${money(inv.total)}');
+    if (ActiveVat.applies) buf.writeln('${ActiveVat.lineLabel}: ${money(vat)}');
+    buf
+      ..writeln('Advance: ${money(inv.advance)}')
+      ..writeln('Due: ${money(due)}');
     if (inv.teamNames.isNotEmpty) {
       buf
         ..writeln()
@@ -304,6 +320,15 @@ class _InvoicePaper extends StatelessWidget {
 
   String _money(double v) =>
       BookingFormat.money(v, lang: 'en', bnNumerals: false);
+
+  /// Tax computed from the studio's VAT setting; `0` when tax is off.
+  double get _vat => ActiveVat.on(invoice.total);
+
+  /// Balance owed. With tax on, the client owes the tax too, so it's added on
+  /// top of the package before subtracting the advance. Tax off → the server's
+  /// own `due` (unchanged behaviour).
+  double get _due =>
+      ActiveVat.applies ? invoice.total + _vat - invoice.advance : invoice.due;
 
   /// "#INV-XXXX" — last 4 characters of the id, matching the mock's
   /// "#INV-0042" without inventing a sequence the backend doesn't have.
@@ -507,6 +532,31 @@ class _InvoicePaper extends StatelessWidget {
                     ],
                   ),
                 ),
+                // Tax line — only when the studio has VAT/GST turned on.
+                if (ActiveVat.applies)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 9),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            ActiveVat.lineLabel,
+                            style: TextStyle(
+                              color: AppColors.filmDim,
+                              fontSize: 12.5,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '+ ${_money(_vat)}',
+                          style: TextStyle(
+                            color: AppColors.filmDim,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Row(
@@ -549,9 +599,9 @@ class _InvoicePaper extends StatelessWidget {
                       ),
                       const Spacer(),
                       Text(
-                        _money(invoice.due),
+                        _money(_due),
                         style: TextStyle(
-                          color: invoice.due > 0
+                          color: _due > 0
                               ? AppColors.red
                               : AppColors.green,
                           fontSize: 20,

@@ -50,6 +50,9 @@ class WhatsAppTemplate {
         'Dear {name}, here is the invoice for your {event}.\n\n'
         'Package: {package}\n'
         'Total: {total}\n'
+        // {vat} carries its own "VAT 15%: …\n" line, or is empty when the
+        // studio has tax off — so there's no stray blank line either way.
+        '{vat}'
         'Advance: {advance}\n'
         'Due: {due}\n\n'
         'Please review and let us know if you have any questions.',

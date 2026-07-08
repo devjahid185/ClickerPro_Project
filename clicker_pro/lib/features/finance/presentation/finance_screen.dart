@@ -20,6 +20,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/booking_status/booking_status.dart';
+import '../../../core/format/currency.dart';
 import '../../../core/navigation/route_names.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_theme.dart';
@@ -47,9 +48,11 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   // For "Both" role only: which side of finance is showing.
   bool _showFreelancerSide = false;
 
-  // ৳ with thousands grouping — "৳1,86,500". Shared by the hero + stat cards.
+  // Active-currency symbol with thousands grouping — "৳186,500" / "$186,500".
+  // Shared by the hero + stat cards.
   static final NumberFormat _moneyFmt = NumberFormat.decimalPattern('en');
-  static String _money(num v) => '৳${_moneyFmt.format(v.round())}';
+  static String _money(num v) =>
+      ActiveCurrency.value.wrap(_moneyFmt.format(v.round()));
 
   @override
   Widget build(BuildContext context) {

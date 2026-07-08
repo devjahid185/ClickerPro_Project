@@ -2,6 +2,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/format/currency.dart';
 import '../../../core/pdf/pdf_export.dart';
 import '../../../core/providers.dart';
 import '../../../shared/states/empty_state.dart';
@@ -12,9 +13,9 @@ import '../data/petty_cash_repository.dart';
 import '../domain/petty_cash_entry.dart';
 import '../../../theme/app_theme.dart';
 
-/// Money in the app's Bangladeshi grouping, e.g. "৳4,250".
+/// Active-currency money in South-Asian grouping, e.g. "৳4,250".
 String _money(double v) =>
-    '৳${NumberFormat('#,##,##0', 'en_IN').format(v.round())}';
+    ActiveCurrency.value.wrap(NumberFormat('#,##,##0', 'en_IN').format(v.round()));
 
 /// Category → (icon, soft bg, saturated fg) for the expense rows, matching
 /// the .dc.html MOD-54 colour coding.
@@ -239,7 +240,7 @@ class PettyCashScreen extends ConsumerWidget {
           summary: [
             PdfRow(
               'Balance',
-              '৳ ${balance.toStringAsFixed(2)}',
+              ActiveCurrency.value.wrap(balance.toStringAsFixed(2), spaced: true),
               emphasize: true,
             ),
           ],
@@ -253,7 +254,7 @@ class PettyCashScreen extends ConsumerWidget {
                         e.title,
                         e.category.name,
                         d(e.date),
-                        '৳ ${e.amount.toStringAsFixed(2)}',
+                        ActiveCurrency.value.wrap(e.amount.toStringAsFixed(2), spaced: true),
                       ],
                   ],
                 ),
