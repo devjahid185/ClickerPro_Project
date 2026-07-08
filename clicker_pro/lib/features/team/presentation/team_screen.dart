@@ -12,6 +12,7 @@ import '../application/team_providers.dart';
 import '../data/team_api.dart' show TeamMemberProfile;
 import '../domain/team_member.dart';
 import '../../../theme/app_theme.dart';
+import '../../../shared/widgets/web_shell.dart';
 
 class TeamScreen extends ConsumerWidget {
   const TeamScreen({super.key});
@@ -103,21 +104,36 @@ class TeamScreen extends ConsumerWidget {
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(18, 12, 18, 96),
                   children: [
-                    _InviteMethodsRow(
-                      onPasscode: () => _showInviteSheet(context, ref),
-                      onJoin: () => _showJoinSheet(context),
+                    // Cap + centre on wide web so the two-up member grid stays
+                    // a comfortable width; mobile is a plain full-width column.
+                    WebFormWidth(
+                      maxWidth: 920,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _InviteMethodsRow(
+                            onPasscode: () => _showInviteSheet(context, ref),
+                            onJoin: () => _showJoinSheet(context),
+                          ),
+                          const SizedBox(height: 18),
+                          for (final group in groups) ...[
+                            _roleHeader(group.label, group.members.length),
+                            const SizedBox(height: 10),
+                            // Two-up tile grid on wide web, single column on
+                            // mobile / narrow web.
+                            WebTwoColumn(
+                              runSpacing: 9,
+                              children: [
+                                for (final m in group.members)
+                                  _TeamMemberTile(member: m),
+                              ],
+                            ),
+                            if (group != groups.last)
+                              const SizedBox(height: 18),
+                          ],
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 18),
-                    for (final group in groups) ...[
-                      _roleHeader(group.label, group.members.length),
-                      const SizedBox(height: 10),
-                      for (var i = 0; i < group.members.length; i++) ...[
-                        _TeamMemberTile(member: group.members[i]),
-                        if (i != group.members.length - 1)
-                          const SizedBox(height: 9),
-                      ],
-                      if (group != groups.last) const SizedBox(height: 18),
-                    ],
                   ],
                 );
               },

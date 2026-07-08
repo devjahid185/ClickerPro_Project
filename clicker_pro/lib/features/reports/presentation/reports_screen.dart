@@ -30,6 +30,7 @@ import 'widgets/team_performance_section.dart';
 import 'widgets/year_selector.dart';
 import 'widgets/yearly_summary_card.dart';
 import '../../../theme/app_theme.dart';
+import '../../../shared/widgets/web_shell.dart';
 
 class ReportsScreen extends ConsumerWidget {
   const ReportsScreen({super.key});
@@ -70,7 +71,9 @@ class ReportsScreen extends ConsumerWidget {
           // Tiny delay so the spinner shows even on instant cache hits।
           await Future<void>.delayed(const Duration(milliseconds: 200));
         },
-        child: ListView(
+        child: WebFormWidth(
+          maxWidth: 720,
+          child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           children: const [
             SizedBox(height: 8),
@@ -78,6 +81,7 @@ class ReportsScreen extends ConsumerWidget {
             YearlySummaryCard(),
             TeamPerformanceSection(),
           ],
+        ),
         ),
       ),
     );

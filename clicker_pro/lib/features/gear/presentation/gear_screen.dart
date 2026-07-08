@@ -7,6 +7,7 @@ import '../../../core/format/booking_format.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/states/empty_state.dart';
 import '../../../shared/widgets/motion.dart';
+import '../../../shared/widgets/web_shell.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
@@ -166,11 +167,16 @@ class GearScreen extends ConsumerWidget {
                   itemCount: items.length,
                   itemBuilder: (_, i) => StaggeredList.item(
                     i,
-                    GearRow(
-                      item: items[i],
-                      lang: lang,
-                      onDelete: () =>
-                          _confirmAndDelete(context, ref, items[i].id),
+                    // Cap + centre each row on wide web so gear items don't
+                    // stretch the full desktop width. Mobile: pass-through.
+                    WebFormWidth(
+                      maxWidth: 620,
+                      child: GearRow(
+                        item: items[i],
+                        lang: lang,
+                        onDelete: () =>
+                            _confirmAndDelete(context, ref, items[i].id),
+                      ),
                     ),
                   ),
                 );

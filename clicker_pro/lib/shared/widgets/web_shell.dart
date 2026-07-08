@@ -106,3 +106,59 @@ class WebFormWidth extends StatelessWidget {
     );
   }
 }
+
+/// Lays [children] out in two columns on a wide web viewport, and in a single
+/// stacked column everywhere else (narrow web + all mobile). Each item keeps
+/// its own height; the grid just flows them left-to-right, two per row.
+///
+/// Use it for card/tile lists (team members, packages, gear) so they read as
+/// a tidy two-up grid on desktop instead of one very wide row per item. On
+/// mobile it is a plain [Column], so the phone layout is unchanged.
+class WebTwoColumn extends StatelessWidget {
+  const WebTwoColumn({
+    super.key,
+    required this.children,
+    this.spacing = 12,
+    this.runSpacing = 12,
+    this.wideBreakpoint = 720,
+  });
+
+  final List<Widget> children;
+  final double spacing;
+  final double runSpacing;
+
+  /// Below this content width the list stays single-column.
+  final double wideBreakpoint;
+
+  @override
+  Widget build(BuildContext context) {
+    // Single stacked column on mobile and on narrow web.
+    Widget stacked() => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var i = 0; i < children.length; i++) ...[
+              if (i != 0) SizedBox(height: runSpacing),
+              children[i],
+            ],
+          ],
+        );
+
+    if (!kIsWeb) return stacked();
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        if (w < wideBreakpoint) return stacked();
+        final itemWidth = (w - spacing) / 2;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: runSpacing,
+          children: [
+            for (final child in children)
+              SizedBox(width: itemWidth, child: child),
+          ],
+        );
+      },
+    );
+  }
+}

@@ -24,6 +24,7 @@ import '../../../core/format/currency.dart';
 import '../../../core/navigation/route_names.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_theme.dart';
+import '../../../shared/widgets/web_shell.dart';
 import '../../auth/domain/user_role.dart';
 import '../../bookings/application/booking_providers.dart';
 import '../../bookings/domain/booking.dart';
@@ -176,7 +177,9 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
           ref.invalidate(dueBreakdownProvider);
           await ref.read(expenseListControllerProvider.notifier).refresh();
         },
-        child: ListView(
+        child: WebFormWidth(
+          maxWidth: 720,
+          child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
           children: [
             // Both-role users get a Studio | Freelancer switch so they can
@@ -227,6 +230,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
             ],
             _FadeUp(order: 6, child: _buildActivityLog(periodDueEntries)),
           ],
+        ),
         ),
       ),
     );

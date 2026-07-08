@@ -26,6 +26,7 @@ import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../shared/states/offline_banner.dart';
 import '../../../shared/widgets/motion.dart';
+import '../../../shared/widgets/web_shell.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_theme.dart';
 
@@ -617,7 +618,12 @@ class _BookingListColumn extends StatelessWidget {
       controller: scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 96),
-      child: Row(
+      // On web the two-column Day|Night split is capped and centred so each
+      // card stays a comfortable width on a wide desktop window instead of
+      // each column ballooning to ~700px. Mobile is unchanged (pass-through).
+      child: WebFormWidth(
+        maxWidth: 960,
+        child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
@@ -640,6 +646,7 @@ class _BookingListColumn extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }
