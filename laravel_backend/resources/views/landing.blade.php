@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Clicker Pro — Run Your Photography Business</title>
-    <meta name="description" content="Clicker Pro replaces a photography studio's notebook, WhatsApp groups, and Excel sheet with one app. Bookings, team, and money — in one place.">
+    <title>Graphy7 — Run Your Photography Business</title>
+    <meta name="description" content="Graphy7 replaces a photography studio's notebook, WhatsApp groups, and Excel sheet with one app. Bookings, team, and money — in one place.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,12 +15,13 @@
     {{-- NAV --}}
     <nav class="nav">
         <a href="#top" class="nav__brand">
-            <span class="nav__mark">C</span> Clicker Pro
+            <span class="nav__mark">G</span> Graphy<span style="color:var(--primary)">7</span>
         </a>
         <div class="nav__links">
             <a href="#features" class="nav__link">Features</a>
             <a href="#screens" class="nav__link">Screens</a>
             <a href="#pricing" class="nav__link">Pricing</a>
+            <a href="{{ $appWebUrl }}" class="nav__link" target="_blank" rel="noopener">Web App</a>
             <a href="{{ $appDownloadUrl }}" class="nav__cta">Download APK</a>
         </div>
         <button class="nav__menu" aria-label="Menu">☰</button>
@@ -39,7 +40,7 @@
             <p class="hero__support">{{ $heroDescription }}</p>
             <div class="hero__actions">
                 <a href="{{ $appDownloadUrl }}" class="btn btn--primary">Download APK</a>
-                <a href="#features" class="btn btn--ghost">Explore Features</a>
+                <a href="{{ $appWebUrl }}" class="btn btn--ghost" target="_blank" rel="noopener">Open Web App</a>
             </div>
         </div>
 
@@ -115,11 +116,11 @@
             <div class="visual-grid">
                 <article class="visual-card reveal">
                     <div class="visual-card__label">Mobile app preview</div>
-                    <img src="{{ asset('landing/img/mobile-app.jpg') }}" alt="Clicker Pro mobile app screenshot" loading="lazy" width="720" height="1069">
+                    <img src="{{ asset('landing/img/mobile-app.jpg') }}" alt="Graphy7 mobile app screenshot" loading="lazy" width="720" height="1069">
                 </article>
                 <article class="visual-card reveal">
                     <div class="visual-card__label">Web dashboard preview</div>
-                    <img src="{{ asset('landing/img/web-app.jpg') }}" alt="Clicker Pro web dashboard screenshot" loading="lazy" width="1280" height="800">
+                    <img src="{{ asset('landing/img/web-app.jpg') }}" alt="Graphy7 web dashboard screenshot" loading="lazy" width="1280" height="800">
                 </article>
             </div>
 
@@ -225,11 +226,11 @@
             <div class="cta-band reveal">
                 <div class="cta-band__content">
                     <h2 class="cta-band__title">Ready to run your studio better?</h2>
-                    <p class="cta-band__desc">Download Clicker Pro and bring bookings, team, and money into one place.</p>
+                    <p class="cta-band__desc">Use Graphy7 on the web or install the app — bring bookings, team, and money into one place.</p>
                 </div>
                 <div class="cta-band__actions">
-                    <a href="{{ $appDownloadUrl }}" class="btn btn--light">⬇ Download APK</a>
-                    <a href="{{ $appWebUrl }}" class="btn btn--ghost">Open Web App</a>
+                    <a href="{{ $appWebUrl }}" class="btn btn--light" target="_blank" rel="noopener">🌐 Open Web App</a>
+                    <a href="{{ $appDownloadUrl }}" class="btn btn--ghost">⬇ Download APK</a>
                 </div>
             </div>
         </div>
@@ -239,13 +240,13 @@
     <footer class="footer">
         <div class="container">
             <div class="footer__grid">
-                <div class="footer__brand"><span class="nav__mark">C</span> Clicker Pro</div>
+                <div class="footer__brand"><span class="nav__mark">G</span> Graphy<span style="color:var(--primary)">7</span></div>
                 <div class="footer__links">
                     <a href="#features" class="footer__link">Features</a>
                     <a href="#download" class="footer__link">Download</a>
                 </div>
             </div>
-            <div class="footer__copy">© {{ date('Y') }} Clicker Pro · Photography &amp; event management for Bangladesh.</div>
+            <div class="footer__copy">© {{ date('Y') }} Graphy7 · Photography &amp; event management for Bangladesh.</div>
         </div>
     </footer>
 

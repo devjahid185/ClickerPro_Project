@@ -16,11 +16,11 @@
   --text-dim:      #94a3b8; /* slate-400 */
   --text-muted:    #64748b; /* slate-500 */
 
-  --primary:       #FF6B00; /* brand orange */
-  --primary-light: #FF8534;
-  --primary-dark:  #E55F00;
-  --primary-soft:  rgba(255, 107, 0, 0.12);
-  --primary-glow:  rgba(255, 107, 0, 0.35);
+  --primary:       #E2620E; /* Graphy7 Signal Orange */
+  --primary-light: #F4881C;
+  --primary-dark:  #B84E0A;
+  --primary-soft:  rgba(226, 98, 14, 0.12);
+  --primary-glow:  rgba(226, 98, 14, 0.35);
 
   --font-display: 'Playfair Display', Georgia, serif;
   --font-body:    'Outfit', system-ui, -apple-system, sans-serif;

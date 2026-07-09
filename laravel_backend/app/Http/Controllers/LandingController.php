@@ -52,7 +52,7 @@ class LandingController extends Controller
             [
                 'name' => $this->getValue('landing.review_1_name', 'Ayesha Rahman'),
                 'role' => $this->getValue('landing.review_1_role', 'Studio Owner'),
-                'text' => $this->getValue('landing.review_1_text', 'Clicker Pro replaced our paper bookings and WhatsApp chaos. Now every shoot is organised and the team knows exactly what to do.'),
+                'text' => $this->getValue('landing.review_1_text', 'Graphy7 replaced our paper bookings and WhatsApp chaos. Now every shoot is organised and the team knows exactly what to do.'),
             ],
             [
                 'name' => $this->getValue('landing.review_2_name', 'Shakib Hasan'),
@@ -69,7 +69,7 @@ class LandingController extends Controller
         return view('landing', [
             'heroTitle' => $this->getValue('landing.hero_title', 'Run Your Photography Business With Confidence.'),
             'heroSubtitle' => $this->getValue('landing.hero_subtitle', 'Built for Bangladesh studios that want bookings, teams and money managed in a single, modern platform.'),
-            'heroDescription' => $this->getValue('landing.hero_description', 'Clicker Pro gives you the mobile app and web dashboard to run your photography company like a pro.'),
+            'heroDescription' => $this->getValue('landing.hero_description', 'Graphy7 gives you the mobile app and web dashboard to run your photography company like a pro.'),
             'featureHeadline' => $this->getValue('landing.feature_headline', 'Smart tools for booking, team, finance and delivery.'),
             'featureSubheadline' => $this->getValue('landing.feature_subheadline', 'Everything your photography company needs with a premium, professional user experience.'),
             'details' => $details,
