@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -13,6 +14,7 @@ import '../data/team_api.dart' show TeamMemberProfile;
 import '../domain/team_member.dart';
 import '../../../theme/app_theme.dart';
 import '../../../shared/widgets/web_shell.dart';
+import 'web_team.dart';
 
 class TeamScreen extends ConsumerWidget {
   const TeamScreen({super.key});
@@ -21,6 +23,27 @@ class TeamScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final loc = AppLocalizations.of(context);
     final membersAsync = ref.watch(teamMembersProvider);
+
+    // On wide web the WebNavShell owns the chrome; render the dedicated desktop
+    // members grid instead of the mobile body. Mobile + narrow web unchanged.
+    final webWide = kIsWeb && MediaQuery.sizeOf(context).width >= 900;
+    if (webWide) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        body: WebTeam(
+          onInvite: () => _showInviteSheet(context, ref),
+          onTapMember: (m) => showModalBottomSheet<void>(
+            context: context,
+            backgroundColor: AppColors.voidLight,
+            isScrollControlled: true,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            builder: (_) => _MemberProfileSheet(member: m),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.voidBlack,

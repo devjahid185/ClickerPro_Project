@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#FBFAF7</color>
+    <color name="ic_launcher_background">#FFFFFF</color>
     <!-- Native launch-screen background: BLACK to match the Dart SplashScreen,
          whose Scaffold is black and whose full-bleed Sphlash.jpg fades in from
          a black top edge. A paper-white launch window flashed white before the

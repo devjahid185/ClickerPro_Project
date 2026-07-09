@@ -26,10 +26,17 @@
 // only what each screen uses.
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Web-only design tokens. Pure data + tiny helpers — no widgets, no state.
 class WebTheme {
   WebTheme._();
+
+  // ─────────────────────────────────────────────────────────── FONTS
+  /// Monospace family for micro-labels / group headers (IBM Plex Mono in the
+  /// design source). Resolved via google_fonts, so use this getter — a
+  /// hardcoded `'IBM Plex Mono'` string will NOT match the runtime family.
+  static final String? mono = GoogleFonts.ibmPlexMono().fontFamily;
 
   // ─────────────────────────────────────────────────────────── ACCENT
   // Signal Orange — the brand action colour (#E2620E, the most-used hue in
@@ -85,8 +92,9 @@ class WebTheme {
   static const Color pageBg = Color(0xFFFBFAF7);
   static const Color pageBgDeep = Color(0xFFF4F3EF);
 
-  /// Card / panel surface — a hair warmer than pure white for a premium feel.
-  static const Color surface = Color(0xFFFAF9F6);
+  /// Card / panel surface — pure white so cards lift cleanly off the warm
+  /// off-white page (matches the design source, where every card is #fff).
+  static const Color surface = Color(0xFFFFFFFF);
 
   /// Sidebar surface — near-black chrome (alias of [chrome]); `sidebarDeep`
   /// is a touch darker for the gradient foot.

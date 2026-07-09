@@ -3007,9 +3007,9 @@ class _AnimatedBrand extends StatelessWidget {
                 letterSpacing: -0.03 * 20,
               ),
               children: [
-                const TextSpan(text: 'Clicker'),
+                const TextSpan(text: 'Graphy'),
                 TextSpan(
-                  text: 'Pro',
+                  text: '7',
                   style: TextStyle(color: AppColors.accent),
                 ),
               ],

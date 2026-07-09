@@ -210,8 +210,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       alignment: Alignment.center,
                       children: [
                         Container(
-                          width: 130 * pulse,
-                          height: 130 * pulse,
+                          width: 172 * pulse,
+                          height: 172 * pulse,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             // Soft white halo reads over the sunset image.
@@ -222,9 +222,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                           opacity: _logoFade.value.clamp(0.0, 1.0),
                           child: Transform.scale(
                             scale: _logoScale.value,
-                            // The orange aperture brand mark (spec) — the first
-                            // thing the user sees, matching the launcher icon.
-                            child: const ClickerLogo(size: 104),
+                            // The Graphy7 G7 brand mark — the first thing the
+                            // user sees, matching the launcher icon.
+                            child: const ClickerLogo(size: 132),
                           ),
                         ),
                       ],
@@ -247,9 +247,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         letterSpacing: -0.03 * 30,
                       ),
                       children: [
-                        TextSpan(text: 'Clicker'),
+                        TextSpan(text: 'Graphy'),
                         TextSpan(
-                          text: 'Pro',
+                          text: '7',
                           style: TextStyle(color: AppColors.orange),
                         ),
                       ],
@@ -260,7 +260,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 FadeTransition(
                   opacity: _brandFade,
                   child: Text(
-                    'COMPANY MANAGEMENT',
+                    'PHOTOGRAPHY MANAGEMENT',
                     style: TextStyle(
                       fontFamily: AppText.bodyFontFamily,
                       fontSize: 9.5,

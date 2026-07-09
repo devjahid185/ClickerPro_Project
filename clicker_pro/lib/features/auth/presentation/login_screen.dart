@@ -318,9 +318,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                               letterSpacing: -0.04 * 34,
                             ),
                             children: [
-                              TextSpan(text: 'Clicker'),
+                              TextSpan(text: 'Graphy'),
                               TextSpan(
-                                text: 'Pro',
+                                text: '7',
                                 style: TextStyle(color: AppColors.accent),
                               ),
                             ],
@@ -328,7 +328,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'COMPANY MANAGEMENT',
+                          'PHOTOGRAPHY MANAGEMENT',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontFamily: AppText.bodyFontFamily,
@@ -512,16 +512,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Soft halo so the fan floats over the page like the landing hero.
+          // Soft halo so the mark floats over the page like the landing hero.
           Container(
-            width: 132,
-            height: 132,
+            width: 164,
+            height: 164,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppColors.accent.withValues(alpha: 0.08),
             ),
           ),
-          const ClickerLogo(size: 88),
+          const ClickerLogo(size: 116),
         ],
       ),
     );

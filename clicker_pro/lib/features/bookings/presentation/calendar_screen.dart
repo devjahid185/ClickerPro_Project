@@ -28,6 +28,7 @@ import '../application/booking_providers.dart';
 import '../domain/booking.dart';
 import '../domain/event_type_vibe.dart';
 import '../domain/shift.dart';
+import 'web_calendar.dart';
 import 'widgets/booking_status_badge.dart';
 
 /// Which calendar layout is active — wired to the Month/Week/Day toggle.
@@ -51,6 +52,16 @@ class CalendarScreen extends ConsumerWidget {
     final bookingsAsync = ref.watch(calendarBookingsProvider(cursor));
     final policy = ref.watch(bookingsPolicyProvider);
     final loc = AppLocalizations.of(context);
+
+    // On wide web the WebNavShell owns the chrome; render the dedicated desktop
+    // calendar instead of the mobile body. Mobile + narrow web are unchanged.
+    final webWide = kIsWeb && MediaQuery.sizeOf(context).width >= 900;
+    if (webWide) {
+      return const Scaffold(
+        backgroundColor: Colors.transparent,
+        body: WebCalendar(),
+      );
+    }
 
     return Scaffold(
       // WEB: transparent so the WebShell's light backdrop shows through and the

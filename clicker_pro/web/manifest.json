@@ -1,11 +1,11 @@
 {
-    "name": "clicker_pro",
-    "short_name": "clicker_pro",
+    "name": "Graphy7",
+    "short_name": "Graphy7",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FBFAF7",
+    "theme_color": "#E2620E",
+    "description": "Graphy7 — photography studio management.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

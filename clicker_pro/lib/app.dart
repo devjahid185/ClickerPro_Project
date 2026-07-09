@@ -45,7 +45,7 @@ class ClickerProApp extends ConsumerWidget {
         : AppTheme.clickerPro();
 
     return MaterialApp(
-      title: 'Clicker Pro',
+      title: 'Graphy7',
       debugShowCheckedModeBanner: false,
       // Web uses its own neutral base theme (AppThemeWeb via WebTheme tokens);
       // mobile uses the selected theme. On web the Scaffold is made transparent

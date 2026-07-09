@@ -673,7 +673,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           side: BorderSide(color: AppColors.line(0.08)),
         ),
         title: Text(
-          'Sign out of Clicker Pro?',
+          'Sign out of Graphy7?',
           style: TextStyle(
             color: AppColors.film,
             fontFamily: AppText.brandFontFamily,
@@ -1083,10 +1083,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
         title: Row(
           children: [
-            const ClickerLogo(size: 28),
+            const ClickerLogo(size: 34),
             const SizedBox(width: 10),
             Text(
-              'CLICKER PRO',
+              'GRAPHY7',
               style: TextStyle(
                 color: AppColors.film,
                 fontFamily: AppText.bodyFontFamily,

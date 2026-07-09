@@ -14,6 +14,8 @@
 //   • Nav items drive the real router via the root navigator key.
 //   • All motion honours reduce-motion via the web_motion primitives.
 
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -54,7 +56,7 @@ class WebNavShell extends ConsumerWidget {
   final String currentRoute;
 
   static const double _sidebarBreakpoint = 900;
-  static const double _sidebarWidth = 264;
+  static const double _sidebarWidth = 256;
 
   static const Set<String> _fullscreenRoutes = {
     // '/' is the boot/splash state before any named route is tracked — the
@@ -137,17 +139,6 @@ class WebNavShell extends ConsumerWidget {
     return false;
   }
 
-  /// Human title for the current route, shown in the top bar.
-  String _titleFor() {
-    for (final g in _groups) {
-      for (final d in g.items) {
-        if (_isActive(d.route)) return d.label;
-      }
-    }
-    if (_isActive(RouteNames.profile)) return 'Profile';
-    return 'Clicker Pro';
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final width = MediaQuery.sizeOf(context).width;
@@ -179,7 +170,7 @@ class WebNavShell extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _TopBar(title: _titleFor()),
+              const _TopBar(),
               Expanded(
                 // Re-key on route so each screen replays its entrance.
                 child: WebEntrance(
@@ -197,72 +188,172 @@ class WebNavShell extends ConsumerWidget {
 }
 
 // ───────────────────────────────────────────────────────────── TOP BAR
+/// The content-panel header, ported from the design source: a translucent
+/// blurred bar carrying a search field, a Signal-Orange "New Booking" CTA, and
+/// a notification bell with an unread dot. Search + bell are visual for now
+/// (no backing behaviour yet); the CTA routes to Bookings.
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.title});
-  final String title;
+  const _TopBar();
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          height: 64,
+          padding: const EdgeInsets.symmetric(horizontal: 26),
+          decoration: const BoxDecoration(
+            // Warm off-white at 85% so content faintly shows through the blur.
+            color: Color(0xD9FBFAF7),
+            border: Border(
+              bottom: BorderSide(color: Color(0x0F000000), width: 1),
+            ),
+          ),
+          child: Row(
+            children: [
+              const _SearchField(),
+              const Spacer(),
+              _NewBookingCta(
+                onTap: () =>
+                    rootNavigatorKey.currentState?.pushNamed(RouteNames.bookings),
+              ),
+              const SizedBox(width: 14),
+              const _NotificationBell(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Read-only search affordance (matches the design's 320px pill with a ⌘K hint).
+class _SearchField extends StatelessWidget {
+  const _SearchField();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: WebTheme.sp5),
-      decoration: const BoxDecoration(
+      width: 320,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      decoration: BoxDecoration(
         color: WebTheme.surface,
-        border: Border(
-          bottom: BorderSide(color: WebTheme.hairline, width: 1),
-        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0x12000000)),
       ),
       child: Row(
         children: [
-          // A small sunset tick before the title for brand consistency.
-          Container(
-            width: 4,
-            height: 20,
-            decoration: BoxDecoration(
-              gradient: WebTheme.sunset,
-              borderRadius: BorderRadius.circular(WebTheme.rFull),
-            ),
-          ),
-          const SizedBox(width: WebTheme.sp3),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.3,
-              color: WebTheme.ink,
+          const Icon(Icons.search_rounded, size: 19, color: Color(0xFFA3A199)),
+          const SizedBox(width: 10),
+          const Text(
+            'Search anything…',
+            style: TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF9A988F),
             ),
           ),
           const Spacer(),
-          // Decorative "live" pill — warm, subtle, reads as a healthy app.
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
             decoration: BoxDecoration(
-              color: WebTheme.successSoft,
-              borderRadius: BorderRadius.circular(WebTheme.rFull),
+              borderRadius: BorderRadius.circular(5),
+              border: Border.all(color: const Color(0x14000000)),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 7,
-                  height: 7,
-                  decoration: const BoxDecoration(
-                    color: WebTheme.success,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 7),
-                const Text(
-                  'Online',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: WebTheme.success,
-                  ),
-                ),
-              ],
+            child: Text(
+              '⌘K',
+              style: TextStyle(
+                fontFamily: WebTheme.mono,
+                fontSize: 10,
+                color: const Color(0xFFB8B6AE),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The orange primary action in the header.
+class _NewBookingCta extends StatelessWidget {
+  const _NewBookingCta({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return WebHoverLift(
+      onTap: onTap,
+      borderRadius: 11,
+      enableShadow: false,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 9),
+        decoration: BoxDecoration(
+          color: WebTheme.orange,
+          borderRadius: BorderRadius.circular(11),
+          boxShadow: [
+            BoxShadow(
+              color: WebTheme.orange.withValues(alpha: 0.42),
+              blurRadius: 16,
+              offset: const Offset(0, 7),
+            ),
+          ],
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.add_rounded, size: 18, color: Colors.white),
+            SizedBox(width: 6),
+            Text(
+              'New Booking',
+              style: TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Notification bell with a small unread dot (visual only for now).
+class _NotificationBell extends StatelessWidget {
+  const _NotificationBell();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 40,
+      height: 40,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: WebTheme.surface,
+              borderRadius: BorderRadius.circular(11),
+              border: Border.all(color: const Color(0x12000000)),
+            ),
+            child: const Icon(Icons.notifications_none_rounded,
+                size: 21, color: Color(0xFF3A3A36)),
+          ),
+          Positioned(
+            top: 8,
+            right: 9,
+            child: Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(
+                color: WebTheme.danger,
+                shape: BoxShape.circle,
+                border: Border.all(color: WebTheme.pageBg, width: 1.5),
+              ),
             ),
           ),
         ],
@@ -288,11 +379,8 @@ class _Sidebar extends StatelessWidget {
     return Container(
       width: WebNavShell._sidebarWidth,
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [WebTheme.sidebar, WebTheme.sidebarDeep],
-        ),
+        // Flat near-black chrome — matches the design source (no gradient).
+        color: WebTheme.chrome,
         border: Border(
           right: BorderSide(color: WebTheme.chromeLine, width: 1),
         ),
@@ -302,61 +390,32 @@ class _Sidebar extends StatelessWidget {
         children: [
           // ── Brand header ──────────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 18),
-            child: Row(
+            padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    gradient: WebTheme.sunset,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: WebTheme.orange.withValues(alpha: 0.30),
-                        blurRadius: 14,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
+                // Full Graphy7 lockup (mark + wordmark) — the dark-surface PNG
+                // reads cleanly on the near-black chrome. Left-aligned, capped
+                // so it never crowds the 256px rail.
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Image.asset(
+                    'assets/brand/graphy7_lockup.png',
+                    height: 34,
+                    fit: BoxFit.contain,
+                    filterQuality: FilterQuality.medium,
                   ),
-                  child: const Icon(Icons.camera_alt_rounded,
-                      color: Colors.white, size: 22),
                 ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Wordmark on the dark chrome: white "Clicker" + orange
-                    // "Pro", matching the .dc.html sidebar brand.
-                    Text.rich(
-                      const TextSpan(
-                        children: [
-                          TextSpan(text: 'Clicker'),
-                          TextSpan(
-                            text: 'Pro',
-                            style: TextStyle(color: WebTheme.orangeLight),
-                          ),
-                        ],
-                      ),
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.3,
-                        color: WebTheme.chromeInk,
-                        height: 1.05,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    const Text(
-                      'Studio Workspace',
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 1.4,
-                        color: WebTheme.chromeInkMuted,
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 7),
+                Text(
+                  'PHOTOGRAPHY MANAGEMENT',
+                  style: TextStyle(
+                    fontFamily: WebTheme.mono,
+                    fontSize: 7.5,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 1.6, // ≈0.24em at 7.5px
+                    color: WebTheme.chromeInkMuted,
+                  ),
                 ),
               ],
             ),
@@ -369,13 +428,14 @@ class _Sidebar extends StatelessWidget {
               children: [
                 for (final group in groups) ...[
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
+                    padding: const EdgeInsets.fromLTRB(10, 16, 10, 7),
                     child: Text(
-                      group.title,
-                      style: const TextStyle(
-                        fontSize: 10.5,
-                        letterSpacing: 1.2,
-                        fontWeight: FontWeight.w800,
+                      group.title.toUpperCase(),
+                      style: TextStyle(
+                        fontFamily: WebTheme.mono,
+                        fontSize: 9,
+                        letterSpacing: 1.8, // ≈0.2em at 9px
+                        fontWeight: FontWeight.w500,
                         color: WebTheme.chromeInkFaint,
                       ),
                     ),
@@ -427,53 +487,36 @@ class _SidebarItem extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: WebHoverHighlight(
         onTap: onTap,
-        borderRadius: WebTheme.rButton,
+        borderRadius: 11,
         builder: (context, hovering) {
-          // Dark chrome. Active = a soft orange-tinted fill with white text and
-          // an orange icon + accent bar (the action reads loud on near-black).
-          // Hover = faint white wash + brighter text. Default = muted chrome
-          // ink so the rail stays calm.
+          // Dark chrome, matching the design source exactly:
+          //   • active  → solid Signal-Orange fill, white text + icon (weight 700)
+          //   • hover   → faint white wash, text/icon brighten to chrome ink
+          //   • default → muted chrome ink so the rail stays calm
           final Color bg = active
-              ? WebTheme.orange.withValues(alpha: 0.16)
+              ? WebTheme.orange
               : hovering
                   ? Colors.white.withValues(alpha: 0.06)
                   : Colors.transparent;
           final Color fg = active
-              ? WebTheme.chromeInk
+              ? Colors.white
               : hovering
                   ? WebTheme.chromeInk
-                  : WebTheme.chromeInkMuted;
-          final Color iconColor = active ? WebTheme.orangeLight : fg;
+                  : const Color(0xFFB8B4AC);
+          final Color iconColor =
+              active ? Colors.white : (hovering ? WebTheme.chromeInk : const Color(0xFF8C877E));
 
           return AnimatedContainer(
             duration: WebTheme.fast,
             curve: WebTheme.ease,
             padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
             decoration: BoxDecoration(
               color: bg,
-              borderRadius: BorderRadius.circular(WebTheme.rButton),
-              border: active
-                  ? Border.all(
-                      color: WebTheme.orange.withValues(alpha: 0.24),
-                      width: 1,
-                    )
-                  : null,
+              borderRadius: BorderRadius.circular(11),
             ),
             child: Row(
               children: [
-                // Active accent bar — orange (action), slides in via width.
-                AnimatedContainer(
-                  duration: WebTheme.base,
-                  curve: WebTheme.ease,
-                  width: active ? 3 : 0,
-                  height: 18,
-                  margin: EdgeInsets.only(right: active ? 9 : 0),
-                  decoration: BoxDecoration(
-                    gradient: WebTheme.sunset,
-                    borderRadius: BorderRadius.circular(WebTheme.rFull),
-                  ),
-                ),
                 Icon(dest.icon, size: 20, color: iconColor),
                 const SizedBox(width: 12),
                 Text(
@@ -481,6 +524,7 @@ class _SidebarItem extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                    letterSpacing: -0.14, // ≈-0.01em
                     color: fg,
                   ),
                 ),

@@ -72,7 +72,7 @@ class AppUpdateService {
                 Text(
                   versionName.isNotEmpty
                       ? 'A new version ($versionName) is ready.'
-                      : 'A new version of Clicker Pro is ready.',
+                      : 'A new version of Graphy7 is ready.',
                   style: TextStyle(color: AppColors.filmDim, fontSize: 13.5),
                 ),
                 if (notes.trim().isNotEmpty) ...[

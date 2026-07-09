@@ -20,9 +20,16 @@ final GlobalKey<NavigatorState> rootNavigatorKey =
 class AppRouteObserver extends NavigatorObserver {
   void _update(Route<dynamic>? route) {
     final name = route?.settings.name;
-    if (name != null && name.isNotEmpty) {
+    if (name == null || name.isEmpty) return;
+    // Defer to after the current frame: NavigatorObserver callbacks fire while
+    // the navigator is flushing history updates mid-build, so mutating this
+    // notifier synchronously makes any ValueListenableBuilder listening on it
+    // (the web shell) "setState during build". A post-frame hop avoids that
+    // while keeping the active-route highlight correct. No-op on mobile.
+    if (currentRouteName.value == name) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       currentRouteName.value = name;
-    }
+    });
   }
 
   @override

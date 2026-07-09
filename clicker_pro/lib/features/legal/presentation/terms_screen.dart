@@ -103,7 +103,7 @@ MarkdownStyleSheet _markdownStyle() {
 String _fallbackTerms(String lang) => _termsEn;
 
 const String _termsEn = '''
-By using Clicker Pro you agree to:
+By using Graphy7 you agree to:
 
 **Account responsibility**
 Keep your credentials secure. You are responsible for your team and your data.

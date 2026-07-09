@@ -235,6 +235,130 @@ class _WebHoverHighlightState extends State<WebHoverHighlight> {
   }
 }
 
+/// Counts a number up from zero to [value] once on mount — the polished way a
+/// KPI settles instead of snapping to its final figure. [builder] formats the
+/// interpolated value however the caller likes (currency, plain int, suffix).
+///
+/// Honours reduce-motion: renders the final value instantly when motion is off.
+/// When [value] changes (e.g. live data refresh) it eases from the old figure
+/// to the new one, so streaming updates read as a smooth roll, not a jump.
+class WebCountUp extends StatelessWidget {
+  const WebCountUp({
+    super.key,
+    required this.value,
+    required this.builder,
+    this.duration,
+    this.curve = WebTheme.easeInOut,
+  });
+
+  /// The target figure to count toward (the real, final value).
+  final double value;
+
+  /// Formats the current interpolated figure into a widget (usually a Text).
+  final Widget Function(BuildContext context, double current) builder;
+  final Duration? duration;
+  final Curve curve;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_noMotion(context)) return builder(context, value);
+    return TweenAnimationBuilder<double>(
+      // Keyed by the target so a new value animates from the current one.
+      tween: Tween<double>(begin: 0, end: value),
+      duration: duration ?? WebTheme.slow,
+      curve: curve,
+      builder: (context, v, _) => builder(context, v),
+    );
+  }
+}
+
+/// A shimmering placeholder block — a soft sheen sweeps left→right across a
+/// rounded surface while content loads. The premium alternative to a spinner
+/// or a flat grey box.
+///
+/// Honours reduce-motion: falls back to a still, faint fill (no sweep) so the
+/// skeleton still reads as "loading" without animating.
+class WebShimmer extends StatefulWidget {
+  const WebShimmer({
+    super.key,
+    this.width,
+    this.height = 14,
+    this.borderRadius = 6,
+  });
+
+  final double? width;
+  final double height;
+  final double borderRadius;
+
+  @override
+  State<WebShimmer> createState() => _WebShimmerState();
+}
+
+class _WebShimmerState extends State<WebShimmer>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1250),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_noMotion(context) && !_c.isAnimating) _c.repeat();
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(widget.borderRadius);
+    if (_noMotion(context)) {
+      return Container(
+        width: widget.width,
+        height: widget.height,
+        decoration: BoxDecoration(
+          color: WebTheme.sageTintSoft,
+          borderRadius: radius,
+        ),
+      );
+    }
+    return ClipRRect(
+      borderRadius: radius,
+      child: AnimatedBuilder(
+        animation: _c,
+        builder: (context, _) {
+          // Slide a bright band across the base; -1 → 2 keeps it fully off-screen
+          // at each end for a clean, gapless loop.
+          final t = _c.value * 3 - 1;
+          return Container(
+            width: widget.width,
+            height: widget.height,
+            decoration: BoxDecoration(
+              color: WebTheme.sageTintSoft,
+              gradient: LinearGradient(
+                begin: Alignment(t - 1, 0),
+                end: Alignment(t + 1, 0),
+                colors: [
+                  WebTheme.sageTintSoft,
+                  WebTheme.sageTint,
+                  WebTheme.hairline.withValues(alpha: 0.55),
+                  WebTheme.sageTint,
+                  WebTheme.sageTintSoft,
+                ],
+                stops: const [0.0, 0.35, 0.5, 0.65, 1.0],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
 /// A page-transition builder for web routes: a quick fade + subtle slide.
 /// Wire into PageRouteBuilder.transitionsBuilder.
 Widget webPageTransition(

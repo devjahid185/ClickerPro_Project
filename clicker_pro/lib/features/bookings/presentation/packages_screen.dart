@@ -15,6 +15,8 @@ import '../../../core/format/currency.dart';
 import '../../../core/role/capability.dart';
 import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 import '../../../shared/widgets/motion.dart';
 import '../../../shared/widgets/web_shell.dart';
 import '../../../shared/states/lens_loader.dart';
@@ -24,6 +26,7 @@ import '../../../theme/app_theme.dart';
 
 import '../application/booking_providers.dart';
 import '../domain/package.dart';
+import 'web_packages.dart';
 import 'widgets/lens_form_fields.dart';
 
 const _printSizeOptions = [
@@ -58,6 +61,19 @@ class _PackagesScreenState extends ConsumerState<PackagesScreen> {
   Widget build(BuildContext context) {
     final policy = ref.watch(bookingsPolicyProvider);
     final canManage = policy.can(Capability.editStudioBranding);
+
+    // On wide web the WebNavShell owns the chrome; render the dedicated desktop
+    // package grid instead of the mobile body. Mobile + narrow web unchanged.
+    final webWide = kIsWeb && MediaQuery.sizeOf(context).width >= 900;
+    if (webWide) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        body: WebPackages(
+          canManage: canManage,
+          onEdit: (pkg) => _openEditSheet(context, ref, pkg),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.voidBlack,

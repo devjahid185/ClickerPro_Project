@@ -10,6 +10,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../shared/widgets/clicker_logo.dart';
 import '../../../theme/app_theme.dart';
 import '../../auth/application/session_controller.dart';
 import '../../auth/domain/user_role.dart';
@@ -102,29 +103,38 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Container(
-                    width: 72,
-                    height: 72,
+                    width: 84,
+                    height: 84,
                     decoration: BoxDecoration(
-                      color: _kAdminOrange,
-                      borderRadius: BorderRadius.circular(20),
+                      color: Colors.white.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(
+                        color: _kAdminOrange.withValues(alpha: 0.4),
+                        width: 1.5,
+                      ),
                     ),
                     alignment: Alignment.center,
-                    child: const Icon(
-                      Icons.shield_outlined,
-                      color: Colors.white,
-                      size: 34,
-                    ),
+                    child: const ClickerLogo(size: 54),
                   ),
                   const SizedBox(height: 24),
-                  Text(
-                    'PRO ADMIN',
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        const TextSpan(text: 'Graphy'),
+                        TextSpan(
+                          text: '7',
+                          style: TextStyle(color: _kAdminOrange),
+                        ),
+                        const TextSpan(text: ' Admin'),
+                      ],
+                    ),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: AppText.brandFontFamily,
                       fontSize: 26,
                       fontWeight: FontWeight.w800,
                       color: Colors.white,
-                      letterSpacing: 1.2,
+                      letterSpacing: -0.5,
                     ),
                   ),
                   const SizedBox(height: 6),

@@ -22,6 +22,7 @@
 // "Booking Detail Screen". Validates Requirements 5.1–5.11, 3.4, 3.5,
 // 3.7, 3.8, 7.1.
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
@@ -77,9 +78,14 @@ class BookingDetailScreen extends ConsumerWidget {
         .watch(languageControllerProvider)
         .maybeWhen(data: (c) => c, orElse: () => 'en');
 
+    // On web the content panel is wide + `voidBlack` resolves to a dark cream
+    // that hurt readability; use a transparent scaffold (WebShell backdrop
+    // shows through) and cap the body width so the detail reads as a column.
+    final webWide = kIsWeb && MediaQuery.sizeOf(context).width >= 900;
+
     return StatusConflictListener(
       child: Scaffold(
-        backgroundColor: AppColors.voidBlack,
+        backgroundColor: kIsWeb ? Colors.transparent : AppColors.voidBlack,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -213,7 +219,9 @@ class BookingDetailScreen extends ConsumerWidget {
           },
           orElse: () => null,
         ),
-        body: SafeArea(
+        body: _CapWidth(
+          cap: webWide,
+          child: SafeArea(
           child: Column(
             children: [
               const OfflineBanner(),
@@ -245,6 +253,7 @@ class BookingDetailScreen extends ConsumerWidget {
               ),
             ],
           ),
+        ),
         ),
       ),
     );
@@ -2325,4 +2334,24 @@ String _titleCase(String input) {
       .where((p) => p.isNotEmpty)
       .map((p) => p[0].toUpperCase() + p.substring(1))
       .join(' ');
+}
+
+/// Centres and caps the booking-detail body on wide web so it reads as a
+/// column instead of stretching across the panel. Pass-through when [cap] is
+/// false (mobile / narrow web).
+class _CapWidth extends StatelessWidget {
+  const _CapWidth({required this.cap, required this.child});
+  final bool cap;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!cap) return child;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 760),
+        child: child,
+      ),
+    );
+  }
 }

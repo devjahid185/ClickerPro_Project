@@ -70,7 +70,7 @@
         <receiver
             android:name=".ClickerProWidgetProvider"
             android:exported="true"
-            android:label="CLICKER PRO">
+            android:label="Graphy7">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>

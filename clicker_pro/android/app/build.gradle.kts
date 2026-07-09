@@ -54,7 +54,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        manifestPlaceholders["appLabel"] = "CLICKER PRO"
+        manifestPlaceholders["appLabel"] = "Graphy7"
     }
 
     flavorDimensions += "version"
@@ -62,7 +62,7 @@ android {
         create("clickerPro") {
             dimension = "version"
             applicationId = "com.clickerpro.app"
-            manifestPlaceholders["appLabel"] = "CLICKER PRO"
+            manifestPlaceholders["appLabel"] = "Graphy7"
         }
         // IMPORTANT: this flavor alone does NOT select lib/main_admin.dart —
         // Gradle flavors have no automatic per-flavor Dart entrypoint. Always
@@ -72,7 +72,7 @@ android {
         create("proAdmin") {
             dimension = "version"
             applicationId = "com.clickerpro.proadmin"
-            manifestPlaceholders["appLabel"] = "PRO ADMIN"
+            manifestPlaceholders["appLabel"] = "Graphy7 Admin"
         }
     }
 

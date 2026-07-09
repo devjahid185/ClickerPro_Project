@@ -38,6 +38,7 @@ import '../domain/booking.dart';
 import '../domain/booking_filter.dart';
 import '../domain/event_type_vibe.dart';
 import '../domain/shift.dart';
+import 'web_bookings.dart';
 
 enum _StatusChip { all, pending, confirmed, successful, delivered, cancelled }
 
@@ -210,6 +211,17 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
     final loc = AppLocalizations.of(context);
     final bookings = listAsync.valueOrNull;
     final totalCount = bookings?.length ?? 0;
+
+    // On wide web the WebNavShell owns the chrome (sidebar + top bar); render
+    // the dedicated desktop bookings table instead of the mobile body. Mobile
+    // and narrow web keep the original layout 100% unchanged.
+    final webWide = kIsWeb && MediaQuery.sizeOf(context).width >= 900;
+    if (webWide) {
+      return const Scaffold(
+        backgroundColor: Colors.transparent,
+        body: WebBookings(),
+      );
+    }
 
     return Scaffold(
       // WEB readability fix: the screen previously used `voidBlack` which on

@@ -47,7 +47,7 @@ class ProAdminApp extends StatelessWidget {
   Widget build(BuildContext context) {
     AppColors.active = ActivePalette.clickerPro;
     return MaterialApp(
-      title: 'Clicker Pro — Admin',
+      title: 'Graphy7 — Admin',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.clickerPro(),
       home: const _AdminRoot(),

@@ -45,7 +45,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       final databaseContent = <String, dynamic>{
         'schemaVersion': db.schemaVersion,
         'exportedAt': DateTime.now().toIso8601String(),
-        'note': 'Clicker Pro local database backup',
+        'note': 'Graphy7 local database backup',
       };
       final record = await ref
           .read(backupServiceProvider)

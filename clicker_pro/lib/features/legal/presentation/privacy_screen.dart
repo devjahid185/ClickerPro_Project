@@ -131,7 +131,7 @@ MarkdownStyleSheet _markdownStyle() {
 String _fallbackPrivacy(String lang) => _privacyEn;
 
 const String _privacyEn = '''
-Clicker Pro respects your privacy.
+Graphy7 respects your privacy.
 
 **What we collect**
 - Account info you provide (name, email, phone)

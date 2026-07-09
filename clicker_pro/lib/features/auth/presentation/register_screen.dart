@@ -30,6 +30,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/providers.dart';
 import '../../../core/validation/phone_validator.dart';
 import '../../../shared/widgets/auth_glass_field.dart';
+import '../../../shared/widgets/clicker_logo.dart';
 import '../../../shared/widgets/web_shell.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_theme.dart';
@@ -271,7 +272,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'COMPANY MANAGEMENT · STEP 1 OF 1',
+                        'PHOTOGRAPHY MANAGEMENT · STEP 1 OF 1',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontFamily: AppText.bodyFontFamily,
@@ -466,16 +467,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         alignment: Alignment.center,
         children: [
           Container(
-            width: 76,
-            height: 76,
+            width: 96,
+            height: 96,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppColors.orange.withValues(alpha: 0.1),
             ),
           ),
           Container(
-            width: 56,
-            height: 56,
+            width: 72,
+            height: 72,
+            alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppColors.orange.withValues(alpha: 0.18),
@@ -484,11 +486,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 width: 1.5,
               ),
             ),
-            child: Icon(
-              Icons.camera_alt_outlined,
-              size: 24,
-              color: AppColors.orange,
-            ),
+            child: const ClickerLogo(size: 48),
           ),
         ],
       ),

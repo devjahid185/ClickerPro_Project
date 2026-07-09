@@ -21,6 +21,7 @@
 //   - After a successful add, the controller invalidates
 //     `profitLossProvider` so the totals refresh automatically।
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -32,6 +33,7 @@ import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
 import '../application/expense_providers.dart';
 import 'dialogs/add_expense_sheet.dart';
+import 'web_expenses.dart';
 import 'widgets/expense_row.dart';
 import 'widgets/profit_loss_card.dart';
 import '../../../theme/app_theme.dart';
@@ -53,6 +55,16 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
     final loc = AppLocalizations.of(context);
     final lang = 'en';
     final async = ref.watch(expenseListControllerProvider);
+
+    // On wide web the WebNavShell owns the chrome; render the dedicated desktop
+    // expenses view instead of the mobile body. Mobile + narrow web unchanged.
+    final webWide = kIsWeb && MediaQuery.sizeOf(context).width >= 900;
+    if (webWide) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        body: WebExpenses(onLogExpense: () => AddExpenseSheet.show(context)),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.surfaceAlt,

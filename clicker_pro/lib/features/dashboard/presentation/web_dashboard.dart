@@ -246,7 +246,8 @@ class _KpiRow extends ConsumerWidget {
     final cards = <Widget>[
       _KpiCard(
         label: "Today's Events",
-        value: '${m.todayEvents}',
+        countTo: m.todayEvents.toDouble(),
+        format: (v) => '${v.round()}',
         sub: '${m.todayDayEvents} day · ${m.todayNightEvents} night',
         icon: Icons.event_available_rounded,
         accent: WebTheme.sage,
@@ -255,7 +256,8 @@ class _KpiRow extends ConsumerWidget {
       ),
       _KpiCard(
         label: 'Upcoming',
-        value: '${m.upcomingEvents}',
+        countTo: m.upcomingEvents.toDouble(),
+        format: (v) => '${v.round()}',
         sub: '${m.totalEvents} total booked',
         icon: Icons.upcoming_rounded,
         accent: WebTheme.info,
@@ -269,7 +271,8 @@ class _KpiRow extends ConsumerWidget {
       cards.add(
         _KpiCard(
           label: collectLabel,
-          value: _formatBdt(m.todayCollection),
+          countTo: m.todayCollection.toDouble(),
+          format: (v) => _formatBdt(v.round()),
           sub: 'across paid events',
           icon: Icons.payments_rounded,
           accent: WebTheme.success,
@@ -282,7 +285,8 @@ class _KpiRow extends ConsumerWidget {
     cards.add(
       _KpiCard(
         label: dueLabel,
-        value: _formatBdt(m.pendingDue),
+        countTo: m.pendingDue.toDouble(),
+        format: (v) => _formatBdt(v.round()),
         sub: 'outstanding',
         icon: Icons.hourglass_bottom_rounded,
         accent: WebTheme.orange,
@@ -324,7 +328,8 @@ class _KpiRow extends ConsumerWidget {
 class _KpiCard extends StatelessWidget {
   const _KpiCard({
     required this.label,
-    required this.value,
+    required this.countTo,
+    required this.format,
     required this.sub,
     required this.icon,
     required this.accent,
@@ -333,7 +338,12 @@ class _KpiCard extends StatelessWidget {
   });
 
   final String label;
-  final String value;
+
+  /// The real numeric figure this card settles on — the count-up target.
+  final double countTo;
+
+  /// Formats an interpolated figure into display text (plain int or currency).
+  final String Function(double value) format;
   final String sub;
   final IconData icon;
   final Color accent;
@@ -385,16 +395,19 @@ class _KpiCard extends StatelessWidget {
             const SizedBox(height: 4),
             loading
                 ? const _ValueShimmer()
-                : Text(
-                    value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      color: WebTheme.ink,
-                      letterSpacing: -0.8,
-                      height: 1.0,
+                : WebCountUp(
+                    value: countTo,
+                    builder: (context, current) => Text(
+                      format(current),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        color: WebTheme.ink,
+                        letterSpacing: -0.8,
+                        height: 1.0,
+                      ),
                     ),
                   ),
             const SizedBox(height: 6),
@@ -419,14 +432,9 @@ class _ValueShimmer extends StatelessWidget {
   const _ValueShimmer();
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 28,
-      width: 84,
-      margin: const EdgeInsets.symmetric(vertical: 2),
-      decoration: BoxDecoration(
-        color: WebTheme.sageTintSoft,
-        borderRadius: BorderRadius.circular(6),
-      ),
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 2),
+      child: WebShimmer(height: 28, width: 84, borderRadius: 6),
     );
   }
 }
@@ -502,56 +510,11 @@ class _PerformanceCard extends ConsumerWidget {
                 return Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Text(
-                          count == 0 ? '' : '$count',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: isToday ? WebTheme.orange : WebTheme.inkMuted,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        // Animated bar: grows from 8px → full on mount.
-                        TweenAnimationBuilder<double>(
-                          tween: Tween(begin: 0, end: frac),
-                          duration: WebTheme.slow,
-                          curve: WebTheme.ease,
-                          builder: (context, v, _) {
-                            final h = 8.0 + v * 96.0;
-                            return Container(
-                              height: h,
-                              decoration: BoxDecoration(
-                                gradient: isToday
-                                    ? WebTheme.sunset
-                                    : const LinearGradient(
-                                        begin: Alignment.topCenter,
-                                        end: Alignment.bottomCenter,
-                                        colors: [
-                                          WebTheme.sage,
-                                          WebTheme.sageDeep,
-                                        ],
-                                      ),
-                                borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(6),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          dow[i],
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight:
-                                isToday ? FontWeight.w800 : FontWeight.w600,
-                            color: isToday ? WebTheme.ink : WebTheme.inkFaint,
-                          ),
-                        ),
-                      ],
+                    child: _WeekBar(
+                      count: count,
+                      frac: frac,
+                      isToday: isToday,
+                      label: dow[i],
                     ),
                   ),
                 );
@@ -559,6 +522,156 @@ class _PerformanceCard extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// A single weekly column: the count label, a bar that grows in on mount, and
+/// the day letter. Brightens and lifts its count on hover so the chart reads as
+/// interactive, not just a static picture.
+class _WeekBar extends StatefulWidget {
+  const _WeekBar({
+    required this.count,
+    required this.frac,
+    required this.isToday,
+    required this.label,
+  });
+
+  final int count;
+  final double frac;
+  final bool isToday;
+  final String label;
+
+  @override
+  State<_WeekBar> createState() => _WeekBarState();
+}
+
+class _WeekBarState extends State<_WeekBar> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final noMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final lit = _hover && !noMotion;
+
+    // Today keeps the sunset gradient; other days use the chrome scale, and
+    // brighten toward orange on hover so the hovered bar clearly stands out.
+    final LinearGradient barGradient = widget.isToday
+        ? WebTheme.sunset
+        : lit
+            ? const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [WebTheme.orangeLight, WebTheme.orange],
+              )
+            : const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [WebTheme.sage, WebTheme.sageDeep],
+              );
+
+    final Color countColor = lit
+        ? WebTheme.orange
+        : widget.isToday
+            ? WebTheme.orange
+            : WebTheme.inkMuted;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          // Count label lifts a touch and always shows on hover.
+          _SlideUpCount(
+            show: widget.count != 0 || lit,
+            text: '${widget.count}',
+            color: countColor,
+            lifted: lit,
+          ),
+          const SizedBox(height: 6),
+          // Animated bar: grows from 8px → full on mount; hover adds a soft glow.
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: widget.frac),
+            duration: WebTheme.slow,
+            curve: WebTheme.ease,
+            builder: (context, v, _) {
+              final h = 8.0 + v * 96.0;
+              return AnimatedContainer(
+                duration: WebTheme.fast,
+                curve: WebTheme.ease,
+                height: h,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: barGradient,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(6),
+                  ),
+                  boxShadow: lit
+                      ? [
+                          BoxShadow(
+                            color: WebTheme.orange.withValues(alpha: 0.28),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : null,
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+          Text(
+            widget.label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: widget.isToday ? FontWeight.w800 : FontWeight.w600,
+              color: widget.isToday ? WebTheme.ink : WebTheme.inkFaint,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A tiny count label that fades + lifts into view. Reserves its line height so
+/// bars never shift vertically as the label appears/disappears on hover.
+class _SlideUpCount extends StatelessWidget {
+  const _SlideUpCount({
+    required this.show,
+    required this.text,
+    required this.color,
+    required this.lifted,
+  });
+
+  final bool show;
+  final String text;
+  final Color color;
+  final bool lifted;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 14,
+      child: AnimatedOpacity(
+        duration: WebTheme.fast,
+        opacity: show ? 1 : 0,
+        child: AnimatedSlide(
+          duration: WebTheme.fast,
+          curve: WebTheme.ease,
+          offset: Offset(0, lifted ? -0.12 : 0),
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1289,25 +1402,14 @@ class _TableSkeleton extends StatelessWidget {
         (i) => Padding(
           padding: const EdgeInsets.symmetric(vertical: WebTheme.sp3),
           child: Row(
-            children: [
-              Container(
+            children: const [
+              WebShimmer(
                 width: 40,
                 height: 40,
-                decoration: BoxDecoration(
-                  color: WebTheme.sageTintSoft,
-                  borderRadius: BorderRadius.circular(WebTheme.rChip),
-                ),
+                borderRadius: WebTheme.rChip,
               ),
-              const SizedBox(width: WebTheme.sp3),
-              Expanded(
-                child: Container(
-                  height: 14,
-                  decoration: BoxDecoration(
-                    color: WebTheme.sageTintSoft,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-              ),
+              SizedBox(width: WebTheme.sp3),
+              Expanded(child: WebShimmer(height: 14, borderRadius: 6)),
             ],
           ),
         ),
