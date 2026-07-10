@@ -7,14 +7,13 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 /**
- * Admin → Businesses (Blade). A studio-oriented view of OWNER accounts,
- * reusing the API users endpoint with role=OWNER (matches the Next.js panel).
+ * Admin businesses (Blade). A studio-oriented view of OWNER accounts,
+ * reusing the API users endpoint with role=OWNER.
  */
 class StudiosController extends Controller
 {
     public function index(Request $request, AdminController $api)
     {
-        // Force role=OWNER; preserve any search term.
         $request->merge(['role' => 'OWNER']);
         $payload = $api->users($request)->getData(true);
 

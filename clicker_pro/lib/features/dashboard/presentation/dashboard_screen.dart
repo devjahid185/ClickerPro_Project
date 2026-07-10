@@ -40,6 +40,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/format/bd_holidays.dart';
+import '../../../core/logging/app_logger.dart';
 import '../../../core/navigation/route_names.dart';
 import '../../../core/notifications/event_reminder_service.dart';
 import '../../../core/update/app_update_service.dart';
@@ -62,6 +63,7 @@ import '../../../core/format/currency.dart';
 import '../../home_widget/data/widget_refresher.dart';
 import '../../home_widget/domain/widget_data.dart';
 import '../../bookings/application/booking_providers.dart';
+import '../../bookings/domain/booking_filter.dart';
 import '../../broadcasts/presentation/broadcast_popup.dart';
 import '../../push/application/fcm_bootstrap.dart';
 import '../../announcements/application/announcement_providers.dart';
@@ -124,8 +126,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       // Register this device for push notifications (fail-soft).
       initPushNotifications(ref);
       // Prime the on-device event-reminder channel + permissions so the
-      // "1 hour before" alarms can be scheduled (fail-soft).
-      EventReminderService.instance.init();
+      // "1 hour before" alarms can be scheduled (fail-soft), then re-arm a
+      // reminder for every upcoming booking. scheduleForBooking only runs on
+      // in-app save, so server-synced / other-device / pre-feature bookings
+      // never had an alarm — this is the fix for "event আগে notification
+      // আসে না". Fully fail-soft; never blocks the dashboard.
+      _syncEventReminders();
       // Over-the-air update check — prompts if a newer APK is published.
       AppUpdateService.checkAndPrompt(context, ref.read(apiClientProvider));
     });
@@ -135,6 +141,43 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   void dispose() {
     _fadeCtrl.dispose();
     super.dispose();
+  }
+
+  /// Re-arms the on-device "1 hour before" reminder for every upcoming,
+  /// non-terminal booking on app open. scheduleForBooking only runs on
+  /// in-app save, so bookings that synced from the server, were created on
+  /// another device, or predate the reminder feature never had an alarm —
+  /// this is the fix for "event আগে notification আসে না". Fail-soft: any
+  /// error is swallowed so it can never block the dashboard from loading.
+  Future<void> _syncEventReminders() async {
+    await EventReminderService.instance.init();
+    try {
+      final bookings =
+          await ref.read(bookingListAllProvider(const BookingFilter()).future);
+      final today = DateTime.now();
+      final midnight = DateTime(today.year, today.month, today.day);
+      final upcoming = bookings
+          .where((b) =>
+              b.status != BookingStatus.cancelled &&
+              b.status != BookingStatus.completed &&
+              !b.date.isBefore(midnight))
+          .map((b) => ReminderBooking(
+                id: b.id,
+                title: b.clientName?.trim().isNotEmpty == true
+                    ? b.clientName!.trim()
+                    : b.title,
+                eventDate: b.date,
+                startTime: b.startTime,
+                endTime: b.endTime,
+                venue: b.venue,
+                clientName: b.clientName,
+                clientPhone: b.clientPhone,
+              ));
+      await EventReminderService.instance.syncUpcomingReminders(upcoming);
+    } catch (e) {
+      // Non-fatal — reminders are best-effort, the dashboard must still load.
+      AppLogger.w('dashboard', 'reminder sync failed: $e');
+    }
   }
 
   String _lang() => ref
@@ -1152,7 +1195,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   // ─── Quick action row (role-adaptive) ─────────────────────────────
-  // Calendar · Prayer · Calculator · Notes · Team Chat, plus
+  // Calendar · Calculator · Notes · Team Chat, plus
   // Expense (Freelancer/Both) or Team (Owner/Both/Manager) depending on
   // role. More entries than comfortably fit one screen width, so the row
   // scrolls horizontally instead of being squeezed into equal Expanded
@@ -1187,12 +1230,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           label: 'Expense',
           routeName: RouteNames.financeExpenses,
         ),
-      _qaBtn(
-        icon: Icons.mosque_rounded,
-        color: AppColors.gold,
-        label: 'Prayer',
-        routeName: RouteNames.prayerTimes,
-      ),
       _qaBtn(
         icon: Icons.calculate_rounded,
         color: AppColors.indigo,
@@ -2557,10 +2594,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       color: AppColors.line(0.05),
                     ),
                     _sbGroup('ADMIN'),
-                    _sbItem(Icons.backup_outlined, 'Backup & Restore', () {
-                      Navigator.pop(context);
-                      _pushNamed(RouteNames.backup);
-                    }),
                     _sbItem(Icons.history_edu_outlined, 'Audit Log', () {
                       Navigator.pop(context);
                       _pushNamed(RouteNames.auditLog);

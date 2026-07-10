@@ -6,8 +6,8 @@ use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Controller;
 
 /**
- * Admin → Analytics (Blade). Signups + bookings trends, status breakdown,
- * and top studios — all from the cached AdminController::analytics.
+ * Admin analytics (Blade). Shows privacy-safe platform growth metrics from
+ * the cached AdminController::analytics payload.
  */
 class AnalyticsController extends Controller
 {
@@ -16,10 +16,7 @@ class AnalyticsController extends Controller
         $data = $api->analytics()->getData(true)['data'] ?? [];
 
         return view('admin.analytics.index', [
-            'signups'         => $data['signups'] ?? [],
-            'bookings'        => $data['bookings'] ?? [],
-            'statusBreakdown' => $data['statusBreakdown'] ?? [],
-            'topStudios'      => $data['topStudios'] ?? [],
+            'signups' => $data['signups'] ?? [],
         ]);
     }
 }

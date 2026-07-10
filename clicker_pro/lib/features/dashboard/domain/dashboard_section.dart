@@ -83,10 +83,15 @@ class DashboardSection {
       enabled: true,
       order: 6,
     ),
+    // Weather is disabled by default: the current card shows a fake,
+    // time-of-day-based reading (no real weather API is wired yet), so
+    // rather than mislead users we hide it until a real provider
+    // (API key + device location) lands. Users can still re-enable it
+    // from Customize, and flipping this back to `true` restores it.
     DashboardSection(
       type: DashboardSectionType.weather,
       label: 'Weather',
-      enabled: true,
+      enabled: false,
       order: 7,
     ),
   ];

@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'admin.web' => \App\Http\Middleware\AdminWebMiddleware::class,
             'manager' => \App\Http\Middleware\ManagerMiddleware::class,
+            'touch.active' => \App\Http\Middleware\TouchLastActive::class,
         ]);
         // Security headers on every API response.
         $middleware->api(append: [

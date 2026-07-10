@@ -1,6 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/logging/app_logger.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/providers.dart';
 import '../../../core/validation/phone_validator.dart';
@@ -102,6 +104,7 @@ class WaitlistScreen extends ConsumerWidget {
     final formKey = GlobalKey<FormState>();
     final nameCtrl = TextEditingController();
     final phoneCtrl = TextEditingController();
+    final fbCtrl = TextEditingController();
     final noteCtrl = TextEditingController();
     DateTime preferredDate = DateTime.now().add(const Duration(days: 7));
     var saving = false;
@@ -185,6 +188,13 @@ class WaitlistScreen extends ConsumerWidget {
                     validator: (v) => PhoneValidator.validate(v),
                   ),
                   const SizedBox(height: 12),
+                  TextFormField(
+                    controller: fbCtrl,
+                    keyboardType: TextInputType.url,
+                    style: TextStyle(color: AppColors.film),
+                    decoration: deco('Facebook link (optional)'),
+                  ),
+                  const SizedBox(height: 12),
                   InkWell(
                     onTap: () async {
                       final picked = await showDatePicker(
@@ -247,6 +257,9 @@ class WaitlistScreen extends ConsumerWidget {
                                 note: noteCtrl.text.trim().isEmpty
                                     ? null
                                     : noteCtrl.text.trim(),
+                                facebookLink: fbCtrl.text.trim().isEmpty
+                                    ? null
+                                    : fbCtrl.text.trim(),
                               );
                               try {
                                 await ref
@@ -296,6 +309,7 @@ class WaitlistScreen extends ConsumerWidget {
       // Dispose the sheet's controllers once it closes to avoid a leak.
       nameCtrl.dispose();
       phoneCtrl.dispose();
+      fbCtrl.dispose();
       noteCtrl.dispose();
     });
   }
@@ -305,6 +319,47 @@ class _WaitlistRow extends StatelessWidget {
   const _WaitlistRow({required this.entry});
 
   final WaitlistEntry entry;
+
+  /// Opens the phone dialer pre-filled with the client's number. Fail-soft:
+  /// a missing dialer (rare) is logged, never crashes the list.
+  Future<void> _call(BuildContext context) async {
+    final number = entry.phone.trim();
+    if (number.isEmpty) return;
+    final uri = Uri(scheme: 'tel', path: number);
+    try {
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open the dialer')),
+        );
+      }
+    } catch (e) {
+      AppLogger.w('waitlist', 'dial failed: $e');
+    }
+  }
+
+  /// Opens the client's Facebook link in the browser / Facebook app.
+  Future<void> _openFacebook(BuildContext context) async {
+    final raw = entry.facebookLink?.trim() ?? '';
+    if (raw.isEmpty) return;
+    // Accept links pasted without a scheme (e.g. "facebook.com/…").
+    final normalized =
+        raw.startsWith('http://') || raw.startsWith('https://')
+            ? raw
+            : 'https://$raw';
+    final uri = Uri.tryParse(normalized);
+    if (uri == null) return;
+    try {
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open the link')),
+        );
+      }
+    } catch (e) {
+      AppLogger.w('waitlist', 'facebook open failed: $e');
+    }
+  }
 
   Color _statusColor() {
     switch (entry.status) {
@@ -359,21 +414,78 @@ class _WaitlistRow extends StatelessWidget {
             fontSize: 12,
           ),
         ),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-          decoration: BoxDecoration(
-            color: statusColor.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Text(
-            entry.status.name.toUpperCase(),
-            style: TextStyle(
-              color: statusColor,
-              fontFamily: AppText.monoFontFamily,
-              fontSize: 9,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.6,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Call the client straight from the list.
+            _RowActionButton(
+              icon: Icons.call_outlined,
+              color: AppColors.green,
+              tooltip: 'Call',
+              onTap: () => _call(context),
             ),
+            // Facebook / Messenger \u2014 only when a link is on file.
+            if ((entry.facebookLink?.trim().isNotEmpty ?? false)) ...[
+              const SizedBox(width: 4),
+              _RowActionButton(
+                icon: Icons.facebook,
+                color: const Color(0xFF1877F2),
+                tooltip: 'Open Facebook',
+                onTap: () => _openFacebook(context),
+              ),
+            ],
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                entry.status.name.toUpperCase(),
+                style: TextStyle(
+                  color: statusColor,
+                  fontFamily: AppText.monoFontFamily,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.6,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Small round tap target for the per-row call / Facebook actions.
+class _RowActionButton extends StatelessWidget {
+  const _RowActionButton({
+    required this.icon,
+    required this.color,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: color.withValues(alpha: 0.12),
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Icon(icon, color: color, size: 18),
           ),
         ),
       ),

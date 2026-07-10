@@ -25,11 +25,12 @@ class UsersController extends Controller
         $payload = $api->users($request)->getData(true);
 
         return view('admin.users.index', [
-            'users'  => $payload['data'] ?? [],
-            'total'  => $payload['total'] ?? 0,
-            'search' => (string) $request->query('search', ''),
-            'role'   => (string) $request->query('role', ''),
-            'roles'  => self::ROLES,
+            'users'    => $payload['data'] ?? [],
+            'total'    => $payload['total'] ?? 0,
+            'search'   => (string) $request->query('search', ''),
+            'role'     => (string) $request->query('role', ''),
+            'activity' => (string) $request->query('activity', ''),
+            'roles'    => self::ROLES,
         ]);
     }
 

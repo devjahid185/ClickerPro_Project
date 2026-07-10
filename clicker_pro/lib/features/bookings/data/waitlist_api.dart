@@ -41,6 +41,9 @@ class WaitlistApi {
             draft.preferredDate.toIso8601String().split('T').first,
         if (draft.note != null && draft.note!.trim().isNotEmpty)
           'notes': draft.note,
+        if (draft.facebookLink != null &&
+            draft.facebookLink!.trim().isNotEmpty)
+          'facebook_link': draft.facebookLink!.trim(),
       },
     ) as Map<String, dynamic>;
     return WaitlistEntry.fromJson(_normalize(r['data']));
@@ -65,6 +68,8 @@ class WaitlistApi {
       'preferredDate': (date ?? DateTime.now().toIso8601String()).toString(),
       if (m['notes'] != null || m['note'] != null)
         'note': (m['notes'] ?? m['note']).toString(),
+      if (m['facebook_link'] != null || m['facebookLink'] != null)
+        'facebookLink': (m['facebook_link'] ?? m['facebookLink']).toString(),
       'status': status is String ? status.toLowerCase() : 'waiting',
     };
   }

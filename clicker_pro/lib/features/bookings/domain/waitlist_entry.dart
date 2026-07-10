@@ -7,6 +7,12 @@ class WaitlistEntry {
   final String phone;
   final DateTime preferredDate;
   final String? note;
+
+  /// Optional Facebook profile / page link for the client, so the studio can
+  /// reach them on Messenger as well as by phone. Persisted server-side once
+  /// the `facebook_link` column ships.
+  final String? facebookLink;
+
   final WaitlistStatus status;
 
   const WaitlistEntry({
@@ -16,6 +22,7 @@ class WaitlistEntry {
     required this.phone,
     required this.preferredDate,
     this.note,
+    this.facebookLink,
     this.status = WaitlistStatus.waiting,
   });
 
@@ -26,6 +33,7 @@ class WaitlistEntry {
     String? phone,
     DateTime? preferredDate,
     String? note,
+    String? facebookLink,
     WaitlistStatus? status,
   }) {
     return WaitlistEntry(
@@ -35,6 +43,7 @@ class WaitlistEntry {
       phone: phone ?? this.phone,
       preferredDate: preferredDate ?? this.preferredDate,
       note: note ?? this.note,
+      facebookLink: facebookLink ?? this.facebookLink,
       status: status ?? this.status,
     );
   }
@@ -47,6 +56,7 @@ class WaitlistEntry {
       'phone': phone,
       'preferredDate': preferredDate.toIso8601String(),
       if (note != null) 'note': note,
+      if (facebookLink != null) 'facebookLink': facebookLink,
       'status': status.name,
     };
   }
@@ -59,6 +69,9 @@ class WaitlistEntry {
       phone: json['phone'] as String,
       preferredDate: DateTime.parse(json['preferredDate'] as String),
       note: json['note'] as String?,
+      // Accept both camelCase (app) and snake_case (Laravel) keys.
+      facebookLink:
+          json['facebookLink'] as String? ?? json['facebook_link'] as String?,
       status: WaitlistStatus.values.firstWhere(
         (s) => s.name == json['status'] as String,
         orElse: () => WaitlistStatus.waiting,
@@ -76,10 +89,19 @@ class WaitlistEntry {
         phone == other.phone &&
         preferredDate == other.preferredDate &&
         note == other.note &&
+        facebookLink == other.facebookLink &&
         status == other.status;
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, ownerId, clientName, phone, preferredDate, note, status);
+  int get hashCode => Object.hash(
+        id,
+        ownerId,
+        clientName,
+        phone,
+        preferredDate,
+        note,
+        facebookLink,
+        status,
+      );
 }

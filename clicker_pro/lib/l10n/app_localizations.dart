@@ -1628,6 +1628,30 @@ abstract class AppLocalizations {
   /// **'support@clickerpro.app'**
   String get help_contact_email;
 
+  /// No description provided for @help_email_us.
+  ///
+  /// In en, this message translates to:
+  /// **'Email us'**
+  String get help_email_us;
+
+  /// No description provided for @help_whatsapp_us.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat on WhatsApp'**
+  String get help_whatsapp_us;
+
+  /// No description provided for @help_no_mail_app.
+  ///
+  /// In en, this message translates to:
+  /// **'No mail app found on this device.'**
+  String get help_no_mail_app;
+
+  /// No description provided for @help_no_whatsapp.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open WhatsApp.'**
+  String get help_no_whatsapp;
+
   /// No description provided for @help_send_ticket.
   ///
   /// In en, this message translates to:

@@ -14,6 +14,12 @@ import '../domain/dashboard_section.dart';
 
 const String _kDashSectionsKey = 'dashboard_sections_v1';
 
+// One-time migration flag. Existing installs persisted the Weather section
+// as enabled, so a plain default change wouldn't reach them — their old
+// prefs still show the (fake) weather card. On first load after this
+// update we force Weather off once; afterwards the user's own choice wins.
+const String _kWeatherMigratedKey = 'dashboard_weather_hidden_v1';
+
 class DashboardPrefsNotifier extends StateNotifier<List<DashboardSection>> {
   DashboardPrefsNotifier() : super(DashboardSection.defaultOrder) {
     _load();
@@ -27,7 +33,7 @@ class DashboardPrefsNotifier extends StateNotifier<List<DashboardSection>> {
       return;
     }
     try {
-      final list = (jsonDecode(raw) as List<dynamic>)
+      var list = (jsonDecode(raw) as List<dynamic>)
           .map(
             (e) => DashboardSection(
               type: DashboardSectionType.values[e['type'] as int],
@@ -38,6 +44,20 @@ class DashboardPrefsNotifier extends StateNotifier<List<DashboardSection>> {
           )
           .toList();
       if (list.length == DashboardSectionType.values.length) {
+        // One-time: hide the (fake) weather card on existing installs.
+        if (!(prefs.getBool(_kWeatherMigratedKey) ?? false)) {
+          list = [
+            for (final s in list)
+              if (s.type == DashboardSectionType.weather)
+                s.copyWith(enabled: false)
+              else
+                s,
+          ];
+          await prefs.setBool(_kWeatherMigratedKey, true);
+          state = list;
+          await _save();
+          return;
+        }
         state = list;
       }
     } catch (_) {

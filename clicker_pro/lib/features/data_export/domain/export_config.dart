@@ -1,4 +1,4 @@
-enum ExportType { csv, pdf, zip }
+enum ExportType { csv, googleSheets, pdf, zip }
 
 enum ExportScope { bookings, clients, payments, expenses, all }
 

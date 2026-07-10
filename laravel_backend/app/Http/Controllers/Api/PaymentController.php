@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\LogsAudit;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\Payment;
@@ -11,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 
 class PaymentController extends Controller
 {
+    use LogsAudit;
+
     public function __construct(private PaymentService $payments)
     {
     }
@@ -49,6 +52,13 @@ class PaymentController extends Controller
         }
 
         $payment = $this->payments->record($data, $request->user()->id);
+
+        $this->audit($request, 'CREATE', 'payment', $payment->id, after: [
+            'amount' => $payment->amount,
+            'kind' => $payment->kind,
+            'method' => $payment->method,
+            'event_id' => $payment->event_id,
+        ]);
 
         return response()->json(['data' => $payment], 201);
     }
@@ -111,6 +121,13 @@ class PaymentController extends Controller
         if (!$owns) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
+
+        $this->audit($request, 'DELETE', 'payment', $payment->id, before: [
+            'amount' => $payment->amount,
+            'kind' => $payment->kind,
+            'method' => $payment->method,
+            'event_id' => $payment->event_id,
+        ]);
 
         $this->payments->delete($payment);
 

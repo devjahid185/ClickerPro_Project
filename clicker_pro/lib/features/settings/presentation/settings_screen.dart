@@ -22,6 +22,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/format/currency.dart';
 import '../../../core/navigation/route_names.dart';
+import '../../../core/notifications/event_reminder_service.dart';
 import '../../../core/providers.dart';
 import '../../../core/role/capability.dart';
 import '../../../shared/states/offline_banner.dart';
@@ -268,12 +269,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         context,
                         RouteNames.widgetSettings,
                       ),
-                    ),
-                    _buildListItem(
-                      label: 'Backup & Restore',
-                      icon: Icons.backup_outlined,
-                      onTap: () =>
-                          Navigator.pushNamed(context, RouteNames.backup),
                     ),
                     _buildListItem(
                       label: 'Audit Log',
@@ -614,6 +609,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             value: prefs.eventReminders,
             onChanged: (v) =>
                 _saveNotifPrefs(userId, prefs.copyWith(eventReminders: v)),
+          ),
+          // Lets the user confirm reminders actually reach the phone: fires a
+          // sample notification in ~10s and surfaces a permission problem
+          // (the usual reason "event reminders don't arrive") right away.
+          _buildListItem(
+            label: 'Send test reminder',
+            icon: Icons.notifications_active_outlined,
+            onTap: _sendTestReminder,
           ),
           _buildBoolRow(
             label: t('notif_payment_due'),
@@ -1095,7 +1098,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ],
         ),
         content: Text(
-          'Company management for photographers in Bangladesh.\n'
+          'Company management for photographers.\n'
           'Version 3.8 · by waLidu Tech',
           style: TextStyle(
             color: AppColors.filmDim.withValues(alpha: 0.85),
@@ -1111,6 +1114,61 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ],
       ),
     );
+  }
+
+  /// Fires a sample event reminder ~10s from now and reports whether the OS
+  /// accepted it. If notifications are blocked (the usual reason reminders
+  /// never arrive), offers a one-tap jump to the app's notification settings —
+  /// Android won't re-show the permission dialog after a denial.
+  Future<void> _sendTestReminder() async {
+    final ok = await EventReminderService.instance.sendTestNotification();
+    if (!mounted) return;
+    if (ok) {
+      _showSnack('Test reminder will appear in ~10 seconds.');
+      return;
+    }
+    final retry = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(color: AppColors.line(0.08)),
+        ),
+        title: Text(
+          'Notifications are off',
+          style: TextStyle(color: AppColors.film, fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          'Event reminders need notification access, which is currently blocked.\n\n'
+          'Turn it on:\nPhone Settings → Apps → Graphy7 → Notifications → Allow.\n\n'
+          'Then come back and tap Try again.',
+          style: TextStyle(color: AppColors.filmDim, fontSize: 14, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text('Later', style: TextStyle(color: AppColors.filmDim)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.orange),
+            child: const Text('Try again'),
+          ),
+        ],
+      ),
+    );
+    // "Try again" re-runs the request; if the user just enabled it in phone
+    // Settings, this now succeeds and fires the sample reminder.
+    if (retry == true) {
+      final ok = await EventReminderService.instance.sendTestNotification();
+      if (!mounted) return;
+      _showSnack(
+        ok
+            ? 'Test reminder will appear in ~10 seconds.'
+            : 'Still blocked — enable notifications for Graphy7 in phone Settings.',
+      );
+    }
   }
 
   void _showSnack(String message) {

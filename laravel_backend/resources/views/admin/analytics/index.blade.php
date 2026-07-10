@@ -4,89 +4,105 @@
 
 @section('content')
     @php
-        $mk = fn ($rows, $key) => collect($rows)->map(fn ($r) => [
+        $signupSeries = collect($signups)->map(fn ($r) => [
             'label' => isset($r['month']) ? \Illuminate\Support\Str::of($r['month'])->afterLast('-') : '',
-            'value' => (int) ($r[$key] ?? $r['count'] ?? 0),
-        ])->take(-6)->values();
-        $signupSeries  = $mk($signups, 'count');
-        $bookingSeries = $mk($bookings, 'count');
-        $maxSignup  = max(1, $signupSeries->max('value') ?? 1);
-        $maxBooking = max(1, $bookingSeries->max('value') ?? 1);
-        $statusTotal = max(1, collect($statusBreakdown)->sum(fn ($s) => (int) ($s['count'] ?? 0)));
+            'value' => (int) ($r['count'] ?? 0),
+        ])->take(-12)->values();
+        $maxSignup = max(1, $signupSeries->max('value') ?? 1);
+        $totalSignups = $signupSeries->sum('value');
+        $latest = $signupSeries->last()['value'] ?? 0;
     @endphp
 
-    <div class="page-header"><div><h1>Analytics</h1><p class="page-header__sub">Growth trends and platform breakdown.</p></div></div>
-
-    <div class="grid mb-6" style="grid-template-columns: 1fr 1fr; gap: var(--sp-5);">
-        <div class="card">
-            <div class="card__header"><span class="card__title">New Signups (6 mo)</span></div>
-            <div class="card__body">
-                @if ($signupSeries->isEmpty())<div class="empty-state"><p>No data.</p></div>@else
-                <div class="bar-chart">
-                    @foreach ($signupSeries as $pt)
-                        <div class="bar-chart__col">
-                            <span class="bar-chart__val">{{ $pt['value'] }}</span>
-                            <div class="bar-chart__bar" style="height: {{ max(4, round($pt['value'] / $maxSignup * 130)) }}px"></div>
-                            <span class="bar-chart__label">{{ $pt['label'] }}</span>
-                        </div>
-                    @endforeach
-                </div>@endif
-            </div>
-        </div>
-        <div class="card">
-            <div class="card__header"><span class="card__title">Bookings (6 mo)</span></div>
-            <div class="card__body">
-                @if ($bookingSeries->isEmpty())<div class="empty-state"><p>No data.</p></div>@else
-                <div class="bar-chart">
-                    @foreach ($bookingSeries as $pt)
-                        <div class="bar-chart__col">
-                            <span class="bar-chart__val">{{ $pt['value'] }}</span>
-                            <div class="bar-chart__bar" style="height: {{ max(4, round($pt['value'] / $maxBooking * 130)) }}px"></div>
-                            <span class="bar-chart__label">{{ $pt['label'] }}</span>
-                        </div>
-                    @endforeach
-                </div>@endif
-            </div>
+    <div class="page-header">
+        <div>
+            <span class="eyebrow">Privacy-Safe Analytics</span>
+            <h1>Growth Overview</h1>
+            <p class="page-header__sub">Track platform account growth without exposing any studio booking, payment, income, or expense records.</p>
         </div>
     </div>
 
-    <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--sp-5); align-items: start;">
-        <div class="card">
-            <div class="card__header"><span class="card__title">Status Breakdown</span></div>
+    <div class="stat-grid mb-6">
+        <section class="stat-card stat-card--orange">
+            <div class="stat-card__top">
+                <span class="material-symbols-rounded stat-card__icon" aria-hidden="true">person_add</span>
+                <span class="stat-card__label">Signups</span>
+            </div>
+            <div class="stat-card__value">{{ number_format($totalSignups) }}</div>
+            <div class="stat-card__meta">Shown for the current trend window</div>
+        </section>
+        <section class="stat-card stat-card--teal">
+            <div class="stat-card__top">
+                <span class="material-symbols-rounded stat-card__icon" aria-hidden="true">calendar_month</span>
+                <span class="stat-card__label">Latest Month</span>
+            </div>
+            <div class="stat-card__value">{{ number_format($latest) }}</div>
+            <div class="stat-card__meta">New accounts in the latest bucket</div>
+        </section>
+        <section class="stat-card stat-card--green">
+            <div class="stat-card__top">
+                <span class="material-symbols-rounded stat-card__icon" aria-hidden="true">lock</span>
+                <span class="stat-card__label">Privacy</span>
+            </div>
+            <div class="stat-card__value">On</div>
+            <div class="stat-card__meta">No bookings or finance analytics displayed</div>
+        </section>
+    </div>
+
+    <div class="dashboard-grid">
+        <section class="card dashboard-panel--wide">
+            <div class="card__header">
+                <div>
+                    <span class="card__title">New Signups</span>
+                    <p class="card__meta">Monthly account creation trend.</p>
+                </div>
+                <span class="count-pill">{{ $signupSeries->count() }} months</span>
+            </div>
             <div class="card__body">
-                @forelse ($statusBreakdown as $s)
-                    @php $count = (int) ($s['count'] ?? 0); $pct = round($count / $statusTotal * 100); @endphp
-                    <div style="margin-bottom: var(--sp-3)">
-                        <div class="flex justify-between" style="margin-bottom:4px">
-                            @include('admin.partials.status_badge', ['status' => $s['status'] ?? '—'])
-                            <span class="mono" style="font-size:13px">{{ $count }} ({{ $pct }}%)</span>
-                        </div>
-                        <div style="height:6px;background:var(--surface-alt);border-radius:var(--r-pill);overflow:hidden">
-                            <div style="height:100%;width:{{ $pct }}%;background:var(--primary)"></div>
+                @if ($signupSeries->isEmpty())
+                    <div class="empty-state">
+                        <span class="material-symbols-rounded empty-state__icon" aria-hidden="true">monitoring</span>
+                        <p>No signup data yet.</p>
+                    </div>
+                @else
+                    <div class="bar-chart">
+                        @foreach ($signupSeries as $pt)
+                            <div class="bar-chart__col">
+                                <span class="bar-chart__val">{{ $pt['value'] }}</span>
+                                <div class="bar-chart__bar" style="height: {{ max(6, round($pt['value'] / $maxSignup * 132)) }}px"></div>
+                                <span class="bar-chart__label">{{ $pt['label'] }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="card__header">
+                <div>
+                    <span class="card__title">Data Boundary</span>
+                    <p class="card__meta">What this page intentionally excludes.</p>
+                </div>
+                <span class="badge badge--success">Protected</span>
+            </div>
+            <div class="card__body">
+                <div class="system-list">
+                    <div class="system-row">
+                        <span class="material-symbols-rounded" aria-hidden="true">event_busy</span>
+                        <div>
+                            <strong>No booking analytics</strong>
+                            <p>Studio schedules remain owner-private.</p>
                         </div>
                     </div>
-                @empty
-                    <div class="empty-state"><p>No bookings yet.</p></div>
-                @endforelse
+                    <div class="system-row">
+                        <span class="material-symbols-rounded" aria-hidden="true">payments</span>
+                        <div>
+                            <strong>No finance analytics</strong>
+                            <p>Payments, income, and expenses are not surfaced.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="card">
-            <div class="card__header"><span class="card__title">Top Studios</span></div>
-            <div class="table-wrap">
-                <table class="data-table">
-                    <thead><tr><th>Studio</th><th style="text-align:right">Bookings</th></tr></thead>
-                    <tbody>
-                        @forelse ($topStudios as $t)
-                            <tr>
-                                <td><strong>{{ $t['name'] ?? '—' }}</strong></td>
-                                <td style="text-align:right" class="mono">{{ number_format($t['bookings'] ?? 0) }}</td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="2"><div class="empty-state"><p>No data.</p></div></td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        </section>
     </div>
 @endsection

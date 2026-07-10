@@ -67,10 +67,14 @@ Route::middleware('throttle:30,1')->group(function () {
     Route::post('crash-reports', [\App\Http\Controllers\Api\CrashReportController::class, 'store']);
     // Over-the-air update channel: the mobile app polls this on launch.
     Route::get('app/version', [\App\Http\Controllers\Api\AppVersionController::class, 'show']);
+    // Admin-configurable Help & Support contact channels (email + WhatsApp).
+    Route::get('support/config', [SupportController::class, 'config']);
 });
 
 // Protected routes — authenticated + general per-user throttle.
-Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
+// touch.active stamps last_active_at (throttled) so the admin console can
+// show "last seen" and Active/Inactive status for each account.
+Route::middleware(['auth:sanctum', 'throttle:120,1', 'touch.active'])->group(function () {
     Route::post('auth/logout', [AuthController::class, 'logout']);
     Route::post('auth/change-password', [AuthController::class, 'changePassword']);
 

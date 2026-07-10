@@ -143,7 +143,11 @@ class ExportController extends Notifier<ExportControllerState> {
     state = state.copyWith(itemCounts: counts);
   }
 
-  Future<void> generateAndShare() async {
+  /// Runs the export. Returns `true` when a Google Sheets export produced
+  /// files (so the screen can offer to open Sheets for the import step);
+  /// `false` for every other format. Never throws to the caller — errors
+  /// are swallowed so the button always resets.
+  Future<bool> generateAndShare() async {
     state = state.copyWith(generating: true);
     try {
       final service = ref.read(exportServiceProvider);
@@ -152,11 +156,20 @@ class ExportController extends Notifier<ExportControllerState> {
         scopes: state.scopes,
         dateRange: state.dateRange,
       );
+      if (state.type == ExportType.googleSheets) {
+        final files = await service.exportToGoogleSheets(config);
+        return files.isNotEmpty;
+      }
       await service.shareExport(config);
+      return false;
     } finally {
       state = state.copyWith(generating: false);
     }
   }
+
+  /// Opens Google Sheets so the user can import the CSV they just shared.
+  Future<bool> openGoogleSheets() =>
+      ref.read(exportServiceProvider).openGoogleSheets();
 }
 
 final exportControllerProvider =

@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../theme/app_colors.dart';
 import '../application/broadcast_providers.dart';
+import '../application/dismissed_broadcasts_provider.dart';
 import '../domain/broadcast.dart';
 
 /// Compact platform-broadcast banner for the top of the dashboard. Shows the
@@ -41,8 +42,13 @@ class _BroadcastBannerState extends ConsumerState<BroadcastBanner> {
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(broadcastsProvider);
+    final dismissed = ref.watch(dismissedBroadcastsProvider);
     return async.maybeWhen(
-      data: (items) {
+      data: (all) {
+        // Drop broadcasts the user closed with (×) — they stay gone across
+        // restarts (persisted in dismissedBroadcastsProvider).
+        final items =
+            all.where((b) => !dismissed.contains(b.id)).toList(growable: false);
         if (items.isEmpty) return const SizedBox.shrink();
         final i = _index.clamp(0, items.length - 1);
         final b = items[i];
@@ -181,6 +187,18 @@ class _BroadcastBannerState extends ConsumerState<BroadcastBanner> {
                         ],
                       ),
                     ],
+                    // Close (×): dismisses this broadcast for good. Reset the
+                    // pager to the top so the next banner shows in place.
+                    const SizedBox(width: 4),
+                    _PagerButton(
+                      icon: Icons.close_rounded,
+                      onTap: () {
+                        ref
+                            .read(dismissedBroadcastsProvider.notifier)
+                            .dismiss(b.id);
+                        setState(() => _index = 0);
+                      },
+                    ),
                   ],
                 ),
               ),

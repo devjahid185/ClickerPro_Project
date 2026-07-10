@@ -45,6 +45,10 @@ dependencies:
   # no server cron / Firebase scheduling needed.
   flutter_local_notifications: ^18.0.1
   timezone: ^0.9.4
+  # Reads the device's own IANA timezone (e.g. Asia/Kolkata vs Asia/Dhaka) so
+  # reminders fire on the user's local wall-clock — the app is international,
+  # not Bangladesh-only. Falls back to Asia/Dhaka when the lookup fails.
+  flutter_timezone: ^3.0.1
   # Writes booking events straight into the phone's calendar (no Google
   # web page / manual Save). Permission-gated; falls back to the web URL.
   device_calendar: ^4.3.3

@@ -169,7 +169,7 @@
         <div class="container">
             <div class="section--center">
                 <div class="section__eyebrow">Pricing</div>
-                <h2 class="section__title">Simple pricing, built for Bangladesh studios.</h2>
+                <h2 class="section__title">Simple pricing, built for growing studios.</h2>
                 <p class="section__desc">Start free. Upgrade only when your studio is ready to scale the whole team.</p>
             </div>
 
@@ -246,7 +246,7 @@
                     <a href="#download" class="footer__link">Download</a>
                 </div>
             </div>
-            <div class="footer__copy">© {{ date('Y') }} Graphy7 · Photography &amp; event management for Bangladesh.</div>
+            <div class="footer__copy">© {{ date('Y') }} Graphy7 · Photography &amp; event management for studios.</div>
         </div>
     </footer>
 

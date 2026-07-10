@@ -62,7 +62,6 @@ class RouteNames {
   static const String paymentEntry = '/payment/entry';
 
   // ─── Tools (offline utilities on the dashboard) ───
-  static const String prayerTimes = '/tools/prayer-times';
   static const String calculator = '/tools/calculator';
   static const String notes = '/tools/notes';
 
@@ -102,7 +101,6 @@ class RouteNames {
   static const String widgetSettings = '/widget-settings';
 
   // ─── Production & Reliability module ───
-  static const String backup = '/backup';
   static const String auditLog = '/audit-log';
   static const String crashSettings = '/crash-settings';
 }

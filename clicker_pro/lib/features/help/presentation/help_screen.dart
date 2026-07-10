@@ -7,11 +7,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
+import '../../whatsapp/data/whatsapp_service.dart';
 import '../application/support_providers.dart';
 import 'dialogs/send_ticket_sheet.dart';
 import '../../../theme/app_theme.dart';
@@ -29,10 +31,42 @@ class HelpScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _emailUs(BuildContext context, String email) async {
+    final uri = Uri(
+      scheme: 'mailto',
+      path: email,
+      query: 'subject=${Uri.encodeComponent('Graphy7 Support')}',
+    );
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && context.mounted) {
+      _toast(context, AppLocalizations.of(context).help_no_mail_app);
+    }
+  }
+
+  /// Opens a WhatsApp chat with the admin-configured support number. The
+  /// number itself is never shown in the UI — the user just lands in a chat
+  /// with a pre-filled message addressed to the app.
+  Future<void> _whatsAppUs(BuildContext context, String number) async {
+    final ok = await WhatsAppService.openChat(
+      phone: number,
+      message: 'Graphy7 Support: ',
+    );
+    if (!ok && context.mounted) {
+      _toast(context, AppLocalizations.of(context).help_no_whatsapp);
+    }
+  }
+
+  void _toast(BuildContext context, String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final loc = AppLocalizations.of(context);
     final faqs = ref.watch(faqsProvider);
+    final contact = ref
+        .watch(supportContactProvider)
+        .valueOrNull ?? supportContactFallback;
 
     return Scaffold(
       backgroundColor: AppColors.voidBlack,
@@ -113,21 +147,34 @@ class HelpScreen extends ConsumerWidget {
                       height: 1.4,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  SelectableText(
-                    loc.help_contact_email,
-                    style: TextStyle(
-                      color: AppColors.gold,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  const SizedBox(height: 14),
+
+                  // Email — tap to open the mail app with a pre-filled subject.
+                  _ContactAction(
+                    icon: Icons.mail_outline_rounded,
+                    label: loc.help_email_us,
+                    value: contact.email,
+                    onTap: () => _emailUs(context, contact.email),
                   ),
+
+                  // WhatsApp — only shown when the admin has set a number. The
+                  // number is never displayed; the row just says "app name".
+                  if (contact.whatsapp.trim().isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    _ContactAction(
+                      icon: Icons.chat_rounded,
+                      label: loc.help_whatsapp_us,
+                      value: 'Graphy7',
+                      onTap: () => _whatsAppUs(context, contact.whatsapp),
+                    ),
+                  ],
+
                   const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton.icon(
                       onPressed: () => _openTicketSheet(context),
-                      icon: const Icon(Icons.mail_outline),
+                      icon: const Icon(Icons.confirmation_number_outlined),
                       label: Text(loc.help_send_ticket),
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.orange,
@@ -232,6 +279,72 @@ class HelpScreen extends ConsumerWidget {
               },
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A tappable contact row (icon + label + secondary value) used for the email
+/// and WhatsApp channels on the Help screen.
+class _ContactAction extends StatelessWidget {
+  const _ContactAction({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          child: Row(
+            children: [
+              Icon(icon, color: AppColors.orange, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        color: AppColors.film,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (value.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        value,
+                        style: TextStyle(
+                          color: AppColors.gold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.filmDim,
+                size: 20,
+              ),
+            ],
+          ),
         ),
       ),
     );

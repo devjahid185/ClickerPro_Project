@@ -15,6 +15,20 @@ class SupportApi {
 
   final ApiClient _client;
 
+  /// Admin-configured support contact channels. Public endpoint, so it
+  /// resolves even before auth. Returns empty strings when unset — callers
+  /// fall back to the bundled defaults.
+  Future<({String email, String whatsapp})> config() async {
+    final r = await _client.get('/api/support/config');
+    final d = (r is Map && r['data'] is Map)
+        ? (r['data'] as Map).cast<String, dynamic>()
+        : const <String, dynamic>{};
+    return (
+      email: (d['email'] ?? '').toString(),
+      whatsapp: (d['whatsapp'] ?? '').toString(),
+    );
+  }
+
   Future<List<FaqEntry>> faqs() async {
     final r = await _client.get('/api/faqs');
     final raw = r is Map ? (r['data'] ?? r['faqs'] ?? const []) : r;

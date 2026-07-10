@@ -258,7 +258,7 @@ Tasks marked with `*` are optional test sub-tasks; they may be skipped for a fas
   - Approve creates a local `Booking` row by calling `BookingRepository.save` on the materialized event from the server response
   - _Requirements: 6.1–6.11, 11.6_
 
-- [~] 6.9 Wire repository providers in `core/providers.dart`
+- [-] 6.9 Wire repository providers in `core/providers.dart`
   - Add the 9 booking API providers and the 9 booking repository providers exactly per design "Provider Tree Extensions" section
   - Add `BookingFilter`, `BookingSearch`, `BookingSort`, `bookingListPage`, `calendarVisibleMonth` `StateProvider`s
   - Add the booking-related `StreamProvider`/`FutureProvider.family` providers

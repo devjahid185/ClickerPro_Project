@@ -44,6 +44,12 @@ class SettingsController extends Controller
             'app.android_url' => asset('ClickerPro.apk'),
             'app.web_url' => url('/'),
             'app.admin_url' => route('admin.login'),
+            // Help & Support contact channels shown in the mobile app. Edit
+            // these from the admin Settings page. WhatsApp is a full
+            // international number (e.g. 8801XXXXXXXXX) — the app opens a
+            // wa.me chat and never displays the raw number to the user.
+            'support.email' => 'support@graphy7.app',
+            'support.whatsapp' => '',
         ];
     }
 

@@ -11,6 +11,7 @@ class Waitlist extends Model
 
     protected $fillable = [
         'owner_id', 'name', 'phone', 'email', 'date_requested', 'notes',
+        'facebook_link',
     ];
 
     protected $casts = [

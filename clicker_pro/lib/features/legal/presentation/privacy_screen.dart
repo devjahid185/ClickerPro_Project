@@ -135,7 +135,6 @@ Graphy7 respects your privacy.
 
 **What we collect**
 - Account info you provide (name, email, phone)
-- Bookings, payments, and gear data you create
 - Device id and language for sync
 
 **How we use it**
@@ -143,13 +142,13 @@ Graphy7 respects your privacy.
 - To send service notifications you've opted in to
 
 **Third-party services**
-Firebase Analytics, Google OAuth (if used).
+We use Firebase Cloud Messaging to deliver push notifications. We do not use analytics or advertising trackers.
 
 **Your rights**
 - Export your data any time from Settings → Account
 - Delete your account; full purge after a 7-day grace window
 
 **Contact**
-support@clickerpro.app
+support@graphy7.app
 ''';
 

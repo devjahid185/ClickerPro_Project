@@ -37,7 +37,7 @@ import '../../features/freelancer/presentation/fl_companies_screen.dart';
 import '../../features/freelancer/presentation/fl_leave_request_screen.dart';
 import '../../features/gear/presentation/gear_screen.dart';
 import '../../features/help/presentation/help_screen.dart';
-import '../../features/legal/presentation/data_export_screen.dart';
+import '../../features/data_export/presentation/data_export_screen.dart';
 import '../../features/legal/presentation/privacy_screen.dart';
 import '../../features/legal/presentation/terms_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
@@ -56,11 +56,9 @@ import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/team/presentation/salary_sheet_screen.dart';
 import '../../features/team/presentation/team_screen.dart';
 import '../../features/invoice/presentation/invoice_screen.dart';
-import '../../features/tools/presentation/prayer_times_screen.dart';
 import '../../features/tools/presentation/calculator_screen.dart';
 import '../../features/tools/presentation/notes_screen.dart';
 import '../../features/invoice/domain/invoice.dart';
-import '../../features/backup/presentation/backup_screen.dart';
 import '../../features/audit/presentation/audit_log_screen.dart';
 import '../../features/crash_reporting/presentation/crash_settings_screen.dart';
 import '../../features/whatsapp/presentation/whatsapp_share_sheet.dart';
@@ -270,14 +268,6 @@ class AppRouter {
                 : const InvoiceScreen(),
           ),
         );
-      case RouteNames.backup:
-        return lensPageRoute<void>(
-          const RoleGatedScreen(
-            capability: Capability.viewFinancials,
-            title: 'Backup & Restore',
-            child: BackupScreen(),
-          ),
-        );
       case RouteNames.auditLog:
         return lensPageRoute<void>(
           const RoleGatedScreen(
@@ -369,8 +359,6 @@ class AppRouter {
         return lensPageRoute<void>(const CalendarSyncSettings());
       case RouteNames.paymentEntry:
         return lensPageRoute<void>(const PaymentEntryScreen());
-      case RouteNames.prayerTimes:
-        return lensPageRoute<void>(const PrayerTimesScreen());
       case RouteNames.calculator:
         return lensPageRoute<void>(const CalculatorScreen());
       case RouteNames.notes:

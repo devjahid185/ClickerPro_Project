@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/db/app_database.dart';
 import '../../expenses/domain/expense_repository.dart';
@@ -238,6 +239,69 @@ class ExportService {
       await SharePlus.instance.share(
         ShareParams(files: files.map(XFile.new).toList()),
       );
+    }
+  }
+
+  /// Exports the selected scopes as CSV and hands them to Google Sheets.
+  ///
+  /// Google's Sheets API needs OAuth + an API key to write a spreadsheet
+  /// directly, which we don't ship. The reliable, key-free path Google
+  /// itself recommends is: produce a CSV, drop it in Drive, and open it
+  /// with Sheets (Sheets imports CSV natively). So we:
+  ///   1. write the CSV file(s) to temp,
+  ///   2. share them — the Android/iOS share sheet lists **Drive** and
+  ///      **Sheets**; picking either lands the data in Google Sheets,
+  ///   3. return the file paths so the caller can offer to open Google
+  ///      Sheets afterwards for the import step.
+  ///
+  /// Returns the generated file paths (empty when nothing was selected).
+  Future<List<String>> exportToGoogleSheets(ExportConfig config) async {
+    final dir = await getTemporaryDirectory();
+    final files = <String>[];
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+
+    Future<void> add(String name, Future<String> Function() build) async {
+      final csv = await build();
+      final file = File('${dir.path}/${name}_$timestamp.csv');
+      await file.writeAsString(csv);
+      files.add(file.path);
+    }
+
+    final all = config.scopes.contains(ExportScope.all);
+    if (all || config.scopes.contains(ExportScope.bookings)) {
+      await add('bookings', () => exportBookingsCsv(config.dateRange));
+    }
+    if (all || config.scopes.contains(ExportScope.clients)) {
+      await add('clients', exportClientsCsv);
+    }
+    if (all || config.scopes.contains(ExportScope.payments)) {
+      await add('payments', () => exportPaymentsCsv(config.dateRange));
+    }
+    if (all || config.scopes.contains(ExportScope.expenses)) {
+      await add('expenses', () => exportExpensesCsv(config.dateRange));
+    }
+
+    if (files.isEmpty) return const [];
+
+    await SharePlus.instance.share(
+      ShareParams(
+        files: files.map(XFile.new).toList(),
+        subject: 'Clicker Pro export — import into Google Sheets',
+      ),
+    );
+    return files;
+  }
+
+  /// Opens Google Sheets so the user can import the CSV they just saved.
+  /// Tries the Sheets app first (`https://sheets.google.com`), which the
+  /// installed app claims; falls back to the browser. Fail-soft: returns
+  /// false if nothing could handle the link.
+  Future<bool> openGoogleSheets() async {
+    final uri = Uri.parse('https://docs.google.com/spreadsheets/u/0/');
+    try {
+      return await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      return false;
     }
   }
 

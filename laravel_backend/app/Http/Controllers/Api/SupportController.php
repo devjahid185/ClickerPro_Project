@@ -3,11 +3,28 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AppSetting;
 use App\Models\SupportTicket;
 use Illuminate\Http\Request;
 
 class SupportController extends Controller
 {
+    /**
+     * Public support contact channels, editable from the admin Settings page
+     * (keys `support.email` / `support.whatsapp`). The WhatsApp number is
+     * returned so the app can open a wa.me chat, but the app never shows the
+     * raw number to the user — only the app name / a "Chat on WhatsApp" CTA.
+     */
+    public function config()
+    {
+        return response()->json([
+            'data' => [
+                'email' => (string) AppSetting::getValue('support.email', ''),
+                'whatsapp' => (string) AppSetting::getValue('support.whatsapp', ''),
+            ],
+        ]);
+    }
+
     public function index(Request $request)
     {
         $tickets = SupportTicket::where('user_id', $request->user()->id)

@@ -802,6 +802,18 @@ class AppLocalizationsBn extends AppLocalizations {
   String get help_contact_email => 'support@clickerpro.app';
 
   @override
+  String get help_email_us => 'ইমেইল করুন';
+
+  @override
+  String get help_whatsapp_us => 'WhatsApp-এ চ্যাট করুন';
+
+  @override
+  String get help_no_mail_app => 'এই ডিভাইসে কোনো মেইল অ্যাপ পাওয়া যায়নি।';
+
+  @override
+  String get help_no_whatsapp => 'WhatsApp খোলা যায়নি।';
+
+  @override
   String get help_send_ticket => 'টিকিট পাঠান';
 
   @override

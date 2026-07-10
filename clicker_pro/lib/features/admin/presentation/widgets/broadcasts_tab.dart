@@ -232,6 +232,18 @@ class _BroadcastComposerSheetState extends ConsumerState<_BroadcastComposerSheet
   late final TextEditingController _bodyCtrl;
   late final TextEditingController _linkCtrl;
   String _priority = 'Normal';
+
+  /// Call-to-action label shown on the broadcast button. Owner picks one of
+  /// the common presets; the value is stored verbatim as `button_label`.
+  String _buttonLabel = _ctaLabels.first;
+  static const _ctaLabels = <String>[
+    'Learn More',
+    'Shop Now',
+    'Buy Now',
+    'Get Started',
+    'Contact Us',
+    'Download',
+  ];
   bool _submitting = false;
   bool _uploadingImage = false;
   String? _error;
@@ -253,6 +265,12 @@ class _BroadcastComposerSheetState extends ConsumerState<_BroadcastComposerSheet
     _linkCtrl = TextEditingController(text: e?.link ?? '');
     _existingImageUrl = e?.imageUrl;
     if (e != null && _priorities.contains(e.priority)) _priority = e.priority;
+    // Restore the saved CTA label when editing; unknown / custom labels fall
+    // back to the first preset so the dropdown always has a valid value.
+    final existingLabel = e?.buttonLabel?.trim();
+    if (existingLabel != null && _ctaLabels.contains(existingLabel)) {
+      _buttonLabel = existingLabel;
+    }
   }
 
   @override
@@ -309,12 +327,17 @@ class _BroadcastComposerSheetState extends ConsumerState<_BroadcastComposerSheet
         setState(() => _uploadingImage = false);
       }
 
+      // The CTA label only matters when there's a link to open; without one
+      // the button never renders, so don't persist a stray label.
+      final buttonLabel = link.isEmpty ? null : _buttonLabel;
+
       if (widget.existing == null) {
         await api.createBroadcast(
           title: title,
           body: body,
           priority: _priority,
           link: link.isEmpty ? null : link,
+          buttonLabel: buttonLabel,
           imageUrl: imageUrl,
         );
       } else {
@@ -324,6 +347,7 @@ class _BroadcastComposerSheetState extends ConsumerState<_BroadcastComposerSheet
           body: body,
           priority: _priority,
           link: link.isEmpty ? null : link,
+          buttonLabel: buttonLabel,
           imageUrl: imageUrl,
         );
       }
@@ -433,11 +457,27 @@ class _BroadcastComposerSheetState extends ConsumerState<_BroadcastComposerSheet
             const SizedBox(height: 12),
             TextField(
               controller: _linkCtrl,
+              // Rebuild on edits so the CTA picker appears/disappears with the
+              // link (the button only shows when a link is set).
+              onChanged: (_) => setState(() {}),
               decoration: const InputDecoration(
                 labelText: 'Link (optional)',
                 hintText: 'https://…',
               ),
             ),
+            // Button label (CTA) — only relevant when a link is present.
+            if (_linkCtrl.text.trim().isNotEmpty) ...[
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: _buttonLabel,
+                decoration: const InputDecoration(labelText: 'Button label'),
+                items: _ctaLabels
+                    .map((l) => DropdownMenuItem(value: l, child: Text(l)))
+                    .toList(growable: false),
+                onChanged: (v) =>
+                    setState(() => _buttonLabel = v ?? _ctaLabels.first),
+              ),
+            ],
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,

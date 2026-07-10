@@ -723,13 +723,26 @@ class _ShiftColumn extends StatelessWidget {
           )
         else
           for (var i = 0; i < bookings.length; i++)
-            FadeUpIn(
-              order: i.clamp(0, 8),
-              child: _BookingColumnRow(
-                booking: bookings[i],
-                accentColor: color,
-                accentSide: accentSide,
-              ),
+            // RepaintBoundary isolates each card's paint layer so scrolling
+            // only repaints what actually moves, not the whole column — this
+            // is the fix for the "scroll করলে কেঁপে ওঠে" jank. Only the first
+            // screenful gets the staggered entrance; rows past that render in
+            // place so a long list doesn't animate every card on first paint.
+            RepaintBoundary(
+              child: i < 8
+                  ? FadeUpIn(
+                      order: i,
+                      child: _BookingColumnRow(
+                        booking: bookings[i],
+                        accentColor: color,
+                        accentSide: accentSide,
+                      ),
+                    )
+                  : _BookingColumnRow(
+                      booking: bookings[i],
+                      accentColor: color,
+                      accentSide: accentSide,
+                    ),
             ),
       ],
     );

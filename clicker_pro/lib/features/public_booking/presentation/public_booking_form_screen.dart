@@ -31,6 +31,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/format/booking_format.dart';
 import '../../../core/navigation/route_names.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../core/validation/phone_validator.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
@@ -445,7 +446,15 @@ class _FormState extends ConsumerState<_Form> {
       if (!mounted) return;
       setState(() {
         _submitting = false;
-        _topLevelError = 'Could not submit your request. $e';
+        // A status-0 ApiException means the request never reached the server
+        // (offline, or the browser blocked a cross-origin call). Show a plain
+        // "check your connection" line instead of the raw
+        // "ApiException(status: 0, message: Network error)" the client saw.
+        final isNetwork = e is ApiException && e.isNetwork;
+        _topLevelError = isNetwork
+            ? 'Could not submit your request. Please check your internet '
+                  'connection and try again.'
+            : 'Could not submit your request. Please try again in a moment.';
       });
     }
   }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\LogsAudit;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BookingRequest;
 use App\Http\Resources\BookingResource;
@@ -13,6 +14,21 @@ use Illuminate\Http\Request;
 
 class BookingController extends Controller
 {
+    use LogsAudit;
+
+    /** Compact booking snapshot stored in the audit trail's before/after. */
+    private function auditSnapshot(Event $event): array
+    {
+        return [
+            'title' => $event->title,
+            'status' => $event->status,
+            'date' => optional($event->date)->toDateString(),
+            'venue' => $event->venue,
+            'price' => $event->price,
+            'due_amount' => $event->due_amount,
+        ];
+    }
+
     /**
      * The web/mobile booking form sends a free-text client_name (+ optional
      * phone) rather than a client_id. Resolve it to a Client row owned by the
@@ -103,6 +119,9 @@ class BookingController extends Controller
 
         $event = Event::create($data);
 
+        $this->audit($request, 'CREATE', 'booking', $event->id,
+            after: $this->auditSnapshot($event));
+
         // Auto-append the new booking to the owner's Google Sheet (if the
         // integration is configured). Fail-safe: any Sheets error is swallowed
         // inside the service so it can never block the booking from saving.
@@ -166,7 +185,11 @@ class BookingController extends Controller
             ->all();
 
         $this->resolveClientId($request, $data);
+        $before = $this->auditSnapshot($event);
         $event->update(array_filter($data, fn($v) => $v !== null));
+
+        $this->audit($request, 'UPDATE', 'booking', $event->id,
+            before: $before, after: $this->auditSnapshot($event->fresh()));
 
         return response()->json(['data' => $this->flatten($event->fresh()->load('client'))]);
     }
@@ -227,6 +250,10 @@ class BookingController extends Controller
             'note' => $data['note'] ?? null,
         ]);
 
+        $this->audit($request, 'UPDATE', 'booking', $event->id,
+            before: ['status' => $oldStatus],
+            after: ['status' => $data['status']]);
+
         return response()->json(['data' => $event->fresh()]);
     }
 
@@ -238,7 +265,10 @@ class BookingController extends Controller
             return response()->json(['message' => 'Not found'], 404);
         }
 
+        $before = $this->auditSnapshot($event);
         $event->delete();
+
+        $this->audit($request, 'DELETE', 'booking', $id, before: $before);
 
         return response()->json(['message' => 'ok']);
     }

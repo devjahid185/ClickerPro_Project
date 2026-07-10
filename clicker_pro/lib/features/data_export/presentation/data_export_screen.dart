@@ -90,7 +90,8 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Generate CSV files for bookings, clients, payments, and expenses.',
+                  'Export bookings, clients, payments, and expenses — as CSV, '
+                  'or straight into Google Sheets.',
                   style: AppText.bodyDim.copyWith(fontSize: 13),
                 ),
               ],
@@ -105,20 +106,31 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
     return Text(text, style: AppText.sectionTitle);
   }
 
+  ({String label, IconData icon}) _typeMeta(ExportType type) {
+    switch (type) {
+      case ExportType.csv:
+        return (label: 'CSV', icon: Icons.table_chart_outlined);
+      case ExportType.googleSheets:
+        return (label: 'Sheets', icon: Icons.grid_on_outlined);
+      case ExportType.pdf:
+        return (label: 'PDF', icon: Icons.picture_as_pdf_outlined);
+      case ExportType.zip:
+        return (label: 'ZIP', icon: Icons.folder_zip_outlined);
+    }
+  }
+
+  // Only the formats that actually produce their own output are offered.
+  // PDF/ZIP were placeholder tiles that silently fell back to CSV, so they
+  // are excluded from the picker (the enum keeps them for compatibility).
+  static const _selectableTypes = [ExportType.csv, ExportType.googleSheets];
+
   Widget _buildTypeSelector(ExportControllerState state) {
     return Row(
-      children: ExportType.values.map((type) {
+      children: _selectableTypes.map((type) {
         final selected = state.type == type;
-        final label = type == ExportType.csv
-            ? 'CSV'
-            : type == ExportType.pdf
-            ? 'PDF'
-            : 'ZIP';
-        final icon = type == ExportType.csv
-            ? Icons.table_chart_outlined
-            : type == ExportType.pdf
-            ? Icons.picture_as_pdf_outlined
-            : Icons.folder_zip_outlined;
+        final meta = _typeMeta(type);
+        final label = meta.label;
+        final icon = meta.icon;
 
         return Expanded(
           child: GestureDetector(
@@ -127,7 +139,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               margin: EdgeInsets.only(
-                right: type != ExportType.values.last ? 10 : 0,
+                right: type != ExportType.values.last ? 8 : 0,
               ),
               padding: const EdgeInsets.symmetric(vertical: 18),
               decoration:
@@ -145,15 +157,17 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
                   Icon(
                     icon,
                     color: selected ? AppColors.teal : AppColors.filmDim,
-                    size: 26,
+                    size: 24,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: AppText.body.copyWith(
                       color: selected ? AppColors.teal : AppColors.filmDim,
                       fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                      fontSize: 13,
+                      fontSize: 12.5,
                     ),
                   ),
                 ],
@@ -402,6 +416,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
   Widget _buildGenerateButton(ExportControllerState state) {
     final hasScope = state.scopes.isNotEmpty;
     final isGenerating = state.generating;
+    final isSheets = state.type == ExportType.googleSheets;
 
     return SizedBox(
       height: 54,
@@ -413,10 +428,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        onPressed: hasScope && !isGenerating
-            ? () =>
-                  ref.read(exportControllerProvider.notifier).generateAndShare()
-            : null,
+        onPressed: hasScope && !isGenerating ? _onGenerate : null,
         icon: isGenerating
             ? SizedBox(
                 width: 18,
@@ -426,9 +438,17 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
                   color: AppColors.film,
                 ),
               )
-            : Icon(Icons.share_outlined, color: AppColors.film, size: 18),
+            : Icon(
+                isSheets ? Icons.grid_on_outlined : Icons.share_outlined,
+                color: AppColors.film,
+                size: 18,
+              ),
         label: Text(
-          isGenerating ? 'Generating...' : 'Generate & Share',
+          isGenerating
+              ? 'Generating...'
+              : isSheets
+              ? 'Export to Sheets'
+              : 'Generate & Share',
           style: TextStyle(
             color: AppColors.film,
             fontWeight: FontWeight.w600,
@@ -437,6 +457,63 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> _onGenerate() async {
+    final notifier = ref.read(exportControllerProvider.notifier);
+    final wasSheets =
+        ref.read(exportControllerProvider).type == ExportType.googleSheets;
+    final producedSheets = await notifier.generateAndShare();
+    if (!mounted || !wasSheets || !producedSheets) return;
+    await _showOpenSheetsPrompt();
+  }
+
+  /// After the CSV has been shared to Drive/Sheets, walk the user through
+  /// the one import tap Google requires (Drive can't auto-convert on our
+  /// behalf without OAuth).
+  Future<void> _showOpenSheetsPrompt() async {
+    final open = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.voidElevated,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Text('Open in Google Sheets', style: AppText.brand),
+        content: Text(
+          'Your data was exported as a CSV. To finish, open Google Sheets, '
+          'then use File → Import (or open the CSV from Drive) to load it '
+          'into a spreadsheet.',
+          style: AppText.bodyDim.copyWith(fontSize: 13.5, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text('Not now', style: TextStyle(color: AppColors.filmDim)),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.teal),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(
+              'Open Sheets',
+              style: TextStyle(
+                color: AppColors.film,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (open != true || !mounted) return;
+    final ok = await ref
+        .read(exportControllerProvider.notifier)
+        .openGoogleSheets();
+    if (!mounted || ok) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Could not open Google Sheets')),
     );
   }
 }

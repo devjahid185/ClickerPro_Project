@@ -14,6 +14,8 @@ import '../../../core/navigation/route_names.dart';
 import '../../../core/providers.dart';
 import '../../../theme/app_colors.dart';
 import '../../bookings/application/booking_providers.dart';
+import '../../bookings/domain/booking_filter.dart';
+import '../../profile/application/profile_controllers.dart';
 import '../data/search_api.dart';
 
 final searchApiProvider = Provider<SearchApi>(
@@ -62,21 +64,73 @@ class _GlobalSearchSheetState extends ConsumerState<GlobalSearchSheet> {
       _loading = true;
       _error = null;
     });
+
+    // Local-first: search the on-device Drift store (booking title + client
+    // name) exactly like the Booking List does, so search works OFFLINE and
+    // never depends on the server endpoint being deployed. This is the fix for
+    // "ড্যাশবোর্ড সার্চ থেকে সার্চ করলে কিছু আসে না" — the sheet used to hit the
+    // server ONLY, so a slow / undeployed /api/search returned nothing.
+    final localHits = await _localBookingHits(q);
+
+    // Then augment with the server results (clients, cross-device bookings the
+    // phone hasn't synced). If the server call fails we still show local hits.
+    List<SearchHit> serverHits = const [];
     try {
-      final hits = await ref.read(searchApiProvider).search(q);
-      // Ignore stale responses if the query moved on.
-      if (!mounted || q != _lastQuery) return;
-      setState(() {
-        _hits = hits;
-        _loading = false;
-      });
-    } catch (e) {
-      if (!mounted || q != _lastQuery) return;
-      setState(() {
-        _loading = false;
-        _error = 'Search failed. Check your connection.';
-      });
+      serverHits = await ref.read(searchApiProvider).search(q);
+    } catch (_) {
+      // Offline / undeployed — local hits carry the search on their own.
     }
+
+    if (!mounted || q != _lastQuery) return;
+    setState(() {
+      _hits = _mergeHits(localHits, serverHits);
+      _loading = false;
+    });
+  }
+
+  /// Searches the local Drift booking store via the same filter the Booking
+  /// List screen uses, so results match offline. Returns [] on any error.
+  Future<List<SearchHit>> _localBookingHits(String q) async {
+    try {
+      final user = ref.read(currentUserProvider).value;
+      if (user == null) return const [];
+      final policy = ref.read(bookingsPolicyProvider);
+      final bookings = await ref
+          .read(bookingRepositoryProvider)
+          .watchAll(
+            BookingFilter(search: q),
+            policy: policy,
+            currentUserId: user.id,
+          )
+          .first;
+      return bookings
+          .map((b) => SearchHit(
+                kind: SearchKind.booking,
+                // Prefer the remote id so _openHit can resolve it; fall back to
+                // the local id (getByRemoteId returns null → opens the list).
+                id: (b.remoteId ?? b.id),
+                title: b.clientName?.trim().isNotEmpty == true
+                    ? b.clientName!.trim()
+                    : b.title,
+                subtitle: b.venue ?? '',
+              ))
+          .toList(growable: false);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// Merges local + server hits, de-duplicating bookings by id so a booking
+  /// that exists both locally and on the server isn't listed twice.
+  List<SearchHit> _mergeHits(
+    List<SearchHit> local,
+    List<SearchHit> server,
+  ) {
+    final seen = <String>{for (final h in local) '${h.kind}:${h.id}'};
+    return [
+      ...local,
+      ...server.where((h) => seen.add('${h.kind}:${h.id}')),
+    ];
   }
 
   Future<void> _openHit(SearchHit hit) async {

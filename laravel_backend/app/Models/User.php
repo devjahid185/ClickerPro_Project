@@ -38,6 +38,7 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'last_active_at' => 'datetime',
         'manager_permissions' => 'array',
         'totp_enabled' => 'boolean',
         'is_active' => 'boolean',

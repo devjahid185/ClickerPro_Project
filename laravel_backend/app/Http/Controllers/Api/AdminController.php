@@ -63,14 +63,16 @@ class AdminController extends Controller
 
     public function users(Request $request)
     {
-        // PRIVACY: no event/booking counts — admin must not see user activity.
+        // PRIVACY: no booking/payment/revenue data — the admin sees accounts
+        // and whether they're used, never what's done inside them.
         $query = User::orderBy('created_at', 'desc');
 
         if ($request->has('search') && $request->search) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%");
             });
         }
 
@@ -78,14 +80,41 @@ class AdminController extends Controller
             $query->where('role', $request->role);
         }
 
+        // Activity filter: active = used the app within the window; inactive =
+        // never used or dormant past it. Empty / "all" applies no filter.
+        $activity = (string) $request->query('activity', '');
+        if ($activity === 'active') {
+            $cutoff = now()->subDays(self::ACTIVE_WINDOW_DAYS);
+            $query->where('last_active_at', '>=', $cutoff);
+        } elseif ($activity === 'inactive') {
+            $cutoff = now()->subDays(self::ACTIVE_WINDOW_DAYS);
+            $query->where(function ($q) use ($cutoff) {
+                $q->whereNull('last_active_at')
+                  ->orWhere('last_active_at', '<', $cutoff);
+            });
+        }
+
         $users = $query->limit(100)->get()->map(fn ($u) => $this->userRow($u));
 
         return response()->json(['data' => $users, 'total' => $users->count()]);
     }
 
+    /** Accounts active in the app within this many days count as "Active". */
+    private const ACTIVE_WINDOW_DAYS = 30;
+
     // Shape a User into the camelCase form the admin UI expects.
+    //
+    // PRIVACY: still no bookings / payments / revenue — the admin sees who
+    // registered, their contact details, plan, and *whether* they use the
+    // app (last active), but not what they do inside it.
     private function userRow($u): array
     {
+        $lastActive = $u->last_active_at;
+        // "Recently active" = opened the app within the active window. Never
+        // active (null) counts as inactive.
+        $recentlyActive = $lastActive !== null
+            && $lastActive->diffInDays(now()) < self::ACTIVE_WINDOW_DAYS;
+
         return [
             'id' => (string) $u->id,
             'email' => $u->email,
@@ -95,10 +124,11 @@ class AdminController extends Controller
             'plan' => $u->plan,
             'planExpiresAt' => $u->plan_expires_at ?? null,
             'businessName' => $u->business_name,
-            'totalEvents' => $u->events_count ?? 0,
             'totalRevenueMinor' => 0,
             'deletedAt' => $u->is_active ? null : ($u->updated_at?->toIso8601String()),
             'createdAt' => $u->created_at?->toIso8601String(),
+            'lastActiveAt' => $lastActive?->toIso8601String(),
+            'recentlyActive' => $recentlyActive,
         ];
     }
 

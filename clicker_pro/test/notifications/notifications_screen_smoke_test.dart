@@ -7,6 +7,9 @@
 //   • empty state renders when the list is empty
 //   • tap on an unread row triggers `markRead` exactly once
 
+import 'package:clicker_pro/features/bookings/application/booking_providers.dart';
+import 'package:clicker_pro/features/bookings/domain/booking.dart';
+import 'package:clicker_pro/features/bookings/domain/booking_filter.dart';
 import 'package:clicker_pro/features/notifications/application/notification_providers.dart';
 import 'package:clicker_pro/features/notifications/domain/app_notification.dart';
 import 'package:clicker_pro/features/notifications/domain/notification_repository.dart';
@@ -34,10 +37,20 @@ class _FakeNotifRepo implements NotificationRepository {
 Future<void> _pump(
   WidgetTester tester, {
   required NotificationRepository repo,
+  List<Booking> localBookings = const <Booking>[],
 }) async {
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [notificationRepositoryProvider.overrideWithValue(repo)],
+      overrides: [
+        notificationRepositoryProvider.overrideWithValue(repo),
+        // The inbox is now local-first: the controller reads the booking
+        // list to derive offline notifications. Stub it with an explicit
+        // list so these server-focused smoke tests stay deterministic
+        // (and don't hang on an un-completing empty stream).
+        bookingListAllProvider(
+          const BookingFilter(),
+        ).overrideWith((ref) => Stream.value(localBookings)),
+      ],
       child: MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,

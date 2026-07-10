@@ -797,6 +797,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get help_contact_email => 'support@clickerpro.app';
 
   @override
+  String get help_email_us => 'Email us';
+
+  @override
+  String get help_whatsapp_us => 'Chat on WhatsApp';
+
+  @override
+  String get help_no_mail_app => 'No mail app found on this device.';
+
+  @override
+  String get help_no_whatsapp => 'Could not open WhatsApp.';
+
+  @override
   String get help_send_ticket => 'Send a ticket';
 
   @override

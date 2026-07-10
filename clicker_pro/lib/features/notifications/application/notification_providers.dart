@@ -11,6 +11,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers.dart';
+import '../../bookings/application/booking_providers.dart';
+import '../../bookings/domain/booking_filter.dart';
+import '../data/local_notifications_builder.dart';
 import '../data/notification_api.dart';
 import '../data/notification_repository_impl.dart';
 import '../domain/app_notification.dart';
@@ -30,16 +33,75 @@ final notificationRepositoryProvider = Provider<NotificationRepository>(
 
 class NotificationInboxController extends AsyncNotifier<List<AppNotification>> {
   @override
-  Future<List<AppNotification>> build() async {
-    return ref.read(notificationRepositoryProvider).list();
-  }
+  Future<List<AppNotification>> build() => _load();
 
   /// Pull-to-refresh / explicit refresh.
   Future<void> refresh() async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(
-      () => ref.read(notificationRepositoryProvider).list(),
-    );
+    state = await AsyncValue.guard(_load);
+  }
+
+  /// Local-first load: derive notifications from the on-device booking list
+  /// (works fully offline), then merge in the server inbox when reachable.
+  /// The inbox never shows empty/error just because the backend is down —
+  /// mirrors the local-first search fix.
+  Future<List<AppNotification>> _load() async {
+    final local = await _localNotifications();
+
+    List<AppNotification> server = const [];
+    try {
+      server = await ref.read(notificationRepositoryProvider).list();
+    } catch (_) {
+      // Backend unreachable/undeployed — fall back to local-only so the
+      // bell still shows the user's upcoming shoots.
+    }
+
+    return _merge(local, server);
+  }
+
+  Future<List<AppNotification>> _localNotifications() async {
+    try {
+      final bookings = await ref.read(
+        bookingListAllProvider(const BookingFilter()).future,
+      );
+      return LocalNotificationsBuilder.fromBookings(bookings);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// Server rows win over locally-derived ones for the same booking (the
+  /// backend copy carries the authoritative read-state + id). Everything is
+  /// sorted newest-first.
+  List<AppNotification> _merge(
+    List<AppNotification> local,
+    List<AppNotification> server,
+  ) {
+    // A server notification deeplinking to /bookings/<id> supersedes the
+    // local reminder for that same booking.
+    final serverBookingIds = <String>{
+      for (final n in server)
+        if (_bookingIdOf(n.deeplink) != null) _bookingIdOf(n.deeplink)!,
+    };
+
+    final merged = <AppNotification>[
+      ...server,
+      ...local.where(
+        (n) => !serverBookingIds.contains(_bookingIdOf(n.deeplink)),
+      ),
+    ]..sort((a, b) => b.sentAt.compareTo(a.sentAt));
+    return merged;
+  }
+
+  /// Extracts the booking id from a `/bookings/<id>` deeplink, else null.
+  String? _bookingIdOf(String? deeplink) {
+    if (deeplink == null) return null;
+    final segments = deeplink.split('?').first.split('#').first.split('/')
+      ..removeWhere((s) => s.isEmpty);
+    if (segments.length >= 2 && segments.first == 'bookings') {
+      return segments[1];
+    }
+    return null;
   }
 
   /// Optimistically flips the row's `read` flag and fires the PATCH।

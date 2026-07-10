@@ -28,7 +28,12 @@ Future<void> _pump(
 }) async {
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [supportRepositoryProvider.overrideWithValue(repo)],
+      overrides: [
+        supportRepositoryProvider.overrideWithValue(repo),
+        // Bypass the network-backed contact lookup so the smoke test doesn't
+        // leave a retry timer pending; the UI falls back to these anyway.
+        supportContactProvider.overrideWith((ref) async => supportContactFallback),
+      ],
       child: MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,

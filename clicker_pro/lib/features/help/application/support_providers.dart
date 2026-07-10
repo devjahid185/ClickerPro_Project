@@ -19,3 +19,25 @@ final supportRepositoryProvider = Provider<SupportRepository>(
 final faqsProvider = FutureProvider<List<FaqEntry>>(
   (ref) => ref.read(supportRepositoryProvider).faqs(),
 );
+
+/// Admin-configurable Help & Support contact channels. Defaults to the
+/// bundled email and no WhatsApp; the backend value (admin Settings page)
+/// overrides both. Kept as a tolerant future so a backend hiccup never hides
+/// the Help screen — [supportContactProvider] falls back to the default.
+const supportContactFallback = (
+  email: 'support@graphy7.app',
+  whatsapp: '',
+);
+
+final supportContactProvider =
+    FutureProvider<({String email, String whatsapp})>((ref) async {
+  try {
+    final cfg = await ref.read(supportApiProvider).config();
+    return (
+      email: cfg.email.isNotEmpty ? cfg.email : supportContactFallback.email,
+      whatsapp: cfg.whatsapp,
+    );
+  } catch (_) {
+    return supportContactFallback;
+  }
+});

@@ -14,7 +14,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/format/currency.dart';
+import '../../../core/navigation/route_names.dart';
 import '../../../core/network/api_exception.dart';
+import '../../bookings/application/booking_providers.dart';
 import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
@@ -239,10 +241,38 @@ class _SummaryCard extends StatelessWidget {
 
 // ─── Payment Row ──────────────────────────────────────────────────────────────
 
-class _PaymentRow extends StatelessWidget {
+class _PaymentRow extends ConsumerWidget {
   const _PaymentRow({required this.record});
 
   final PaymentRecord record;
+
+  /// Opens the booking this receipt belongs to. The receipt carries the
+  /// SERVER event id, but Event Details is keyed by the local Drift id, so
+  /// resolve it first (same pattern as global search). This is the fix for
+  /// "Receipt list … ট্যাব করলে লিস্ট কাজ করে না" — the row had no onTap at
+  /// all, so tapping a receipt did nothing.
+  Future<void> _openBooking(BuildContext context, WidgetRef ref) async {
+    final navigator = Navigator.of(context);
+    final eventId = record.eventId.trim();
+    if (eventId.isEmpty) return;
+    try {
+      final booking =
+          await ref.read(bookingRepositoryProvider).getByRemoteId(eventId);
+      if (!context.mounted) return;
+      if (booking != null) {
+        navigator.pushNamed(RouteNames.bookingDetail, arguments: booking.id);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('This booking is not on this device yet')),
+        );
+      }
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open the booking')),
+      );
+    }
+  }
 
   Color _methodColor() {
     switch (record.method) {
@@ -278,7 +308,7 @@ class _PaymentRow extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final methodColor = _methodColor();
     final d = record.createdAt;
     final dateStr =
@@ -289,6 +319,7 @@ class _PaymentRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       decoration: AppColors.glassCardDecoration(),
       child: ListTile(
+        onTap: () => _openBooking(context, ref),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
         leading: Container(
           width: 40,

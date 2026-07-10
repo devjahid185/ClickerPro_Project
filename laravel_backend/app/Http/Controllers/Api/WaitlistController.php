@@ -25,6 +25,7 @@ class WaitlistController extends Controller
             'email' => 'nullable|email|max:255',
             'date_requested' => 'nullable|date',
             'notes' => 'nullable|string',
+            'facebook_link' => 'nullable|string|max:500',
         ]);
 
         $data['owner_id'] = $request->user()->id;

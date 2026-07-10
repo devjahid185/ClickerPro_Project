@@ -31,6 +31,20 @@
 
   <title>Graphy7</title>
   <link rel="manifest" href="manifest.json">
+
+  <!--
+    Suppress the browser's PWA "Install Graphy7 App" banner. Clients open the
+    self-booking share link (app.<domain>/book/<token>) just to submit a
+    request — the auto "Install app" prompt on top of the booking form was
+    confusing them ("Instal Graphy7 App লেখা আসে ... এটা আসবে না"). The studio
+    owner uses the real native APK, so nobody needs the PWA install path.
+    Capturing beforeinstallprompt and never calling prompt() hides the banner.
+  -->
+  <script>
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+    });
+  </script>
 </head>
 <body>
   <!--

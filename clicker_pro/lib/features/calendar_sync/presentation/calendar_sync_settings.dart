@@ -1,24 +1,30 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/booking_status/booking_status.dart';
 import '../../../theme/app_colors.dart';
+import '../../bookings/application/booking_providers.dart';
+import '../../bookings/domain/booking.dart';
+import '../../bookings/domain/booking_filter.dart';
 import '../data/calendar_sync_service.dart';
-import '../domain/calendar_event.dart';
 import '../../../theme/app_theme.dart';
 
-class CalendarSyncSettings extends StatefulWidget {
+class CalendarSyncSettings extends ConsumerStatefulWidget {
   const CalendarSyncSettings({super.key});
 
   @override
-  State<CalendarSyncSettings> createState() => _CalendarSyncSettingsState();
+  ConsumerState<CalendarSyncSettings> createState() =>
+      _CalendarSyncSettingsState();
 }
 
-class _CalendarSyncSettingsState extends State<CalendarSyncSettings> {
+class _CalendarSyncSettingsState extends ConsumerState<CalendarSyncSettings> {
   static const _keyAutoSync = 'calendar_auto_sync';
   // Auto-sync defaults ON so a freshly created booking lands in the device
   // calendar silently, with no manual "Save" step.
   bool _autoSync = true;
   String? _lastSyncTime;
+  bool _syncing = false;
 
   @override
   void initState() {
@@ -40,24 +46,77 @@ class _CalendarSyncSettingsState extends State<CalendarSyncSettings> {
     setState(() => _autoSync = value);
   }
 
+  /// Writes every upcoming confirmed booking straight into the device
+  /// calendar — a silent bulk version of the per-booking auto-sync. No share
+  /// sheet, no ICS file, no Google web page: [openGoogleCalendar] with
+  /// `allowWebFallback: false` just adds each event via device_calendar.
   Future<void> _syncAllConfirmed() async {
-    final now = DateTime.now();
-    final event = CalendarEvent(
-      title: 'Clicker Pro — Demo Sync',
-      startTime: now.add(const Duration(hours: 2)),
-      endTime: now.add(const Duration(hours: 4)),
-      description: 'Auto-synced confirmed bookings.',
-      location: 'TBD',
-    );
+    if (_syncing) return;
+    setState(() => _syncing = true);
 
-    await CalendarSyncService.shareCalendarEvent(event);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final bookings =
+          await ref.read(bookingListAllProvider(const BookingFilter()).future);
 
-    final prefs = await SharedPreferences.getInstance();
-    final timestamp =
-        '${now.month}/${now.day}/${now.year} ${now.hour}:${now.minute.toString().padLeft(2, '0')}';
-    await prefs.setString('calendar_last_sync', timestamp);
-    setState(() => _lastSyncTime = timestamp);
+      final today = DateTime.now();
+      final cutoff = DateTime(today.year, today.month, today.day);
+      final confirmed = bookings.where((b) {
+        if (b.status != BookingStatus.confirmed) return false;
+        return !b.date.isBefore(cutoff); // today or later only
+      }).toList();
+
+      if (confirmed.isEmpty) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('No upcoming confirmed bookings to sync')),
+        );
+        return;
+      }
+
+      var added = 0;
+      for (final b in confirmed) {
+        final ok = await CalendarSyncService.openGoogleCalendar(
+          title: b.title,
+          date: b.date,
+          startTime: b.startTime,
+          endTime: b.endTime,
+          venue: b.venue,
+          description: _describe(b),
+          allowWebFallback: false, // silent bulk — never yank to a browser
+        );
+        if (ok) added++;
+      }
+
+      final now = DateTime.now();
+      final prefs = await SharedPreferences.getInstance();
+      final timestamp =
+          '${now.month}/${now.day}/${now.year} ${now.hour}:${now.minute.toString().padLeft(2, '0')}';
+      await prefs.setString('calendar_last_sync', timestamp);
+      if (mounted) setState(() => _lastSyncTime = timestamp);
+
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            added == confirmed.length
+                ? 'Synced $added booking${added == 1 ? '' : 's'} to your calendar'
+                : 'Synced $added of ${confirmed.length} — check calendar permission',
+          ),
+        ),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Calendar sync failed: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _syncing = false);
+    }
   }
+
+  String _describe(Booking b) => [
+        if (b.clientName != null) 'Client: ${b.clientName}',
+        if (b.clientPhone != null) 'Phone: ${b.clientPhone}',
+        'Booked via GRAPHY7',
+      ].join('\n');
 
   @override
   Widget build(BuildContext context) {
@@ -161,10 +220,19 @@ class _CalendarSyncSettingsState extends State<CalendarSyncSettings> {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
-        onPressed: _syncAllConfirmed,
-        icon: Icon(Icons.sync_outlined, color: AppColors.teal, size: 18),
+        onPressed: _syncing ? null : _syncAllConfirmed,
+        icon: _syncing
+            ? SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.teal,
+                ),
+              )
+            : Icon(Icons.sync_outlined, color: AppColors.teal, size: 18),
         label: Text(
-          'Sync All Confirmed',
+          _syncing ? 'Syncing…' : 'Sync All Confirmed',
           style: TextStyle(color: AppColors.teal, fontWeight: FontWeight.w600),
         ),
         style: OutlinedButton.styleFrom(
