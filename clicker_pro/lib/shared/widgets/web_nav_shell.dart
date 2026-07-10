@@ -25,8 +25,23 @@ import '../../core/role/capability.dart';
 import '../../core/role/role_policy.dart';
 import '../../features/auth/domain/user_role.dart';
 import '../../features/profile/application/profile_controllers.dart';
+import '../../features/search/presentation/global_search_sheet.dart';
 import '../../theme/web_theme.dart';
 import 'web_motion.dart';
+
+/// Opens the shared global search sheet from the web chrome — same sheet the
+/// mobile dashboard uses, so search behaves identically on web.
+void _openGlobalSearch() {
+  final ctx = rootNavigatorKey.currentContext;
+  if (ctx == null) return;
+  showModalBottomSheet<void>(
+    context: ctx,
+    backgroundColor: Colors.transparent,
+    barrierColor: Colors.black.withValues(alpha: 0.6),
+    isScrollControlled: true,
+    builder: (_) => const GlobalSearchSheet(),
+  );
+}
 
 class _NavDest {
   const _NavDest(this.icon, this.label, this.route, {this.capability});
@@ -79,6 +94,10 @@ class WebNavShell extends ConsumerWidget {
   // The same capabilities the mobile drawer uses, so web + mobile role
   // visibility stay in lockstep: a Freelancer never sees studio-management
   // surfaces (Finance, Team, Packages, Waitlist, Invoices, Reports…).
+  // Web sidebar mirrors the mobile drawer 1:1 (same routes + same capability
+  // gates) so every feature reachable on mobile is reachable on web —
+  // "মোবাইল এপের সব ফিচার ওয়েব এপ এ থাকবে". Capability gates are copied from
+  // dashboard_screen's drawer so role visibility stays in lockstep.
   static const List<_NavGroup> _groups = [
     _NavGroup('OVERVIEW', [
       _NavDest(Icons.dashboard_rounded, 'Dashboard', RouteNames.dashboard),
@@ -86,6 +105,8 @@ class WebNavShell extends ConsumerWidget {
     ]),
     _NavGroup('BOOKINGS', [
       _NavDest(Icons.event_note_rounded, 'Bookings', RouteNames.bookings),
+      _NavDest(Icons.edit_note_rounded, 'Re-edit Requests',
+          RouteNames.reEditRequests, capability: Capability.requestReEdit),
       _NavDest(Icons.inventory_2_rounded, 'Packages', RouteNames.packages,
           capability: Capability.accessPackages),
       _NavDest(Icons.hourglass_bottom_rounded, 'Waitlist', RouteNames.waitlist,
@@ -104,18 +125,39 @@ class WebNavShell extends ConsumerWidget {
           capability: Capability.viewFinancials),
       _NavDest(Icons.bar_chart_rounded, 'Reports', RouteNames.reports,
           capability: Capability.viewFinancials),
+      _NavDest(Icons.insights_rounded, 'Performance', RouteNames.performance,
+          capability: Capability.viewFinancials),
+      _NavDest(Icons.timeline_rounded, 'Cash Flow', RouteNames.cashFlow,
+          capability: Capability.viewFinancials),
     ]),
     _NavGroup('WORKSPACE', [
       _NavDest(Icons.groups_rounded, 'Team', RouteNames.team,
           capability: Capability.accessTeam),
+      _NavDest(Icons.chat_bubble_rounded, 'Team Chat', RouteNames.chat),
+      _NavDest(Icons.campaign_rounded, 'Announcements',
+          RouteNames.announcements, capability: Capability.viewAnnouncements),
+      _NavDest(Icons.cell_tower_rounded, 'Platform Updates',
+          RouteNames.broadcasts),
+    ]),
+    _NavGroup('OPERATIONS', [
       _NavDest(Icons.camera_alt_rounded, 'Gear', RouteNames.gear),
-      _NavDest(Icons.settings_rounded, 'Settings', RouteNames.settings),
+      _NavDest(Icons.local_shipping_rounded, 'Delivery', RouteNames.delivery,
+          capability: Capability.accessDelivery),
+      _NavDest(Icons.follow_the_signs_rounded, 'Follow-up',
+          RouteNames.followup, capability: Capability.accessFollowup),
+      _NavDest(Icons.alarm_rounded, 'Reminders', RouteNames.reminders,
+          capability: Capability.accessReminders),
+      _NavDest(Icons.swap_horiz_rounded, 'Rent Tracking', RouteNames.rent,
+          capability: Capability.accessRentTracking),
     ]),
     // Same offline utilities the mobile dashboard's quick-action row offers —
     // web/mobile feature parity ("ওয়েব এপ এ সব ফিচার সেইম সেইম থাকবে").
     _NavGroup('TOOLS', [
       _NavDest(Icons.calculate_rounded, 'Calculator', RouteNames.calculator),
       _NavDest(Icons.sticky_note_2_rounded, 'Notes', RouteNames.notes),
+      _NavDest(Icons.calendar_month_rounded, 'Calendar Sync',
+          RouteNames.calendarSyncSettings),
+      _NavDest(Icons.settings_rounded, 'Settings', RouteNames.settings),
     ]),
   ];
 
@@ -211,14 +253,17 @@ class _TopBar extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const _SearchField(),
+              _SearchField(onTap: _openGlobalSearch),
               const Spacer(),
               _NewBookingCta(
                 onTap: () =>
                     rootNavigatorKey.currentState?.pushNamed(RouteNames.bookings),
               ),
               const SizedBox(width: 14),
-              const _NotificationBell(),
+              _NotificationBell(
+                onTap: () => rootNavigatorKey.currentState
+                    ?.pushNamed(RouteNames.notifications),
+              ),
             ],
           ),
         ),
@@ -227,13 +272,19 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-/// Read-only search affordance (matches the design's 320px pill with a ⌘K hint).
+/// Search affordance (matches the design's 320px pill with a ⌘K hint). Tapping
+/// opens the shared global search sheet — the same one the mobile app uses.
 class _SearchField extends StatelessWidget {
-  const _SearchField();
+  const _SearchField({required this.onTap});
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return WebHoverLift(
+      onTap: onTap,
+      borderRadius: 12,
+      enableShadow: false,
+      child: Container(
       width: 320,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
       decoration: BoxDecoration(
@@ -270,6 +321,7 @@ class _SearchField extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -319,13 +371,19 @@ class _NewBookingCta extends StatelessWidget {
   }
 }
 
-/// Notification bell with a small unread dot (visual only for now).
+/// Notification bell with a small unread dot. Tapping opens the notifications
+/// inbox — the same screen the mobile bell routes to.
 class _NotificationBell extends StatelessWidget {
-  const _NotificationBell();
+  const _NotificationBell({required this.onTap});
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return WebHoverLift(
+      onTap: onTap,
+      borderRadius: 11,
+      enableShadow: false,
+      child: SizedBox(
       width: 40,
       height: 40,
       child: Stack(
@@ -356,6 +414,7 @@ class _NotificationBell extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }
