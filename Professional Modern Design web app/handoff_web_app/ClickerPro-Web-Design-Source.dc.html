@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#FBFAF7}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.14);border-radius:8px;border:2px solid #FBFAF7}
+::-webkit-scrollbar-track{background:transparent}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0&display=block" rel="stylesheet">
+</helmet>
+
+<div style="display:flex;height:100vh;width:100%;overflow:hidden;font-family:'Hanken Grotesk',-apple-system,sans-serif;color:#1A1A18">
+
+  <!-- ░░░ SIDEBAR ░░░ -->
+  <aside style="width:256px;flex-shrink:0;background:#161513;display:flex;flex-direction:column;color:#EDEBE6">
+    <div style="display:flex;align-items:center;gap:11px;padding:22px 20px 20px">
+      <svg viewBox="0 0 200 200" width="34" height="34"><path d="M100 14 A86 86 0 0 1 174.48 57 L119 100 L109.5 83.55 Z" fill="#F9A52E"/><path d="M174.48 57 A86 86 0 0 1 174.48 143 L109.5 116.45 L119 100 Z" fill="#F4881C"/><path d="M174.48 143 A86 86 0 0 1 100 186 L90.5 116.45 L109.5 116.45 Z" fill="#EA7414"/><path d="M100 186 A86 86 0 0 1 25.52 143 L81 100 L90.5 116.45 Z" fill="#E2620E"/><path d="M25.52 143 A86 86 0 0 1 25.52 57 L90.5 83.55 L81 100 Z" fill="#F4881C"/><path d="M25.52 57 A86 86 0 0 1 100 14 L109.5 83.55 L90.5 83.55 Z" fill="#F9A52E"/></svg>
+      <div>
+        <div style="font-size:18px;font-weight:800;letter-spacing:-0.03em;color:#fff;line-height:1">Clicker<span style="color:#F89A2B">Pro</span></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:500;letter-spacing:0.24em;color:#8C857C;text-transform:uppercase;margin-top:3px">Studio Workspace</div>
+      </div>
+    </div>
+
+    <div style="flex:1;overflow-y:auto;padding:4px 14px 14px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.2em;color:#6E6961;text-transform:uppercase;padding:10px 10px 7px">Workspace</div>
+      <nav style="display:flex;flex-direction:column;gap:3px">
+        <sc-for list="{{ navMain }}" as="item" hint-placeholder-count="5">
+          <a href="#" onClick="{{ item.onClick }}" style="{{ item.style }}">
+            <span style="font-family:'Material Symbols Rounded';font-size:20px;color:{{ item.iconColor }}">{{ item.icon }}</span>
+            <span style="flex:1;font-size:14px;font-weight:{{ item.weight }};letter-spacing:-0.01em">{{ item.label }}</span>
+            <sc-if value="{{ item.badge }}" hint-placeholder-val=""><span style="{{ item.badgeStyle }}">{{ item.badge }}</span></sc-if>
+          </a>
+        </sc-for>
+      </nav>
+
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.2em;color:#6E6961;text-transform:uppercase;padding:16px 10px 7px">Finance</div>
+      <nav style="display:flex;flex-direction:column;gap:3px">
+        <sc-for list="{{ navFinance }}" as="item" hint-placeholder-count="4">
+          <a href="#" onClick="{{ item.onClick }}" style="{{ item.style }}">
+            <span style="font-family:'Material Symbols Rounded';font-size:20px;color:{{ item.iconColor }}">{{ item.icon }}</span>
+            <span style="flex:1;font-size:14px;font-weight:{{ item.weight }};letter-spacing:-0.01em">{{ item.label }}</span>
+            <sc-if value="{{ item.badge }}" hint-placeholder-val=""><span style="{{ item.badgeStyle }}">{{ item.badge }}</span></sc-if>
+          </a>
+        </sc-for>
+      </nav>
+
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.2em;color:#6E6961;text-transform:uppercase;padding:16px 10px 7px">Team</div>
+      <nav style="display:flex;flex-direction:column;gap:3px">
+        <sc-for list="{{ navTeam }}" as="item" hint-placeholder-count="3">
+          <a href="#" onClick="{{ item.onClick }}" style="{{ item.style }}">
+            <span style="font-family:'Material Symbols Rounded';font-size:20px;color:{{ item.iconColor }}">{{ item.icon }}</span>
+            <span style="flex:1;font-size:14px;font-weight:{{ item.weight }};letter-spacing:-0.01em">{{ item.label }}</span>
+            <sc-if value="{{ item.badge }}" hint-placeholder-val=""><span style="{{ item.badgeStyle }}">{{ item.badge }}</span></sc-if>
+          </a>
+        </sc-for>
+      </nav>
+    </div>
+
+    <div style="padding:0 14px 14px">
+      <a href="#" onClick="{{ settingsClick }}" style="{{ settingsStyle }}">
+        <span style="font-family:'Material Symbols Rounded';font-size:20px;color:{{ settingsIcon }}">settings</span>
+        <span style="flex:1;font-size:14px;font-weight:{{ settingsWeight }};letter-spacing:-0.01em">Settings</span>
+      </a>
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 8px 4px;margin-top:6px;border-top:1px solid #2A2723">
+        <span style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#E2620E,#B84E0A);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700">RH</span>
+        <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700;color:#fff;line-height:1.1">Rahim Hossain</div><div style="font-size:10.5px;color:#8C857C">Studio Owner</div></div>
+        <span style="font-family:'Material Symbols Rounded';font-size:19px;color:#6E6961">unfold_more</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ░░░ MAIN ░░░ -->
+  <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+    <header style="height:64px;flex-shrink:0;background:rgba(251,250,247,0.85);backdrop-filter:blur(8px);border-bottom:1px solid rgba(0,0,0,0.06);display:flex;align-items:center;gap:16px;padding:0 26px;z-index:5">
+      <div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid rgba(0,0,0,0.07);border-radius:12px;padding:9px 14px;width:320px">
+        <span style="font-family:'Material Symbols Rounded';font-size:19px;color:#A3A199">search</span>
+        <span style="font-size:13.5px;color:#9A988F">Search anything…</span>
+        <span style="flex:1"></span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#B8B6AE;border:1px solid rgba(0,0,0,0.08);border-radius:5px;padding:1px 5px">⌘K</span>
+      </div>
+      <span style="flex:1"></span>
+      <button style="display:flex;align-items:center;gap:7px;background:#E2620E;border:none;border-radius:11px;padding:9px 15px;cursor:pointer;font-family:inherit;font-size:13.5px;font-weight:700;color:#fff;box-shadow:0 8px 16px -7px rgba(226,98,14,0.55)"><span style="font-family:'Material Symbols Rounded';font-size:18px">add</span>New Booking</button>
+      <span style="position:relative;display:inline-flex">
+        <span style="width:40px;height:40px;border-radius:11px;background:#fff;border:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:21px;color:#3A3A36">notifications</span></span>
+        <span style="position:absolute;top:8px;right:9px;width:7px;height:7px;border-radius:50%;background:#C0392B;border:1.5px solid #fff"></span>
+      </span>
+    </header>
+
+    <main style="flex:1;overflow-y:auto;padding:26px 28px 44px">
+
+      <!-- ═══ DASHBOARD ═══ -->
+      <sc-if value="{{ isDashboard }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <div style="display:flex;align-items:flex-end;gap:16px;margin-bottom:22px">
+          <div><h1 style="margin:0;font-size:31px;font-weight:800;letter-spacing:-0.035em">Dashboard</h1><p style="margin:6px 0 0;font-size:15px;color:#7A786F">Welcome back, Rahim — here's how the studio is performing today.</p></div>
+          <span style="flex:1"></span>
+          <button style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:11px 15px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:600;color:#1A1A18"><span style="font-family:'Material Symbols Rounded';font-size:18px">ios_share</span>Export</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px">
+          <div style="border-radius:20px;padding:19px 20px;color:#fff;position:relative;overflow:hidden;background:linear-gradient(140deg,#F0772A,#D6520A)">
+            <div style="position:absolute;right:-28px;top:-28px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.08)"></div>
+            <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.16em;font-weight:600;color:rgba(255,255,255,0.85)">REVENUE · JUL</span><span style="font-family:'Material Symbols Rounded';font-size:19px;color:rgba(255,255,255,0.9)">payments</span></div>
+            <div style="font-size:37px;font-weight:800;letter-spacing:-0.035em;margin-top:12px;line-height:1">৳9.24L</div>
+            <div style="display:flex;align-items:center;gap:5px;margin-top:8px"><span style="font-family:'Material Symbols Rounded';font-size:16px">trending_up</span><span style="font-size:12px;font-weight:600">12.5%</span><span style="font-size:12px;color:rgba(255,255,255,0.75)">vs June</span></div>
+          </div>
+          <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="3">
+            <div style="border-radius:20px;padding:19px 20px;background:#fff;border:1px solid rgba(0,0,0,0.06)">
+              <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.14em;font-weight:600;color:#9A988F">{{ k.label }}</span><span style="width:30px;height:30px;border-radius:9px;background:{{ k.iconBg }};display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:17px;color:{{ k.iconFg }}">{{ k.icon }}</span></span></div>
+              <div style="font-size:37px;font-weight:800;letter-spacing:-0.035em;margin-top:12px;line-height:1;color:#1A1A18">{{ k.value }}</div>
+              <div style="font-size:12px;color:#9A988F;margin-top:8px">{{ k.sub }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:1.62fr 1fr;gap:16px">
+          <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:20px;padding:20px 22px">
+            <div style="display:flex;align-items:center"><div><div style="font-size:16.5px;font-weight:700;letter-spacing:-0.01em">Revenue Overview</div><div style="font-size:12px;color:#9A988F;margin-top:2px">Monthly earnings · last 10 months</div></div><span style="flex:1"></span><span style="display:inline-flex;align-items:center;gap:2px;font-size:12px;font-weight:700;color:#2F8F6B;background:#E1F0E9;padding:3px 9px;border-radius:6px"><span style="font-family:'Material Symbols Rounded';font-size:14px">trending_up</span>12.5%</span></div>
+            <svg viewBox="0 0 680 230" style="width:100%;height:auto;margin-top:14px" preserveAspectRatio="none">
+              <defs><linearGradient id="cpArea2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E2620E" stop-opacity="0.22"/><stop offset="1" stop-color="#E2620E" stop-opacity="0"/></linearGradient></defs>
+              <line x1="8" y1="44.3" x2="672" y2="44.3" stroke="rgba(0,0,0,0.05)"/><line x1="8" y1="96.9" x2="672" y2="96.9" stroke="rgba(0,0,0,0.05)"/><line x1="8" y1="149.4" x2="672" y2="149.4" stroke="rgba(0,0,0,0.05)"/><line x1="8" y1="202" x2="672" y2="202" stroke="rgba(0,0,0,0.05)"/>
+              <path d="M8 170.5 L 81.8 154.7 L 155.6 162.6 L 229.3 128.4 L 303.1 138.9 L 376.9 104.7 L 450.7 91.6 L 524.4 102.1 L 598.2 60.1 L 672 39 L 672 202 L 8 202 Z" fill="url(#cpArea2)"/>
+              <path d="M8 170.5 L 81.8 154.7 L 155.6 162.6 L 229.3 128.4 L 303.1 138.9 L 376.9 104.7 L 450.7 91.6 L 524.4 102.1 L 598.2 60.1 L 672 39" fill="none" stroke="#E2620E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="672" cy="39" r="5" fill="#E2620E" stroke="#fff" stroke-width="2.5"/>
+            </svg>
+            <div style="display:flex;justify-content:space-between;margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#B0AEA5"><span>Oct</span><span>Nov</span><span>Dec</span><span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span></div>
+          </div>
+          <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:20px;padding:20px 20px 8px">
+            <div style="display:flex;align-items:center;margin-bottom:12px"><span style="font-size:16.5px;font-weight:700;letter-spacing:-0.01em">Upcoming Events</span><span style="flex:1"></span><a href="#" onClick="{{ goCalendar }}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.08em;color:#E2620E;text-decoration:none">VIEW ALL</a></div>
+            <sc-for list="{{ events }}" as="ev" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid rgba(0,0,0,0.05)">
+                <div style="width:44px;text-align:center;flex-shrink:0"><div style="font-size:17px;font-weight:800;letter-spacing:-0.02em;line-height:1;color:#E2620E">{{ ev.day }}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;color:#9A988F;margin-top:2px">{{ ev.mon }}</div></div>
+                <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700;letter-spacing:-0.01em">{{ ev.title }}</div><div style="font-size:12px;color:#9A988F;margin-top:2px">{{ ev.meta }}</div></div>
+                <span style="width:8px;height:8px;border-radius:50%;background:{{ ev.dot }};flex-shrink:0"></span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- To-Do widget + Reminders (embedded modules) -->
+        <div style="display:grid;grid-template-columns:1.62fr 1fr;gap:16px;margin-top:16px">
+          <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:20px;padding:20px 22px">
+            <div style="display:flex;align-items:center;margin-bottom:12px">
+              <span style="font-size:16.5px;font-weight:700;letter-spacing:-0.01em">To-Do</span>
+              <span style="font-size:11px;font-weight:700;color:#E2620E;background:#FBEBDE;padding:3px 9px;border-radius:999px;margin-left:10px">{{ todoOpen }} open</span>
+              <span style="flex:1"></span>
+              <span style="display:inline-flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.08em;color:#E2620E;cursor:pointer"><span style="font-family:'Material Symbols Rounded';font-size:16px">add</span>ADD TASK</span>
+            </div>
+            <sc-for list="{{ todos }}" as="t" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(0,0,0,0.05)">
+                <span style="{{ t.checkStyle }}"><sc-if value="{{ t.done }}" hint-placeholder-val=""><span style="font-family:'Material Symbols Rounded';font-size:16px;color:#fff">check</span></sc-if></span>
+                <div style="flex:1;min-width:0"><div style="{{ t.titleStyle }}">{{ t.title }}</div><div style="font-size:11.5px;color:#9A988F;margin-top:2px">{{ t.meta }}</div></div>
+                <span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;background:{{ t.priBg }};color:{{ t.priFg }}">{{ t.priority }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:20px;padding:20px 20px 8px">
+            <div style="display:flex;align-items:center;margin-bottom:12px"><span style="font-family:'Material Symbols Rounded';font-size:19px;color:#E2620E;margin-right:8px">notifications_active</span><span style="font-size:16.5px;font-weight:700;letter-spacing:-0.01em">Reminders</span></div>
+            <sc-for list="{{ reminders }}" as="r" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(0,0,0,0.05)">
+                <span style="width:36px;height:36px;border-radius:10px;background:{{ r.iconBg }};display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-family:'Material Symbols Rounded';font-size:18px;color:{{ r.iconFg }}">{{ r.icon }}</span></span>
+                <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;letter-spacing:-0.01em">{{ r.title }}</div><div style="font-size:11.5px;color:#9A988F;margin-top:2px">{{ r.when }}</div></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ═══ CALENDAR ═══ -->
+      <sc-if value="{{ isCalendar }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:flex;align-items:flex-end;gap:16px;margin-bottom:20px">
+          <div><h1 style="margin:0;font-size:31px;font-weight:800;letter-spacing:-0.035em">Calendar</h1><p style="margin:6px 0 0;font-size:15px;color:#7A786F">7 sessions scheduled this month</p></div>
+          <span style="flex:1"></span>
+          <div style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid rgba(0,0,0,0.07);border-radius:11px;padding:6px">
+            <span style="width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:'Material Symbols Rounded';font-size:19px;color:#3A3A36">chevron_left</span>
+            <span style="font-size:14px;font-weight:700;padding:0 8px">July 2026</span>
+            <span style="width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:'Material Symbols Rounded';font-size:19px;color:#3A3A36">chevron_right</span>
+          </div>
+        </div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:20px;padding:18px 20px">
+          <div style="display:flex;align-items:center;gap:18px;margin-bottom:14px">
+            <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#7A786F"><span style="width:9px;height:9px;border-radius:3px;background:#E2620E"></span>Shoot</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#7A786F"><span style="width:9px;height:9px;border-radius:3px;background:#F1E3E1;border:1px solid #E2C4BF"></span>Holiday</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#7A786F"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#B0AEA5">০৯</span>Bangla date</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:8px">
+            <sc-for list="{{ dow }}" as="d" hint-placeholder-count="7"><div style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#9A988F">{{ d }}</div></sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px">
+            <sc-for list="{{ calCells }}" as="c" hint-placeholder-count="35">
+              <div style="{{ c.style }}">
+                <div style="display:flex;align-items:baseline;justify-content:space-between"><div style="{{ c.numStyle }}">{{ c.n }}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#B0AEA5">{{ c.bn }}</div></div>
+                <sc-if value="{{ c.holiday }}" hint-placeholder-val=""><div style="font-size:9px;font-weight:700;color:#B0453A;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.holiday }}</div></sc-if>
+                <sc-for list="{{ c.chips }}" as="ch" hint-placeholder-count="0"><div style="font-size:9.5px;font-weight:700;color:#fff;background:{{ ch.bg }};border-radius:5px;padding:2px 5px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ ch.t }}</div></sc-for>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ═══ BOOKINGS ═══ -->
+      <sc-if value="{{ isBookings }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:flex;align-items:flex-end;gap:16px;margin-bottom:20px">
+          <div><h1 style="margin:0;font-size:31px;font-weight:800;letter-spacing:-0.035em">Bookings</h1><p style="margin:6px 0 0;font-size:15px;color:#7A786F">86 total · 14 upcoming this month</p></div>
+          <span style="flex:1"></span>
+          <button style="display:flex;align-items:center;gap:6px;background:#E2620E;border:none;border-radius:12px;padding:11px 17px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;color:#fff;box-shadow:0 8px 16px -6px rgba(226,98,14,0.55)"><span style="font-family:'Material Symbols Rounded';font-size:18px">add</span>New Booking</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+          <div style="display:flex;gap:4px;background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:12px;padding:4px">
+            <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5"><span style="{{ t.style }}">{{ t.label }}</span></sc-for>
+          </div>
+          <span style="flex:1"></span>
+          <div style="display:flex;align-items:center;gap:9px;background:#fff;border:1px solid rgba(0,0,0,0.07);border-radius:11px;padding:9px 13px;width:230px"><span style="font-family:'Material Symbols Rounded';font-size:18px;color:#A3A199">search</span><span style="font-size:13px;color:#9A988F">Search client…</span></div>
+        </div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:20px;overflow:hidden">
+          <div style="display:grid;grid-template-columns:2fr 1.2fr 1.1fr 1.2fr 1fr 1fr 40px;gap:14px;padding:14px 22px;background:#FAF9F6;border-bottom:1px solid rgba(0,0,0,0.06)">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.12em;color:#9A988F">CLIENT</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.12em;color:#9A988F">EVENT</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.12em;color:#9A988F">DATE</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.12em;color:#9A988F">PACKAGE</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.12em;color:#9A988F;text-align:right">AMOUNT</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.12em;color:#9A988F;text-align:right">STATUS</span><span></span>
+          </div>
+          <sc-for list="{{ bookings }}" as="b" hint-placeholder-count="8">
+            <div style="display:grid;grid-template-columns:2fr 1.2fr 1.1fr 1.2fr 1fr 1fr 40px;gap:14px;align-items:center;padding:13px 22px;border-bottom:1px solid rgba(0,0,0,0.04)">
+              <div style="display:flex;align-items:center;gap:11px"><span style="width:36px;height:36px;border-radius:10px;background:{{ b.av }};display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0">{{ b.ini }}</span><div style="min-width:0"><div style="font-size:14px;font-weight:700;letter-spacing:-0.01em">{{ b.name }}</div><div style="font-size:12px;color:#9A988F">{{ b.email }}</div></div></div>
+              <span style="font-size:13.5px;color:#3A3A36">{{ b.event }}</span><span style="font-size:13.5px;color:#3A3A36">{{ b.date }}</span><span style="font-size:13.5px;color:#3A3A36">{{ b.pkg }}</span>
+              <span style="font-size:14px;font-weight:700;text-align:right;letter-spacing:-0.01em">{{ b.amount }}</span>
+              <span style="justify-self:end;font-size:11px;font-weight:700;padding:4px 11px;border-radius:999px;background:{{ b.stBg }};color:{{ b.stFg }}">{{ b.status }}</span>
+              <span style="justify-self:center;font-family:'Material Symbols Rounded';font-size:20px;color:#B0AEA5;cursor:pointer">more_vert</span>
+            </div>
+          </sc-for>
+          <div style="display:flex;align-items:center;padding:14px 22px;background:#FAF9F6"><span style="font-size:12.5px;color:#9A988F">Showing 1–8 of 86</span><span style="flex:1"></span><div style="display:flex;gap:6px;align-items:center"><span style="width:32px;height:32px;border-radius:9px;background:#E2620E;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">1</span><span style="width:32px;height:32px;border-radius:9px;border:1px solid rgba(0,0,0,0.08);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#3A3A36;cursor:pointer">2</span><span style="width:32px;height:32px;border-radius:9px;border:1px solid rgba(0,0,0,0.08);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#3A3A36;cursor:pointer">3</span></div></div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ═══ CLIENTS ═══ -->
+      <sc-if value="{{ isClients }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:flex;align-items:flex-end;gap:16px;margin-bottom:20px">
+          <div><h1 style="margin:0;font-size:31px;font-weight:800;letter-spacing:-0.035em">Clients</h1><p style="margin:6px 0 0;font-size:15px;color:#7A786F">128 clients · 3 on waitlist</p></div>
+          <span style="flex:1"></span>
+          <button style="display:flex;align-items:center;gap:6px;background:#E2620E;border:none;border-radius:12px;padding:11px 17px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;color:#fff;box-shadow:0 8px 16px -6px rgba(226,98,14,0.55)"><span style="font-family:'Material Symbols Rounded';font-size:18px">person_add</span>Add Client</button>
+        </div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:20px;overflow:hidden">
+          <div style="display:grid;grid-template-columns:2fr 1.4fr 1fr 1fr 1fr;gap:14px;padding:14px 22px;background:#FAF9F6;border-bottom:1px solid rgba(0,0,0,0.06)">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.12em;color:#9A988F">CLIENT</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.12em;color:#9A988F">PHONE</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.12em;color:#9A988F;text-align:center">SESSIONS</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.12em;color:#9A988F;text-align:right">TOTAL SPENT</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.12em;color:#9A988F;text-align:right">STATUS</span>
+          </div>
+          <sc-for list="{{ clients }}" as="c" hint-placeholder-count="6">
+            <div style="display:grid;grid-template-columns:2fr 1.4fr 1fr 1fr 1fr;gap:14px;align-items:center;padding:13px 22px;border-bottom:1px solid rgba(0,0,0,0.04)">
+              <div style="display:flex;align-items:center;gap:11px"><span style="width:36px;height:36px;border-radius:50%;background:{{ c.av }};display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0">{{ c.ini }}</span><div style="min-width:0"><div style="font-size:14px;font-weight:700;letter-spacing:-0.01em">{{ c.name }}</div><div style="font-size:12px;color:#9A988F">{{ c.email }}</div></div></div>
+              <span style="font-size:13.5px;color:#3A3A36;font-family:'IBM Plex Mono',monospace">{{ c.phone }}</span>
+              <span style="font-size:14px;font-weight:700;text-align:center">{{ c.sessions }}</span>
+              <span style="font-size:14px;font-weight:700;text-align:right;letter-spacing:-0.01em">{{ c.spent }}</span>
+              <span style="justify-self:end;font-size:11px;font-weight:700;padding:4px 11px;border-radius:999px;background:{{ c.stBg }};color:{{ c.stFg }}">{{ c.status }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ═══ PACKAGES ═══ -->
+      <sc-if value="{{ isPackages }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:flex;align-items:flex-end;gap:16px;margin-bottom:20px">
+          <div><h1 style="margin:0;font-size:31px;font-weight:800;letter-spacing:-0.035em">Packages</h1><p style="margin:6px 0 0;font-size:15px;color:#7A786F">6 active packages · edit pricing &amp; inclusions</p></div>
+          <span style="flex:1"></span>
+          <button style="display:flex;align-items:center;gap:6px;background:#E2620E;border:none;border-radius:12px;padding:11px 17px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;color:#fff;box-shadow:0 8px 16px -6px rgba(226,98,14,0.55)"><span style="font-family:'Material Symbols Rounded';font-size:18px">add</span>New Package</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+          <sc-for list="{{ packages }}" as="p" hint-placeholder-count="6">
+            <div style="{{ p.cardStyle }}">
+              <sc-if value="{{ p.popular }}" hint-placeholder-val=""><span style="position:absolute;top:16px;right:16px;font-size:10px;font-weight:700;letter-spacing:0.06em;padding:4px 10px;border-radius:999px;background:#FBEBDE;color:#C0530B">POPULAR</span></sc-if>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#9A988F;font-weight:600">{{ p.tag }}</div>
+              <div style="font-size:19px;font-weight:800;letter-spacing:-0.02em;margin-top:8px">{{ p.name }}</div>
+              <div style="font-size:28px;font-weight:800;letter-spacing:-0.03em;margin-top:8px;color:#E2620E">{{ p.price }}</div>
+              <div style="height:1px;background:rgba(0,0,0,0.06);margin:15px 0"></div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ p.features }}" as="f" hint-placeholder-count="4"><div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Material Symbols Rounded';font-size:17px;color:#2F8F6B">check_circle</span><span style="font-size:13px;color:#3A3A36">{{ f }}</span></div></sc-for>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:18px;padding-top:15px;border-top:1px solid rgba(0,0,0,0.05)">
+                <span style="font-size:12.5px;color:#9A988F">{{ p.booked }} booked</span><span style="flex:1"></span>
+                <button style="display:flex;align-items:center;gap:5px;background:#fff;border:1px solid rgba(0,0,0,0.12);border-radius:10px;padding:8px 14px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:#1A1A18"><span style="font-family:'Material Symbols Rounded';font-size:16px">edit</span>Edit</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ═══ INVOICES ═══ -->
+      <sc-if value="{{ isInvoices }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:flex;align-items:flex-end;gap:16px;margin-bottom:20px">
+          <div><h1 style="margin:0;font-size:31px;font-weight:800;letter-spacing:-0.035em">Invoices</h1><p style="margin:6px 0 0;font-size:15px;color:#7A786F">Billing &amp; payment tracking</p></div>
+          <span style="flex:1"></span>
+          <button style="display:flex;align-items:center;gap:6px;background:#E2620E;border:none;border-radius:12px;padding:11px 17px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;color:#fff;box-shadow:0 8px 16px -6px rgba(226,98,14,0.55)"><span style="font-family:'Material Symbols Rounded';font-size:18px">add</span>New Invoice</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px">
+          <sc-for list="{{ finKpis }}" as="k" hint-placeholder-count="4">
+            <div style="border-radius:20px;padding:19px 20px;background:#fff;border:1px solid rgba(0,0,0,0.06)"><div style="display:flex;align-items:center;justify-content:space-between"><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.14em;font-weight:600;color:#9A988F">{{ k.label }}</span><span style="width:30px;height:30px;border-radius:9px;background:{{ k.iconBg }};display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:17px;color:{{ k.iconFg }}">{{ k.icon }}</span></span></div><div style="font-size:31px;font-weight:800;letter-spacing:-0.035em;margin-top:12px;line-height:1">{{ k.value }}</div><div style="font-size:12px;color:#9A988F;margin-top:8px">{{ k.sub }}</div></div>
+          </sc-for>
+        </div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:20px;overflow:hidden">
+          <div style="display:grid;grid-template-columns:1fr 2fr 1.2fr 1fr 1fr;gap:14px;padding:14px 22px;background:#FAF9F6;border-bottom:1px solid rgba(0,0,0,0.06)">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.12em;color:#9A988F">INVOICE</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.12em;color:#9A988F">CLIENT</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.12em;color:#9A988F">DATE</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.12em;color:#9A988F;text-align:right">AMOUNT</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.12em;color:#9A988F;text-align:right">STATUS</span>
+          </div>
+          <sc-for list="{{ invoices }}" as="iv" hint-placeholder-count="6">
+            <div style="display:grid;grid-template-columns:1fr 2fr 1.2fr 1fr 1fr;gap:14px;align-items:center;padding:13px 22px;border-bottom:1px solid rgba(0,0,0,0.04)">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:500;color:#3A3A36">{{ iv.id }}</span><span style="font-size:13.5px;font-weight:600;color:#1A1A18">{{ iv.client }}</span><span style="font-size:13px;color:#9A988F">{{ iv.date }}</span><span style="font-size:14px;font-weight:700;text-align:right;letter-spacing:-0.01em">{{ iv.amount }}</span><span style="justify-self:end;font-size:11px;font-weight:700;padding:4px 11px;border-radius:999px;background:{{ iv.stBg }};color:{{ iv.stFg }}">{{ iv.status }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ═══ EXPENSES ═══ -->
+      <sc-if value="{{ isExpenses }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:flex;align-items:flex-end;gap:16px;margin-bottom:20px">
+          <div><h1 style="margin:0;font-size:31px;font-weight:800;letter-spacing:-0.035em">Expenses &amp; Petty Cash</h1><p style="margin:6px 0 0;font-size:15px;color:#7A786F">Track spending and cash on hand</p></div>
+          <span style="flex:1"></span>
+          <button style="display:flex;align-items:center;gap:6px;background:#E2620E;border:none;border-radius:12px;padding:11px 17px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;color:#fff;box-shadow:0 8px 16px -6px rgba(226,98,14,0.55)"><span style="font-family:'Material Symbols Rounded';font-size:18px">add</span>Log Expense</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 2.2fr;gap:16px">
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div style="border-radius:20px;padding:22px;color:#fff;background:linear-gradient(140deg,#3541AF,#242E85);position:relative;overflow:hidden"><div style="position:absolute;right:-28px;top:-28px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.07)"></div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.14em;font-weight:600;color:rgba(255,255,255,0.8)">PETTY CASH BALANCE</div><div style="font-size:34px;font-weight:800;letter-spacing:-0.035em;margin-top:10px">৳18,400</div><div style="font-size:12.5px;color:rgba(255,255,255,0.78);margin-top:5px">Refilled Jul 1 · ৳25,000</div></div>
+            <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:20px;padding:20px"><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.14em;font-weight:600;color:#9A988F">SPENT · JULY</div><div style="font-size:34px;font-weight:800;letter-spacing:-0.035em;margin-top:10px;color:#B0453A">৳2,10,000</div><div style="font-size:12.5px;color:#9A988F;margin-top:5px">Gear, travel, studio, payouts</div></div>
+          </div>
+          <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:20px;overflow:hidden">
+            <div style="padding:16px 22px;font-size:16.5px;font-weight:700;letter-spacing:-0.01em;border-bottom:1px solid rgba(0,0,0,0.06)">Recent Expenses</div>
+            <sc-for list="{{ expenses }}" as="e" hint-placeholder-count="6">
+              <div style="display:flex;align-items:center;gap:14px;padding:13px 22px;border-bottom:1px solid rgba(0,0,0,0.04)"><span style="width:40px;height:40px;border-radius:11px;background:{{ e.iconBg }};display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-family:'Material Symbols Rounded';font-size:20px;color:{{ e.iconFg }}">{{ e.icon }}</span></span><div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;letter-spacing:-0.01em">{{ e.title }}</div><div style="font-size:12px;color:#9A988F;margin-top:2px">{{ e.cat }} · {{ e.date }}</div></div><span style="font-size:15px;font-weight:800;letter-spacing:-0.02em;color:#B0453A">−{{ e.amount }}</span></div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ═══ PAYOUTS ═══ -->
+      <sc-if value="{{ isPayouts }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:flex;align-items:flex-end;gap:16px;margin-bottom:20px">
+          <div><h1 style="margin:0;font-size:31px;font-weight:800;letter-spacing:-0.035em">Freelancer Payouts</h1><p style="margin:6px 0 0;font-size:15px;color:#7A786F">6 freelancers awaiting payment · ৳1.42L total</p></div>
+          <span style="flex:1"></span>
+          <button style="display:flex;align-items:center;gap:6px;background:#E2620E;border:none;border-radius:12px;padding:11px 17px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;color:#fff;box-shadow:0 8px 16px -6px rgba(226,98,14,0.55)"><span style="font-family:'Material Symbols Rounded';font-size:18px">payments</span>Pay All</button>
+        </div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:20px;overflow:hidden">
+          <sc-for list="{{ payouts }}" as="p" hint-placeholder-count="6">
+            <div style="display:flex;align-items:center;gap:14px;padding:15px 22px;border-bottom:1px solid rgba(0,0,0,0.04)"><span style="width:44px;height:44px;border-radius:50%;background:{{ p.av }};display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700;flex-shrink:0">{{ p.ini }}</span><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:700;letter-spacing:-0.01em">{{ p.name }}</div><div style="font-size:12.5px;color:#9A988F;margin-top:2px">{{ p.role }} · {{ p.shoots }}</div></div><div style="text-align:right;margin-right:8px"><div style="font-size:16px;font-weight:800;letter-spacing:-0.02em">{{ p.amount }}</div></div><button style="background:#161513;border:none;border-radius:10px;padding:9px 18px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;color:#fff">Pay</button></div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ═══ CASH FLOW ═══ -->
+      <sc-if value="{{ isCashflow }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="margin-bottom:20px"><h1 style="margin:0;font-size:31px;font-weight:800;letter-spacing:-0.035em">Cash Flow</h1><p style="margin:6px 0 0;font-size:15px;color:#7A786F">Money in and out · July 2026</p></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px">
+          <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:20px;padding:20px"><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.14em;font-weight:600;color:#9A988F">MONEY IN</div><div style="font-size:30px;font-weight:800;letter-spacing:-0.035em;margin-top:10px;color:#2F8F6B">+৳9.24L</div></div>
+          <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:20px;padding:20px"><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.14em;font-weight:600;color:#9A988F">MONEY OUT</div><div style="font-size:30px;font-weight:800;letter-spacing:-0.035em;margin-top:10px;color:#B0453A">−৳2.10L</div></div>
+          <div style="border-radius:20px;padding:20px;color:#fff;background:linear-gradient(140deg,#F0772A,#D6520A)"><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.14em;font-weight:600;color:rgba(255,255,255,0.85)">NET BALANCE</div><div style="font-size:30px;font-weight:800;letter-spacing:-0.035em;margin-top:10px">৳7.14L</div></div>
+        </div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:20px;overflow:hidden">
+          <div style="padding:16px 22px;font-size:16.5px;font-weight:700;letter-spacing:-0.01em;border-bottom:1px solid rgba(0,0,0,0.06)">Transactions</div>
+          <sc-for list="{{ cashflow }}" as="t" hint-placeholder-count="6">
+            <div style="display:flex;align-items:center;gap:14px;padding:13px 22px;border-bottom:1px solid rgba(0,0,0,0.04)"><span style="width:38px;height:38px;border-radius:11px;background:{{ t.iconBg }};display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-family:'Material Symbols Rounded';font-size:19px;color:{{ t.iconFg }}">{{ t.icon }}</span></span><div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;letter-spacing:-0.01em">{{ t.title }}</div><div style="font-size:12px;color:#9A988F;margin-top:2px">{{ t.date }}</div></div><span style="font-size:15px;font-weight:800;letter-spacing:-0.02em;color:{{ t.amtColor }}">{{ t.amount }}</span></div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ═══ MEMBERS ═══ -->
+      <sc-if value="{{ isMembers }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:flex;align-items:flex-end;gap:16px;margin-bottom:20px">
+          <div><h1 style="margin:0;font-size:31px;font-weight:800;letter-spacing:-0.035em">Team Members</h1><p style="margin:6px 0 0;font-size:15px;color:#7A786F">9 members · 6 photographers, 2 editors, 1 coordinator</p></div>
+          <span style="flex:1"></span>
+          <button style="display:flex;align-items:center;gap:6px;background:#E2620E;border:none;border-radius:12px;padding:11px 17px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;color:#fff;box-shadow:0 8px 16px -6px rgba(226,98,14,0.55)"><span style="font-family:'Material Symbols Rounded';font-size:18px">person_add</span>Invite Member</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+          <sc-for list="{{ team }}" as="m" hint-placeholder-count="6">
+            <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:20px;padding:20px">
+              <div style="display:flex;align-items:center;gap:13px"><span style="width:50px;height:50px;border-radius:14px;background:{{ m.av }};display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:700;flex-shrink:0">{{ m.ini }}</span><div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:700;letter-spacing:-0.02em">{{ m.name }}</div><div style="font-size:12.5px;color:#9A988F">{{ m.role }}</div></div><span style="font-size:10px;font-weight:700;padding:4px 9px;border-radius:999px;background:{{ m.stBg }};color:{{ m.stFg }}">{{ m.status }}</span></div>
+              <div style="display:flex;gap:10px;margin-top:16px;padding-top:15px;border-top:1px solid rgba(0,0,0,0.05)"><div style="flex:1"><div style="font-size:18px;font-weight:800;letter-spacing:-0.03em">{{ m.shoots }}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;color:#9A988F;margin-top:2px">SHOOTS</div></div><div style="flex:1"><div style="font-size:18px;font-weight:800;letter-spacing:-0.03em">{{ m.rating }}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;color:#9A988F;margin-top:2px">RATING</div></div><div style="flex:1"><div style="font-size:18px;font-weight:800;letter-spacing:-0.03em;color:#E2620E">{{ m.load }}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;color:#9A988F;margin-top:2px">THIS WK</div></div></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ═══ TEAM CHAT ═══ -->
+      <sc-if value="{{ isChat }}" hint-placeholder-val="{{ false }}">
+      <div style="height:calc(100vh - 154px);display:flex;gap:16px">
+        <div style="width:260px;flex-shrink:0;background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:20px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="padding:16px 18px;border-bottom:1px solid rgba(0,0,0,0.06);font-size:16.5px;font-weight:700;letter-spacing:-0.01em">Team Chat</div>
+          <div style="flex:1;overflow-y:auto;padding:8px">
+            <sc-for list="{{ channels }}" as="ch" hint-placeholder-count="5">
+              <div style="{{ ch.style }}"><span style="width:34px;height:34px;border-radius:10px;background:{{ ch.av }};display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0">{{ ch.ini }}</span><div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ ch.name }}</div><div style="font-size:11.5px;color:#9A988F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ ch.last }}</div></div><sc-if value="{{ ch.unread }}" hint-placeholder-val=""><span style="width:18px;height:18px;border-radius:50%;background:#E2620E;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">{{ ch.unread }}</span></sc-if></div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="flex:1;background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:20px;display:flex;flex-direction:column;min-width:0">
+          <div style="display:flex;align-items:center;gap:11px;padding:14px 20px;border-bottom:1px solid rgba(0,0,0,0.06)"><span style="width:38px;height:38px;border-radius:11px;background:#E2620E;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700">WT</span><div><div style="font-size:15px;font-weight:700;letter-spacing:-0.01em"># Wedding Team — Jul 12</div><div style="font-size:12px;color:#2F8F6B">5 members · 3 online</div></div></div>
+          <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px">
+            <sc-for list="{{ messages }}" as="m" hint-placeholder-count="5">
+              <div style="{{ m.rowStyle }}">
+                <sc-if value="{{ m.showAv }}" hint-placeholder-val=""><span style="width:34px;height:34px;border-radius:50%;background:{{ m.av }};display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0">{{ m.ini }}</span></sc-if>
+                <div style="{{ m.bubbleStyle }}"><sc-if value="{{ m.showName }}" hint-placeholder-val=""><div style="font-size:11.5px;font-weight:700;color:#E2620E;margin-bottom:3px">{{ m.name }}</div></sc-if><div style="font-size:13.5px;line-height:1.45">{{ m.text }}</div><div style="{{ m.timeStyle }}">{{ m.time }}</div></div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;border-top:1px solid rgba(0,0,0,0.06)"><span style="font-family:'Material Symbols Rounded';font-size:22px;color:#9A988F;cursor:pointer">add_circle</span><div style="flex:1;background:#F4F3EF;border-radius:12px;padding:11px 15px;font-size:13.5px;color:#9A988F">Message the wedding team…</div><span style="width:40px;height:40px;border-radius:11px;background:#E2620E;display:flex;align-items:center;justify-content:center;cursor:pointer"><span style="font-family:'Material Symbols Rounded';font-size:20px;color:#fff">send</span></span></div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ═══ ANNOUNCEMENTS ═══ -->
+      <sc-if value="{{ isAnnounce }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:flex;align-items:flex-end;gap:16px;margin-bottom:20px">
+          <div><h1 style="margin:0;font-size:31px;font-weight:800;letter-spacing:-0.035em">Announcements</h1><p style="margin:6px 0 0;font-size:15px;color:#7A786F">Studio-wide updates for the whole team</p></div>
+          <span style="flex:1"></span>
+          <button style="display:flex;align-items:center;gap:6px;background:#E2620E;border:none;border-radius:12px;padding:11px 17px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;color:#fff;box-shadow:0 8px 16px -6px rgba(226,98,14,0.55)"><span style="font-family:'Material Symbols Rounded';font-size:18px">campaign</span>Post Update</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;max-width:760px">
+          <sc-for list="{{ announcements }}" as="a" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:20px;padding:20px 22px;position:relative;overflow:hidden">
+              <sc-if value="{{ a.pinned }}" hint-placeholder-val=""><span style="position:absolute;left:0;top:0;bottom:0;width:3px;background:#E2620E"></span></sc-if>
+              <div style="display:flex;align-items:center;gap:11px;margin-bottom:11px"><span style="width:38px;height:38px;border-radius:11px;background:{{ a.av }};display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700">{{ a.ini }}</span><div><div style="font-size:14px;font-weight:700;letter-spacing:-0.01em">{{ a.author }}</div><div style="font-size:12px;color:#9A988F">{{ a.role }} · {{ a.time }}</div></div><span style="flex:1"></span><sc-if value="{{ a.pinned }}" hint-placeholder-val=""><span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:#E2620E;background:#FBEBDE;padding:4px 10px;border-radius:999px"><span style="font-family:'Material Symbols Rounded';font-size:13px">push_pin</span>PINNED</span></sc-if></div>
+              <div style="font-size:16px;font-weight:700;letter-spacing:-0.015em;margin-bottom:5px">{{ a.title }}</div>
+              <div style="font-size:13.5px;color:#3A3A36;line-height:1.55">{{ a.body }}</div>
+              <div style="display:flex;gap:16px;margin-top:14px;padding-top:13px;border-top:1px solid rgba(0,0,0,0.05)"><span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#7A786F"><span style="font-family:'Material Symbols Rounded';font-size:18px">favorite</span>{{ a.likes }}</span><span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#7A786F"><span style="font-family:'Material Symbols Rounded';font-size:18px">chat_bubble</span>{{ a.comments }}</span></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ═══ SETTINGS ═══ -->
+      <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:760px">
+        <div style="margin-bottom:20px"><h1 style="margin:0;font-size:31px;font-weight:800;letter-spacing:-0.035em">Settings</h1><p style="margin:6px 0 0;font-size:15px;color:#7A786F">Manage your profile, studio &amp; preferences</p></div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:20px;padding:22px;margin-bottom:16px;display:flex;align-items:center;gap:16px">
+          <span style="width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,#E2620E,#B84E0A);display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;font-weight:700">RH</span>
+          <div style="flex:1"><div style="font-size:19px;font-weight:800;letter-spacing:-0.02em">Rahim Hossain</div><div style="font-size:13.5px;color:#9A988F;margin-top:2px">rahim@clickerpro.studio · Studio Owner</div></div>
+          <button style="background:#fff;border:1px solid rgba(0,0,0,0.12);border-radius:11px;padding:10px 18px;cursor:pointer;font-family:inherit;font-size:13.5px;font-weight:600;color:#1A1A18">Edit Profile</button>
+        </div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:20px;overflow:hidden">
+          <sc-for list="{{ settings }}" as="s" hint-placeholder-count="6">
+            <div style="display:flex;align-items:center;gap:14px;padding:16px 22px;border-bottom:1px solid rgba(0,0,0,0.04)"><span style="width:40px;height:40px;border-radius:11px;background:#F4F3EF;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-family:'Material Symbols Rounded';font-size:20px;color:#3A3A36">{{ s.icon }}</span></span><div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:700;letter-spacing:-0.01em">{{ s.title }}</div><div style="font-size:12.5px;color:#9A988F;margin-top:2px">{{ s.sub }}</div></div><div style="{{ s.control }}"><sc-if value="{{ s.knob }}" hint-placeholder-val=""><span style="{{ s.knobStyle }}"></span></sc-if><sc-if value="{{ s.chevron }}" hint-placeholder-val=""><span style="font-family:'Material Symbols Rounded';font-size:22px;color:#B0AEA5">chevron_right</span></sc-if></div></div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:912}}">
+class Component extends DCLogic {
+  state = { view: 'dashboard' };
+
+  renderVals() {
+    const view = this.state.view;
+    const set = (id) => (e) => { e.preventDefault(); this.setState({ view: id }); };
+
+    const mkNav = (defs) => defs.map(d => {
+      const active = d.id === view;
+      return {
+        label:d.label, icon:d.icon, onClick:set(d.id),
+        weight: active ? 700 : 500,
+        iconColor: active ? '#fff' : '#8C877E',
+        style:['display:flex','align-items:center','gap:12px','padding:9px 11px','border-radius:11px','text-decoration:none','cursor:pointer', active?'background:#E2620E':'background:transparent', active?'color:#fff':'color:#B8B4AC'].join(';'),
+        badge: d.badge || '',
+        badgeStyle:['font-size:10px','font-weight:700','padding:1px 7px','border-radius:999px', active?'background:rgba(255,255,255,0.22);color:#fff':'background:#E2620E;color:#fff'].join(';'),
+      };
+    });
+
+    const navMain = mkNav([
+      { id:'dashboard', label:'Dashboard', icon:'grid_view' },
+      { id:'calendar', label:'Calendar', icon:'calendar_month' },
+      { id:'bookings', label:'Bookings', icon:'event_note', badge:'14' },
+      { id:'clients', label:'Clients', icon:'groups' },
+      { id:'packages', label:'Packages', icon:'inventory_2' },
+    ]);
+    const navFinance = mkNav([
+      { id:'invoices', label:'Invoices', icon:'receipt_long' },
+      { id:'expenses', label:'Expenses', icon:'payments' },
+      { id:'payouts', label:'Payouts', icon:'account_balance_wallet', badge:'6' },
+      { id:'cashflow', label:'Cash Flow', icon:'trending_up' },
+    ]);
+    const navTeam = mkNav([
+      { id:'members', label:'Members', icon:'diversity_3' },
+      { id:'chat', label:'Team Chat', icon:'chat_bubble', badge:'3' },
+      { id:'announce', label:'Announcements', icon:'campaign' },
+    ]);
+    const settingsActive = view==='settings';
+
+    const pill=(bg,fg)=>({stBg:bg,stFg:fg});
+    const CONF=pill('#FBEBDE','#C0530B'), PEND=pill('#FBF1D6','#9C7614'), DONE=pill('#E1F0E9','#2F8F6B'), CANC=pill('#F1E3E1','#B0453A');
+
+    const kpis = [
+      { label:'BOOKINGS', value:'48', sub:'8 new this week', icon:'event', iconBg:'#E0F1F1', iconFg:'#00898B' },
+      { label:'PAYOUTS DUE', value:'৳1.42L', sub:'6 freelancers pending', icon:'account_balance_wallet', iconBg:'#E4E6F5', iconFg:'#3541AF' },
+      { label:'DELIVERED', value:'132', sub:'94% on-time', icon:'check_circle', iconBg:'#E1F0E9', iconFg:'#2F8F6B' },
+    ];
+    const events = [
+      { day:'12', mon:'JUL', title:'Ayesha & Kabir — Wedding', meta:'Full day · 2 shooters · Gulshan', dot:'#E2620E' },
+      { day:'14', mon:'JUL', title:'Tanvir Corp. Headshots', meta:'Half day · Studio A', dot:'#00898B' },
+      { day:'18', mon:'JUL', title:'Mahin — 1st Birthday', meta:'3 hours · Banani', dot:'#6D5BD0' },
+      { day:'21', mon:'JUL', title:'Rafa & Jarin — Engagement', meta:'Evening · Outdoor', dot:'#C99A2E' },
+    ];
+
+    // calendar — Jul 1 2026 is Wednesday
+    const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+    // To-Do widget (embedded module) + Reminders (notification triggers)
+    const priPill = { High:['#F1E3E1','#B0453A'], Med:['#FBF1D6','#9C7614'], Low:['#E1F0E9','#2F8F6B'] };
+    const chkOn='width:22px;height:22px;border-radius:7px;background:#2F8F6B;display:flex;align-items:center;justify-content:center;flex-shrink:0';
+    const chkOff='width:22px;height:22px;border-radius:7px;background:#fff;border:2px solid #D8D6CE;flex-shrink:0';
+    const todos = [
+      { done:false, title:'Edit Ayesha & Kabir gallery', meta:'Job-linked · due Jul 15', priority:'High' },
+      { done:false, title:'Confirm 2nd shooter for Wedding', meta:'Team · due Jul 10', priority:'High' },
+      { done:false, title:'Order backup SD cards', meta:'Personal · due Jul 8', priority:'Med' },
+      { done:true, title:'Send Tanvir corporate quote', meta:'Job-linked · done', priority:'Low' },
+    ].map(t => {
+      const [pb,pf] = priPill[t.priority];
+      return { ...t, priBg:pb, priFg:pf, checkStyle: t.done?chkOn:chkOff,
+        titleStyle:['font-size:13.5px','font-weight:600','letter-spacing:-0.01em', t.done?'color:#B0AEA5;text-decoration:line-through':'color:#1A1A18'].join(';') };
+    });
+    const todoOpen = todos.filter(t=>!t.done).length;
+    const reminders = [
+      { title:'Wedding shoot starts', when:'Jul 12 · 1 hr before', icon:'photo_camera', iconBg:'#FBEBDE', iconFg:'#E2620E' },
+      { title:'Payment due — Tanvir', when:'Jul 14 · invoice #INV-2040', icon:'payments', iconBg:'#FBF1D6', iconFg:'#C99A2E' },
+      { title:'Gear return — Canon R5', when:'Jul 13 · custom alarm', icon:'alarm', iconBg:'#E4E6F5', iconFg:'#3541AF' },
+      { title:'To-Do: edit gallery', when:'Jul 15 · task due', icon:'checklist', iconBg:'#E1F0E9', iconFg:'#2F8F6B' },
+    ];
+
+    const evMap = {5:[{t:'Maternity',bg:'#2F8F6B'}],9:[{t:'Portrait',bg:'#00898B'}],12:[{t:'Wedding',bg:'#E2620E'}],14:[{t:'Corporate',bg:'#3541AF'}],18:[{t:'Birthday',bg:'#6D5BD0'}],21:[{t:'Engagement',bg:'#C99A2E'}],26:[{t:'Wedding',bg:'#E2620E'}]};
+    const holidayMap = {4:'আশুরা', 26:'রথযাত্রা', 29:'আষাঢ়ী পূর্ণিমা'};
+    const bnNum = (x)=>String(x).replace(/[0-9]/g,d=>'০১২৩৪৫৬৭৮৯'[+d]);
+    const cells = [];
+    [28,29,30].forEach(n=>cells.push({n, muted:true}));
+    for(let n=1;n<=31;n++) cells.push({n, muted:false});
+    [1].forEach(n=>cells.push({n, muted:true}));
+    const today = 1;
+    const calCells = cells.map((c,i) => {
+      const chips = (!c.muted && evMap[c.n]) ? evMap[c.n] : [];
+      const isToday = !c.muted && c.n===today;
+      const holiday = (!c.muted && holidayMap[c.n]) ? holidayMap[c.n] : '';
+      const isFriday = (i % 7) === 5;
+      const bg = c.muted ? '#FAF9F6' : (holiday ? '#F9EEEC' : (isFriday ? '#FBFAF7' : '#fff'));
+      return {
+        n:c.n, chips, holiday,
+        bn: c.muted ? '' : bnNum(c.n),
+        style:['min-height:92px','border-radius:12px','padding:8px', 'background:'+bg, 'border:1px solid '+(isToday?'#E2620E':(holiday?'#E2C4BF':'rgba(0,0,0,0.06)'))].join(';'),
+        numStyle:['font-size:13px','font-weight:'+(isToday?800:600), c.muted?'color:#C8C6BE':(isToday?'color:#E2620E':(holiday?'color:#B0453A':'color:#3A3A36'))].join(';'),
+      };
+    });
+
+    const tabs = ['All','Confirmed','Pending','Delivered','Cancelled'].map((label,i)=>({label, style:['font-size:12.5px','padding:7px 14px','border-radius:9px','cursor:pointer', i===0?'background:#E2620E;color:#fff;font-weight:700':'color:#7A786F;font-weight:600'].join(';')}));
+
+    const bookings = [
+      { ini:'AK', av:'#E2620E', name:'Ayesha & Kabir', email:'ayesha.k@gmail.com', event:'Wedding', date:'Jul 12, 2026', pkg:'Platinum', amount:'৳85,000', status:'Confirmed', ...CONF },
+      { ini:'TR', av:'#00898B', name:'Tanvir Rahman', email:'tanvir@studio.co', event:'Corporate', date:'Jul 14, 2026', pkg:'Business', amount:'৳32,000', status:'Pending', ...PEND },
+      { ini:'NS', av:'#3541AF', name:'Nusrat Sultana', email:'nusrat.s@gmail.com', event:'Portrait', date:'Jul 09, 2026', pkg:'Studio Basic', amount:'৳12,500', status:'Delivered', ...DONE },
+      { ini:'MF', av:'#6D5BD0', name:'Mahin Faisal', email:'mahin.f@outlook.com', event:'Birthday', date:'Jul 18, 2026', pkg:'Celebration', amount:'৳18,000', status:'Confirmed', ...CONF },
+      { ini:'RJ', av:'#C99A2E', name:'Rafa & Jarin', email:'rafa.j@gmail.com', event:'Engagement', date:'Jul 21, 2026', pkg:'Gold', amount:'৳45,000', status:'Pending', ...PEND },
+      { ini:'SI', av:'#2F8F6B', name:'Sadia Islam', email:'sadia.i@gmail.com', event:'Maternity', date:'Jul 05, 2026', pkg:'Studio Basic', amount:'৳15,000', status:'Delivered', ...DONE },
+      { ini:'HK', av:'#B84E0A', name:'Hasan Kabir', email:'hasan.k@gmail.com', event:'Product', date:'Jul 03, 2026', pkg:'Commercial', amount:'৳28,000', status:'Cancelled', ...CANC },
+      { ini:'FA', av:'#3541AF', name:'Farhan Ahmed', email:'farhan.a@gmail.com', event:'Wedding', date:'Jul 26, 2026', pkg:'Platinum', amount:'৳92,000', status:'Confirmed', ...CONF },
+    ];
+
+    const ACT=pill('#E1F0E9','#2F8F6B'), VIP=pill('#FBEBDE','#C0530B'), WL=pill('#FBF1D6','#9C7614');
+    const clients = [
+      { ini:'AK', av:'#E2620E', name:'Ayesha & Kabir', email:'ayesha.k@gmail.com', phone:'+880 1711-000001', sessions:'3', spent:'৳1.65L', status:'VIP', ...VIP },
+      { ini:'TR', av:'#00898B', name:'Tanvir Rahman', email:'tanvir@studio.co', phone:'+880 1811-000042', sessions:'5', spent:'৳2.10L', status:'Active', ...ACT },
+      { ini:'NS', av:'#3541AF', name:'Nusrat Sultana', email:'nusrat.s@gmail.com', phone:'+880 1911-000173', sessions:'2', spent:'৳48,000', status:'Active', ...ACT },
+      { ini:'ZK', av:'#6D5BD0', name:'Zara Khan', email:'zara.k@gmail.com', phone:'+880 1611-000088', sessions:'0', spent:'৳0', status:'Waitlist', ...WL },
+      { ini:'HK', av:'#B84E0A', name:'Hasan Kabir', email:'hasan.k@gmail.com', phone:'+880 1511-000210', sessions:'1', spent:'৳28,000', status:'Active', ...ACT },
+      { ini:'MB', av:'#C99A2E', name:'Marium Begum', email:'marium.b@gmail.com', phone:'+880 1311-000355', sessions:'0', spent:'৳0', status:'Waitlist', ...WL },
+    ];
+
+    const baseCard='position:relative;background:#fff;border:1px solid rgba(0,0,0,0.07);border-radius:20px;padding:22px 20px;display:flex;flex-direction:column';
+    const packages = [
+      { tag:'STUDIO', name:'Studio Basic', price:'৳12,500', features:['1 hour studio','1 photographer','30 edited photos','Online gallery'], booked:'34', popular:false },
+      { tag:'EVENTS', name:'Gold', price:'৳45,000', features:['Half day coverage','1 photographer','150 edited photos','1 printed album'], booked:'52', popular:true },
+      { tag:'EVENTS', name:'Platinum', price:'৳85,000', features:['Full day · 2 shooters','400 edited photos','2 albums + highlights','Cinematic video'], booked:'28', popular:false },
+      { tag:'BRANDS', name:'Commercial', price:'৳28,000', features:['Product / brand shoot','Studio + props','50 edited photos','Commercial license'], booked:'19', popular:false },
+      { tag:'FAMILY', name:'Celebration', price:'৳18,000', features:['3 hour coverage','1 photographer','80 edited photos','Online gallery'], booked:'41', popular:false },
+      { tag:'PORTRAIT', name:'Maternity', price:'৳15,000', features:['Studio + outdoor','60 edited photos','Props & wardrobe','1 framed print'], booked:'23', popular:false },
+    ].map(p => ({ ...p, cardStyle: p.popular ? baseCard+';border:2px solid #E2620E' : baseCard }));
+
+    const finKpis = [
+      { label:'TOTAL REVENUE', value:'৳9.24L', sub:'This month', icon:'payments', iconBg:'#FBEBDE', iconFg:'#E2620E' },
+      { label:'OUTSTANDING', value:'৳1.86L', sub:'12 unpaid', icon:'schedule', iconBg:'#FBF1D6', iconFg:'#C99A2E' },
+      { label:'PAID · JUL', value:'৳7.38L', sub:'62 settled', icon:'check_circle', iconBg:'#E1F0E9', iconFg:'#2F8F6B' },
+      { label:'EXPENSES', value:'৳2.10L', sub:'Gear, payouts', icon:'trending_down', iconBg:'#F1E3E1', iconFg:'#B0453A' },
+    ];
+    const invoices = [
+      { id:'#INV-2041', client:'Ayesha & Kabir', date:'Jul 12, 2026', amount:'৳85,000', status:'Paid', ...DONE },
+      { id:'#INV-2040', client:'Tanvir Rahman', date:'Jul 14, 2026', amount:'৳32,000', status:'Pending', ...PEND },
+      { id:'#INV-2039', client:'Nusrat Sultana', date:'Jul 09, 2026', amount:'৳12,500', status:'Paid', ...DONE },
+      { id:'#INV-2038', client:'Farhan Ahmed', date:'Jul 26, 2026', amount:'৳92,000', status:'Overdue', ...CANC },
+      { id:'#INV-2037', client:'Mahin Faisal', date:'Jul 18, 2026', amount:'৳18,000', status:'Paid', ...DONE },
+      { id:'#INV-2036', client:'Rafa & Jarin', date:'Jul 21, 2026', amount:'৳45,000', status:'Pending', ...PEND },
+    ];
+
+    const expenses = [
+      { title:'Canon R5 rental', cat:'Gear', date:'Jul 11', amount:'৳8,500', icon:'photo_camera', iconBg:'#FBEBDE', iconFg:'#E2620E' },
+      { title:'Venue travel — Gulshan', cat:'Travel', date:'Jul 12', amount:'৳2,200', icon:'local_taxi', iconBg:'#E4E6F5', iconFg:'#3541AF' },
+      { title:'Studio backdrop set', cat:'Studio', date:'Jul 08', amount:'৳6,400', icon:'wallpaper', iconBg:'#E0F1F1', iconFg:'#00898B' },
+      { title:'Team lunch — wedding crew', cat:'Meals', date:'Jul 12', amount:'৳3,100', icon:'restaurant', iconBg:'#FBF1D6', iconFg:'#C99A2E' },
+      { title:'Album printing', cat:'Production', date:'Jul 06', amount:'৳12,000', icon:'menu_book', iconBg:'#EFE6F3', iconFg:'#6D5BD0' },
+      { title:'SD cards (x4)', cat:'Gear', date:'Jul 03', amount:'৳4,800', icon:'sd_card', iconBg:'#FBEBDE', iconFg:'#E2620E' },
+    ];
+
+    const payouts = [
+      { ini:'ZH', av:'#E2620E', name:'Zahid Hasan', role:'Lead Photographer', amount:'৳34,000', shoots:'8 shoots' },
+      { ini:'MB', av:'#00898B', name:'Mou Barua', role:'Photographer', amount:'৳26,500', shoots:'6 shoots' },
+      { ini:'RA', av:'#6D5BD0', name:'Rakib Anam', role:'Photographer', amount:'৳22,000', shoots:'5 shoots' },
+      { ini:'SD', av:'#3541AF', name:'Shorna Das', role:'Editor', amount:'৳18,500', shoots:'42 edits' },
+      { ini:'TI', av:'#C99A2E', name:'Tamim Iqbal', role:'2nd Shooter', amount:'৳15,000', shoots:'4 shoots' },
+      { ini:'NF', av:'#2F8F6B', name:'Nabila Ferdous', role:'Coordinator', amount:'৳26,000', shoots:'Jul retainer' },
+    ];
+
+    const IN='#2F8F6B', OUT='#B0453A';
+    const cashflow = [
+      { title:'Wedding — final balance', date:'Jul 12', amount:'+৳45,000', amtColor:IN, icon:'south_west', iconBg:'#E1F0E9', iconFg:'#2F8F6B' },
+      { title:'Freelancer payout — Zahid', date:'Jul 12', amount:'−৳34,000', amtColor:OUT, icon:'north_east', iconBg:'#F1E3E1', iconFg:'#B0453A' },
+      { title:'Portrait session — Nusrat', date:'Jul 09', amount:'+৳12,500', amtColor:IN, icon:'south_west', iconBg:'#E1F0E9', iconFg:'#2F8F6B' },
+      { title:'Canon R5 rental', date:'Jul 11', amount:'−৳8,500', amtColor:OUT, icon:'north_east', iconBg:'#F1E3E1', iconFg:'#B0453A' },
+      { title:'Corporate advance — Tanvir', date:'Jul 07', amount:'+৳16,000', amtColor:IN, icon:'south_west', iconBg:'#E1F0E9', iconFg:'#2F8F6B' },
+      { title:'Album printing', date:'Jul 06', amount:'−৳12,000', amtColor:OUT, icon:'north_east', iconBg:'#F1E3E1', iconFg:'#B0453A' },
+    ];
+
+    const OFF=pill('#EFEDE8','#8A887F');
+    const team = [
+      { ini:'ZH', av:'#E2620E', name:'Zahid Hasan', role:'Lead Photographer', status:'Active', ...ACT, shoots:'128', rating:'4.9', load:'3' },
+      { ini:'MB', av:'#00898B', name:'Mou Barua', role:'Photographer', status:'On shoot', ...CONF, shoots:'86', rating:'4.8', load:'2' },
+      { ini:'RA', av:'#6D5BD0', name:'Rakib Anam', role:'Photographer', status:'Active', ...ACT, shoots:'74', rating:'4.7', load:'2' },
+      { ini:'SD', av:'#3541AF', name:'Shorna Das', role:'Senior Editor', status:'Active', ...ACT, shoots:'—', rating:'4.9', load:'5' },
+      { ini:'TI', av:'#C99A2E', name:'Tamim Iqbal', role:'2nd Shooter', status:'Off today', ...OFF, shoots:'52', rating:'4.6', load:'0' },
+      { ini:'NF', av:'#2F8F6B', name:'Nabila Ferdous', role:'Coordinator', status:'Active', ...ACT, shoots:'—', rating:'5.0', load:'—' },
+    ];
+
+    const chSel = 'wed';
+    const channels = [
+      { id:'wed', ini:'WT', av:'#E2620E', name:'# Wedding Team — Jul 12', last:'Zahid: Gear packed, ready ✅', unread:'' },
+      { id:'gen', ini:'GC', av:'#3541AF', name:'# General', last:'Nabila: Studio A booked Fri', unread:'3' },
+      { id:'edit', ini:'ED', av:'#6D5BD0', name:'# Editors', last:'Shorna: Nusrat gallery done', unread:'' },
+      { id:'mou', ini:'MB', av:'#00898B', name:'Mou Barua', last:'On my way to venue', unread:'' },
+      { id:'rak', ini:'RA', av:'#C99A2E', name:'Rakib Anam', last:'Sent the RAW files', unread:'' },
+    ].map(c => ({ ...c, style:['display:flex','align-items:center','gap:11px','padding:10px','border-radius:12px','cursor:pointer', c.id===chSel?'background:#FBEBDE':'background:transparent'].join(';') }));
+
+    const meBubble='max-width:74%;background:#E2620E;color:#fff;border-radius:16px 16px 4px 16px;padding:10px 14px';
+    const themBubble='max-width:74%;background:#F4F3EF;color:#1A1A18;border-radius:16px 16px 16px 4px;padding:10px 14px';
+    const messages = [
+      { me:false, ini:'ZH', av:'#E2620E', name:'Zahid Hasan', text:'Morning team! Wedding is at Le Méridien, call time 9:30 AM sharp.', time:'8:02 AM', showName:true },
+      { me:false, ini:'MB', av:'#00898B', name:'Mou Barua', text:'Copied. I\'ll bring the 70-200 and both flashes.', time:'8:05 AM', showName:true },
+      { me:true, text:'Great. Nabila has the shot list & family groupings — check the pinned doc.', time:'8:09 AM' },
+      { me:false, ini:'NF', av:'#2F8F6B', name:'Nabila Ferdous', text:'Timeline shared. Ceremony 11:00, couple portraits 4:30 golden hour.', time:'8:12 AM', showName:true },
+      { me:true, text:'Perfect. Let\'s make it a great one 📸', time:'8:14 AM' },
+    ].map(m => ({
+      me:m.me, ini:m.ini, av:m.av, name:m.name, text:m.text, time:m.time,
+      showAv: !m.me, showName: !!m.showName,
+      rowStyle: m.me ? 'display:flex;gap:10px;justify-content:flex-end' : 'display:flex;gap:10px;justify-content:flex-start',
+      bubbleStyle: m.me ? meBubble : themBubble,
+      timeStyle: 'font-size:10px;margin-top:4px;text-align:right;'+(m.me?'color:rgba(255,255,255,0.7)':'color:#9A988F'),
+    }));
+
+    const announcements = [
+      { pinned:true, ini:'RH', av:'#E2620E', author:'Rahim Hossain', role:'Owner', time:'2h ago', title:'Studio closed Aug 15 (National Holiday)', body:'We\'ll be closed for Independence Day. Please reschedule any shoots and inform your clients in advance. Editors can still access the cloud remotely.', likes:'12', comments:'4' },
+      { pinned:false, ini:'NF', av:'#2F8F6B', author:'Nabila Ferdous', role:'Coordinator', time:'Yesterday', title:'New client intake form is live', body:'Please use the updated booking form for all new inquiries — it now captures venue, guest count, and delivery preferences automatically.', likes:'8', comments:'2' },
+      { pinned:false, ini:'SD', av:'#3541AF', author:'Shorna Das', role:'Senior Editor', time:'2 days ago', title:'Turnaround now 7 days', body:'With the new workstation, edited galleries will be delivered within 7 days of the shoot. Rush delivery (48h) available on request.', likes:'21', comments:'6' },
+    ];
+
+    const knobOn='width:44px;height:26px;border-radius:999px;background:#E2620E;position:relative;display:flex;align-items:center;justify-content:flex-end;padding:0 3px';
+    const knobOff='width:44px;height:26px;border-radius:999px;background:#DAD8D1;position:relative;display:flex;align-items:center;justify-content:flex-start;padding:0 3px';
+    const knobDot='width:20px;height:20px;border-radius:50%;background:#fff';
+    const settings = [
+      { icon:'business', title:'Studio Profile', sub:'Name, address, logo & branding', chevron:true },
+      { icon:'notifications', title:'Push Notifications', sub:'Booking alerts, payment reminders', control:knobOn, knob:true, knobStyle:knobDot },
+      { icon:'dark_mode', title:'Dark Mode', sub:'Use dark theme across the app', control:knobOff, knob:true, knobStyle:knobDot },
+      { icon:'credit_card', title:'Billing & Plan', sub:'Pro plan · renews Aug 1', chevron:true },
+      { icon:'group', title:'Roles & Permissions', sub:'Manage what team members can access', chevron:true },
+      { icon:'logout', title:'Sign Out', sub:'Log out of this workspace', chevron:true },
+    ].map(s => ({ ...s, control: s.control || 'display:flex;align-items:center', chevron: s.chevron || false, knob: s.knob || false, knobStyle: s.knobStyle || '' }));
+
+    return {
+      navMain, navFinance, navTeam,
+      settingsClick: set('settings'),
+      settingsStyle:['display:flex','align-items:center','gap:12px','padding:9px 11px','border-radius:11px','text-decoration:none','cursor:pointer', settingsActive?'background:#E2620E':'background:transparent', settingsActive?'color:#fff':'color:#B8B4AC'].join(';'),
+      settingsIcon: settingsActive?'#fff':'#8C877E',
+      settingsWeight: settingsActive?700:500,
+      goCalendar: set('calendar'),
+      isDashboard:view==='dashboard', isCalendar:view==='calendar', isBookings:view==='bookings', isClients:view==='clients', isPackages:view==='packages',
+      isInvoices:view==='invoices', isExpenses:view==='expenses', isPayouts:view==='payouts', isCashflow:view==='cashflow',
+      isMembers:view==='members', isChat:view==='chat', isAnnounce:view==='announce', isSettings:view==='settings',
+      kpis, events, todos, todoOpen, reminders, dow, calCells, tabs, bookings, clients, packages, finKpis, invoices, expenses, payouts, cashflow, team, channels, messages, announcements, settings,
+    };
+  }
+}
+</script>
+</body>
+</html>
