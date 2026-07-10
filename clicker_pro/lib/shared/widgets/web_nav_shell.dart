@@ -123,6 +123,9 @@ class WebNavShell extends ConsumerWidget {
       _NavDest(Icons.shopping_bag_rounded, 'Expenses',
           RouteNames.financeExpenses,
           capability: Capability.viewFinancials),
+      _NavDest(Icons.account_balance_wallet_rounded, 'Payouts',
+          RouteNames.teamSalarySheet,
+          capability: Capability.viewFinancials),
       _NavDest(Icons.bar_chart_rounded, 'Reports', RouteNames.reports,
           capability: Capability.viewFinancials),
       _NavDest(Icons.insights_rounded, 'Performance', RouteNames.performance,
@@ -241,7 +244,11 @@ class _TopBar extends StatelessWidget {
     return ClipRect(
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
+        // Transparent Material so the header's Text never picks up the
+        // "missing Material" underline, and taps get proper ink.
+        child: Material(
+          type: MaterialType.transparency,
+          child: Container(
           height: 64,
           padding: const EdgeInsets.symmetric(horizontal: 26),
           decoration: const BoxDecoration(
@@ -266,6 +273,7 @@ class _TopBar extends StatelessWidget {
               ),
             ],
           ),
+        ),
         ),
       ),
     );
@@ -432,81 +440,118 @@ class _Sidebar extends StatelessWidget {
   final bool Function(String) isActive;
   final ValueChanged<String> onTap;
 
+  /// Builds the nav list (group headers + items) each wrapped in a staggered
+  /// entrance. The delay grows per row but is capped so long rails don't crawl.
+  List<Widget> _staggeredNav() {
+    const step = Duration(milliseconds: 32);
+    const cap = 16; // stop growing the delay after this many rows
+    var i = 0;
+    Widget staggered(Widget child) => WebEntrance(
+          delay: step * (i < cap ? i++ : cap),
+          offset: 6,
+          duration: const Duration(milliseconds: 360),
+          child: child,
+        );
+
+    final out = <Widget>[];
+    for (final group in groups) {
+      out.add(staggered(Padding(
+        padding: const EdgeInsets.fromLTRB(10, 16, 10, 7),
+        child: Text(
+          group.title.toUpperCase(),
+          style: TextStyle(
+            fontFamily: WebTheme.mono,
+            fontSize: 9,
+            letterSpacing: 1.8, // ≈0.2em at 9px
+            fontWeight: FontWeight.w500,
+            color: WebTheme.chromeInkFaint,
+            decoration: TextDecoration.none,
+          ),
+        ),
+      )));
+      for (final dest in group.items) {
+        out.add(staggered(_SidebarItem(
+          dest: dest,
+          active: isActive(dest.route),
+          onTap: () => onTap(dest.route),
+        )));
+      }
+    }
+    out.add(const SizedBox(height: 12));
+    return out;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: WebNavShell._sidebarWidth,
-      decoration: const BoxDecoration(
-        // Flat near-black chrome — matches the design source (no gradient).
-        color: WebTheme.chrome,
-        border: Border(
-          right: BorderSide(color: WebTheme.chromeLine, width: 1),
+    // A transparent Material ancestor is REQUIRED: the sidebar lives outside the
+    // routed screen's Scaffold, so without it every nav Text renders with the
+    // "missing Material" yellow-underline debug decoration on web. It also gives
+    // ink/splash a surface to paint on.
+    return Material(
+      type: MaterialType.transparency,
+      child: Container(
+        width: WebNavShell._sidebarWidth,
+        decoration: const BoxDecoration(
+          // Near-black chrome with a whisper-soft top→foot gradient so the rail
+          // reads as a crafted surface, not a flat block.
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF1A1815), WebTheme.chrome, Color(0xFF121110)],
+            stops: [0.0, 0.5, 1.0],
+          ),
+          border: Border(
+            right: BorderSide(color: WebTheme.chromeLine, width: 1),
+          ),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
           // ── Brand header ──────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Full Graphy7 lockup (mark + wordmark) — the dark-surface PNG
-                // reads cleanly on the near-black chrome. Left-aligned, capped
-                // so it never crowds the 256px rail.
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Image.asset(
-                    'assets/brand/graphy7_lockup.png',
-                    height: 34,
-                    fit: BoxFit.contain,
-                    filterQuality: FilterQuality.medium,
+          WebEntrance(
+            offset: 4,
+            duration: const Duration(milliseconds: 420),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Full Graphy7 lockup (mark + wordmark) — the dark-surface PNG
+                  // reads cleanly on the near-black chrome. Left-aligned, capped
+                  // so it never crowds the 256px rail.
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Image.asset(
+                      'assets/brand/graphy7_lockup.png',
+                      height: 34,
+                      fit: BoxFit.contain,
+                      filterQuality: FilterQuality.medium,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 7),
-                Text(
-                  'PHOTOGRAPHY MANAGEMENT',
-                  style: TextStyle(
-                    fontFamily: WebTheme.mono,
-                    fontSize: 7.5,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 1.6, // ≈0.24em at 7.5px
-                    color: WebTheme.chromeInkMuted,
+                  const SizedBox(height: 7),
+                  Text(
+                    'PHOTOGRAPHY MANAGEMENT',
+                    style: TextStyle(
+                      fontFamily: WebTheme.mono,
+                      fontSize: 7.5,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 1.6, // ≈0.24em at 7.5px
+                      color: WebTheme.chromeInkMuted,
+                      decoration: TextDecoration.none,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
           // ── Scrollable nav groups ─────────────────────────────────────
+          // Items settle in with a gentle top-down stagger on first mount so
+          // the rail assembles itself rather than snapping into place.
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              children: [
-                for (final group in groups) ...[
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 16, 10, 7),
-                    child: Text(
-                      group.title.toUpperCase(),
-                      style: TextStyle(
-                        fontFamily: WebTheme.mono,
-                        fontSize: 9,
-                        letterSpacing: 1.8, // ≈0.2em at 9px
-                        fontWeight: FontWeight.w500,
-                        color: WebTheme.chromeInkFaint,
-                      ),
-                    ),
-                  ),
-                  for (final dest in group.items)
-                    _SidebarItem(
-                      dest: dest,
-                      active: isActive(dest.route),
-                      onTap: () => onTap(dest.route),
-                    ),
-                ],
-                const SizedBox(height: 12),
-              ],
+              children: _staggeredNav(),
             ),
           ),
 
@@ -522,12 +567,17 @@ class _Sidebar extends StatelessWidget {
               onTap: () => onTap(RouteNames.profile),
             ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
+/// One nav row, richly animated. Active state is a glowing Signal-Orange pill;
+/// hover is a faint white wash. A slim rounded accent bar slides in on the left
+/// edge, and the icon nudges + scales — small, meaningful motion, all 60fps and
+/// reduce-motion aware (the durations collapse to instant under disableAnimations).
 class _SidebarItem extends StatelessWidget {
   const _SidebarItem({
     required this.dest,
@@ -541,49 +591,102 @@ class _SidebarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final noMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    // Motion collapses to a hair when reduce-motion is on so the state still
+    // updates but nothing visibly animates.
+    final dur = noMotion ? Duration.zero : const Duration(milliseconds: 220);
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 2.5),
       child: WebHoverHighlight(
         onTap: onTap,
-        borderRadius: 11,
+        borderRadius: 12,
         builder: (context, hovering) {
-          // Dark chrome, matching the design source exactly:
-          //   • active  → solid Signal-Orange fill, white text + icon (weight 700)
-          //   • hover   → faint white wash, text/icon brighten to chrome ink
+          //   • active  → orange gradient pill + soft glow, white ink (w700)
+          //   • hover   → faint white wash, ink brightens to chrome ink
           //   • default → muted chrome ink so the rail stays calm
-          final Color bg = active
-              ? WebTheme.orange
-              : hovering
-                  ? Colors.white.withValues(alpha: 0.06)
-                  : Colors.transparent;
           final Color fg = active
               ? Colors.white
               : hovering
                   ? WebTheme.chromeInk
                   : const Color(0xFFB8B4AC);
-          final Color iconColor =
-              active ? Colors.white : (hovering ? WebTheme.chromeInk : const Color(0xFF8C877E));
+          final Color iconColor = active
+              ? Colors.white
+              : hovering
+                  ? WebTheme.chromeInk
+                  : const Color(0xFF8C877E);
 
           return AnimatedContainer(
-            duration: WebTheme.fast,
-            curve: WebTheme.ease,
-            padding:
-                const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+            duration: dur,
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9.5),
             decoration: BoxDecoration(
-              color: bg,
-              borderRadius: BorderRadius.circular(11),
+              gradient: active
+                  ? const LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [Color(0xFFF0772A), WebTheme.orange],
+                    )
+                  : null,
+              color: active
+                  ? null
+                  : hovering
+                      ? Colors.white.withValues(alpha: 0.055)
+                      : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: active && !noMotion
+                  ? [
+                      BoxShadow(
+                        color: WebTheme.orange.withValues(alpha: 0.38),
+                        blurRadius: 16,
+                        offset: const Offset(0, 5),
+                      ),
+                    ]
+                  : const [],
             ),
             child: Row(
               children: [
-                Icon(dest.icon, size: 20, color: iconColor),
+                // Slim accent rail on the left — grows in when active, a faint
+                // stub on hover, gone at rest. The whole row's motion anchor.
+                AnimatedContainer(
+                  duration: dur,
+                  curve: Curves.easeOutCubic,
+                  width: 3,
+                  height: active ? 16 : (hovering ? 9 : 0),
+                  margin: EdgeInsets.only(right: active || hovering ? 8 : 11),
+                  decoration: BoxDecoration(
+                    color: active
+                        ? Colors.white.withValues(alpha: 0.9)
+                        : WebTheme.orange.withValues(alpha: 0.7),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                // Icon nudges + scales a touch on active for a tactile feel.
+                AnimatedScale(
+                  duration: dur,
+                  curve: Curves.easeOutBack,
+                  scale: active ? 1.08 : 1.0,
+                  child: Icon(dest.icon, size: 20, color: iconColor),
+                ),
                 const SizedBox(width: 12),
-                Text(
-                  dest.label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                    letterSpacing: -0.14, // ≈-0.01em
-                    color: fg,
+                Expanded(
+                  child: AnimatedDefaultTextStyle(
+                    duration: dur,
+                    curve: Curves.easeOutCubic,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight:
+                          active ? FontWeight.w700 : FontWeight.w500,
+                      letterSpacing: -0.14, // ≈-0.01em
+                      color: fg,
+                      // Explicitly kill any inherited underline/decoration.
+                      decoration: TextDecoration.none,
+                    ),
+                    child: Text(
+                      dest.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
               ],

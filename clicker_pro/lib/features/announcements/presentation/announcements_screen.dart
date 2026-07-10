@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/role/capability.dart';
@@ -16,6 +17,7 @@ import '../../team/application/team_providers.dart';
 import '../application/announcement_providers.dart';
 import '../domain/announcement.dart';
 import 'create_announcement_sheet.dart';
+import 'web_announcements.dart';
 
 class AnnouncementsScreen extends ConsumerStatefulWidget {
   const AnnouncementsScreen({super.key});
@@ -86,6 +88,29 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
     // Falls back to 1 (owner only) while the team list is still loading.
     final teamSize =
         (ref.watch(teamMembersProvider).valueOrNull?.length ?? 0) + 1;
+
+    // On wide web the WebNavShell owns the chrome; render the dedicated desktop
+    // feed instead of the mobile body. Mobile + narrow web unchanged.
+    final webWide = kIsWeb && MediaQuery.sizeOf(context).width >= 900;
+    if (webWide) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        body: WebAnnouncements(
+          canManage: canManage,
+          teamSize: teamSize,
+          onPost: canManage
+              ? () => CreateAnnouncementSheet.show(context)
+              : null,
+          onTogglePin: (a) => ref
+              .read(announcementListControllerProvider.notifier)
+              .togglePin(a.id, a.pinned),
+          onDelete: (a) => _confirmAndDelete(context, ref, a.id),
+          onMarkRead: (a) => ref
+              .read(announcementListControllerProvider.notifier)
+              .markRead(a.id),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.voidBlack,

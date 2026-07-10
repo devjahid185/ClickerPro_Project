@@ -8,6 +8,7 @@
 // Data: `staffPayoutsProvider` (GET /api/team/payouts). Settling a payout
 // goes through `teamControllerProvider.markPayoutPaid`.
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -24,6 +25,7 @@ import '../application/team_providers.dart';
 import '../domain/staff_payout.dart';
 import '../domain/team_member.dart';
 import '../../../theme/app_theme.dart';
+import 'web_payouts.dart';
 
 class SalarySheetScreen extends ConsumerWidget {
   const SalarySheetScreen({super.key});
@@ -31,6 +33,52 @@ class SalarySheetScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(staffPayoutsProvider);
+
+    // On wide web the WebNavShell owns the chrome; render the dedicated desktop
+    // payout sheet instead of the dark mobile body. Mobile + narrow web are
+    // untouched.
+    final webWide = kIsWeb && MediaQuery.sizeOf(context).width >= 900;
+    if (webWide) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        body: WebPayouts(
+          onPay: (m) => _confirmAndPay(
+            context,
+            ref,
+            title: 'Pay ${m.name}?',
+            message:
+                'Mark this member\'s ${m.events} '
+                '${m.events == 1 ? 'event' : 'events'} as paid.',
+            settle: () => ref
+                .read(teamControllerProvider.notifier)
+                .markPayoutPaid(m.userId),
+          ),
+          onPayAll: () {
+            final sheet = async.valueOrNull;
+            if (sheet == null) return;
+            final unpaid =
+                sheet.members.where((m) => !m.isFullyPaid).toList();
+            if (unpaid.isEmpty) return;
+            _confirmAndPay(
+              context,
+              ref,
+              title: 'Pay all freelancers?',
+              message:
+                  'Settle every outstanding payout for '
+                  '${unpaid.length} '
+                  '${unpaid.length == 1 ? 'member' : 'members'}.',
+              settle: () async {
+                for (final m in unpaid) {
+                  await ref
+                      .read(teamControllerProvider.notifier)
+                      .markPayoutPaid(m.userId);
+                }
+              },
+            );
+          },
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.voidBlack,
@@ -67,6 +115,61 @@ class SalarySheetScreen extends ConsumerWidget {
       ),
       body: const StaffPayoutsBody(),
     );
+  }
+
+  /// Confirm-then-settle used by the web payout rows / Pay All. Settling moves
+  /// real money, so it always confirms first, then surfaces success/failure.
+  Future<void> _confirmAndPay(
+    BuildContext context,
+    WidgetRef ref, {
+    required String title,
+    required String message,
+    required Future<void> Function() settle,
+  }) async {
+    // Capture before the dialog await so we never touch `context` post-gap.
+    final messenger = ScaffoldMessenger.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: Color(0xFF1A1A18),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        content: Text(
+          message,
+          style: const TextStyle(color: Color(0xFF7A786F)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel',
+                style: TextStyle(color: Color(0xFF7A786F))),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFE2620E),
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Pay'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await settle();
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Payout settled.')),
+      );
+    } catch (_) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Could not settle payout.')),
+      );
+    }
   }
 }
 

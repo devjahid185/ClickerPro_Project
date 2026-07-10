@@ -17,6 +17,7 @@
 // All toggle persistence runs through the repository. UI does NOT define
 // defaults — those live in `NotificationPrefs.defaults`.
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -79,38 +80,49 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     String t(String key) => AppStrings.get(key, lang);
 
+    // On wide web the WebNavShell owns the chrome: drop the mobile AppBar and
+    // lead with an in-body page header (like every other web screen), and let
+    // the paper column breathe at the reference's 760px. Mobile is untouched.
+    final webWide = kIsWeb && MediaQuery.sizeOf(context).width >= 900;
+
     return Scaffold(
       backgroundColor: AppColors.appBg,
-      appBar: AppBar(
-        backgroundColor: AppColors.appBg,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.film),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
-        title: Text(
-          'Settings',
-          style: TextStyle(
-            color: AppColors.film,
-            fontFamily: AppText.brandFontFamily,
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.03,
-          ),
-        ),
-      ),
+      appBar: webWide
+          ? null
+          : AppBar(
+              backgroundColor: AppColors.appBg,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              leading: IconButton(
+                icon: Icon(Icons.arrow_back, color: AppColors.film),
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+              title: Text(
+                'Settings',
+                style: TextStyle(
+                  color: AppColors.film,
+                  fontFamily: AppText.brandFontFamily,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.03,
+                ),
+              ),
+            ),
       body: Column(
         children: [
           const OfflineBanner(),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(webWide ? 28 : 20),
               child: WebFormWidth(
-                maxWidth: 620,
+                maxWidth: webWide ? 760 : 620,
                 child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (webWide) ...[
+                    _webPageHeader(),
+                    const SizedBox(height: 24),
+                  ],
                   // Profile hero (.dc.html): avatar + name + phone + role badge.
                   if (user != null) ...[
                     _buildProfileHero(user),
@@ -718,6 +730,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   // ── Visual primitives ─────────────────────────────────────────
+  /// Wide-web page header (H1 + subtitle) — matches every other web screen,
+  /// replacing the mobile AppBar title the WebNavShell hides.
+  Widget _webPageHeader() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Settings',
+          style: TextStyle(
+            color: AppColors.film,
+            fontFamily: AppText.brandFontFamily,
+            fontSize: 30,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -1.0,
+            height: 1.0,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Manage your profile, studio & preferences',
+          style: TextStyle(
+            color: AppColors.filmMuted,
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _sectionHeader(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12, top: 6, left: 4),

@@ -13,6 +13,7 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -22,6 +23,7 @@ import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/web_theme.dart';
 import '../../profile/application/profile_controllers.dart';
 import '../application/chat_providers.dart';
 import 'widgets/message_bubble.dart';
@@ -47,6 +49,14 @@ class ChatScreen extends ConsumerWidget {
     final loc = AppLocalizations.of(context);
     final groupAsync = ref.watch(myGroupProvider);
     final group = groupAsync.valueOrNull;
+
+    // On wide web the WebNavShell owns the chrome; render the thread inside a
+    // centered bordered chat card (the reference's thread pane) rather than the
+    // full-bleed dark mobile screen. Mobile + narrow web are untouched.
+    final webWide = kIsWeb && MediaQuery.sizeOf(context).width >= 900;
+    if (webWide) {
+      return _WebChat(groupAsync: groupAsync, group: group);
+    }
 
     return Scaffold(
       backgroundColor: AppColors.surfaceAlt,
@@ -131,6 +141,148 @@ class ChatScreen extends ConsumerWidget {
           }
           return _ChatThreadView(groupId: group.id);
         },
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────── WEB CHAT
+/// Wide-web chat: the real single-group thread wrapped in a centered, bordered
+/// chat card on the warm-white panel — the reference's thread pane. There is no
+/// channel list because the backend models exactly one team group per studio
+/// (`myGroupProvider`); a mock channel rail would be fake data, so it's omitted.
+class _WebChat extends ConsumerWidget {
+  const _WebChat({required this.groupAsync, required this.group});
+
+  final AsyncValue<dynamic> groupAsync;
+  final dynamic group; // ChatGroup? — kept dynamic to avoid a domain import here
+
+  static const double _maxContentWidth = 920;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final loc = AppLocalizations.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        WebTheme.sp6,
+        WebTheme.sp5,
+        WebTheme.sp6,
+        WebTheme.sp6,
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: _maxContentWidth),
+          child: Container(
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              color: WebTheme.surface,
+              borderRadius: BorderRadius.circular(WebTheme.rPanel),
+              border: Border.all(color: WebTheme.hairline),
+              boxShadow: WebTheme.cardShadow,
+            ),
+            child: Column(
+              children: [
+                _WebChatHeader(name: group?.name as String?),
+                const Divider(height: 1, color: WebTheme.hairline),
+                Expanded(
+                  child: groupAsync.when(
+                    loading: () => const Center(child: LensLoader()),
+                    error: (_, _) => ErrorState(
+                      message: loc.chat_load_failed,
+                      onRetry: () => ref.invalidate(myGroupProvider),
+                    ),
+                    data: (g) {
+                      if (g == null) {
+                        return _NoGroupView(
+                          createGroup: () async {
+                            try {
+                              await ref
+                                  .read(chatRepositoryProvider)
+                                  .createGroup();
+                              ref.invalidate(myGroupProvider);
+                            } catch (_) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text(loc.chat_create_failed)),
+                              );
+                            }
+                          },
+                        );
+                      }
+                      return _ChatThreadView(groupId: g.id as String);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WebChatHeader extends StatelessWidget {
+  const _WebChatHeader({required this.name});
+  final String? name;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = (name?.trim().isNotEmpty ?? false)
+        ? name!.trim()
+        : AppLocalizations.of(context).chat_title;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: WebTheme.orange,
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Text(
+              ChatScreen._groupInitials(title),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.15,
+                    color: WebTheme.ink,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                const Text(
+                  'Team channel',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: WebTheme.inkMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
