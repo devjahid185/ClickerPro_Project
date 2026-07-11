@@ -15,10 +15,12 @@
 // screen works offline. Manager role gets the locked view (due + client
 // only — no income/profit) per the permission matrix.
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import 'web_finance.dart';
 import '../../../core/booking_status/booking_status.dart';
 import '../../../core/format/currency.dart';
 import '../../../core/navigation/route_names.dart';
@@ -69,6 +71,17 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     // users flip between the studio and freelancer sides with the tabs.
     final showFreelancerFace =
         isFreelancer || (isBoth && _showFreelancerSide);
+
+    // On wide web the WebNavShell owns the chrome; render the Sunset Studio
+    // finance hub (6 tabs) instead of the mobile bento. Freelancers keep
+    // their earnings face — the hub is a studio-management surface.
+    final webWide = kIsWeb && MediaQuery.sizeOf(context).width >= 900;
+    if (webWide && !isFreelancer) {
+      return const Scaffold(
+        backgroundColor: Colors.transparent,
+        body: WebFinance(),
+      );
+    }
     final firstName = ref
             .watch(currentUserProvider)
             .valueOrNull

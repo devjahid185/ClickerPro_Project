@@ -1,40 +1,42 @@
 // lib/features/dashboard/presentation/web_dashboard.dart
 //
-// Clicker Pro — WEB-ONLY dashboard (ClickerPro Design).
+// Clicker Pro — WEB-ONLY dashboard (Sunset Studio, from
+// design_handoff_clickerpro_web — Screen 1).
 //
-// A proper desktop dashboard layout, rendered ONLY on wide web. The mobile
-// dashboard body is 100% untouched (DashboardScreen routes to this widget only
-// when kIsWeb && width >= 900). Structure — near-black sidebar chrome (in
-// WebNavShell), Signal Orange action, warm off-white cards — laid out as:
+// Rendered ONLY on wide web (DashboardScreen routes here when kIsWeb &&
+// width >= 900); the mobile dashboard body is 100% untouched. Layout follows
+// the handoff exactly — main column + a 316px right panel that exists ONLY on
+// this screen:
 //
-//   ┌──────────────────────────────────────────────────────────────┐
-//   │  Greeting header  +  primary CTA (New Booking, orange)        │
-//   ├──────────────────────────────────────────────────────────────┤
-//   │  KPI row: Today · Upcoming · Collection · Due   (role-aware)  │
-//   ├──────────────────────────────────┬───────────────────────────┤
-//   │  Performance card (weekly bars)  │  Quick actions            │
-//   │  Recent bookings table           │  Announcement             │
-//   │                                  │  This month (info)        │
-//   └──────────────────────────────────┴───────────────────────────┘
+//   main column                          right panel (316px)
+//   ┌──────────────────────────────┐     ┌──────────────────────┐
+//   │ Week strip (7 day cards)      │     │ Finance · month      │
+//   │ Split hero (03 + 2 stats)     │     │  (role-aware)        │
+//   │ Delivered strip (mini bars)   │     │ Announcement (dark)  │
+//   │ Today's Bookings rows         │     │ Mini calendar        │
+//   │ Quick actions (4)             │     └──────────────────────┘
+//   └──────────────────────────────┘
 //
-// All data comes from the same providers the mobile dashboard already uses, so
-// there is no new business logic — only a web presentation layer.
+// All data comes from the same providers the mobile dashboard already uses —
+// no new business logic, only the web presentation layer.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/booking_status/booking_status.dart';
 import '../../../core/format/bd_holidays.dart';
-import '../../../core/format/booking_format.dart';
 import '../../../core/format/currency.dart';
 import '../../../core/navigation/route_names.dart';
-import '../../../theme/web_theme.dart';
 import '../../../shared/widgets/web_motion.dart';
+import '../../../theme/web_theme.dart';
+import '../../announcements/application/announcement_providers.dart';
 import '../../auth/domain/user_role.dart';
 import '../../bookings/application/booking_providers.dart';
 import '../../bookings/domain/booking.dart';
+import '../../bookings/domain/booking_filter.dart';
 import '../../bookings/domain/event_type_vibe.dart';
-import '../../announcements/application/announcement_providers.dart';
+import '../../bookings/domain/shift.dart';
 import '../../profile/domain/user_model.dart';
 import '../application/dashboard_providers.dart';
 
@@ -44,482 +46,583 @@ class WebDashboard extends ConsumerWidget {
 
   final UserModel? user;
 
-  /// Below this the page switches to a single stacked column.
-  static const double _twoColBreakpoint = 1180;
+  /// Below this the right panel stacks under the main column.
+  static const double _panelBreakpoint = 1180;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final width = MediaQuery.sizeOf(context).width;
-    final twoCol = width >= _twoColBreakpoint;
+    final sideBySide = width >= _panelBreakpoint;
 
-    // Max content width keeps cards from stretching on ultra-wide monitors.
-    final maxW = width.clamp(0, 1480).toDouble();
+    final main = _MainColumn(user: user);
+    final panel = _RightPanel(user: user);
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: maxW),
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            WebTheme.sp6,
-            WebTheme.sp5,
-            WebTheme.sp6,
-            WebTheme.sp7,
-          ),
-          children: [
-            WebEntrance(child: _Header(user: user)),
-            const SizedBox(height: WebTheme.sp5),
-            WebEntrance(
-              delay: const Duration(milliseconds: 55),
-              child: _KpiRow(user: user),
-            ),
-            const SizedBox(height: WebTheme.sp5),
-            if (twoCol)
-              IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 62,
-                      child: WebEntrance(
-                        delay: const Duration(milliseconds: 110),
-                        child: _MainColumn(user: user),
-                      ),
-                    ),
-                    const SizedBox(width: WebTheme.sp5),
-                    Expanded(
-                      flex: 38,
-                      child: WebEntrance(
-                        delay: const Duration(milliseconds: 165),
-                        child: _SideColumn(user: user),
-                      ),
-                    ),
-                  ],
-                ),
+    return ScrollConfiguration(
+      behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.only(bottom: 32),
+        child: sideBySide
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: main),
+                  const SizedBox(width: 20),
+                  SizedBox(width: 316, child: panel),
+                ],
               )
-            else ...[
-              WebEntrance(
-                delay: const Duration(milliseconds: 110),
-                child: _MainColumn(user: user),
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [main, const SizedBox(height: 18), panel],
               ),
-              const SizedBox(height: WebTheme.sp5),
-              WebEntrance(
-                delay: const Duration(milliseconds: 165),
-                child: _SideColumn(user: user),
-              ),
-            ],
-          ],
-        ),
       ),
     );
   }
 }
 
-// ───────────────────────────────────────────────────────────── HEADER
-class _Header extends StatelessWidget {
-  const _Header({this.user});
-  final UserModel? user;
-
-  String _greeting() {
-    final h = DateTime.now().hour;
-    if (h < 12) return 'Good morning';
-    if (h < 17) return 'Good afternoon';
-    return 'Good evening';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final name = (user?.name.trim().isNotEmpty ?? false)
-        ? user!.name.split(' ').first
-        : 'there';
-    final today = DateFormat('EEEE, d MMMM').format(DateTime.now());
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '${_greeting()}, $name 👋',
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.6,
-                  color: WebTheme.ink,
-                  height: 1.05,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                "Here's your studio at a glance · $today",
-                style: const TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w500,
-                  color: WebTheme.inkMuted,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: WebTheme.sp4),
-        _PrimaryCta(
-          label: 'New Booking',
-          icon: Icons.add_rounded,
-          onTap: () => Navigator.of(context).pushNamed(RouteNames.bookings),
-        ),
-      ],
-    );
-  }
-}
-
-/// Orange (action) pill button — the only loud element in the header.
-class _PrimaryCta extends StatelessWidget {
-  const _PrimaryCta({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return WebHoverLift(
-      onTap: onTap,
-      borderRadius: WebTheme.rButton,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
-        decoration: BoxDecoration(
-          gradient: WebTheme.sunset,
-          borderRadius: BorderRadius.circular(WebTheme.rButton),
-          boxShadow: [
-            BoxShadow(
-              color: WebTheme.orange.withValues(alpha: 0.32),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: Colors.white, size: 19),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.2,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ───────────────────────────────────────────────────────────── KPI ROW
-class _KpiRow extends ConsumerWidget {
-  const _KpiRow({this.user});
-  final UserModel? user;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final metricsAsync = ref.watch(dashboardMetricsProvider);
-    final m = metricsAsync.value ?? DashboardMetrics.placeholder;
-    final loading = metricsAsync.isLoading && metricsAsync.value == null;
-
-    final role = user?.role ?? UserRole.owner;
-    final isFreelancer = role == UserRole.freelancer;
-    final isManager = role == UserRole.manager;
-
-    // Finance labels are role-aware (same logic as mobile dashboard).
-    final collectLabel = isFreelancer ? 'Received Today' : "Today's Collection";
-    final dueLabel = isFreelancer ? 'Pending Payout' : 'Pending Due';
-
-    final cards = <Widget>[
-      _KpiCard(
-        label: "Today's Events",
-        countTo: m.todayEvents.toDouble(),
-        format: (v) => '${v.round()}',
-        sub: '${m.todayDayEvents} day · ${m.todayNightEvents} night',
-        icon: Icons.event_available_rounded,
-        accent: WebTheme.sage,
-        loading: loading,
-        onTap: () => Navigator.of(context).pushNamed(RouteNames.bookings),
-      ),
-      _KpiCard(
-        label: 'Upcoming',
-        countTo: m.upcomingEvents.toDouble(),
-        format: (v) => '${v.round()}',
-        sub: '${m.totalEvents} total booked',
-        icon: Icons.upcoming_rounded,
-        accent: WebTheme.info,
-        loading: loading,
-        onTap: () => Navigator.of(context).pushNamed(RouteNames.calendar),
-      ),
-    ];
-
-    // Collection only for Owner/Both/Freelancer (managers don't see income).
-    if (!isManager) {
-      cards.add(
-        _KpiCard(
-          label: collectLabel,
-          countTo: m.todayCollection.toDouble(),
-          format: (v) => _formatBdt(v.round()),
-          sub: 'across paid events',
-          icon: Icons.payments_rounded,
-          accent: WebTheme.success,
-          loading: loading,
-          onTap: () => Navigator.of(context).pushNamed(RouteNames.finance),
-        ),
-      );
-    }
-
-    cards.add(
-      _KpiCard(
-        label: dueLabel,
-        countTo: m.pendingDue.toDouble(),
-        format: (v) => _formatBdt(v.round()),
-        sub: 'outstanding',
-        icon: Icons.hourglass_bottom_rounded,
-        accent: WebTheme.orange,
-        loading: loading,
-        onTap: () => Navigator.of(context).pushNamed(RouteNames.finance),
-      ),
-    );
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Two-up below ~900 content width, else a single equal row.
-        final narrow = constraints.maxWidth < 760;
-        if (narrow) {
-          return Wrap(
-            spacing: WebTheme.sp4,
-            runSpacing: WebTheme.sp4,
-            children: [
-              for (final c in cards)
-                SizedBox(
-                  width: (constraints.maxWidth - WebTheme.sp4) / 2,
-                  child: c,
-                ),
-            ],
-          );
-        }
-        return Row(
-          children: [
-            for (var i = 0; i < cards.length; i++) ...[
-              if (i > 0) const SizedBox(width: WebTheme.sp4),
-              Expanded(child: cards[i]),
-            ],
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _KpiCard extends StatelessWidget {
-  const _KpiCard({
-    required this.label,
-    required this.countTo,
-    required this.format,
-    required this.sub,
-    required this.icon,
-    required this.accent,
-    required this.loading,
-    required this.onTap,
-  });
-
-  final String label;
-
-  /// The real numeric figure this card settles on — the count-up target.
-  final double countTo;
-
-  /// Formats an interpolated figure into display text (plain int or currency).
-  final String Function(double value) format;
-  final String sub;
-  final IconData icon;
-  final Color accent;
-  final bool loading;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return WebHoverLift(
-      onTap: onTap,
-      borderRadius: WebTheme.rCard,
-      child: Container(
-        padding: const EdgeInsets.all(WebTheme.sp5),
-        decoration: BoxDecoration(
-          color: WebTheme.surface,
-          borderRadius: BorderRadius.circular(WebTheme.rCard),
-          border: Border.all(color: WebTheme.hairline),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(WebTheme.rChip),
-                  ),
-                  child: Icon(icon, color: accent, size: 21),
-                ),
-                const Spacer(),
-                Icon(Icons.north_east_rounded,
-                    size: 16, color: WebTheme.inkFaint),
-              ],
-            ),
-            const SizedBox(height: WebTheme.sp4),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: WebTheme.inkMuted,
-                letterSpacing: 0.1,
-              ),
-            ),
-            const SizedBox(height: 4),
-            loading
-                ? const _ValueShimmer()
-                : WebCountUp(
-                    value: countTo,
-                    builder: (context, current) => Text(
-                      format(current),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        color: WebTheme.ink,
-                        letterSpacing: -0.8,
-                        height: 1.0,
-                      ),
-                    ),
-                  ),
-            const SizedBox(height: 6),
-            Text(
-              sub,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w500,
-                color: WebTheme.inkFaint,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ValueShimmer extends StatelessWidget {
-  const _ValueShimmer();
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 2),
-      child: WebShimmer(height: 28, width: 84, borderRadius: 6),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────── MAIN COLUMN
-class _MainColumn extends ConsumerWidget {
+// ═══════════════════════════════════════════════════════════ MAIN COLUMN
+class _MainColumn extends StatelessWidget {
   const _MainColumn({this.user});
   final UserModel? user;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    final role = user?.role ?? UserRole.owner;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: const [
-        _PerformanceCard(),
-        SizedBox(height: WebTheme.sp5),
-        _RecentBookingsCard(),
+      children: [
+        WebEntrance(
+          delay: const Duration(milliseconds: 50),
+          child: const _WeekStrip(),
+        ),
+        const SizedBox(height: 18),
+        WebEntrance(
+          delay: const Duration(milliseconds: 100),
+          child: const _SplitHero(),
+        ),
+        const SizedBox(height: 18),
+        WebEntrance(
+          delay: const Duration(milliseconds: 150),
+          child: const _DeliveredStrip(),
+        ),
+        const SizedBox(height: 18),
+        WebEntrance(
+          delay: const Duration(milliseconds: 200),
+          child: const _TodaysBookingsCard(),
+        ),
+        const SizedBox(height: 18),
+        WebEntrance(
+          delay: const Duration(milliseconds: 250),
+          child: _QuickActions(role: role),
+        ),
       ],
     );
   }
 }
 
-/// A weekly delivered/booked snapshot with a simple, clean bar chart.
-class _PerformanceCard extends ConsumerWidget {
-  const _PerformanceCard();
+// ───────────────────────────────────────────────────────────── WEEK STRIP
+/// 7 equal day cards: DOW, date number, up to 3 event pips (gold=day shift,
+/// purple=night). Today = orange with glow. Hover lifts −3px.
+class _WeekStrip extends ConsumerWidget {
+  const _WeekStrip();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final metricsAsync = ref.watch(dashboardMetricsProvider);
-    final m = metricsAsync.value ?? DashboardMetrics.placeholder;
+    final bookings = ref
+            .watch(bookingListAllProvider(const BookingFilter()))
+            .valueOrNull ??
+        const <Booking>[];
 
-    // Build this-week per-day booking counts from the live month stream.
     final now = DateTime.now();
-    final monthAsync = ref.watch(
-      calendarBookingsProvider((year: now.year, month: now.month)),
-    );
-    final bookings = monthAsync.value ?? const <Booking>[];
-
     final today = DateTime(now.year, now.month, now.day);
     final monday = today.subtract(Duration(days: today.weekday - 1));
-    final weekCounts = List<int>.filled(7, 0);
-    for (final b in bookings) {
-      final d = DateTime(b.date.year, b.date.month, b.date.day);
-      final diff = d.difference(monday).inDays;
-      if (diff >= 0 && diff < 7) weekCounts[diff]++;
-    }
-    final maxCount =
-        weekCounts.isEmpty ? 1 : (weekCounts.reduce((a, b) => a > b ? a : b));
-    const dow = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-    return _Panel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _PanelHeader(
-            title: 'This Week',
-            subtitle: 'Bookings per day',
-            trailing: _StatPill(
-              icon: Icons.check_circle_rounded,
-              label: '${m.successEvents} delivered',
-              color: WebTheme.success,
+    return Row(
+      children: [
+        for (var i = 0; i < 7; i++) ...[
+          if (i != 0) const SizedBox(width: 10),
+          Expanded(
+            child: _WeekDayCard(
+              date: monday.add(Duration(days: i)),
+              today: today,
+              bookings: bookings,
             ),
           ),
-          const SizedBox(height: WebTheme.sp5),
-          SizedBox(
-            height: 150,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: List.generate(7, (i) {
-                final count = weekCounts[i];
-                final isToday = i == (today.weekday - 1);
-                final frac = maxCount == 0 ? 0.0 : count / maxCount;
-                return Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: _WeekBar(
-                      count: count,
-                      frac: frac,
-                      isToday: isToday,
-                      label: dow[i],
-                    ),
-                  ),
-                );
-              }),
+        ],
+      ],
+    );
+  }
+}
+
+class _WeekDayCard extends StatelessWidget {
+  const _WeekDayCard({
+    required this.date,
+    required this.today,
+    required this.bookings,
+  });
+
+  final DateTime date;
+  final DateTime today;
+  final List<Booking> bookings;
+
+  @override
+  Widget build(BuildContext context) {
+    final isToday = date == today;
+    final dayEvents = bookings.where((b) {
+      if (b.status == BookingStatus.cancelled) return false;
+      return b.date.year == date.year &&
+          b.date.month == date.month &&
+          b.date.day == date.day;
+    }).toList();
+
+    final pips = <Color>[
+      for (final b in dayEvents.take(3))
+        b.shift == Shift.night
+            ? (isToday ? WebTheme.chrome : WebTheme.night)
+            : (isToday ? WebTheme.chromeInk : WebTheme.amber),
+    ];
+
+    return _HoverTranslate(
+      dy: -3,
+      onTap: () => Navigator.of(context).pushNamed(RouteNames.calendar),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          color: isToday ? WebTheme.orange : WebTheme.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+              color: isToday ? WebTheme.orange : WebTheme.hairline),
+          boxShadow: isToday ? WebTheme.buttonGlow : WebTheme.cardShadowSmall,
+        ),
+        child: Column(
+          children: [
+            Text(
+              DateFormat('EEE').format(date).toUpperCase(),
+              style: WebTheme.label(
+                size: 9,
+                tracking: 0.12,
+                color:
+                    isToday ? WebTheme.onOrangeLabel : WebTheme.inkMuted,
+              ),
             ),
+            const SizedBox(height: 3),
+            Text(
+              '${date.day}',
+              style: WebTheme.displayStyle(
+                size: 20,
+                weight: FontWeight.w800,
+                color: isToday ? WebTheme.chromeInk : WebTheme.ink,
+              ),
+            ),
+            const SizedBox(height: 5),
+            SizedBox(
+              height: 5,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (var i = 0; i < pips.length; i++) ...[
+                    if (i != 0) const SizedBox(width: 3),
+                    Container(
+                      width: 5,
+                      height: 5,
+                      decoration: BoxDecoration(
+                          color: pips[i], shape: BoxShape.circle),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ───────────────────────────────────────────────────────────── SPLIT HERO
+/// Left: orange gradient hero with the giant today-count (pop-in) + shift
+/// legend + "Next: …" line. Right: UPCOMING and TOTAL BOOKINGS stat cards.
+class _SplitHero extends ConsumerWidget {
+  const _SplitHero();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final m = ref.watch(dashboardMetricsProvider).valueOrNull ??
+        DashboardMetrics.placeholder;
+    final bookings = ref
+            .watch(bookingListAllProvider(const BookingFilter()))
+            .valueOrNull ??
+        const <Booking>[];
+
+    final now = DateTime.now();
+    final thisMonth = bookings
+        .where((b) =>
+            b.status != BookingStatus.cancelled &&
+            b.date.year == now.year &&
+            b.date.month == now.month)
+        .length;
+
+    return LayoutBuilder(builder: (context, constraints) {
+      final narrow = constraints.maxWidth < 640;
+      final hero = _HeroCard(metrics: m, next: _nextEvent(bookings));
+      final stats = Column(
+        children: [
+          Expanded(
+            child: _StatCard(
+              label: 'UPCOMING',
+              value: '${m.upcomingEvents}',
+              valueColor: WebTheme.orange,
+              sub: 'scheduled ahead',
+              subColor: WebTheme.inkMuted,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Expanded(
+            child: _StatCard(
+              label: 'TOTAL BOOKINGS',
+              value: '${m.totalEvents}',
+              valueColor: WebTheme.ink,
+              sub: '↑ $thisMonth this month',
+              subColor: WebTheme.success,
+            ),
+          ),
+        ],
+      );
+
+      if (narrow) {
+        return Column(children: [
+          hero,
+          const SizedBox(height: 18),
+          SizedBox(height: 220, child: stats),
+        ]);
+      }
+      return SizedBox(
+        height: 236,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(flex: 3, child: hero),
+            const SizedBox(width: 18),
+            Expanded(flex: 2, child: stats),
+          ],
+        ),
+      );
+    });
+  }
+
+  /// The next event line: today's next booking (by start time), else the
+  /// nearest future booking.
+  static Booking? _nextEvent(List<Booking> bookings) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final active = bookings
+        .where((b) =>
+            b.status != BookingStatus.cancelled &&
+            !DateTime(b.date.year, b.date.month, b.date.day)
+                .isBefore(today))
+        .toList()
+      ..sort((a, b) {
+        final c = a.date.compareTo(b.date);
+        if (c != 0) return c;
+        return a.startTime.compareTo(b.startTime);
+      });
+    return active.isEmpty ? null : active.first;
+  }
+}
+
+class _HeroCard extends StatelessWidget {
+  const _HeroCard({required this.metrics, required this.next});
+  final DashboardMetrics metrics;
+  final Booking? next;
+
+  @override
+  Widget build(BuildContext context) {
+    final nextLine = next == null
+        ? 'No upcoming events — enjoy the calm ✨'
+        : 'Next: ${next!.eventType.vibe.label}'
+            '${next!.venue?.isNotEmpty == true ? ' — ${next!.venue}' : ''}'
+            ' · reporting ${_time12(next!.startTime)}';
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(30, 24, 30, 22),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        gradient: WebTheme.sunset,
+        borderRadius: BorderRadius.circular(WebTheme.rCard),
+        boxShadow: WebTheme.orangeGlow,
+      ),
+      child: Stack(
+        children: [
+          // Blurred gold glow blob, top-right (radial stands in for blur 90).
+          Positioned(
+            top: -80,
+            right: -50,
+            child: IgnorePointer(
+              child: Container(
+                width: 240,
+                height: 240,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(colors: [
+                    WebTheme.amber.withValues(alpha: 0.35),
+                    WebTheme.amber.withValues(alpha: 0),
+                  ]),
+                ),
+              ),
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("TODAY'S EVENTS",
+                  style: WebTheme.label(
+                      size: 9,
+                      color: WebTheme.onOrangeLabel,
+                      tracking: 0.25)),
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    _PopIn(
+                      delay: const Duration(milliseconds: 250),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          metrics.todayEvents.toString().padLeft(2, '0'),
+                          style: WebTheme.displayStyle(
+                            size: 96,
+                            weight: FontWeight.w800,
+                            color: WebTheme.chromeInk,
+                            height: 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _legend(WebTheme.amber,
+                              '${metrics.todayDayEvents} Day shift'),
+                          const SizedBox(height: 8),
+                          _legend(WebTheme.chrome,
+                              '${metrics.todayNightEvents} Night shift'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                nextLine,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: WebTheme.bodyStyle(
+                    size: 12, color: WebTheme.onOrangeLabel),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _legend(Color dot, String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 8),
+        Text(text,
+            style:
+                WebTheme.bodyStyle(size: 12.5, color: WebTheme.onOrangeBody)),
+      ],
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.valueColor,
+    required this.sub,
+    required this.subColor,
+  });
+
+  final String label;
+  final String value;
+  final Color valueColor;
+  final String sub;
+  final Color subColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return _HoverTranslate(
+      dy: -2,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+        decoration: BoxDecoration(
+          color: WebTheme.surface,
+          borderRadius: BorderRadius.circular(WebTheme.rCard),
+          border: Border.all(color: WebTheme.hairline),
+          boxShadow: WebTheme.cardShadow,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(label,
+                style: WebTheme.label(
+                    size: 9, color: WebTheme.inkMuted, tracking: 0.2)),
+            const SizedBox(height: 2),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(value,
+                    style: WebTheme.displayStyle(
+                        size: 38,
+                        weight: FontWeight.w800,
+                        color: valueColor)),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(sub,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: WebTheme.bodyStyle(size: 11, color: subColor)),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────── DELIVERED STRIP
+/// "DELIVERED / N" + 7 mini month bars (last bar orange→gold) + range/delta.
+class _DeliveredStrip extends ConsumerWidget {
+  const _DeliveredStrip();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final m = ref.watch(dashboardMetricsProvider).valueOrNull ??
+        DashboardMetrics.placeholder;
+    final bookings = ref
+            .watch(bookingListAllProvider(const BookingFilter()))
+            .valueOrNull ??
+        const <Booking>[];
+
+    // Delivered/completed/shot counts per month, oldest → current, 7 months.
+    final now = DateTime.now();
+    final counts = List<int>.filled(7, 0);
+    for (final b in bookings) {
+      if (b.status != BookingStatus.completed &&
+          b.status != BookingStatus.delivered &&
+          b.status != BookingStatus.shotComplete) {
+        continue;
+      }
+      final diff =
+          (now.year - b.date.year) * 12 + (now.month - b.date.month);
+      if (diff < 0 || diff > 6) continue;
+      counts[6 - diff]++;
+    }
+    final maxCount =
+        counts.fold<int>(1, (mx, c) => c > mx ? c : mx);
+
+    final firstMonth = DateTime(now.year, now.month - 6);
+    final range =
+        '${DateFormat('MMM').format(firstMonth).toUpperCase()} – '
+        '${DateFormat('MMM').format(now).toUpperCase()}';
+    final prev = counts[5];
+    final last = counts[6];
+    final deltaPct =
+        prev > 0 ? (((last - prev) / prev) * 100).round() : null;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 18),
+      decoration: BoxDecoration(
+        color: WebTheme.surface,
+        borderRadius: BorderRadius.circular(WebTheme.rCard),
+        border: Border.all(color: WebTheme.hairline),
+        boxShadow: WebTheme.cardShadow,
+      ),
+      child: Row(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('DELIVERED',
+                  style: WebTheme.label(
+                      size: 9, color: WebTheme.inkMuted, tracking: 0.2)),
+              Text('${m.successEvents}',
+                  style: WebTheme.displayStyle(
+                      size: 34,
+                      weight: FontWeight.w800,
+                      color: WebTheme.success,
+                      height: 1.1)),
+            ],
+          ),
+          const SizedBox(width: 24),
+          Expanded(
+            child: SizedBox(
+              height: 44,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  for (var i = 0; i < counts.length; i++) ...[
+                    if (i != 0) const SizedBox(width: 6),
+                    Expanded(
+                      child: _GrowBar(
+                        delay: Duration(milliseconds: 60 * i),
+                        heightFraction:
+                            (counts[i] / maxCount).clamp(0.12, 1.0),
+                        maxHeight: 44,
+                        decoration: BoxDecoration(
+                          borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(4),
+                              bottom: Radius.circular(2)),
+                          gradient:
+                              i == counts.length - 1 ? WebTheme.barGradient : null,
+                          color: i == counts.length - 1
+                              ? null
+                              : WebTheme.orange.withValues(alpha: 0.18),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 24),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(range,
+                  style: WebTheme.label(
+                      size: 10, color: WebTheme.inkMuted, tracking: 0.08)),
+              const SizedBox(height: 6),
+              Text(
+                deltaPct == null
+                    ? '—'
+                    : '${deltaPct >= 0 ? '▲' : '▼'} ${deltaPct.abs()}%',
+                style: WebTheme.label(
+                    size: 10,
+                    color: deltaPct != null && deltaPct >= 0
+                        ? WebTheme.success
+                        : WebTheme.inkMuted,
+                    tracking: 0.08),
+              ),
+            ],
           ),
         ],
       ),
@@ -527,930 +630,1092 @@ class _PerformanceCard extends ConsumerWidget {
   }
 }
 
-/// A single weekly column: the count label, a bar that grows in on mount, and
-/// the day letter. Brightens and lifts its count on hover so the chart reads as
-/// interactive, not just a static picture.
-class _WeekBar extends StatefulWidget {
-  const _WeekBar({
-    required this.count,
-    required this.frac,
-    required this.isToday,
-    required this.label,
-  });
-
-  final int count;
-  final double frac;
-  final bool isToday;
-  final String label;
+// ─────────────────────────────────────────────────── TODAY'S BOOKINGS
+class _TodaysBookingsCard extends ConsumerWidget {
+  const _TodaysBookingsCard();
 
   @override
-  State<_WeekBar> createState() => _WeekBarState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bookings = ref
+            .watch(bookingListAllProvider(const BookingFilter()))
+            .valueOrNull ??
+        const <Booking>[];
+    final dues = ref.watch(dueBreakdownProvider).valueOrNull ??
+        const <DueEntry>[];
+    final dueByBooking = {for (final d in dues) d.bookingId: d.due};
+
+    final now = DateTime.now();
+    final todays = bookings.where((b) {
+      if (b.status == BookingStatus.cancelled) return false;
+      return b.date.year == now.year &&
+          b.date.month == now.month &&
+          b.date.day == now.day;
+    }).toList()
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(26, 22, 26, 22),
+      decoration: BoxDecoration(
+        color: WebTheme.surface,
+        borderRadius: BorderRadius.circular(WebTheme.rCard),
+        border: Border.all(color: WebTheme.hairline),
+        boxShadow: WebTheme.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Text("Today's Bookings",
+                  style: WebTheme.displayStyle(size: 17)),
+              const Spacer(),
+              _MonoLink(
+                label: 'VIEW ALL →',
+                onTap: () =>
+                    Navigator.of(context).pushNamed(RouteNames.bookings),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (todays.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 22),
+              child: Text(
+                'No bookings today.',
+                textAlign: TextAlign.center,
+                style:
+                    WebTheme.bodyStyle(size: 12.5, color: WebTheme.inkMuted),
+              ),
+            )
+          else
+            for (var i = 0; i < todays.length; i++) ...[
+              if (i != 0) const SizedBox(height: 10),
+              WebEntrance(
+                delay: Duration(milliseconds: 60 * i),
+                offset: 6,
+                child: _BookingRow(
+                  booking: todays[i],
+                  due: dueByBooking[todays[i].id],
+                ),
+              ),
+            ],
+        ],
+      ),
+    );
+  }
 }
 
-class _WeekBarState extends State<_WeekBar> {
+class _BookingRow extends StatefulWidget {
+  const _BookingRow({required this.booking, this.due});
+  final Booking booking;
+  final double? due;
+
+  @override
+  State<_BookingRow> createState() => _BookingRowState();
+}
+
+class _BookingRowState extends State<_BookingRow> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final b = widget.booking;
+    final isNight = b.shift == Shift.night;
+    final accent = isNight ? WebTheme.night : WebTheme.amber;
+    final price = b.customPrice;
+    final client = (b.clientName?.isNotEmpty == true)
+        ? b.clientName!
+        : b.title;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: () => Navigator.of(context)
+            .pushNamed(RouteNames.bookingDetail, arguments: b.id),
+        child: AnimatedContainer(
+          duration: WebTheme.base,
+          curve: WebTheme.ease,
+          transform: Matrix4.translationValues(_hover ? 4 : 0, 0, 0),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
+          decoration: BoxDecoration(
+            color: _hover ? WebTheme.orangeTint : WebTheme.pageBg,
+            borderRadius: BorderRadius.circular(WebTheme.rRow),
+            border: Border(
+              left: BorderSide(color: accent, width: 3),
+              top: BorderSide(
+                  color: _hover ? WebTheme.orange : WebTheme.innerLine),
+              right: BorderSide(
+                  color: _hover ? WebTheme.orange : WebTheme.innerLine),
+              bottom: BorderSide(
+                  color: _hover ? WebTheme.orange : WebTheme.innerLine),
+            ),
+          ),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 46,
+                child: Column(
+                  children: [
+                    Text('${b.date.day}',
+                        style: WebTheme.displayStyle(
+                            size: 21, weight: FontWeight.w800, height: 1)),
+                    Text(
+                        DateFormat('MMM').format(b.date).toUpperCase(),
+                        style: WebTheme.label(
+                            size: 8,
+                            color: WebTheme.inkMuted,
+                            tracking: 0.15)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                flex: 14,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(client,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: WebTheme.bodyStyle(
+                            size: 14, weight: FontWeight.w700)),
+                    const SizedBox(height: 2),
+                    Text(b.eventType.vibe.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: WebTheme.bodyStyle(
+                            size: 11.5, color: WebTheme.inkMuted)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              _ShiftChip(night: isNight),
+              const SizedBox(width: 16),
+              Expanded(
+                flex: 10,
+                child: Text(
+                  b.venue ?? '—',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style:
+                      WebTheme.bodyStyle(size: 12, color: WebTheme.inkSoft),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    price == null ? '—' : _formatBdt((price * 100).round()),
+                    style: TextStyle(
+                      fontFamily: WebTheme.mono,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: WebTheme.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  if (price != null)
+                    Text(
+                      (widget.due ?? 0) > 0.5
+                          ? 'Due ${_formatBdt((widget.due! * 100).round())}'
+                          : 'Paid ✓',
+                      style: TextStyle(
+                        fontFamily: WebTheme.mono,
+                        fontSize: 10,
+                        color: (widget.due ?? 0) > 0.5
+                            ? WebTheme.danger
+                            : WebTheme.success,
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// DAY (orange tint) / NIGHT (purple tint) chip, Space Mono 9 uppercase.
+class _ShiftChip extends StatelessWidget {
+  const _ShiftChip({required this.night});
+  final bool night;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 74,
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        color: night ? WebTheme.nightTint : WebTheme.orangeTint,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+            color:
+                night ? WebTheme.nightTintBorder : WebTheme.orangeTintBorder),
+      ),
+      child: Center(
+        child: Text(
+          night ? 'NIGHT' : 'DAY',
+          style: WebTheme.label(
+            size: 9,
+            tracking: 0.1,
+            color: night ? WebTheme.nightText : WebTheme.orangeDeep,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────── QUICK ACTIONS
+class _QuickActions extends StatelessWidget {
+  const _QuickActions({required this.role});
+  final UserRole role;
+
+  @override
+  Widget build(BuildContext context) {
+    final freelancer = role == UserRole.freelancer;
+    final actions = freelancer
+        ? const [
+            (Icons.calendar_month_rounded, 'Calendar', RouteNames.calendar),
+            (Icons.business_rounded, 'Company',
+                RouteNames.freelancerCompanies),
+            (Icons.chat_bubble_outline_rounded, 'Chat', RouteNames.chat),
+            (Icons.shopping_bag_outlined, 'Expense',
+                RouteNames.financeExpenses),
+          ]
+        : const [
+            (Icons.calendar_month_rounded, 'Calendar', RouteNames.calendar),
+            (Icons.receipt_long_rounded, 'Invoice', RouteNames.invoice),
+            (Icons.chat_bubble_outline_rounded, 'Chat', RouteNames.chat),
+            (Icons.groups_rounded, 'Team', RouteNames.team),
+          ];
+
+    const tints = [
+      (WebTheme.orangeTint, WebTheme.orange),
+      (WebTheme.amberTint, WebTheme.amberDeep),
+      (WebTheme.successTint, WebTheme.success),
+      (WebTheme.nightTint, WebTheme.nightText),
+    ];
+
+    return Row(
+      children: [
+        for (var i = 0; i < actions.length; i++) ...[
+          if (i != 0) const SizedBox(width: 14),
+          Expanded(
+            child: _ActionCard(
+              icon: actions[i].$1,
+              label: actions[i].$2,
+              iconBg: tints[i].$1,
+              iconColor: tints[i].$2,
+              onTap: () =>
+                  Navigator.of(context).pushNamed(actions[i].$3),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ActionCard extends StatefulWidget {
+  const _ActionCard({
+    required this.icon,
+    required this.label,
+    required this.iconBg,
+    required this.iconColor,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color iconBg;
+  final Color iconColor;
+  final VoidCallback onTap;
+
+  @override
+  State<_ActionCard> createState() => _ActionCardState();
+}
+
+class _ActionCardState extends State<_ActionCard> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: WebTheme.base,
+          curve: WebTheme.ease,
+          transform:
+              Matrix4.translationValues(0, _hover ? -3 : 0, 0),
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: WebTheme.surface,
+            borderRadius: BorderRadius.circular(WebTheme.rTile),
+            border: Border.all(
+                color: _hover ? WebTheme.orange : WebTheme.hairline),
+            boxShadow:
+                _hover ? WebTheme.cardShadowHover : WebTheme.cardShadowSmall,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: widget.iconBg,
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child:
+                    Icon(widget.icon, size: 18, color: widget.iconColor),
+              ),
+              const SizedBox(width: 12),
+              Flexible(
+                child: Text(
+                  widget.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: WebTheme.bodyStyle(
+                      size: 13, weight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════ RIGHT PANEL
+class _RightPanel extends StatelessWidget {
+  const _RightPanel({this.user});
+  final UserModel? user;
+
+  @override
+  Widget build(BuildContext context) {
+    final role = user?.role ?? UserRole.owner;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        WebEntrance(
+          delay: const Duration(milliseconds: 120),
+          child: _FinancePanel(role: role),
+        ),
+        const SizedBox(height: 18),
+        WebEntrance(
+          delay: const Duration(milliseconds: 180),
+          child: const _AnnouncementPanel(),
+        ),
+        const SizedBox(height: 18),
+        WebEntrance(
+          delay: const Duration(milliseconds: 240),
+          child: const _MiniCalendar(),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────── FINANCE PANEL
+/// Role-aware finance summary (handoff): Owner/Both = Collection + Due tiles,
+/// TOP DUES list, SEND REMINDERS. Manager = hidden-income notice + dues.
+/// Freelancer = My Earnings + Request Payment.
+class _FinancePanel extends ConsumerWidget {
+  const _FinancePanel({required this.role});
+  final UserRole role;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final month = DateFormat('MMMM').format(DateTime.now());
+
+    if (role == UserRole.freelancer) {
+      return _card(
+        context,
+        title: 'My Earnings · $month',
+        children: [
+          Text(
+            'Request a payout for your completed events — approvals land on '
+            'the 15th.',
+            style: WebTheme.bodyStyle(size: 12, color: WebTheme.inkSoft),
+          ),
+          const SizedBox(height: 14),
+          _OrangeButton(
+            label: 'REQUEST PAYMENT',
+            onTap: () => Navigator.of(context)
+                .pushNamed(RouteNames.teamSalarySheet),
+          ),
+        ],
+      );
+    }
+
+    final m = ref.watch(dashboardMetricsProvider).valueOrNull ??
+        DashboardMetrics.placeholder;
+    final dues =
+        ref.watch(dueBreakdownProvider).valueOrNull ?? const <DueEntry>[];
+    final topDues = [...dues]..sort((a, b) => b.due.compareTo(a.due));
+    final shown = topDues.take(4).toList();
+
+    final isManager = role == UserRole.manager;
+
+    return _card(
+      context,
+      title: 'Finance · $month',
+      children: [
+        if (isManager)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: WebTheme.pageBg,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: WebTheme.innerLine),
+            ),
+            child: Text(
+              'Income & profit are hidden for the Manager role. Client dues '
+              'remain visible below.',
+              style: WebTheme.bodyStyle(size: 11.5, color: WebTheme.inkSoft),
+            ),
+          )
+        else
+          Row(
+            children: [
+              Expanded(
+                child: _tile('COLLECTION · TODAY',
+                    _formatBdt(m.todayCollection), WebTheme.orangeTint,
+                    WebTheme.orangeTintBorder, WebTheme.orangeDeep),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _tile('DUE', _formatBdt(m.pendingDue),
+                    WebTheme.dangerTint, WebTheme.dangerTintBorder,
+                    WebTheme.danger),
+              ),
+            ],
+          ),
+        const SizedBox(height: 14),
+        Text('TOP DUES',
+            style: WebTheme.label(
+                size: 9, color: WebTheme.inkMuted, tracking: 0.2)),
+        const SizedBox(height: 8),
+        if (shown.isEmpty)
+          Text('No outstanding dues 🎉',
+              style: WebTheme.bodyStyle(
+                  size: 12, color: WebTheme.inkMuted))
+        else
+          for (final d in shown)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      d.clientName?.isNotEmpty == true
+                          ? d.clientName!
+                          : d.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: WebTheme.bodyStyle(
+                          size: 12.5, weight: FontWeight.w600),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _formatBdt((d.due * 100).round()),
+                    style: TextStyle(
+                      fontFamily: WebTheme.mono,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: WebTheme.danger,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        const SizedBox(height: 6),
+        _OrangeButton(
+          label: 'SEND REMINDERS',
+          onTap: () =>
+              Navigator.of(context).pushNamed(RouteNames.reminders),
+        ),
+      ],
+    );
+  }
+
+  Widget _tile(String label, String value, Color bg, Color border,
+      Color valueColor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: WebTheme.label(
+                  size: 8, color: WebTheme.inkMuted, tracking: 0.12)),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(value,
+                style: WebTheme.displayStyle(
+                    size: 17, weight: FontWeight.w800, color: valueColor)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _card(BuildContext context,
+      {required String title, required List<Widget> children}) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: WebTheme.surface,
+        borderRadius: BorderRadius.circular(WebTheme.rCard),
+        border: Border.all(color: WebTheme.hairline),
+        boxShadow: WebTheme.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(title, style: WebTheme.displayStyle(size: 16)),
+          const SizedBox(height: 14),
+          ...children,
+        ],
+      ),
+    );
+  }
+}
+
+/// Full-width orange pill button with mono uppercase label + glow.
+class _OrangeButton extends StatefulWidget {
+  const _OrangeButton({required this.label, required this.onTap});
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  State<_OrangeButton> createState() => _OrangeButtonState();
+}
+
+class _OrangeButtonState extends State<_OrangeButton> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: WebTheme.base,
+          curve: WebTheme.ease,
+          padding: const EdgeInsets.symmetric(vertical: 11),
+          decoration: BoxDecoration(
+            color: _hover ? WebTheme.orangeDark : WebTheme.orange,
+            borderRadius: BorderRadius.circular(WebTheme.rFull),
+            boxShadow: WebTheme.buttonGlow,
+          ),
+          child: Center(
+            child: Text(widget.label,
+                style: WebTheme.label(
+                    size: 9,
+                    color: WebTheme.chromeInk,
+                    tracking: 0.15,
+                    weight: FontWeight.w700)),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────── ANNOUNCEMENT PANEL
+/// Dark #2B1D12 card with the latest (pinned-first) announcement. Links to
+/// the Announcements screen.
+class _AnnouncementPanel extends ConsumerWidget {
+  const _AnnouncementPanel();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final items =
+        ref.watch(sortedAnnouncementsProvider).valueOrNull ?? const [];
+    if (items.isEmpty) return const SizedBox.shrink();
+    final a = items.first;
+
+    return WebHoverLift(
+      onTap: () =>
+          Navigator.of(context).pushNamed(RouteNames.announcements),
+      borderRadius: WebTheme.rCard,
+      enableShadow: false,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: WebTheme.chrome,
+          borderRadius: BorderRadius.circular(WebTheme.rCard),
+          boxShadow: WebTheme.darkCardShadow,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('📌 ANNOUNCEMENT',
+                style: WebTheme.label(
+                    size: 9, color: WebTheme.amber, tracking: 0.2)),
+            const SizedBox(height: 10),
+            Text(a.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: WebTheme.bodyStyle(
+                    size: 14,
+                    weight: FontWeight.w700,
+                    color: WebTheme.chromeInk)),
+            const SizedBox(height: 6),
+            Text(a.body,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: WebTheme.bodyStyle(
+                    size: 12, color: WebTheme.chromeInkMuted)),
+            const SizedBox(height: 12),
+            Text('VIEW ALL →',
+                style: WebTheme.label(
+                    size: 9, color: WebTheme.amber, tracking: 0.12)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────── MINI CALENDAR
+/// Month grid (Monday start): ‹ › month nav, MO–SU header (SA/SU orange),
+/// today = orange square, gold/purple event dots, next-holiday footer.
+class _MiniCalendar extends ConsumerStatefulWidget {
+  const _MiniCalendar();
+
+  @override
+  ConsumerState<_MiniCalendar> createState() => _MiniCalendarState();
+}
+
+class _MiniCalendarState extends ConsumerState<_MiniCalendar> {
+  late DateTime _month;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _month = DateTime(now.year, now.month);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bookings = ref
+            .watch(bookingListAllProvider(const BookingFilter()))
+            .valueOrNull ??
+        const <Booking>[];
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    // day → (hasDay, hasNight) for the visible month.
+    final dots = <int, (bool, bool)>{};
+    for (final b in bookings) {
+      if (b.status == BookingStatus.cancelled) continue;
+      if (b.date.year != _month.year || b.date.month != _month.month) {
+        continue;
+      }
+      final prev = dots[b.date.day] ?? (false, false);
+      dots[b.date.day] = b.shift == Shift.night
+          ? (prev.$1, true)
+          : (true, prev.$2);
+    }
+
+    final firstWeekday = DateTime(_month.year, _month.month, 1).weekday;
+    final leading = firstWeekday - 1; // Monday start
+    final daysInMonth =
+        DateTime(_month.year, _month.month + 1, 0).day;
+
+    final holiday = _nextHoliday(today);
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: WebTheme.surface,
+        borderRadius: BorderRadius.circular(WebTheme.rCard),
+        border: Border.all(color: WebTheme.hairline),
+        boxShadow: WebTheme.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Text(DateFormat('MMMM yyyy').format(_month),
+                  style: WebTheme.displayStyle(size: 15)),
+              const Spacer(),
+              _roundNav('‹', () => setState(() {
+                    _month = DateTime(_month.year, _month.month - 1);
+                  })),
+              const SizedBox(width: 6),
+              _roundNav('›', () => setState(() {
+                    _month = DateTime(_month.year, _month.month + 1);
+                  })),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              for (var i = 0; i < 7; i++)
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      const ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'][i],
+                      style: WebTheme.label(
+                        size: 8.5,
+                        tracking: 0.1,
+                        color: i >= 5
+                            ? WebTheme.orange
+                            : WebTheme.inkMuted,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          for (var week = 0;
+              week * 7 < leading + daysInMonth;
+              week++) ...[
+            Row(
+              children: [
+                for (var i = 0; i < 7; i++)
+                  Expanded(
+                    child: _cell(week * 7 + i - leading + 1, daysInMonth,
+                        today, dots),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 4),
+          ],
+          const SizedBox(height: 8),
+          if (holiday != null)
+            Row(
+              children: [
+                Container(
+                  width: 7,
+                  height: 7,
+                  decoration: const BoxDecoration(
+                      color: WebTheme.success, shape: BoxShape.circle),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Next holiday: ${holiday.name} · '
+                    '${DateFormat('d MMM').format(holiday.date)}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: WebTheme.bodyStyle(
+                        size: 11, color: WebTheme.inkSoft),
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _cell(int day, int daysInMonth, DateTime today,
+      Map<int, (bool, bool)> dots) {
+    if (day < 1 || day > daysInMonth) return const SizedBox(height: 34);
+    final isToday = today.year == _month.year &&
+        today.month == _month.month &&
+        today.day == day;
+    final d = dots[day];
+
+    return SizedBox(
+      height: 34,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 24,
+            height: 22,
+            decoration: BoxDecoration(
+              color: isToday ? WebTheme.orange : null,
+              borderRadius: BorderRadius.circular(7),
+            ),
+            child: Center(
+              child: Text(
+                '$day',
+                style: WebTheme.bodyStyle(
+                  size: 11.5,
+                  weight: isToday ? FontWeight.w700 : FontWeight.w500,
+                  color: isToday ? WebTheme.chromeInk : WebTheme.inkSoft,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 6,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (d?.$1 == true)
+                  Container(
+                    width: 4,
+                    height: 4,
+                    margin: const EdgeInsets.symmetric(horizontal: 1),
+                    decoration: const BoxDecoration(
+                        color: WebTheme.amber, shape: BoxShape.circle),
+                  ),
+                if (d?.$2 == true)
+                  Container(
+                    width: 4,
+                    height: 4,
+                    margin: const EdgeInsets.symmetric(horizontal: 1),
+                    decoration: const BoxDecoration(
+                        color: WebTheme.night, shape: BoxShape.circle),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _roundNav(String glyph, VoidCallback onTap) {
+    return WebHoverHighlight(
+      onTap: onTap,
+      borderRadius: 999,
+      builder: (context, hovering) => Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+              color: hovering ? WebTheme.orange : WebTheme.hairline),
+        ),
+        child: Center(
+          child: Text(glyph,
+              style: TextStyle(
+                fontSize: 13,
+                color: hovering ? WebTheme.orange : WebTheme.inkMuted,
+                height: 1,
+              )),
+        ),
+      ),
+    );
+  }
+
+  /// The next BD holiday on/after [from] (looks up to 2 months ahead).
+  static BdHoliday? _nextHoliday(DateTime from) {
+    for (var i = 0; i < 3; i++) {
+      final month = DateTime(from.year, from.month + i);
+      for (final h in bdHolidaysOfMonth(month)) {
+        if (!h.date.isBefore(from)) return h;
+      }
+    }
+    return null;
+  }
+}
+
+// ═══════════════════════════════════════════════════════ SHARED PIECES
+/// Space-Mono orange micro-link ("VIEW ALL →").
+class _MonoLink extends StatelessWidget {
+  const _MonoLink({required this.label, required this.onTap});
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return WebHoverHighlight(
+      onTap: onTap,
+      builder: (context, hovering) => Text(
+        label,
+        style: WebTheme.label(
+          size: 10,
+          color: hovering ? WebTheme.orangeDark : WebTheme.orange,
+          tracking: 0.1,
+        ),
+      ),
+    );
+  }
+}
+
+/// Hover → translate by [dy] px (the handoff's lift). Reduce-motion aware.
+class _HoverTranslate extends StatefulWidget {
+  const _HoverTranslate({
+    required this.child,
+    required this.dy,
+    this.onTap,
+  });
+
+  final Widget child;
+  final double dy;
+  final VoidCallback? onTap;
+
+  @override
+  State<_HoverTranslate> createState() => _HoverTranslateState();
+}
+
+class _HoverTranslateState extends State<_HoverTranslate> {
   bool _hover = false;
 
   @override
   Widget build(BuildContext context) {
     final noMotion =
         MediaQuery.maybeOf(context)?.disableAnimations ?? false;
-    final lit = _hover && !noMotion;
-
-    // Today keeps the sunset gradient; other days use the chrome scale, and
-    // brighten toward orange on hover so the hovered bar clearly stands out.
-    final LinearGradient barGradient = widget.isToday
-        ? WebTheme.sunset
-        : lit
-            ? const LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [WebTheme.orangeLight, WebTheme.orange],
-              )
-            : const LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [WebTheme.sage, WebTheme.sageDeep],
-              );
-
-    final Color countColor = lit
-        ? WebTheme.orange
-        : widget.isToday
-            ? WebTheme.orange
-            : WebTheme.inkMuted;
-
     return MouseRegion(
+      cursor: widget.onTap != null
+          ? SystemMouseCursors.click
+          : MouseCursor.defer,
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          // Count label lifts a touch and always shows on hover.
-          _SlideUpCount(
-            show: widget.count != 0 || lit,
-            text: '${widget.count}',
-            color: countColor,
-            lifted: lit,
-          ),
-          const SizedBox(height: 6),
-          // Animated bar: grows from 8px → full on mount; hover adds a soft glow.
-          TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0, end: widget.frac),
-            duration: WebTheme.slow,
-            curve: WebTheme.ease,
-            builder: (context, v, _) {
-              final h = 8.0 + v * 96.0;
-              return AnimatedContainer(
-                duration: WebTheme.fast,
-                curve: WebTheme.ease,
-                height: h,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  gradient: barGradient,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(6),
-                  ),
-                  boxShadow: lit
-                      ? [
-                          BoxShadow(
-                            color: WebTheme.orange.withValues(alpha: 0.28),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ]
-                      : null,
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 8),
-          Text(
-            widget.label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: widget.isToday ? FontWeight.w800 : FontWeight.w600,
-              color: widget.isToday ? WebTheme.ink : WebTheme.inkFaint,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// A tiny count label that fades + lifts into view. Reserves its line height so
-/// bars never shift vertically as the label appears/disappears on hover.
-class _SlideUpCount extends StatelessWidget {
-  const _SlideUpCount({
-    required this.show,
-    required this.text,
-    required this.color,
-    required this.lifted,
-  });
-
-  final bool show;
-  final String text;
-  final Color color;
-  final bool lifted;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 14,
-      child: AnimatedOpacity(
-        duration: WebTheme.fast,
-        opacity: show ? 1 : 0,
-        child: AnimatedSlide(
-          duration: WebTheme.fast,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: noMotion ? Duration.zero : WebTheme.base,
           curve: WebTheme.ease,
-          offset: Offset(0, lifted ? -0.12 : 0),
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
+          transform: Matrix4.translationValues(
+              0, _hover && !noMotion ? widget.dy : 0, 0),
+          child: widget.child,
         ),
       ),
     );
   }
 }
 
-/// The recent / upcoming bookings table — the heart of the dashboard.
-class _RecentBookingsCard extends ConsumerWidget {
-  const _RecentBookingsCard();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final now = DateTime.now();
-    final monthAsync = ref.watch(
-      calendarBookingsProvider((year: now.year, month: now.month)),
-    );
-
-    return _Panel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _PanelHeader(
-            title: 'Upcoming Bookings',
-            subtitle: 'Sorted by date',
-            trailing: _ViewAll(
-              onTap: () =>
-                  Navigator.of(context).pushNamed(RouteNames.bookings),
-            ),
-          ),
-          const SizedBox(height: WebTheme.sp3),
-          monthAsync.when(
-            loading: () => const _TableSkeleton(),
-            error: (_, _) => const _TableEmpty(
-              message: 'Could not load bookings.',
-            ),
-            data: (all) {
-              final today = DateTime(now.year, now.month, now.day);
-              final upcoming = all
-                  .where((b) {
-                    final d = DateTime(b.date.year, b.date.month, b.date.day);
-                    return !d.isBefore(today);
-                  })
-                  .toList()
-                ..sort((a, b) => a.date.compareTo(b.date));
-              final rows = upcoming.take(6).toList();
-              if (rows.isEmpty) {
-                return const _TableEmpty(
-                  message: 'No upcoming bookings this month.',
-                );
-              }
-              return Column(
-                children: [
-                  for (var i = 0; i < rows.length; i++) ...[
-                    if (i > 0)
-                      const Divider(height: 1, color: WebTheme.hairline),
-                    _BookingRow(booking: rows[i]),
-                  ],
-                ],
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BookingRow extends StatelessWidget {
-  const _BookingRow({required this.booking});
-  final Booking booking;
-
-  String _statusLabel(String raw) {
-    // Turn enum name (e.g. inProgress) into Title Case ("In Progress").
-    final spaced = raw.replaceAllMapped(
-      RegExp('[A-Z]'),
-      (m) => ' ${m[0]}',
-    );
-    final t = spaced.trim();
-    return t.isEmpty ? raw : '${t[0].toUpperCase()}${t.substring(1)}';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final vibe = booking.eventType.vibe;
-    final client = (booking.clientName?.trim().isNotEmpty ?? false)
-        ? booking.clientName!.trim()
-        : booking.title;
-    final dateStr = DateFormat('d MMM').format(booking.date);
-    final statusColor = WebTheme.statusColor(booking.status.name);
-    final price = booking.customPrice;
-
-    return WebHoverHighlight(
-      borderRadius: WebTheme.rChip,
-      onTap: () => Navigator.of(context).pushNamed(
-        RouteNames.bookingDetail,
-        arguments: booking.id,
-      ),
-      builder: (context, hovering) {
-        return AnimatedContainer(
-          duration: WebTheme.fast,
-          curve: WebTheme.ease,
-          padding: const EdgeInsets.symmetric(
-            horizontal: WebTheme.sp3,
-            vertical: WebTheme.sp3,
-          ),
-          decoration: BoxDecoration(
-            color: hovering ? WebTheme.sageTintSoft : Colors.transparent,
-            borderRadius: BorderRadius.circular(WebTheme.rChip),
-          ),
-          child: Row(
-            children: [
-              // Event-type vibe avatar.
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: vibe.color.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(WebTheme.rChip),
-                ),
-                child: Icon(vibe.icon, color: vibe.color, size: 20),
-              ),
-              const SizedBox(width: WebTheme.sp3),
-              // Client + event type.
-              Expanded(
-                flex: 5,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      client,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: WebTheme.ink,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${vibe.label} · ${BookingFormat.clockTime(booking.startTime)}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: WebTheme.inkMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Date.
-              Expanded(
-                flex: 2,
-                child: Text(
-                  dateStr,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: WebTheme.inkSoft,
-                  ),
-                ),
-              ),
-              // Status badge.
-              Expanded(
-                flex: 3,
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(WebTheme.rFull),
-                    ),
-                    child: Text(
-                      _statusLabel(booking.status.name),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                        color: statusColor,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              // Price (right-aligned).
-              Expanded(
-                flex: 2,
-                child: Text(
-                  price == null ? '—' : _formatBdt((price * 100).round()),
-                  textAlign: TextAlign.right,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w800,
-                    color: WebTheme.ink,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────── SIDE COLUMN
-class _SideColumn extends ConsumerWidget {
-  const _SideColumn({this.user});
-  final UserModel? user;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _QuickActionsCard(user: user),
-        const SizedBox(height: WebTheme.sp5),
-        const _AnnouncementCard(),
-        const SizedBox(height: WebTheme.sp5),
-        const _ThisMonthCard(),
-      ],
-    );
-  }
-}
-
-class _QuickActionsCard extends StatelessWidget {
-  const _QuickActionsCard({this.user});
-  final UserModel? user;
-
-  @override
-  Widget build(BuildContext context) {
-    final isFreelancer = user?.role == UserRole.freelancer;
-    final actions = <_Qa>[
-      _Qa(Icons.calendar_month_rounded, 'Calendar', WebTheme.sage,
-          RouteNames.calendar),
-      _Qa(
-        isFreelancer ? Icons.business_rounded : Icons.receipt_long_rounded,
-        isFreelancer ? 'Company' : 'Invoice',
-        WebTheme.info,
-        isFreelancer ? RouteNames.bookings : RouteNames.invoice,
-      ),
-      _Qa(Icons.inventory_2_rounded, 'Packages', WebTheme.success,
-          RouteNames.packages),
-      _Qa(Icons.groups_rounded, 'Team', WebTheme.orange, RouteNames.team),
-    ];
-
-    return _Panel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _PanelHeader(title: 'Quick Actions'),
-          const SizedBox(height: WebTheme.sp4),
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: WebTheme.sp3,
-            crossAxisSpacing: WebTheme.sp3,
-            childAspectRatio: 2.4,
-            children: [
-              for (final a in actions)
-                WebHoverLift(
-                  onTap: () => Navigator.of(context).pushNamed(a.route),
-                  borderRadius: WebTheme.rChip,
-                  enableShadow: false,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: WebTheme.sageTintSoft,
-                      borderRadius: BorderRadius.circular(WebTheme.rChip),
-                      border: Border.all(color: WebTheme.sageLine),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 30,
-                          height: 30,
-                          decoration: BoxDecoration(
-                            color: a.color.withValues(alpha: 0.14),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(a.icon, color: a.color, size: 17),
-                        ),
-                        const SizedBox(width: 9),
-                        Flexible(
-                          child: Text(
-                            a.label,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: WebTheme.inkSoft,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Qa {
-  const _Qa(this.icon, this.label, this.color, this.route);
-  final IconData icon;
-  final String label;
-  final Color color;
-  final String route;
-}
-
-class _AnnouncementCard extends ConsumerWidget {
-  const _AnnouncementCard();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final announcementsAsync = ref.watch(sortedAnnouncementsProvider);
-
-    return _Panel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _PanelHeader(
-            title: 'Announcement',
-            trailing: _ViewAll(
-              onTap: () => Navigator.of(context)
-                  .pushNamed(RouteNames.announcements),
-            ),
-          ),
-          const SizedBox(height: WebTheme.sp4),
-          announcementsAsync.when(
-            loading: () => const _AnnouncementBody(
-              text: 'Loading announcements…',
-            ),
-            error: (_, _) => const _AnnouncementBody(
-              text: 'Could not load announcements.',
-            ),
-            data: (items) {
-              final active = items.where((a) => !a.isExpired).toList();
-              if (active.isEmpty) {
-                return const _AnnouncementBody(
-                  text: 'No announcements yet — tap "View all" to post one.',
-                );
-              }
-              final a = active.first;
-              return _AnnouncementBody(title: a.title, text: a.body);
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AnnouncementBody extends StatelessWidget {
-  const _AnnouncementBody({this.title, required this.text});
-  final String? title;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(WebTheme.sp4),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            WebTheme.orange.withValues(alpha: 0.08),
-            WebTheme.amber.withValues(alpha: 0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(WebTheme.rChip),
-        border: Border.all(color: WebTheme.orange.withValues(alpha: 0.18)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              gradient: WebTheme.sunset,
-              borderRadius: BorderRadius.circular(9),
-            ),
-            child: const Icon(Icons.campaign_rounded,
-                color: Colors.white, size: 18),
-          ),
-          const SizedBox(width: WebTheme.sp3),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (title?.trim().isNotEmpty ?? false) ...[
-                  Text(
-                    title!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w800,
-                      color: WebTheme.ink,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                ],
-                Text(
-                  text,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    height: 1.45,
-                    fontWeight: FontWeight.w500,
-                    color: WebTheme.inkSoft,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ThisMonthCard extends ConsumerWidget {
-  const _ThisMonthCard();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final metricsAsync = ref.watch(dashboardMetricsProvider);
-    final m = metricsAsync.value ?? DashboardMetrics.placeholder;
-    final monthName = DateFormat.MMMM().format(DateTime.now());
-    // National gazetted days first (most relevant), then weekly Fri/Sat.
-    final all = bdHolidaysOfMonth(DateTime.now());
-    final national =
-        all.where((h) => !h.name.startsWith('Weekly Holiday')).toList();
-    final weekly =
-        all.where((h) => h.name.startsWith('Weekly Holiday')).toList();
-    final holidays = [...national, ...weekly];
-
-    return _Panel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _PanelHeader(title: monthName, subtitle: 'This month'),
-          const SizedBox(height: WebTheme.sp4),
-          _InfoRow(
-            icon: Icons.celebration_rounded,
-            color: WebTheme.amberDeep,
-            label: 'Holidays',
-            value: '${m.holidaysThisMonth}',
-          ),
-          const SizedBox(height: WebTheme.sp3),
-          _InfoRow(
-            icon: Icons.cancel_rounded,
-            color: WebTheme.danger,
-            label: 'Cancelled events',
-            value: '${m.cancelledEvents}',
-          ),
-          if (holidays.isNotEmpty) ...[
-            const SizedBox(height: WebTheme.sp4),
-            const Divider(height: 1, color: WebTheme.hairline),
-            const SizedBox(height: WebTheme.sp3),
-            for (final h in holidays.take(3))
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 34,
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      decoration: BoxDecoration(
-                        color: WebTheme.amber.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(7),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        '${h.date.day}',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: WebTheme.amberDeep,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: WebTheme.sp3),
-                    Expanded(
-                      child: Text(
-                        h.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          color: WebTheme.inkSoft,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({
-    required this.icon,
-    required this.color,
-    required this.label,
-    required this.value,
-  });
-
-  final IconData icon;
-  final Color color;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(9),
-          ),
-          child: Icon(icon, color: color, size: 18),
-        ),
-        const SizedBox(width: WebTheme.sp3),
-        Expanded(
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w600,
-              color: WebTheme.inkSoft,
-            ),
-          ),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: color,
-            letterSpacing: -0.3,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────── SHARED BUILDING BLOCKS
-class _Panel extends StatelessWidget {
-  const _Panel({required this.child});
+/// Scale 0.92 → 1 pop with the overshoot curve (handoff `popIn`).
+class _PopIn extends StatefulWidget {
+  const _PopIn({required this.child, this.delay = Duration.zero});
   final Widget child;
+  final Duration delay;
+
+  @override
+  State<_PopIn> createState() => _PopInState();
+}
+
+class _PopInState extends State<_PopIn>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 600),
+  );
+  bool _scheduled = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_scheduled) return;
+    _scheduled = true;
+    final noMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    if (noMotion) {
+      _c.value = 1;
+    } else if (widget.delay == Duration.zero) {
+      _c.forward();
+    } else {
+      Future<void>.delayed(widget.delay, () {
+        if (mounted) _c.forward();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(WebTheme.sp5),
-      decoration: BoxDecoration(
-        color: WebTheme.surface,
-        borderRadius: BorderRadius.circular(WebTheme.rPanel),
-        border: Border.all(color: WebTheme.hairline),
-        boxShadow: WebTheme.cardShadow,
-      ),
-      child: child,
+    final scale = Tween<double>(begin: 0.92, end: 1)
+        .animate(CurvedAnimation(parent: _c, curve: WebTheme.spring));
+    return FadeTransition(
+      opacity: CurvedAnimation(parent: _c, curve: Curves.easeOut),
+      child: ScaleTransition(scale: scale, child: widget.child),
     );
   }
 }
 
-class _PanelHeader extends StatelessWidget {
-  const _PanelHeader({
-    required this.title,
-    this.subtitle,
-    this.trailing,
+/// A bar that grows from the bottom (scaleY 0 → 1) with a stagger delay —
+/// the handoff's `barGrow`. Reduce-motion renders the final bar instantly.
+class _GrowBar extends StatefulWidget {
+  const _GrowBar({
+    required this.heightFraction,
+    required this.maxHeight,
+    required this.decoration,
+    this.delay = Duration.zero,
   });
 
-  final String title;
-  final String? subtitle;
-  final Widget? trailing;
+  final double heightFraction;
+  final double maxHeight;
+  final BoxDecoration decoration;
+  final Duration delay;
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.3,
-                  color: WebTheme.ink,
-                ),
-              ),
-              if (subtitle != null) ...[
-                const SizedBox(height: 2),
-                Text(
-                  subtitle!,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: WebTheme.inkMuted,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-        ?trailing,
-      ],
-    );
-  }
+  State<_GrowBar> createState() => _GrowBarState();
 }
 
-class _StatPill extends StatelessWidget {
-  const _StatPill({
-    required this.icon,
-    required this.label,
-    required this.color,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color color;
+class _GrowBarState extends State<_GrowBar>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 700),
+  );
+  bool _scheduled = false;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(WebTheme.rFull),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_scheduled) return;
+    _scheduled = true;
+    final noMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    if (noMotion) {
+      _c.value = 1;
+    } else {
+      Future<void>.delayed(widget.delay, () {
+        if (mounted) _c.forward();
+      });
+    }
   }
-}
-
-class _ViewAll extends StatelessWidget {
-  const _ViewAll({required this.onTap});
-  final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    return WebHoverHighlight(
-      borderRadius: WebTheme.rFull,
-      onTap: onTap,
-      builder: (context, hovering) {
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: hovering ? WebTheme.sageTint : Colors.transparent,
-            borderRadius: BorderRadius.circular(WebTheme.rFull),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: const [
-              Text(
-                'View all',
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
-                  color: WebTheme.sage,
-                ),
-              ),
-              SizedBox(width: 3),
-              Icon(Icons.chevron_right_rounded,
-                  size: 17, color: WebTheme.sage),
-            ],
-          ),
-        );
-      },
-    );
+  void dispose() {
+    _c.dispose();
+    super.dispose();
   }
-}
-
-class _TableSkeleton extends StatelessWidget {
-  const _TableSkeleton();
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: List.generate(
-        4,
-        (i) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: WebTheme.sp3),
-          child: Row(
-            children: const [
-              WebShimmer(
-                width: 40,
-                height: 40,
-                borderRadius: WebTheme.rChip,
-              ),
-              SizedBox(width: WebTheme.sp3),
-              Expanded(child: WebShimmer(height: 14, borderRadius: 6)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TableEmpty extends StatelessWidget {
-  const _TableEmpty({required this.message});
-  final String message;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: WebTheme.sp6),
-      child: Center(
-        child: Column(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: WebTheme.sageTint,
-                borderRadius: BorderRadius.circular(WebTheme.rChip),
-              ),
-              child: const Icon(Icons.event_busy_rounded,
-                  color: WebTheme.sage, size: 24),
-            ),
-            const SizedBox(height: WebTheme.sp3),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: WebTheme.inkMuted,
-              ),
-            ),
-          ],
-        ),
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: AnimatedBuilder(
+        animation: _c,
+        builder: (context, _) {
+          final t =
+              CurvedAnimation(parent: _c, curve: WebTheme.ease).value;
+          return Container(
+            height: widget.maxHeight * widget.heightFraction * t,
+            decoration: widget.decoration,
+          );
+        },
       ),
     );
   }
@@ -1470,4 +1735,15 @@ String _formatBdt(int minor) {
     buf.write(reversed[i]);
   }
   return ActiveCurrency.value.wrap(buf.toString().split('').reversed.join());
+}
+
+/// `"16:30"` → `"4:30 PM"`.
+String _time12(String hhmm) {
+  final parts = hhmm.split(':');
+  if (parts.length != 2) return hhmm;
+  final h = int.tryParse(parts[0]);
+  final m = int.tryParse(parts[1]);
+  if (h == null || m == null) return hhmm;
+  final dt = DateTime(2000, 1, 1, h, m);
+  return DateFormat('h:mm a').format(dt);
 }

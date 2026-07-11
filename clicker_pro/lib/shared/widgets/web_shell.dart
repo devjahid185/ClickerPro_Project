@@ -26,53 +26,11 @@ class WebShell extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!kIsWeb) return child;
 
-    return DecoratedBox(
-      decoration: const BoxDecoration(gradient: WebTheme.pageWash),
-      child: Stack(
-        children: [
-          // Faint sage glow anchored top-left — pure decoration, no hit test.
-          Positioned(
-            top: -180,
-            left: -160,
-            child: IgnorePointer(
-              child: Container(
-                width: 620,
-                height: 620,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      WebTheme.sage.withValues(alpha: 0.08),
-                      WebTheme.sage.withValues(alpha: 0.0),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          // A second, warm orange glow bottom-right for brand balance.
-          Positioned(
-            bottom: -200,
-            right: -180,
-            child: IgnorePointer(
-              child: Container(
-                width: 560,
-                height: 560,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      WebTheme.orange.withValues(alpha: 0.045),
-                      WebTheme.orange.withValues(alpha: 0.0),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          child,
-        ],
-      ),
+    // Sunset Studio canvas: flat warm cream (#FBF6F0) — the handoff's page
+    // background. Cards/sidebar supply all the depth; no backdrop glows.
+    return ColoredBox(
+      color: WebTheme.pageBg,
+      child: child,
     );
   }
 }

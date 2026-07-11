@@ -7,10 +7,10 @@
 // buttons, dialogs, snackbars…) so they match the web design language driven
 // by WebTheme tokens — NOT the mobile cream/terracotta look.
 //
-// STATUS: CLICKERPRO DESIGN — reads from WebTheme, so it inherited the Signal
-// Orange / warm off-white palette automatically when those token values were
-// swapped. Body font is Hanken Grotesk to match the design source
-// (ClickerPro Web.dc.html).
+// STATUS: SUNSET STUDIO WEB — reads from WebTheme, so it inherited the warm
+// cream / Signal Orange palette automatically when those token values were
+// swapped. Body font is DM Sans to match the design handoff
+// (design_handoff_clickerpro_web / ClickerPro Dashboard v2.dc.html).
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -22,8 +22,9 @@ class AppThemeWeb {
 
   static ThemeData theme() {
     final base = ThemeData.light();
-    // Hanken Grotesk is the design source's UI typeface (ClickerPro Web.dc.html).
-    final textTheme = GoogleFonts.hankenGroteskTextTheme(base.textTheme);
+    // DM Sans is the handoff's body/UI typeface; headings use Sora via
+    // WebTheme.display at the widget level.
+    final textTheme = GoogleFonts.dmSansTextTheme(base.textTheme);
 
     return ThemeData(
       brightness: Brightness.light,

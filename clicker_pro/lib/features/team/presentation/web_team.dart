@@ -1,306 +1,307 @@
 // lib/features/team/presentation/web_team.dart
 //
-// Graphy7 — WEB-ONLY team members (Graphy7 Design).
+// Graphy7 — WEB-ONLY team screen (Sunset Studio, from
+// design_handoff_clickerpro_web — Screen 5, MOD-08).
 //
-// A desktop members grid, rendered ONLY on wide web. The mobile team body is
-// 100% untouched (TeamScreen routes here only when kIsWeb && width >= 900).
-// Ported from the design source's "Team Members" screen: a header with an
-// Invite CTA and a responsive 3-up grid of member cards (avatar, name, role,
-// status pill, contact rows).
+// Layout per the handoff:
+//   1. 4 stat tiles — Members (dark) · Freelancers (orange) · Managers
+//      (purple) · Active (green)
+//   2. Chief card — full-width gold gradient with the busiest member
+//   3. Members card — filter chips + "+ Invite" pill; rows with tinted
+//      avatar + status dot, name + phone, role tag pill, event count and a
+//      round call button (green-tint hover)
 //
-// Data comes from the same `teamMembersProvider` the mobile screen uses — no
-// new business logic, only a web presentation layer.
+// Data: teamMembersProvider (the same list mobile uses) + staffPayoutsProvider
+// for per-member event counts. No new business logic.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../shared/widgets/web_motion.dart';
 import '../../../theme/web_theme.dart';
 import '../application/team_providers.dart';
+import '../domain/staff_payout.dart';
 import '../domain/team_member.dart';
 
-/// The wide-web team grid. Pure presentation over the existing providers.
-class WebTeam extends ConsumerWidget {
+/// The wide-web team screen. Pure presentation over the existing providers.
+class WebTeam extends ConsumerStatefulWidget {
   const WebTeam({super.key, this.onInvite, this.onTapMember});
 
   final VoidCallback? onInvite;
   final void Function(TeamMember member)? onTapMember;
 
-  static const double _maxContentWidth = 1200;
+  @override
+  ConsumerState<WebTeam> createState() => _WebTeamState();
+}
+
+class _WebTeamState extends ConsumerState<WebTeam> {
+  String _roleFilter = 'ALL';
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final async = ref.watch(teamMembersProvider);
+    final members = async.valueOrNull ?? const <TeamMember>[];
+    final payouts = ref.watch(staffPayoutsProvider).valueOrNull;
+    final eventsByUser = <String, int>{
+      for (final p in payouts?.members ?? const <StaffPayout>[])
+        p.userId: p.events,
+    };
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: _maxContentWidth),
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            WebTheme.sp6,
-            WebTheme.sp5,
-            WebTheme.sp6,
-            WebTheme.sp7,
-          ),
-          children: [
-            WebEntrance(
-              child: _Header(count: async.value?.length, onInvite: onInvite),
+    final freelancers =
+        members.where((m) => m.role.toUpperCase() == 'FREELANCER').length;
+    final managers =
+        members.where((m) => m.role.toUpperCase() == 'MANAGER').length;
+    final active =
+        members.where((m) => (eventsByUser[m.userId] ?? 0) > 0).length;
+
+    // Chief = the member with the most assigned events (real signal).
+    TeamMember? chief;
+    var chiefEvents = 0;
+    for (final m in members) {
+      final e = eventsByUser[m.userId] ?? 0;
+      if (e > chiefEvents) {
+        chief = m;
+        chiefEvents = e;
+      }
+    }
+
+    final roles = <String>{
+      for (final m in members) m.role.toUpperCase(),
+    }.toList()
+      ..sort();
+
+    final filtered = _roleFilter == 'ALL'
+        ? members
+        : members
+            .where((m) => m.role.toUpperCase() == _roleFilter)
+            .toList();
+
+    return ScrollConfiguration(
+      behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+      child: ListView(
+        padding: const EdgeInsets.only(bottom: 32),
+        children: [
+          WebEntrance(
+            delay: const Duration(milliseconds: 50),
+            child: _StatTiles(
+              members: members.length,
+              freelancers: freelancers,
+              managers: managers,
+              active: active,
             ),
-            const SizedBox(height: WebTheme.sp5),
+          ),
+          if (chief != null) ...[
+            const SizedBox(height: 16),
             WebEntrance(
-              delay: const Duration(milliseconds: 55),
-              child: async.when(
-                loading: () => const _Grid(
-                  children: [_CardSkeleton(), _CardSkeleton(), _CardSkeleton()],
-                ),
-                error: (_, _) => const _Message(text: 'Could not load team.'),
-                data: (members) {
-                  if (members.isEmpty) {
-                    return const _Message(
-                      text: 'No team members yet — invite your first one.',
-                    );
-                  }
-                  return _Grid(
-                    children: [
-                      for (final m in members)
-                        _MemberCard(
-                          member: m,
-                          onTap: onTapMember == null
-                              ? null
-                              : () => onTapMember!(m),
-                        ),
-                    ],
-                  );
-                },
+              delay: const Duration(milliseconds: 110),
+              child: _ChiefCard(
+                member: chief,
+                events: chiefEvents,
+                onTap: widget.onTapMember == null
+                    ? null
+                    : () => widget.onTapMember!(chief!),
               ),
             ),
           ],
-        ),
+          const SizedBox(height: 16),
+          WebEntrance(
+            delay: const Duration(milliseconds: 170),
+            child: _MembersCard(
+              loading: async.isLoading && members.isEmpty,
+              error: async.hasError && members.isEmpty,
+              members: filtered,
+              roles: roles,
+              roleFilter: _roleFilter,
+              eventsByUser: eventsByUser,
+              onFilter: (r) => setState(() => _roleFilter = r),
+              onInvite: widget.onInvite,
+              onTapMember: widget.onTapMember,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-// ───────────────────────────────────────────────────────────── HEADER
-class _Header extends StatelessWidget {
-  const _Header({this.count, this.onInvite});
-  final int? count;
-  final VoidCallback? onInvite;
+// ───────────────────────────────────────────────────────── STAT TILES
+class _StatTiles extends StatelessWidget {
+  const _StatTiles({
+    required this.members,
+    required this.freelancers,
+    required this.managers,
+    required this.active,
+  });
+
+  final int members;
+  final int freelancers;
+  final int managers;
+  final int active;
 
   @override
   Widget build(BuildContext context) {
-    final n = count == null ? '—' : '$count';
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Team Members',
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -1.0,
-                  color: WebTheme.ink,
-                  height: 1.0,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                count == 1 ? '1 member' : '$n members',
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: WebTheme.inkMuted,
-                ),
-              ),
-            ],
-          ),
+    Widget tile({
+      required String label,
+      required int value,
+      Color? bg,
+      Color? valueColor,
+      Color? labelColor,
+      bool dark = false,
+    }) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        decoration: BoxDecoration(
+          color: dark ? WebTheme.chrome : WebTheme.surface,
+          borderRadius: BorderRadius.circular(WebTheme.rTile),
+          border: dark ? null : Border.all(color: WebTheme.hairline),
+          boxShadow:
+              dark ? WebTheme.darkCardShadow : WebTheme.cardShadowSmall,
         ),
-        if (onInvite != null) ...[
-          const SizedBox(width: WebTheme.sp4),
-          WebHoverLift(
-            onTap: onInvite,
-            borderRadius: WebTheme.rButton,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 11),
-              decoration: BoxDecoration(
-                color: WebTheme.orange,
-                borderRadius: BorderRadius.circular(WebTheme.rButton),
-                boxShadow: [
-                  BoxShadow(
-                    color: WebTheme.orange.withValues(alpha: 0.42),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.person_add_alt_1_rounded,
-                      color: Colors.white, size: 18),
-                  SizedBox(width: 6),
-                  Text(
-                    'Invite Member',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-/// Responsive 3-up / 2-up / 1-up grid of equal-width cards.
-class _Grid extends StatelessWidget {
-  const _Grid({required this.children});
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, c) {
-        final cols = c.maxWidth >= 900 ? 3 : (c.maxWidth >= 560 ? 2 : 1);
-        const gap = WebTheme.sp4;
-        final cardW = (c.maxWidth - gap * (cols - 1)) / cols;
-        return Wrap(
-          spacing: gap,
-          runSpacing: gap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            for (final child in children) SizedBox(width: cardW, child: child),
+            Text(label,
+                style: WebTheme.label(
+                  size: 9,
+                  tracking: 0.15,
+                  color: labelColor ??
+                      (dark ? WebTheme.chromeInkMuted : WebTheme.inkMuted),
+                )),
+            const SizedBox(height: 4),
+            Text('$value',
+                style: WebTheme.displayStyle(
+                  size: 28,
+                  weight: FontWeight.w800,
+                  color: valueColor ??
+                      (dark ? WebTheme.chromeInk : WebTheme.ink),
+                )),
           ],
-        );
-      },
-    );
+        ),
+      );
+    }
+
+    final tiles = [
+      tile(label: 'MEMBERS', value: members, dark: true),
+      tile(
+          label: 'FREELANCERS',
+          value: freelancers,
+          valueColor: WebTheme.orange,
+          labelColor: WebTheme.orangeDeep),
+      tile(
+          label: 'MANAGERS',
+          value: managers,
+          valueColor: WebTheme.nightText),
+      tile(label: 'ACTIVE', value: active, valueColor: WebTheme.success),
+    ];
+
+    return LayoutBuilder(builder: (context, c) {
+      if (c.maxWidth < 680) {
+        return Column(children: [
+          Row(children: [
+            Expanded(child: tiles[0]),
+            const SizedBox(width: 14),
+            Expanded(child: tiles[1]),
+          ]),
+          const SizedBox(height: 14),
+          Row(children: [
+            Expanded(child: tiles[2]),
+            const SizedBox(width: 14),
+            Expanded(child: tiles[3]),
+          ]),
+        ]);
+      }
+      return Row(children: [
+        for (var i = 0; i < tiles.length; i++) ...[
+          if (i != 0) const SizedBox(width: 14),
+          Expanded(child: tiles[i]),
+        ],
+      ]);
+    });
   }
 }
 
-class _MemberCard extends StatelessWidget {
-  const _MemberCard({required this.member, required this.onTap});
+// ───────────────────────────────────────────────────────── CHIEF CARD
+/// Full-width gold-gradient card with the studio's busiest member.
+class _ChiefCard extends StatelessWidget {
+  const _ChiefCard({
+    required this.member,
+    required this.events,
+    this.onTap,
+  });
+
   final TeamMember member;
+  final int events;
   final VoidCallback? onTap;
-
-  /// Deterministic accent so avatars vary but stay stable per member.
-  static const _accents = [
-    WebTheme.orange,
-    WebTheme.teal,
-    WebTheme.info,
-    WebTheme.success,
-    WebTheme.amberDeep,
-    WebTheme.rose,
-  ];
-
-  Color get _accent =>
-      _accents[member.userId.hashCode.abs() % _accents.length];
-
-  String get _initials {
-    final parts =
-        member.fullName.trim().split(RegExp(r'\s+')).where((s) => s.isNotEmpty);
-    if (parts.isEmpty) return '?';
-    if (parts.length == 1) return parts.first.characters.first.toUpperCase();
-    return (parts.first.characters.first + parts.last.characters.first)
-        .toUpperCase();
-  }
-
-  String get _roleLabel {
-    final r = member.role.replaceAll('_', ' ').toLowerCase();
-    return r.isEmpty
-        ? 'Member'
-        : r
-            .split(' ')
-            .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
-            .join(' ');
-  }
 
   @override
   Widget build(BuildContext context) {
     return WebHoverLift(
       onTap: onTap,
-      borderRadius: WebTheme.rPanel,
+      borderRadius: WebTheme.rCard,
+      enableShadow: false,
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
         decoration: BoxDecoration(
-          color: WebTheme.surface,
-          borderRadius: BorderRadius.circular(WebTheme.rPanel),
-          border: Border.all(color: WebTheme.hairline),
-          boxShadow: WebTheme.cardShadow,
+          gradient: WebTheme.goldBlend,
+          borderRadius: BorderRadius.circular(WebTheme.rCard),
+          boxShadow: WebTheme.goldGlow,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
+        child: Row(
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: _accent.withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Text(
-                    _initials,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: _accent,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 13),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        member.fullName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.3,
-                          color: WebTheme.ink,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _roleLabel,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w500,
-                          color: WebTheme.inkMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const Divider(height: 1, color: WebTheme.hairline),
-            const SizedBox(height: 14),
-            _ContactRow(icon: Icons.mail_outline_rounded, text: member.email),
-            if ((member.phone ?? '').trim().isNotEmpty) ...[
-              const SizedBox(height: 8),
-              _ContactRow(
-                icon: Icons.phone_outlined,
-                text: member.phone!.trim(),
+            Container(
+              width: 52,
+              height: 52,
+              decoration: const BoxDecoration(
+                color: WebTheme.chrome,
+                shape: BoxShape.circle,
               ),
-            ],
+              child: Center(
+                child: Text(
+                  member.fullName.isEmpty
+                      ? '?'
+                      : member.fullName[0].toUpperCase(),
+                  style: WebTheme.displayStyle(
+                      size: 20,
+                      weight: FontWeight.w700,
+                      color: WebTheme.amber),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('${member.fullName} ★',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: WebTheme.displayStyle(
+                          size: 17,
+                          weight: FontWeight.w700,
+                          color: WebTheme.chrome)),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Chief Photographer · $events events',
+                    style: WebTheme.bodyStyle(
+                        size: 12,
+                        weight: FontWeight.w600,
+                        color: const Color(0xB32B1D12)),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: WebTheme.chrome,
+                borderRadius: BorderRadius.circular(WebTheme.rFull),
+              ),
+              child: Text('CHIEF',
+                  style: WebTheme.label(
+                      size: 9, color: WebTheme.amber, tracking: 0.15)),
+            ),
           ],
         ),
       ),
@@ -308,105 +309,364 @@ class _MemberCard extends StatelessWidget {
   }
 }
 
-class _ContactRow extends StatelessWidget {
-  const _ContactRow({required this.icon, required this.text});
-  final IconData icon;
-  final String text;
+// ─────────────────────────────────────────────────────── MEMBERS CARD
+class _MembersCard extends StatelessWidget {
+  const _MembersCard({
+    required this.loading,
+    required this.error,
+    required this.members,
+    required this.roles,
+    required this.roleFilter,
+    required this.eventsByUser,
+    required this.onFilter,
+    this.onInvite,
+    this.onTapMember,
+  });
 
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: WebTheme.inkFaint),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: WebTheme.inkSoft,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ───────────────────────────────────────────────────── LOADING / EMPTY
-class _CardSkeleton extends StatelessWidget {
-  const _CardSkeleton();
+  final bool loading;
+  final bool error;
+  final List<TeamMember> members;
+  final List<String> roles;
+  final String roleFilter;
+  final Map<String, int> eventsByUser;
+  final ValueChanged<String> onFilter;
+  final VoidCallback? onInvite;
+  final void Function(TeamMember member)? onTapMember;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
       decoration: BoxDecoration(
         color: WebTheme.surface,
-        borderRadius: BorderRadius.circular(WebTheme.rPanel),
+        borderRadius: BorderRadius.circular(WebTheme.rCard),
         border: Border.all(color: WebTheme.hairline),
+        boxShadow: WebTheme.cardShadow,
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
           Row(
             children: [
-              WebShimmer(width: 50, height: 50, borderRadius: 14),
-              SizedBox(width: 13),
-              Expanded(child: WebShimmer(height: 16, borderRadius: 6)),
+              Text('Members', style: WebTheme.displayStyle(size: 16)),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _filterChip('ALL'),
+                    for (final r in roles) _filterChip(r),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              if (onInvite != null)
+                WebHoverHighlight(
+                  onTap: onInvite,
+                  borderRadius: WebTheme.rFull,
+                  builder: (context, hovering) => AnimatedContainer(
+                    duration: WebTheme.base,
+                    curve: WebTheme.ease,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: hovering
+                          ? WebTheme.orangeDark
+                          : WebTheme.orange,
+                      borderRadius: BorderRadius.circular(WebTheme.rFull),
+                      boxShadow: WebTheme.buttonGlow,
+                    ),
+                    child: Text('+ Invite',
+                        style: WebTheme.bodyStyle(
+                            size: 12.5,
+                            weight: FontWeight.w700,
+                            color: WebTheme.chromeInk)),
+                  ),
+                ),
             ],
           ),
-          SizedBox(height: 20),
-          WebShimmer(height: 12, borderRadius: 4),
-          SizedBox(height: 10),
-          WebShimmer(height: 12, borderRadius: 4),
+          const SizedBox(height: 16),
+          if (loading)
+            const Column(children: [
+              WebShimmer(height: 56, borderRadius: 14),
+              SizedBox(height: 8),
+              WebShimmer(height: 56, borderRadius: 14),
+              SizedBox(height: 8),
+              WebShimmer(height: 56, borderRadius: 14),
+            ])
+          else if (error)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              child: Text('Could not load the team.',
+                  textAlign: TextAlign.center,
+                  style: WebTheme.bodyStyle(
+                      size: 12.5, color: WebTheme.inkMuted)),
+            )
+          else if (members.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              child: Text('No team members yet — invite your first one.',
+                  textAlign: TextAlign.center,
+                  style: WebTheme.bodyStyle(
+                      size: 12.5, color: WebTheme.inkMuted)),
+            )
+          else
+            for (var i = 0; i < members.length; i++) ...[
+              if (i != 0) const SizedBox(height: 8),
+              WebEntrance(
+                delay: Duration(milliseconds: (45 * i).clamp(0, 400)),
+                offset: 6,
+                child: _MemberRow(
+                  member: members[i],
+                  events: eventsByUser[members[i].userId] ?? 0,
+                  index: i,
+                  onTap: onTapMember == null
+                      ? null
+                      : () => onTapMember!(members[i]),
+                ),
+              ),
+            ],
         ],
       ),
     );
   }
+
+  Widget _filterChip(String label) {
+    final active = roleFilter == label;
+    return WebHoverHighlight(
+      onTap: () => onFilter(label),
+      borderRadius: WebTheme.rFull,
+      builder: (context, hovering) => AnimatedContainer(
+        duration: WebTheme.base,
+        curve: WebTheme.ease,
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
+        decoration: BoxDecoration(
+          color: active
+              ? WebTheme.orange
+              : hovering
+                  ? WebTheme.orangeTint
+                  : WebTheme.pageBg,
+          borderRadius: BorderRadius.circular(WebTheme.rFull),
+          border: Border.all(
+              color: active ? WebTheme.orange : WebTheme.innerLine),
+        ),
+        child: Text(label,
+            style: WebTheme.label(
+              size: 9,
+              tracking: 0.08,
+              color: active ? WebTheme.chromeInk : WebTheme.inkMuted,
+            )),
+      ),
+    );
+  }
 }
 
-class _Message extends StatelessWidget {
-  const _Message({required this.text});
-  final String text;
+// ─────────────────────────────────────────────────────── MEMBER ROW
+class _MemberRow extends StatelessWidget {
+  const _MemberRow({
+    required this.member,
+    required this.events,
+    required this.index,
+    this.onTap,
+  });
+
+  final TeamMember member;
+  final int events;
+  final int index;
+  final VoidCallback? onTap;
+
+  static const _avatarTints = [
+    (WebTheme.orangeTint, WebTheme.orangeDeep),
+    (WebTheme.nightTint, WebTheme.nightText),
+    (WebTheme.successTint, WebTheme.success),
+    (WebTheme.amberTint, WebTheme.amberText),
+  ];
+
+  (Color, Color, Color) _roleColors(String role) {
+    switch (role.toUpperCase()) {
+      case 'FREELANCER':
+        return (
+          WebTheme.orangeTint,
+          WebTheme.orangeTintBorder,
+          WebTheme.orangeDeep
+        );
+      case 'MANAGER':
+        return (
+          WebTheme.nightTint,
+          WebTheme.nightTintBorder,
+          WebTheme.nightText
+        );
+      default:
+        return (
+          WebTheme.amberTint,
+          WebTheme.amberTintBorder,
+          WebTheme.amberText
+        );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 64),
-      decoration: BoxDecoration(
-        color: WebTheme.surface,
-        borderRadius: BorderRadius.circular(WebTheme.rPanel),
-        border: Border.all(color: WebTheme.hairline),
-      ),
-      child: Center(
-        child: Column(
+    final tint = _avatarTints[index % _avatarTints.length];
+    final role = _roleColors(member.role);
+    final phone = member.phone?.trim();
+    // Real activity signal: a member with assigned events shows green.
+    final statusColor = events > 0 ? WebTheme.success : WebTheme.tan;
+
+    return WebHoverHighlight(
+      onTap: onTap,
+      borderRadius: WebTheme.rRow,
+      builder: (context, hovering) => AnimatedContainer(
+        duration: WebTheme.base,
+        curve: WebTheme.ease,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+        decoration: BoxDecoration(
+          color: hovering ? WebTheme.orangeTint : WebTheme.pageBg,
+          borderRadius: BorderRadius.circular(WebTheme.rRow),
+          border: Border.all(
+              color: hovering ? WebTheme.orange : WebTheme.innerLine),
+        ),
+        child: Row(
           children: [
+            // Avatar + status dot.
+            SizedBox(
+              width: 44,
+              height: 44,
+              child: Stack(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                        color: tint.$1, shape: BoxShape.circle),
+                    child: Center(
+                      child: Text(
+                        member.fullName.isEmpty
+                            ? '?'
+                            : member.fullName[0].toUpperCase(),
+                        style: WebTheme.bodyStyle(
+                            size: 14,
+                            weight: FontWeight.w700,
+                            color: tint.$2),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: 2,
+                    bottom: 2,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: statusColor,
+                        shape: BoxShape.circle,
+                        border:
+                            Border.all(color: Colors.white, width: 1.5),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(member.fullName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: WebTheme.bodyStyle(
+                          size: 13.5, weight: FontWeight.w700)),
+                  const SizedBox(height: 2),
+                  Text(
+                    phone?.isNotEmpty == true ? phone! : member.email,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: WebTheme.bodyStyle(
+                        size: 11, color: WebTheme.inkMuted),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
             Container(
-              width: 48,
-              height: 48,
-              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
-                color: WebTheme.sageTint,
-                borderRadius: BorderRadius.circular(WebTheme.rChip),
+                color: role.$1,
+                borderRadius: BorderRadius.circular(WebTheme.rFull),
+                border: Border.all(color: role.$2),
               ),
-              child: const Icon(Icons.groups_outlined,
-                  color: WebTheme.inkMuted, size: 24),
+              child: Text(member.role.toUpperCase(),
+                  style: WebTheme.label(
+                      size: 9, color: role.$3, tracking: 0.08)),
             ),
-            const SizedBox(height: WebTheme.sp3),
-            Text(
-              text,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: WebTheme.inkMuted,
+            const SizedBox(width: 16),
+            SizedBox(
+              width: 52,
+              child: Text(
+                '$events ev',
+                textAlign: TextAlign.right,
+                style: TextStyle(
+                  fontFamily: WebTheme.mono,
+                  fontSize: 11,
+                  color: WebTheme.inkSoft,
+                ),
               ),
             ),
+            const SizedBox(width: 14),
+            _CallButton(phone: phone),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Round ✆ button — green tint on hover; disabled when no phone on file.
+class _CallButton extends StatelessWidget {
+  const _CallButton({this.phone});
+  final String? phone;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = phone?.isNotEmpty == true;
+    return WebHoverHighlight(
+      onTap: enabled
+          ? () => launchUrl(Uri(scheme: 'tel', path: phone!))
+          : null,
+      borderRadius: 999,
+      builder: (context, hovering) => AnimatedContainer(
+        duration: WebTheme.base,
+        curve: WebTheme.ease,
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(
+          color: enabled && hovering
+              ? WebTheme.successTint
+              : WebTheme.surface,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: enabled && hovering
+                ? WebTheme.successTintBorder
+                : WebTheme.hairline,
+          ),
+        ),
+        child: Center(
+          child: Text(
+            '✆',
+            style: TextStyle(
+              fontSize: 15,
+              height: 1,
+              color: !enabled
+                  ? WebTheme.inkFaint
+                  : hovering
+                      ? WebTheme.success
+                      : WebTheme.inkSoft,
+            ),
+          ),
         ),
       ),
     );

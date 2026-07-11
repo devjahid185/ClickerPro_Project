@@ -1,20 +1,22 @@
 // lib/features/bookings/presentation/web_bookings.dart
 //
-// Graphy7 — WEB-ONLY bookings screen (Graphy7 Design).
+// Graphy7 — WEB-ONLY bookings screen (Sunset Studio, from
+// design_handoff_clickerpro_web — Screen 2).
 //
-// A desktop bookings table, rendered ONLY on wide web. The mobile booking list
-// body is 100% untouched (BookingListScreen routes here only when
-// kIsWeb && width >= 900). Ported from the design source's "Bookings" screen:
+// Rendered ONLY on wide web (BookingListScreen routes here when kIsWeb &&
+// width >= 900); the mobile booking list is 100% untouched. Layout follows
+// the handoff:
 //
-//   ┌──────────────────────────────────────────────────────────────┐
-//   │  Header (title + count)                       New Booking (⊕) │
-//   ├──────────────────────────────────────────────────────────────┤
-//   │  [All][Confirmed][Pending][Delivered][Cancelled]     search   │
-//   ├──────────────────────────────────────────────────────────────┤
-//   │  CLIENT · EVENT · DATE · AMOUNT · STATUS                      │
-//   │  ● Client name / email     Wedding   12 Jul  ৳85,000  [pill]  │
-//   │  …                                                            │
-//   └──────────────────────────────────────────────────────────────┘
+//   [All][Pending][Confirmed][Successful][Delivered][Cancelled]
+//                                  [🔗 SELF-BOOKING]  [+ New Booking]
+//   ┌───────────────────────────┐  ┌───────────────────────────┐
+//   │ ☀ Day Shift          (n)  │  │ ☾ Night Shift        (n)  │
+//   │ gold-bordered rows →      │  │ ← purple-bordered rows    │
+//   └───────────────────────────┘  └───────────────────────────┘
+//
+// Day rows carry a 3px gold LEFT border and slide RIGHT on hover; night rows
+// carry a 3px purple RIGHT border and slide LEFT (mirrored, per the spec).
+// Rows show NO status badges (spec decision) — the chips filter instead.
 //
 // All data comes from the same `bookingListProvider` the mobile list uses —
 // no new business logic, only a web presentation layer.
@@ -24,8 +26,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/booking_status/booking_status.dart';
-import '../../../core/format/booking_format.dart';
-import '../../../core/format/currency.dart';
 import '../../../core/navigation/route_names.dart';
 import '../../../shared/widgets/web_motion.dart';
 import '../../../theme/web_theme.dart';
@@ -33,33 +33,39 @@ import '../application/booking_providers.dart';
 import '../domain/booking.dart';
 import '../domain/booking_filter.dart';
 import '../domain/event_type_vibe.dart';
+import '../domain/shift.dart';
 
-/// A status tab in the design-source filter row.
-enum _Tab { all, confirmed, pending, delivered, cancelled }
+/// A status chip in the handoff's filter row.
+enum _Chip { all, pending, confirmed, successful, delivered, cancelled }
 
-extension _TabX on _Tab {
+extension _ChipX on _Chip {
   String get label => switch (this) {
-        _Tab.all => 'All',
-        _Tab.confirmed => 'Confirmed',
-        _Tab.pending => 'Pending',
-        _Tab.delivered => 'Delivered',
-        _Tab.cancelled => 'Cancelled',
+        _Chip.all => 'ALL',
+        _Chip.pending => 'PENDING',
+        _Chip.confirmed => 'CONFIRMED',
+        _Chip.successful => 'SUCCESSFUL',
+        _Chip.delivered => 'DELIVERED',
+        _Chip.cancelled => 'CANCELLED',
       };
 
-  /// The booking statuses this tab keeps. `all` keeps everything.
+  /// The booking statuses this chip keeps. `all` keeps everything.
   Set<BookingStatus> get statuses => switch (this) {
-        _Tab.all => const {},
-        _Tab.confirmed => const {BookingStatus.confirmed},
-        _Tab.pending => const {BookingStatus.pending},
-        _Tab.delivered => const {
-            BookingStatus.delivered,
+        _Chip.all => const {},
+        _Chip.pending => const {BookingStatus.pending},
+        _Chip.confirmed => const {
+            BookingStatus.confirmed,
+            BookingStatus.inProgress,
+          },
+        _Chip.successful => const {
+            BookingStatus.shotComplete,
             BookingStatus.completed,
           },
-        _Tab.cancelled => const {BookingStatus.cancelled},
+        _Chip.delivered => const {BookingStatus.delivered},
+        _Chip.cancelled => const {BookingStatus.cancelled},
       };
 }
 
-/// The wide-web bookings table. Pure presentation over the existing providers.
+/// The wide-web bookings screen. Pure presentation over existing providers.
 class WebBookings extends ConsumerStatefulWidget {
   const WebBookings({super.key});
 
@@ -68,215 +74,119 @@ class WebBookings extends ConsumerStatefulWidget {
 }
 
 class _WebBookingsState extends ConsumerState<WebBookings> {
-  _Tab _tab = _Tab.all;
-  String _search = '';
-
-  /// Max content width keeps the table from stretching on ultra-wide monitors.
-  static const double _maxContentWidth = 1320;
+  _Chip _chip = _Chip.all;
 
   @override
   Widget build(BuildContext context) {
-    // Watch the unfiltered stream once; tab + search filter client-side so
-    // switching tabs is instant and never re-hits the data layer.
+    // Watch the unfiltered stream once; the chip filters client-side so
+    // switching is instant and never re-hits the data layer.
     final async = ref.watch(bookingListProvider(const BookingFilter()));
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: _maxContentWidth),
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            WebTheme.sp6,
-            WebTheme.sp5,
-            WebTheme.sp6,
-            WebTheme.sp7,
+    return ScrollConfiguration(
+      behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+      child: ListView(
+        padding: const EdgeInsets.only(bottom: 32),
+        children: [
+          WebEntrance(
+            delay: const Duration(milliseconds: 50),
+            child: _ChipRow(
+              chip: _chip,
+              onChip: (c) => setState(() => _chip = c),
+            ),
           ),
-          children: [
-            WebEntrance(child: _Header(total: async.value?.length)),
-            const SizedBox(height: WebTheme.sp5),
-            WebEntrance(
-              delay: const Duration(milliseconds: 55),
-              child: _FilterBar(
-                tab: _tab,
-                search: _search,
-                onTab: (t) => setState(() => _tab = t),
-                onSearch: (s) => setState(() => _search = s),
-              ),
-            ),
-            const SizedBox(height: WebTheme.sp4),
-            WebEntrance(
-              delay: const Duration(milliseconds: 110),
-              child: async.when(
-                loading: () => const _TableCard(child: _TableSkeleton()),
-                error: (_, _) => const _TableCard(
-                  child: _TableMessage(message: 'Could not load bookings.'),
-                ),
-                data: (all) {
-                  final rows = _apply(all);
-                  return _TableCard(
-                    child: rows.isEmpty
-                        ? const _TableMessage(
-                            message: 'No bookings match this filter.')
-                        : _BookingsTable(rows: rows, total: all.length),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+          const SizedBox(height: 18),
+          async.when(
+            loading: () => const _LoadingColumns(),
+            error: (_, _) => _Message('Could not load bookings.'),
+            data: (all) {
+              final filtered = _apply(all);
+              final day = filtered
+                  .where((b) => b.shift != Shift.night)
+                  .toList();
+              final night = filtered
+                  .where((b) => b.shift != Shift.day)
+                  .toList();
+              return LayoutBuilder(builder: (context, constraints) {
+                final narrow = constraints.maxWidth < 760;
+                final dayCard = WebEntrance(
+                  delay: const Duration(milliseconds: 100),
+                  child: _ShiftColumn(night: false, bookings: day),
+                );
+                final nightCard = WebEntrance(
+                  delay: const Duration(milliseconds: 150),
+                  child: _ShiftColumn(night: true, bookings: night),
+                );
+                if (narrow) {
+                  return Column(children: [
+                    dayCard,
+                    const SizedBox(height: 18),
+                    nightCard,
+                  ]);
+                }
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: dayCard),
+                    const SizedBox(width: 18),
+                    Expanded(child: nightCard),
+                  ],
+                );
+              });
+            },
+          ),
+        ],
       ),
     );
   }
 
-  /// Applies the active tab + search to the full list, newest-first.
+  /// Applies the active chip, soonest-first.
   List<Booking> _apply(List<Booking> all) {
-    final wanted = _tab.statuses;
-    final q = _search.trim().toLowerCase();
+    final wanted = _chip.statuses;
     final out = all.where((b) {
-      if (wanted.isNotEmpty && !wanted.contains(b.status)) return false;
-      if (q.isEmpty) return true;
-      final name = (b.clientName ?? b.title).toLowerCase();
-      return name.contains(q) || b.title.toLowerCase().contains(q);
+      if (wanted.isEmpty) return b.status != BookingStatus.cancelled;
+      return wanted.contains(b.status);
     }).toList()
-      ..sort((a, b) => b.date.compareTo(a.date));
+      ..sort((a, b) => a.date.compareTo(b.date));
     return out;
   }
 }
 
-// ───────────────────────────────────────────────────────────── HEADER
-class _Header extends StatelessWidget {
-  const _Header({this.total});
-  final int? total;
+// ─────────────────────────────────────────────────────────── CHIP ROW
+class _ChipRow extends StatelessWidget {
+  const _ChipRow({required this.chip, required this.onChip});
+  final _Chip chip;
+  final ValueChanged<_Chip> onChip;
 
   @override
   Widget build(BuildContext context) {
-    final count = total == null ? '—' : '$total';
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Bookings',
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -1.0,
-                  color: WebTheme.ink,
-                  height: 1.0,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '$count total · sorted by date',
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: WebTheme.inkMuted,
-                ),
-              ),
-            ],
+        for (final c in _Chip.values)
+          _StatusChip(
+            label: c.label,
+            active: c == chip,
+            onTap: () => onChip(c),
           ),
+        // Right-aligned actions ride the same wrap on narrow widths.
+        _SelfBookingChip(
+          onTap: () => Navigator.of(context)
+              .pushNamed(RouteNames.pendingPublicBookings),
         ),
-        const SizedBox(width: WebTheme.sp4),
-        _NewBookingCta(
-          onTap: () => Navigator.of(context).pushNamed(RouteNames.bookingNew),
+        _NewBookingPill(
+          onTap: () =>
+              Navigator.of(context).pushNamed(RouteNames.bookingNew),
         ),
       ],
     );
   }
 }
 
-class _NewBookingCta extends StatelessWidget {
-  const _NewBookingCta({required this.onTap});
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return WebHoverLift(
-      onTap: onTap,
-      borderRadius: WebTheme.rButton,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 11),
-        decoration: BoxDecoration(
-          color: WebTheme.orange,
-          borderRadius: BorderRadius.circular(WebTheme.rButton),
-          boxShadow: [
-            BoxShadow(
-              color: WebTheme.orange.withValues(alpha: 0.42),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.add_rounded, color: Colors.white, size: 18),
-            SizedBox(width: 6),
-            Text(
-              'New Booking',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────── FILTER BAR
-class _FilterBar extends StatelessWidget {
-  const _FilterBar({
-    required this.tab,
-    required this.search,
-    required this.onTab,
-    required this.onSearch,
-  });
-
-  final _Tab tab;
-  final String search;
-  final ValueChanged<_Tab> onTab;
-  final ValueChanged<String> onSearch;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        // Segmented status tabs — active = orange fill (design source).
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: WebTheme.surface,
-            borderRadius: BorderRadius.circular(WebTheme.rButton),
-            border: Border.all(color: WebTheme.hairline),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (final t in _Tab.values)
-                _TabChip(
-                  label: t.label,
-                  active: t == tab,
-                  onTap: () => onTab(t),
-                ),
-            ],
-          ),
-        ),
-        const Spacer(),
-        _SearchBox(value: search, onChanged: onSearch),
-      ],
-    );
-  }
-}
-
-class _TabChip extends StatelessWidget {
-  const _TabChip({
+/// Mono uppercase status pill — active = orange fill, cream text.
+class _StatusChip extends StatelessWidget {
+  const _StatusChip({
     required this.label,
     required this.active,
     required this.onTap,
@@ -289,77 +199,33 @@ class _TabChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return WebHoverHighlight(
-      borderRadius: WebTheme.rChip,
       onTap: onTap,
-      builder: (context, hovering) {
-        return AnimatedContainer(
-          duration: WebTheme.fast,
-          curve: WebTheme.ease,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-          decoration: BoxDecoration(
+      borderRadius: WebTheme.rFull,
+      builder: (context, hovering) => AnimatedContainer(
+        duration: WebTheme.base,
+        curve: WebTheme.ease,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: active
+              ? WebTheme.orange
+              : hovering
+                  ? WebTheme.orangeTint
+                  : WebTheme.surface,
+          borderRadius: BorderRadius.circular(WebTheme.rFull),
+          border: Border.all(
             color: active
                 ? WebTheme.orange
                 : hovering
-                    ? WebTheme.sageTint
-                    : Colors.transparent,
-            borderRadius: BorderRadius.circular(WebTheme.rChip),
+                    ? WebTheme.orangeTintBorder
+                    : WebTheme.hairline,
           ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12.5,
-              fontWeight: active ? FontWeight.w700 : FontWeight.w600,
-              color: active ? Colors.white : WebTheme.inkMuted,
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _SearchBox extends StatelessWidget {
-  const _SearchBox({required this.value, required this.onChanged});
-  final String value;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 230,
-      child: TextField(
-        onChanged: onChanged,
-        style: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          color: WebTheme.ink,
         ),
-        cursorColor: WebTheme.orange,
-        decoration: InputDecoration(
-          isDense: true,
-          hintText: 'Search client…',
-          hintStyle: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: WebTheme.inkFaint,
-          ),
-          prefixIcon: const Icon(Icons.search_rounded,
-              size: 18, color: WebTheme.inkFaint),
-          prefixIconConstraints: const BoxConstraints(minWidth: 38),
-          filled: true,
-          fillColor: WebTheme.surface,
-          contentPadding: const EdgeInsets.symmetric(vertical: 11),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(WebTheme.rButton),
-            borderSide: const BorderSide(color: WebTheme.hairline),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(WebTheme.rButton),
-            borderSide: const BorderSide(color: WebTheme.hairline),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(WebTheme.rButton),
-            borderSide: const BorderSide(color: WebTheme.orange, width: 1.4),
+        child: Text(
+          label,
+          style: WebTheme.label(
+            size: 10,
+            tracking: 0.08,
+            color: active ? WebTheme.chromeInk : WebTheme.inkMuted,
           ),
         ),
       ),
@@ -367,278 +233,270 @@ class _SearchBox extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────── TABLE CARD
-class _TableCard extends StatelessWidget {
-  const _TableCard({required this.child});
-  final Widget child;
+/// 🔗 SELF-BOOKING — orange-tint chip; fills orange on hover (handoff).
+class _SelfBookingChip extends StatelessWidget {
+  const _SelfBookingChip({required this.onTap});
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    return WebHoverHighlight(
+      onTap: onTap,
+      borderRadius: WebTheme.rFull,
+      builder: (context, hovering) => AnimatedContainer(
+        duration: WebTheme.base,
+        curve: WebTheme.ease,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+        decoration: BoxDecoration(
+          color: hovering ? WebTheme.orange : WebTheme.orangeTint,
+          borderRadius: BorderRadius.circular(WebTheme.rFull),
+          border: Border.all(
+              color:
+                  hovering ? WebTheme.orange : WebTheme.orangeTintBorder),
+        ),
+        child: Text(
+          '🔗 SELF-BOOKING',
+          style: WebTheme.label(
+            size: 10,
+            tracking: 0.08,
+            color: hovering ? WebTheme.chromeInk : WebTheme.orangeDeep,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "+ New Booking" — solid orange pill with glow.
+class _NewBookingPill extends StatelessWidget {
+  const _NewBookingPill({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return WebHoverHighlight(
+      onTap: onTap,
+      borderRadius: WebTheme.rFull,
+      builder: (context, hovering) => AnimatedContainer(
+        duration: WebTheme.base,
+        curve: WebTheme.ease,
+        transform:
+            Matrix4.translationValues(0, hovering ? -2 : 0, 0),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: hovering ? WebTheme.orangeDark : WebTheme.orange,
+          borderRadius: BorderRadius.circular(WebTheme.rFull),
+          boxShadow: WebTheme.buttonGlow,
+        ),
+        child: Text(
+          '+ New Booking',
+          style: WebTheme.bodyStyle(
+            size: 13,
+            weight: FontWeight.w700,
+            color: WebTheme.chromeInk,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ────────────────────────────────────────────────────── SHIFT COLUMNS
+/// One of the two mirrored cards: ☀ Day (gold) or ☾ Night (purple).
+class _ShiftColumn extends StatelessWidget {
+  const _ShiftColumn({required this.night, required this.bookings});
+  final bool night;
+  final List<Booking> bookings;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = night ? WebTheme.night : WebTheme.amber;
+
     return Container(
-      clipBehavior: Clip.antiAlias,
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: WebTheme.surface,
-        borderRadius: BorderRadius.circular(WebTheme.rPanel),
+        borderRadius: BorderRadius.circular(WebTheme.rCard),
         border: Border.all(color: WebTheme.hairline),
         boxShadow: WebTheme.cardShadow,
       ),
-      child: child,
-    );
-  }
-}
-
-class _BookingsTable extends StatelessWidget {
-  const _BookingsTable({required this.rows, required this.total});
-  final List<Booking> rows;
-  final int total;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const _TableHeaderRow(),
-        for (var i = 0; i < rows.length; i++) ...[
-          if (i > 0) const Divider(height: 1, color: WebTheme.hairline),
-          _BookingRow(booking: rows[i]),
-        ],
-        _TableFooter(shown: rows.length, total: total),
-      ],
-    );
-  }
-}
-
-class _TableHeaderRow extends StatelessWidget {
-  const _TableHeaderRow();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
-      decoration: const BoxDecoration(
-        color: WebTheme.pageBgDeep,
-        border: Border(bottom: BorderSide(color: WebTheme.hairline)),
-      ),
-      child: Row(
-        children: const [
-          Expanded(flex: 5, child: _HeaderLabel('CLIENT')),
-          Expanded(flex: 3, child: _HeaderLabel('EVENT')),
-          Expanded(flex: 2, child: _HeaderLabel('DATE')),
-          Expanded(
-            flex: 2,
-            child: _HeaderLabel('AMOUNT', align: TextAlign.right),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header with the 2px accent bottom border.
+          Container(
+            padding: const EdgeInsets.only(bottom: 12),
+            margin: const EdgeInsets.only(bottom: 14),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: accent, width: 2),
+              ),
+            ),
+            child: Row(
+              children: [
+                Text(night ? '☾' : '☀',
+                    style: const TextStyle(fontSize: 15)),
+                const SizedBox(width: 10),
+                Text(night ? 'Night Shift' : 'Day Shift',
+                    style: WebTheme.displayStyle(size: 15)),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: night
+                        ? WebTheme.nightTint
+                        : WebTheme.orangeTint,
+                    borderRadius: BorderRadius.circular(WebTheme.rFull),
+                    border: Border.all(
+                        color: night
+                            ? WebTheme.nightTintBorder
+                            : WebTheme.orangeTintBorder),
+                  ),
+                  child: Text(
+                    '${bookings.length}',
+                    style: TextStyle(
+                      fontFamily: WebTheme.mono,
+                      fontSize: 10,
+                      color: night
+                          ? WebTheme.nightText
+                          : WebTheme.orangeDeep,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          Expanded(
-            flex: 2,
-            child: _HeaderLabel('STATUS', align: TextAlign.right),
-          ),
+          if (bookings.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Text(
+                night ? 'No night-shift bookings.' : 'No day-shift bookings.',
+                textAlign: TextAlign.center,
+                style:
+                    WebTheme.bodyStyle(size: 12, color: WebTheme.inkMuted),
+              ),
+            )
+          else
+            for (var i = 0; i < bookings.length; i++) ...[
+              if (i != 0) const SizedBox(height: 8),
+              WebEntrance(
+                delay: Duration(milliseconds: (50 * i).clamp(0, 500)),
+                offset: 6,
+                child: _ShiftRow(booking: bookings[i], night: night),
+              ),
+            ],
         ],
       ),
     );
   }
 }
 
-class _HeaderLabel extends StatelessWidget {
-  const _HeaderLabel(this.text, {this.align = TextAlign.left});
-  final String text;
-  final TextAlign align;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      textAlign: align,
-      style: TextStyle(
-        fontFamily: WebTheme.mono,
-        fontSize: 9.5,
-        letterSpacing: 1.1,
-        fontWeight: FontWeight.w500,
-        color: WebTheme.inkFaint,
-      ),
-    );
-  }
-}
-
-class _BookingRow extends StatelessWidget {
-  const _BookingRow({required this.booking});
+/// One booking row: 40px date block · client + "type · area" · › chevron.
+/// Day rows border-left gold, hover slides +4px; night rows border-right
+/// purple, hover slides −4px (mirrored).
+class _ShiftRow extends StatefulWidget {
+  const _ShiftRow({required this.booking, required this.night});
   final Booking booking;
+  final bool night;
 
-  String _statusLabel(String raw) {
-    final spaced = raw.replaceAllMapped(RegExp('[A-Z]'), (m) => ' ${m[0]}');
-    final t = spaced.trim();
-    return t.isEmpty ? raw : '${t[0].toUpperCase()}${t.substring(1)}';
-  }
+  @override
+  State<_ShiftRow> createState() => _ShiftRowState();
+}
+
+class _ShiftRowState extends State<_ShiftRow> {
+  bool _hover = false;
 
   @override
   Widget build(BuildContext context) {
-    final vibe = booking.eventType.vibe;
-    final client = (booking.clientName?.trim().isNotEmpty ?? false)
-        ? booking.clientName!.trim()
-        : booking.title;
-    final sub = booking.clientPhone?.trim().isNotEmpty ?? false
-        ? booking.clientPhone!.trim()
-        : BookingFormat.clockTime(booking.startTime);
-    final dateStr = DateFormat('d MMM yyyy').format(booking.date);
-    final statusColor = WebTheme.statusColor(booking.status.name);
-    final price = booking.customPrice;
+    final b = widget.booking;
+    final night = widget.night;
+    final accent = night ? WebTheme.night : WebTheme.amber;
+    final client = (b.clientName?.trim().isNotEmpty ?? false)
+        ? b.clientName!.trim()
+        : b.title;
+    final area = b.venue?.trim().isNotEmpty == true ? b.venue!.trim() : null;
+    final sub =
+        area == null ? b.eventType.vibe.label : '${b.eventType.vibe.label} · $area';
 
-    return WebHoverHighlight(
-      borderRadius: 0,
-      onTap: () => Navigator.of(context)
-          .pushNamed(RouteNames.bookingDetail, arguments: booking.id),
-      builder: (context, hovering) {
-        return AnimatedContainer(
-          duration: WebTheme.fast,
+    final noMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final dx = _hover && !noMotion ? (night ? -4.0 : 4.0) : 0.0;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: () => Navigator.of(context)
+            .pushNamed(RouteNames.bookingDetail, arguments: b.id),
+        child: AnimatedContainer(
+          duration: noMotion ? Duration.zero : WebTheme.base,
           curve: WebTheme.ease,
-          color: hovering ? WebTheme.sageTintSoft : Colors.transparent,
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
+          transform: Matrix4.translationValues(dx, 0, 0),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          decoration: BoxDecoration(
+            color: _hover
+                ? (night ? WebTheme.nightTint : WebTheme.orangeTint)
+                : WebTheme.pageBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border(
+              left: night
+                  ? const BorderSide(color: WebTheme.innerLine)
+                  : BorderSide(color: accent, width: 3),
+              right: night
+                  ? BorderSide(color: accent, width: 3)
+                  : const BorderSide(color: WebTheme.innerLine),
+              top: const BorderSide(color: WebTheme.innerLine),
+              bottom: const BorderSide(color: WebTheme.innerLine),
+            ),
+          ),
           child: Row(
             children: [
-              // Client (avatar + name + phone/time).
-              Expanded(
-                flex: 5,
-                child: Row(
+              SizedBox(
+                width: 40,
+                child: Column(
                   children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: vibe.color.withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(WebTheme.rChip),
-                      ),
-                      child: Icon(vibe.icon, color: vibe.color, size: 19),
-                    ),
-                    const SizedBox(width: 11),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            client,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: WebTheme.ink,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            sub,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: WebTheme.inkMuted,
-                            ),
-                          ),
-                        ],
-                      ),
+                    Text('${b.date.day}',
+                        style: WebTheme.displayStyle(
+                            size: 17,
+                            weight: FontWeight.w800,
+                            height: 1)),
+                    Text(
+                      DateFormat('MMM').format(b.date).toUpperCase(),
+                      style: WebTheme.label(
+                          size: 7.5,
+                          color: WebTheme.inkMuted,
+                          tracking: 0.12),
                     ),
                   ],
                 ),
               ),
-              // Event type.
+              const SizedBox(width: 12),
               Expanded(
-                flex: 3,
-                child: Text(
-                  vibe.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w500,
-                    color: WebTheme.inkSoft,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(client,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: WebTheme.bodyStyle(
+                            size: 13, weight: FontWeight.w700)),
+                    const SizedBox(height: 2),
+                    Text(sub,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: WebTheme.bodyStyle(
+                            size: 11, color: WebTheme.inkMuted)),
+                  ],
                 ),
               ),
-              // Date.
-              Expanded(
-                flex: 2,
-                child: Text(
-                  dateStr,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: WebTheme.inkSoft,
-                  ),
-                ),
-              ),
-              // Amount (right-aligned).
-              Expanded(
-                flex: 2,
-                child: Text(
-                  price == null ? '—' : _formatBdt((price * 100).round()),
-                  textAlign: TextAlign.right,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: WebTheme.ink,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-              ),
-              // Status pill (right-aligned).
-              Expanded(
-                flex: 2,
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(WebTheme.rFull),
-                    ),
-                    child: Text(
-                      _statusLabel(booking.status.name),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                        color: statusColor,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              const SizedBox(width: 8),
+              Text('›',
+                  style: TextStyle(
+                      fontSize: 14, color: WebTheme.inkFaint, height: 1)),
             ],
           ),
-        );
-      },
-    );
-  }
-}
-
-class _TableFooter extends StatelessWidget {
-  const _TableFooter({required this.shown, required this.total});
-  final int shown;
-  final int total;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-      decoration: const BoxDecoration(
-        color: WebTheme.pageBgDeep,
-        border: Border(top: BorderSide(color: WebTheme.hairline)),
-      ),
-      child: Text(
-        shown == total
-            ? 'Showing all $total bookings'
-            : 'Showing $shown of $total bookings',
-        style: const TextStyle(
-          fontSize: 12.5,
-          fontWeight: FontWeight.w500,
-          color: WebTheme.inkMuted,
         ),
       ),
     );
@@ -646,84 +504,59 @@ class _TableFooter extends StatelessWidget {
 }
 
 // ───────────────────────────────────────────────────── LOADING / EMPTY
-class _TableSkeleton extends StatelessWidget {
-  const _TableSkeleton();
+class _LoadingColumns extends StatelessWidget {
+  const _LoadingColumns();
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(22),
-      child: Column(
-        children: List.generate(
-          6,
-          (i) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Row(
-              children: const [
-                WebShimmer(width: 36, height: 36, borderRadius: WebTheme.rChip),
-                SizedBox(width: 12),
-                Expanded(child: WebShimmer(height: 14, borderRadius: 6)),
-                SizedBox(width: 40),
-                WebShimmer(width: 70, height: 14, borderRadius: 6),
-              ],
+    Widget card() => Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: WebTheme.surface,
+            borderRadius: BorderRadius.circular(WebTheme.rCard),
+            border: Border.all(color: WebTheme.hairline),
+          ),
+          child: Column(
+            children: List.generate(
+              4,
+              (i) => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: WebShimmer(height: 46, borderRadius: 12),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: card()),
+        const SizedBox(width: 18),
+        Expanded(child: card()),
+      ],
     );
   }
 }
 
-class _TableMessage extends StatelessWidget {
-  const _TableMessage({required this.message});
+class _Message extends StatelessWidget {
+  const _Message(this.message);
   final String message;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return Container(
       padding: const EdgeInsets.symmetric(vertical: 56),
+      decoration: BoxDecoration(
+        color: WebTheme.surface,
+        borderRadius: BorderRadius.circular(WebTheme.rCard),
+        border: Border.all(color: WebTheme.hairline),
+      ),
       child: Center(
-        child: Column(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: WebTheme.sageTint,
-                borderRadius: BorderRadius.circular(WebTheme.rChip),
-              ),
-              child: const Icon(Icons.event_busy_rounded,
-                  color: WebTheme.inkMuted, size: 24),
-            ),
-            const SizedBox(height: WebTheme.sp3),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: WebTheme.inkMuted,
-              ),
-            ),
-          ],
+        child: Text(
+          message,
+          style: WebTheme.bodyStyle(size: 13, color: WebTheme.inkMuted),
         ),
       ),
     );
   }
-}
-
-// ───────────────────────────────────────────────────────────── HELPERS
-/// Compact active-currency formatter (paisa → symbol, South-Asian grouping).
-/// Mirrors the web dashboard so totals read identically across web surfaces.
-String _formatBdt(int minor) {
-  final taka = (minor / 100).round();
-  final s = taka.toString();
-  final buf = StringBuffer();
-  final reversed = s.split('').reversed.toList();
-  for (var i = 0; i < reversed.length; i++) {
-    if (i == 3 || (i > 3 && (i - 3) % 2 == 0)) buf.write(',');
-    buf.write(reversed[i]);
-  }
-  return ActiveCurrency.value.wrap(buf.toString().split('').reversed.join());
 }

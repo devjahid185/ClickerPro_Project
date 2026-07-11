@@ -32,6 +32,7 @@ import '../../../shared/widgets/pill_toggle.dart';
 import '../../../shared/widgets/web_shell.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_strings.dart';
+import '../../../theme/web_theme.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_theme_mode.dart';
 import '../../../theme/reduce_motion.dart';
@@ -86,7 +87,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final webWide = kIsWeb && MediaQuery.sizeOf(context).width >= 900;
 
     return Scaffold(
-      backgroundColor: AppColors.appBg,
+      // On wide web the WebNavShell's cream canvas shows through; mobile
+      // keeps its own theme background.
+      backgroundColor: webWide ? Colors.transparent : AppColors.appBg,
       appBar: webWide
           ? null
           : AppBar(
@@ -119,13 +122,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (webWide) ...[
-                    _webPageHeader(),
-                    const SizedBox(height: 24),
-                  ],
-                  // Profile hero (.dc.html): avatar + name + phone + role badge.
+                  // (On wide web the shared shell header already carries the
+                  // "Settings" title, so no in-body page header.)
+                  // Profile hero: avatar + name + phone + role badge. On web
+                  // this is the handoff's dark #2B1D12 hero card.
                   if (user != null) ...[
-                    _buildProfileHero(user),
+                    webWide ? _buildWebProfileHero(user) : _buildProfileHero(user),
                     const SizedBox(height: 24),
                   ],
                   _sectionHeader('Preferences · System'),
@@ -732,35 +734,124 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // ── Visual primitives ─────────────────────────────────────────
   /// Wide-web page header (H1 + subtitle) — matches every other web screen,
   /// replacing the mobile AppBar title the WebNavShell hides.
-  Widget _webPageHeader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Settings',
-          style: TextStyle(
-            color: AppColors.film,
-            fontFamily: AppText.brandFontFamily,
-            fontSize: 30,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -1.0,
-            height: 1.0,
+  /// Web profile hero — the handoff's dark #2B1D12 card: 72px gold-ring
+  /// avatar, cream Sora name, muted contact line, gold role badge. Taps
+  /// through to the full profile.
+  Widget _buildWebProfileHero(dynamic user) {
+    final initials = user.avatarInitials as String? ?? '..';
+    final name = user.name as String? ?? 'User';
+    final phone = (user.phone as String?)?.trim();
+    final company = (user.companyName as String?)?.trim();
+    final roleLabel = (user.studioLabel as String? ?? '').toUpperCase();
+    final subLine = [
+      if (phone != null && phone.isNotEmpty) phone,
+      if (company != null && company.isNotEmpty) company,
+    ].join(' · ');
+
+    return GestureDetector(
+      onTap: () => Navigator.pushNamed(context, RouteNames.profile),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: WebTheme.chrome,
+            borderRadius: BorderRadius.circular(WebTheme.rCard),
+            boxShadow: WebTheme.darkCardShadow,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                      color: WebTheme.amber.withValues(alpha: 0.6),
+                      width: 2),
+                ),
+                child: Container(
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: WebTheme.chromeAvatar,
+                  ),
+                  child: Center(
+                    child: Text(
+                      initials,
+                      style: WebTheme.displayStyle(
+                          size: 22,
+                          weight: FontWeight.w700,
+                          color: WebTheme.amber),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: WebTheme.displayStyle(
+                          size: 19,
+                          weight: FontWeight.w700,
+                          color: WebTheme.chromeInk),
+                    ),
+                    if (subLine.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        subLine,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: WebTheme.bodyStyle(
+                            size: 12, color: WebTheme.chromeInkMuted),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (roleLabel.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: WebTheme.amber.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                        color: WebTheme.amber.withValues(alpha: 0.35)),
+                  ),
+                  child: Text(
+                    roleLabel,
+                    style: WebTheme.label(
+                        size: 9, color: WebTheme.amber, tracking: 0.14),
+                  ),
+                ),
+            ],
           ),
         ),
-        const SizedBox(height: 6),
-        Text(
-          'Manage your profile, studio & preferences',
-          style: TextStyle(
-            color: AppColors.filmMuted,
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
+      ),
     );
   }
 
+  bool get _webWide =>
+      kIsWeb && MediaQuery.sizeOf(context).width >= 900;
+
   Widget _sectionHeader(String title) {
+    if (_webWide) {
+      // Handoff: Space-Mono micro label with wide tracking.
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12, top: 6, left: 4),
+        child: Text(
+          title.toUpperCase(),
+          style: WebTheme.label(
+              size: 9, color: WebTheme.inkMuted, tracking: 0.18),
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.only(bottom: 12, top: 6, left: 4),
       child: Row(
@@ -787,13 +878,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildSettingsGroup(List<Widget> children) {
+    final web = _webWide;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.line(0.06)),
-      ),
+      padding: EdgeInsets.symmetric(
+          horizontal: web ? 14 : 12, vertical: web ? 8 : 4),
+      decoration: web
+          // Handoff card: white, radius 22, warm sand border, soft shadow.
+          ? BoxDecoration(
+              color: WebTheme.surface,
+              borderRadius: BorderRadius.circular(WebTheme.rCard),
+              border: Border.all(color: WebTheme.hairline),
+              boxShadow: WebTheme.cardShadow,
+            )
+          : BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppColors.line(0.06)),
+            ),
       // ListTile children paint their ink/splash on the nearest Material.
       // Without this transparent Material they'd paint on the colored
       // Container above and stay invisible (Flutter asserts about it).

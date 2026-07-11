@@ -1,12 +1,15 @@
 // lib/features/bookings/presentation/web_packages.dart
 //
-// Graphy7 — WEB-ONLY packages (Graphy7 Design).
+// Graphy7 — WEB-ONLY packages (Sunset Studio, from
+// design_handoff_clickerpro_web — Screen 6, MOD-25).
 //
-// A desktop package grid, rendered ONLY on wide web. The mobile packages body
-// is 100% untouched (PackagesScreen routes here only when
-// kIsWeb && width >= 900). Ported from the design source's "Packages" screen:
-// a responsive 3-up grid of pricing cards — tag, name, price, an inclusions
-// checklist, and a footer with an Edit action.
+// Per the handoff: an intro line ("Selecting a package in the booking form
+// auto-fills the payment total.") + orange "+ Add Package" pill, then a 3-col
+// grid of cards with a 4px colored top border (orange / gold / purple):
+// name (Sora 800) + tag pill (POPULAR/VALUE/STARTER), net price in orange with
+// the struck original beside it (when a discount exists), a 2-col spec grid of
+// tiles (micro label + bold value), and Edit (orange-tint, hover fills orange)
+// / Delete (red-tint, hover fills red) buttons. Hover lifts the card −4px.
 //
 // Data comes from the same `packagesProvider` the mobile screen uses — no new
 // business logic, only a web presentation layer.
@@ -22,111 +25,121 @@ import '../domain/package.dart';
 
 /// The wide-web packages grid. Pure presentation over the existing providers.
 class WebPackages extends ConsumerWidget {
-  const WebPackages({super.key, this.canManage = false, this.onEdit});
+  const WebPackages({
+    super.key,
+    this.canManage = false,
+    this.onEdit,
+    this.onAdd,
+    this.onDelete,
+  });
 
   final bool canManage;
 
-  /// Opens the (mobile) edit sheet for a package, wired by the host screen.
+  /// Opens the edit sheet for a package, wired by the host screen.
   final void Function(Package package)? onEdit;
 
-  static const double _maxContentWidth = 1200;
+  /// Opens the create sheet, wired by the host screen.
+  final VoidCallback? onAdd;
+
+  /// Deletes a package (with the host screen's confirm flow).
+  final void Function(Package package)? onDelete;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(packagesProvider);
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: _maxContentWidth),
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            WebTheme.sp6,
-            WebTheme.sp5,
-            WebTheme.sp6,
-            WebTheme.sp7,
-          ),
-          children: [
-            WebEntrance(child: _Header(count: async.value?.length)),
-            const SizedBox(height: WebTheme.sp5),
-            WebEntrance(
-              delay: const Duration(milliseconds: 55),
-              child: async.when(
-                loading: () => const _Grid(children: [
-                  _CardSkeleton(),
-                  _CardSkeleton(),
-                  _CardSkeleton(),
-                ]),
-                error: (_, _) => const _Message(
-                  icon: Icons.inventory_2_outlined,
-                  text: 'Could not load packages.',
+    return ScrollConfiguration(
+      behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+      child: ListView(
+        padding: const EdgeInsets.only(bottom: 32),
+        children: [
+          WebEntrance(
+            delay: const Duration(milliseconds: 50),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Selecting a package in the booking form auto-fills '
+                    'the payment total.',
+                    style: WebTheme.bodyStyle(
+                        size: 12.5, color: WebTheme.inkMuted),
+                  ),
                 ),
-                data: (list) {
-                  if (list.isEmpty) {
-                    return const _Message(
-                      icon: Icons.inventory_2_outlined,
-                      text: 'No packages yet.',
-                    );
-                  }
-                  // Most-booked-looking first: sort by price descending so the
-                  // premium tiers lead, matching the design's card order.
-                  final sorted = [...list]
-                    ..sort((a, b) => b.basePrice.compareTo(a.basePrice));
-                  return _Grid(
-                    children: [
-                      for (final p in sorted)
-                        _PackageCard(
-                          package: p,
-                          canManage: canManage,
-                          onEdit: onEdit == null ? null : () => onEdit!(p),
-                        ),
-                    ],
-                  );
-                },
-              ),
+                if (canManage && onAdd != null) ...[
+                  const SizedBox(width: 16),
+                  WebHoverHighlight(
+                    onTap: onAdd,
+                    borderRadius: WebTheme.rFull,
+                    builder: (context, hovering) => AnimatedContainer(
+                      duration: WebTheme.base,
+                      curve: WebTheme.ease,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 18, vertical: 9),
+                      decoration: BoxDecoration(
+                        color: hovering
+                            ? WebTheme.orangeDark
+                            : WebTheme.orange,
+                        borderRadius:
+                            BorderRadius.circular(WebTheme.rFull),
+                        boxShadow: WebTheme.buttonGlow,
+                      ),
+                      child: Text('+ Add Package',
+                          style: WebTheme.bodyStyle(
+                              size: 13,
+                              weight: FontWeight.w700,
+                              color: WebTheme.chromeInk)),
+                    ),
+                  ),
+                ],
+              ],
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 16),
+          async.when(
+            loading: () => const _Grid(children: [
+              _CardSkeleton(),
+              _CardSkeleton(),
+              _CardSkeleton(),
+            ]),
+            error: (_, _) =>
+                const _Message(text: 'Could not load packages.'),
+            data: (list) {
+              if (list.isEmpty) {
+                return const _Message(text: 'No packages yet.');
+              }
+              // Premium tiers lead, matching the handoff's card order.
+              final sorted = [...list]
+                ..sort((a, b) => b.basePrice.compareTo(a.basePrice));
+              return _Grid(
+                children: [
+                  for (var i = 0; i < sorted.length; i++)
+                    WebEntrance(
+                      delay:
+                          Duration(milliseconds: (70 * i).clamp(0, 420)),
+                      offset: 8,
+                      child: _PackageCard(
+                        package: sorted[i],
+                        index: i,
+                        canManage: canManage,
+                        onEdit: onEdit == null
+                            ? null
+                            : () => onEdit!(sorted[i]),
+                        onDelete: onDelete == null
+                            ? null
+                            : () => onDelete!(sorted[i]),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ],
       ),
     );
   }
 }
 
-// ───────────────────────────────────────────────────────────── HEADER
-class _Header extends StatelessWidget {
-  const _Header({this.count});
-  final int? count;
-
-  @override
-  Widget build(BuildContext context) {
-    final n = count == null ? '—' : '$count';
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Packages',
-          style: TextStyle(
-            fontSize: 30,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -1.0,
-            color: WebTheme.ink,
-            height: 1.0,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          '$n active packages · pricing & inclusions',
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-            color: WebTheme.inkMuted,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Responsive 3-up / 2-up / 1-up grid of equal-height cards.
+/// Responsive 3-up / 2-up / 1-up grid of cards.
 class _Grid extends StatelessWidget {
   const _Grid({required this.children});
   final List<Widget> children;
@@ -136,7 +149,7 @@ class _Grid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, c) {
         final cols = c.maxWidth >= 900 ? 3 : (c.maxWidth >= 560 ? 2 : 1);
-        const gap = WebTheme.sp4;
+        const gap = 16.0;
         final cardW = (c.maxWidth - gap * (cols - 1)) / cols;
         return Wrap(
           spacing: gap,
@@ -151,175 +164,304 @@ class _Grid extends StatelessWidget {
   }
 }
 
-class _PackageCard extends StatelessWidget {
+// ─────────────────────────────────────────────────────────────── CARD
+class _PackageCard extends StatefulWidget {
   const _PackageCard({
     required this.package,
+    required this.index,
     required this.canManage,
     required this.onEdit,
+    required this.onDelete,
   });
 
   final Package package;
+  final int index;
   final bool canManage;
   final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+
+  @override
+  State<_PackageCard> createState() => _PackageCardState();
+}
+
+class _PackageCardState extends State<_PackageCard> {
+  bool _hover = false;
+
+  static const _accents = [WebTheme.orange, WebTheme.amber, WebTheme.night];
+  static const _tags = ['POPULAR', 'VALUE', 'STARTER'];
 
   @override
   Widget build(BuildContext context) {
-    final features = _features(package);
-    final price = package.basePrice - package.discount;
+    final p = widget.package;
+    final accent = _accents[widget.index % _accents.length];
+    final tag = widget.index < _tags.length ? _tags[widget.index] : null;
+    final net = p.basePrice - p.discount;
+    final hasDiscount = p.discount > 0;
+    final specs = _specs(p);
+    final noMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
 
-    return WebHoverLift(
-      borderRadius: WebTheme.rPanel,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: AnimatedContainer(
+        duration: noMotion ? Duration.zero : WebTheme.base,
+        curve: WebTheme.ease,
+        transform: Matrix4.translationValues(
+            0, _hover && !noMotion ? -4 : 0, 0),
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: WebTheme.surface,
-          borderRadius: BorderRadius.circular(WebTheme.rPanel),
-          border: Border.all(color: WebTheme.hairline),
-          boxShadow: WebTheme.cardShadow,
+          borderRadius: BorderRadius.circular(WebTheme.rCard),
+          border: Border.all(
+              color: _hover ? WebTheme.orangeTintBorder : WebTheme.hairline),
+          boxShadow:
+              _hover ? WebTheme.cardShadowHover : WebTheme.cardShadow,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'PACKAGE',
-              style: TextStyle(
-                fontFamily: WebTheme.mono,
-                fontSize: 10,
-                letterSpacing: 1.4,
-                fontWeight: FontWeight.w500,
-                color: WebTheme.inkFaint,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              package.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 19,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.4,
-                color: WebTheme.ink,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _formatBdt((price * 100).round()),
-              style: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.9,
-                color: WebTheme.orange,
-              ),
-            ),
-            const SizedBox(height: 15),
-            const Divider(height: 1, color: WebTheme.hairline),
-            const SizedBox(height: 15),
-            if (features.isEmpty)
-              const Text(
-                'No inclusions listed.',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: WebTheme.inkFaint,
-                ),
-              )
-            else
-              for (final f in features)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            // 4px colored top border.
+            Container(height: 4, color: accent),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
                     children: [
-                      const Icon(Icons.check_circle_rounded,
-                          size: 17, color: WebTheme.success),
-                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          f,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: WebTheme.inkSoft,
+                          p.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: WebTheme.displayStyle(
+                              size: 18, weight: FontWeight.w800),
+                        ),
+                      ),
+                      if (tag != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: accent.withValues(alpha: 0.12),
+                            borderRadius:
+                                BorderRadius.circular(WebTheme.rFull),
+                            border: Border.all(
+                                color: accent.withValues(alpha: 0.35)),
+                          ),
+                          child: Text(tag,
+                              style: WebTheme.label(
+                                  size: 8.5,
+                                  color: accent == WebTheme.amber
+                                      ? WebTheme.amberText
+                                      : accent,
+                                  tracking: 0.1)),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            _money(net),
+                            style: WebTheme.displayStyle(
+                                size: 26,
+                                weight: FontWeight.w800,
+                                color: WebTheme.orange),
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-            if (canManage && onEdit != null) ...[
-              const SizedBox(height: 6),
-              const Divider(height: 1, color: WebTheme.hairline),
-              const SizedBox(height: 14),
-              Align(
-                alignment: Alignment.centerRight,
-                child: WebHoverLift(
-                  onTap: onEdit,
-                  borderRadius: WebTheme.rChip,
-                  enableShadow: false,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: WebTheme.surface,
-                      borderRadius: BorderRadius.circular(WebTheme.rChip),
-                      border: Border.all(color: WebTheme.hairlineStrong),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.edit_rounded,
-                            size: 16, color: WebTheme.ink),
-                        SizedBox(width: 5),
+                      if (hasDiscount) ...[
+                        const SizedBox(width: 8),
                         Text(
-                          'Edit',
+                          _money(p.basePrice),
                           style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: WebTheme.ink,
+                            fontFamily: WebTheme.mono,
+                            fontSize: 12,
+                            color: WebTheme.inkFaint,
+                            decoration: TextDecoration.lineThrough,
+                            decorationColor: WebTheme.inkFaint,
                           ),
                         ),
                       ],
-                    ),
+                    ],
                   ),
-                ),
+                  const SizedBox(height: 14),
+                  // 2-col spec grid of tiles.
+                  if (specs.isEmpty)
+                    Text('No inclusions listed.',
+                        style: WebTheme.bodyStyle(
+                            size: 12, color: WebTheme.inkFaint))
+                  else
+                    LayoutBuilder(builder: (context, c) {
+                      const gap = 8.0;
+                      final w = (c.maxWidth - gap) / 2;
+                      return Wrap(
+                        spacing: gap,
+                        runSpacing: gap,
+                        children: [
+                          for (final s in specs)
+                            SizedBox(
+                              width: w,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: WebTheme.pageBg,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                      color: WebTheme.innerLine),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(s.$1,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: WebTheme.label(
+                                            size: 7.5,
+                                            color: WebTheme.inkMuted,
+                                            tracking: 0.1)),
+                                    const SizedBox(height: 3),
+                                    Text(s.$2,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: WebTheme.bodyStyle(
+                                            size: 12,
+                                            weight: FontWeight.w700)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    }),
+                  if (widget.canManage &&
+                      (widget.onEdit != null ||
+                          widget.onDelete != null)) ...[
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        if (widget.onEdit != null)
+                          Expanded(
+                            child: _ActionButton(
+                              label: 'Edit',
+                              base: WebTheme.orangeTint,
+                              baseBorder: WebTheme.orangeTintBorder,
+                              baseText: WebTheme.orangeDeep,
+                              fill: WebTheme.orange,
+                              onTap: widget.onEdit!,
+                            ),
+                          ),
+                        if (widget.onEdit != null &&
+                            widget.onDelete != null)
+                          const SizedBox(width: 8),
+                        if (widget.onDelete != null)
+                          Expanded(
+                            child: _ActionButton(
+                              label: 'Delete',
+                              base: WebTheme.dangerTint,
+                              baseBorder: WebTheme.dangerTintBorder,
+                              baseText: WebTheme.danger,
+                              fill: WebTheme.danger,
+                              onTap: widget.onDelete!,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ],
               ),
-            ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  /// Human-readable inclusion lines from the package's structured fields,
-  /// falling back to its free-form inclusions/items list.
-  static List<String> _features(Package p) {
-    final out = <String>[];
+  /// (label, value) spec tiles from the package's structured fields plus its
+  /// free-form inclusions.
+  static List<(String, String)> _specs(Package p) {
+    final out = <(String, String)>[];
     if (p.coverageHours != null) {
-      out.add('${_trim(p.coverageHours!)} hours coverage');
+      out.add(('COVERAGE', '${_trim(p.coverageHours!)} hrs'));
     }
     if ((p.photographerCount ?? 0) > 0) {
-      final n = p.photographerCount!;
-      out.add('$n photographer${n > 1 ? 's' : ''}');
+      out.add(('PHOTOGRAPHERS', '${p.photographerCount}'));
     }
     if ((p.cinematographerCount ?? 0) > 0) {
-      final n = p.cinematographerCount!;
-      out.add('$n cinematographer${n > 1 ? 's' : ''}');
+      out.add(('CINEMATOGRAPHERS', '${p.cinematographerCount}'));
     }
-    for (final s in (p.inclusions ?? const <String>[])) {
-      if (s.trim().isNotEmpty) out.add(s.trim());
+    final extras = <String>[
+      ...?p.inclusions,
+      if ((p.inclusions ?? const []).isEmpty) ...?p.items,
+    ];
+    for (final s in extras) {
+      if (s.trim().isEmpty) continue;
+      out.add(('INCLUDED', s.trim()));
+      if (out.length >= 8) break;
     }
-    if (out.isEmpty) {
-      for (final s in (p.items ?? const <String>[])) {
-        if (s.trim().isNotEmpty) out.add(s.trim());
-      }
-    }
-    return out.take(6).toList();
+    return out;
   }
 
   static String _trim(double v) =>
       v == v.roundToDouble() ? v.toInt().toString() : v.toString();
+}
+
+/// Tinted action button that fills solid on hover (Edit orange / Delete red).
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({
+    required this.label,
+    required this.base,
+    required this.baseBorder,
+    required this.baseText,
+    required this.fill,
+    required this.onTap,
+  });
+
+  final String label;
+  final Color base;
+  final Color baseBorder;
+  final Color baseText;
+  final Color fill;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return WebHoverHighlight(
+      onTap: onTap,
+      borderRadius: WebTheme.rFull,
+      builder: (context, hovering) => AnimatedContainer(
+        duration: WebTheme.base,
+        curve: WebTheme.ease,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: hovering ? fill : base,
+          borderRadius: BorderRadius.circular(WebTheme.rFull),
+          border: Border.all(color: hovering ? fill : baseBorder),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: WebTheme.bodyStyle(
+              size: 12.5,
+              weight: FontWeight.w700,
+              color: hovering ? Colors.white : baseText,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 // ───────────────────────────────────────────────────── LOADING / EMPTY
@@ -332,23 +474,19 @@ class _CardSkeleton extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: WebTheme.surface,
-        borderRadius: BorderRadius.circular(WebTheme.rPanel),
+        borderRadius: BorderRadius.circular(WebTheme.rCard),
         border: Border.all(color: WebTheme.hairline),
       ),
-      child: Column(
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          WebShimmer(width: 60, height: 10, borderRadius: 4),
-          SizedBox(height: 12),
+        children: [
           WebShimmer(width: 120, height: 18, borderRadius: 6),
           SizedBox(height: 12),
           WebShimmer(width: 90, height: 26, borderRadius: 6),
           SizedBox(height: 20),
-          WebShimmer(height: 12, borderRadius: 4),
-          SizedBox(height: 10),
-          WebShimmer(height: 12, borderRadius: 4),
-          SizedBox(height: 10),
-          WebShimmer(height: 12, borderRadius: 4),
+          WebShimmer(height: 40, borderRadius: 10),
+          SizedBox(height: 8),
+          WebShimmer(height: 40, borderRadius: 10),
         ],
       ),
     );
@@ -356,42 +494,22 @@ class _CardSkeleton extends StatelessWidget {
 }
 
 class _Message extends StatelessWidget {
-  const _Message({required this.icon, required this.text});
-  final IconData icon;
+  const _Message({required this.text});
   final String text;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 64),
+      padding: const EdgeInsets.symmetric(vertical: 56),
       decoration: BoxDecoration(
         color: WebTheme.surface,
-        borderRadius: BorderRadius.circular(WebTheme.rPanel),
+        borderRadius: BorderRadius.circular(WebTheme.rCard),
         border: Border.all(color: WebTheme.hairline),
       ),
       child: Center(
-        child: Column(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: WebTheme.sageTint,
-                borderRadius: BorderRadius.circular(WebTheme.rChip),
-              ),
-              child: Icon(icon, color: WebTheme.inkMuted, size: 24),
-            ),
-            const SizedBox(height: WebTheme.sp3),
-            Text(
-              text,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: WebTheme.inkMuted,
-              ),
-            ),
-          ],
+        child: Text(
+          text,
+          style: WebTheme.bodyStyle(size: 13, color: WebTheme.inkMuted),
         ),
       ),
     );
@@ -399,8 +517,8 @@ class _Message extends StatelessWidget {
 }
 
 // ───────────────────────────────────────────────────────────── HELPERS
-String _formatBdt(int minor) {
-  final taka = (minor / 100).round();
+String _money(num v) {
+  final taka = v.round();
   final s = taka.toString();
   final buf = StringBuffer();
   final reversed = s.split('').reversed.toList();

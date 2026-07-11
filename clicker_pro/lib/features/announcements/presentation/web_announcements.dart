@@ -1,30 +1,23 @@
 // lib/features/announcements/presentation/web_announcements.dart
 //
-// Graphy7 — WEB-ONLY announcements (Graphy7 Design).
+// Graphy7 — WEB-ONLY announcements (Sunset Studio, from
+// design_handoff_clickerpro_web — Screen 10, MOD-11).
 //
-// A desktop announcement feed, rendered ONLY on wide web. The mobile
-// announcements body is 100% untouched (AnnouncementsScreen routes here only
-// when kIsWeb && width >= 900). Ported from the design source's
-// "Announcements" screen (#12): a single ≤760px column, newest first, each card
-// a white panel; pinned posts get a 3px orange left-edge bar + a "PINNED" pill.
+// ≤860px column, per the handoff:
+//   1. Intro line ("Pinned posts show on every member's dashboard…") +
+//      orange "+ New Post" pill (managers only).
+//   2. Pinned posts — dark #2B1D12 cards: gold "📌 PINNED" label + expiry
+//      right, cream title, muted body, read-receipt dots + "N/M read".
+//   3. Feed — white cards (hover: lift + orange border): author tile + meta,
+//      title, body, footer read count.
 //
-//   ┌──────────────────────────────────────────────────────────────┐
-//   │  Announcements                               Post Update (⊕)  │
-//   ├──────────────────────────────────────────────────────────────┤
-//   │ ▎ [avatar] Owner · time                          📌 PINNED ⋮  │
-//   │   Studio closed Aug 15                                        │
-//   │   Body copy…                                                  │
-//   │   ─────────────────────────────────────────────────────────  │
-//   │   ● N of M read                                               │
-//   └──────────────────────────────────────────────────────────────┘
-//
-// The reference card shows like/comment counters over mock data — the real
-// backend has no such fields, so (per the no-fake-data rule) this keeps the
-// honest footer the mobile card uses: the real "N of M read" status. All data
-// comes from the same providers the mobile screen uses — no new business logic.
+// The reference shows comment counters over mock data — the real backend has
+// none, so (per the no-fake-data rule) the footer keeps the honest
+// "N of M read" the mobile card uses. Same providers as mobile.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../shared/widgets/web_motion.dart';
 import '../../../theme/web_theme.dart';
@@ -53,166 +46,140 @@ class WebAnnouncements extends ConsumerWidget {
   final void Function(Announcement a)? onDelete;
   final void Function(Announcement a)? onMarkRead;
 
-  /// The reference feed caps its column at 760px.
-  static const double _maxContentWidth = 760;
+  /// The handoff caps this column at 860px.
+  static const double _maxContentWidth = 860;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(sortedAnnouncementsProvider);
 
-    return Center(
+    return Align(
+      alignment: Alignment.topCenter,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: _maxContentWidth),
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            WebTheme.sp6,
-            WebTheme.sp5,
-            WebTheme.sp6,
-            WebTheme.sp7,
-          ),
-          children: [
-            WebEntrance(child: _Header(canManage: canManage, onPost: onPost)),
-            const SizedBox(height: WebTheme.sp5),
-            WebEntrance(
-              delay: const Duration(milliseconds: 55),
-              child: async.when(
+        child: ScrollConfiguration(
+          behavior:
+              ScrollConfiguration.of(context).copyWith(scrollbars: false),
+          child: ListView(
+            padding: const EdgeInsets.only(bottom: 32),
+            children: [
+              WebEntrance(
+                delay: const Duration(milliseconds: 50),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        "Pinned posts show on every member's dashboard "
+                        'with read receipts.',
+                        style: WebTheme.bodyStyle(
+                            size: 12.5, color: WebTheme.inkMuted),
+                      ),
+                    ),
+                    if (canManage && onPost != null) ...[
+                      const SizedBox(width: 16),
+                      _NewPostPill(onTap: onPost!),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              async.when(
                 loading: () => const Column(
                   children: [
                     _CardSkeleton(),
-                    SizedBox(height: WebTheme.sp3),
+                    SizedBox(height: 12),
                     _CardSkeleton(),
                   ],
                 ),
-                error: (_, _) => const _Message(
-                  icon: Icons.campaign_outlined,
-                  text: 'Could not load announcements.',
-                ),
+                error: (_, _) =>
+                    const _Message(text: 'Could not load announcements.'),
                 data: (items) {
                   if (items.isEmpty) {
-                    return const _Message(
-                      icon: Icons.campaign_outlined,
-                      text: 'No announcements yet.',
-                    );
+                    return const _Message(text: 'No announcements yet.');
                   }
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       for (var i = 0; i < items.length; i++) ...[
-                        if (i > 0) const SizedBox(height: WebTheme.sp3),
-                        _AnnouncementCard(
-                          announcement: items[i],
-                          canManage: canManage,
-                          teamSize: teamSize,
-                          onTogglePin: onTogglePin == null
-                              ? null
-                              : () => onTogglePin!(items[i]),
-                          onDelete: onDelete == null
-                              ? null
-                              : () => onDelete!(items[i]),
-                          onMarkRead: onMarkRead == null
-                              ? null
-                              : () => onMarkRead!(items[i]),
+                        if (i > 0) const SizedBox(height: 12),
+                        WebEntrance(
+                          delay: Duration(
+                              milliseconds: (60 * i).clamp(0, 420)),
+                          offset: 8,
+                          child: items[i].pinned
+                              ? _PinnedCard(
+                                  announcement: items[i],
+                                  canManage: canManage,
+                                  teamSize: teamSize,
+                                  onTogglePin: _cb(onTogglePin, items[i]),
+                                  onDelete: _cb(onDelete, items[i]),
+                                  onMarkRead: _cb(onMarkRead, items[i]),
+                                )
+                              : _FeedCard(
+                                  announcement: items[i],
+                                  canManage: canManage,
+                                  teamSize: teamSize,
+                                  onTogglePin: _cb(onTogglePin, items[i]),
+                                  onDelete: _cb(onDelete, items[i]),
+                                  onMarkRead: _cb(onMarkRead, items[i]),
+                                ),
                         ),
                       ],
                     ],
                   );
                 },
               ),
-            ),
-          ],
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  static VoidCallback? _cb(
+      void Function(Announcement a)? fn, Announcement a) {
+    return fn == null ? null : () => fn(a);
+  }
+}
+
+/// "+ New Post" — orange pill with glow.
+class _NewPostPill extends StatelessWidget {
+  const _NewPostPill({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return WebHoverHighlight(
+      onTap: onTap,
+      borderRadius: WebTheme.rFull,
+      builder: (context, hovering) => AnimatedContainer(
+        duration: WebTheme.base,
+        curve: WebTheme.ease,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+        decoration: BoxDecoration(
+          color: hovering ? WebTheme.orangeDark : WebTheme.orange,
+          borderRadius: BorderRadius.circular(WebTheme.rFull),
+          boxShadow: WebTheme.buttonGlow,
+        ),
+        child: Text('+ New Post',
+            style: WebTheme.bodyStyle(
+                size: 13,
+                weight: FontWeight.w700,
+                color: WebTheme.chromeInk)),
       ),
     );
   }
 }
 
-// ───────────────────────────────────────────────────────────── HEADER
-class _Header extends StatelessWidget {
-  const _Header({required this.canManage, required this.onPost});
-  final bool canManage;
-  final VoidCallback? onPost;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        const Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Announcements',
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -1.0,
-                  color: WebTheme.ink,
-                  height: 1.0,
-                ),
-              ),
-              SizedBox(height: 6),
-              Text(
-                'Studio-wide updates for the whole team',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: WebTheme.inkMuted,
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (canManage && onPost != null) ...[
-          const SizedBox(width: WebTheme.sp4),
-          WebHoverLift(
-            onTap: onPost,
-            borderRadius: WebTheme.rButton,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 11),
-              decoration: BoxDecoration(
-                color: WebTheme.orange,
-                borderRadius: BorderRadius.circular(WebTheme.rButton),
-                boxShadow: [
-                  BoxShadow(
-                    color: WebTheme.orange.withValues(alpha: 0.42),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.campaign_rounded, color: Colors.white, size: 18),
-                  SizedBox(width: 6),
-                  Text(
-                    'Post Update',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────── CARD
-class _AnnouncementCard extends StatelessWidget {
-  const _AnnouncementCard({
+// ─────────────────────────────────────────────────────── PINNED (DARK)
+class _PinnedCard extends StatelessWidget {
+  const _PinnedCard({
     required this.announcement,
     required this.canManage,
     required this.teamSize,
-    required this.onTogglePin,
-    required this.onDelete,
-    required this.onMarkRead,
+    this.onTogglePin,
+    this.onDelete,
+    this.onMarkRead,
   });
 
   final Announcement announcement;
@@ -225,193 +192,214 @@ class _AnnouncementCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final a = announcement;
+    return WebHoverLift(
+      onTap: onMarkRead,
+      borderRadius: WebTheme.rCard,
+      enableShadow: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(22, 20, 22, 18),
+        decoration: BoxDecoration(
+          color: WebTheme.chrome,
+          borderRadius: BorderRadius.circular(WebTheme.rCard),
+          boxShadow: WebTheme.darkCardShadow,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text('📌 PINNED',
+                    style: WebTheme.label(
+                        size: 9, color: WebTheme.amber, tracking: 0.18)),
+                const Spacer(),
+                if (a.expiresAt != null)
+                  Text(
+                    a.isExpired
+                        ? 'EXPIRED'
+                        : 'EXPIRES ${DateFormat('d MMM').format(a.expiresAt!).toUpperCase()}',
+                    style: WebTheme.label(
+                        size: 9,
+                        color: a.isExpired
+                            ? WebTheme.danger
+                            : WebTheme.chromeInkMuted,
+                        tracking: 0.1),
+                  ),
+                if (canManage)
+                  _CardMenu(
+                    pinned: true,
+                    dark: true,
+                    onTogglePin: onTogglePin,
+                    onDelete: onDelete,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(a.title,
+                style: WebTheme.bodyStyle(
+                    size: 15,
+                    weight: FontWeight.w700,
+                    color: WebTheme.chromeInk)),
+            const SizedBox(height: 6),
+            Text(a.body,
+                style: WebTheme.bodyStyle(
+                    size: 12.5,
+                    color: WebTheme.chromeInkMuted,
+                    height: 1.55)),
+            const SizedBox(height: 14),
+            _ReadStatus(read: a.readCount, total: teamSize, dark: true),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ───────────────────────────────────────────────────────── FEED (WHITE)
+class _FeedCard extends StatefulWidget {
+  const _FeedCard({
+    required this.announcement,
+    required this.canManage,
+    required this.teamSize,
+    this.onTogglePin,
+    this.onDelete,
+    this.onMarkRead,
+  });
+
+  final Announcement announcement;
+  final bool canManage;
+  final int teamSize;
+  final VoidCallback? onTogglePin;
+  final VoidCallback? onDelete;
+  final VoidCallback? onMarkRead;
+
+  @override
+  State<_FeedCard> createState() => _FeedCardState();
+}
+
+class _FeedCardState extends State<_FeedCard> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final a = widget.announcement;
     final expired = a.isExpired;
+    final noMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
 
     return Opacity(
       opacity: expired ? 0.55 : 1.0,
-      child: WebHoverLift(
-        onTap: onMarkRead,
-        borderRadius: WebTheme.rPanel,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(WebTheme.rPanel),
-          child: Stack(
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(22, 20, 22, 18),
-                decoration: BoxDecoration(
-                  color: WebTheme.surface,
-                  borderRadius: BorderRadius.circular(WebTheme.rPanel),
-                  border: Border.all(color: WebTheme.hairline),
-                  boxShadow: WebTheme.cardShadow,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      child: MouseRegion(
+        cursor: widget.onMarkRead != null
+            ? SystemMouseCursors.click
+            : MouseCursor.defer,
+        onEnter: (_) => setState(() => _hover = true),
+        onExit: (_) => setState(() => _hover = false),
+        child: GestureDetector(
+          onTap: widget.onMarkRead,
+          child: AnimatedContainer(
+            duration: noMotion ? Duration.zero : WebTheme.base,
+            curve: WebTheme.ease,
+            transform: Matrix4.translationValues(
+                0, _hover && !noMotion ? -2 : 0, 0),
+            padding: const EdgeInsets.fromLTRB(22, 18, 22, 16),
+            decoration: BoxDecoration(
+              color: WebTheme.surface,
+              borderRadius: BorderRadius.circular(WebTheme.rCard),
+              border: Border.all(
+                  color: _hover ? WebTheme.orange : WebTheme.hairline),
+              boxShadow: WebTheme.cardShadow,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    // Author row: owner avatar + "Studio" role + time, pin pill.
-                    Row(
-                      children: [
-                        Container(
-                          width: 38,
-                          height: 38,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: WebTheme.orange.withValues(alpha: 0.16),
-                            borderRadius: BorderRadius.circular(11),
-                          ),
-                          child: const Icon(Icons.campaign_rounded,
-                              size: 19, color: WebTheme.orange),
-                        ),
-                        const SizedBox(width: 11),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Studio Announcement',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: WebTheme.ink,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                a.timeAgo,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: WebTheme.inkMuted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (a.pinned)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: WebTheme.orange.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(WebTheme.rFull),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.push_pin_rounded,
-                                    size: 13, color: WebTheme.orange),
-                                SizedBox(width: 4),
-                                Text(
-                                  'PINNED',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.5,
-                                    color: WebTheme.orange,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        if (canManage && (onTogglePin != null || onDelete != null))
-                          _CardMenu(
-                            pinned: a.pinned,
-                            onTogglePin: onTogglePin,
-                            onDelete: onDelete,
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      a.title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.2,
-                        color: WebTheme.ink,
-                        height: 1.3,
+                    Container(
+                      width: 30,
+                      height: 30,
+                      decoration: const BoxDecoration(
+                        color: WebTheme.orangeTint,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: Icon(Icons.campaign_rounded,
+                            size: 15, color: WebTheme.orangeDeep),
                       ),
                     ),
-                    const SizedBox(height: 5),
-                    Text(
-                      a.body,
-                      style: const TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w500,
-                        color: WebTheme.inkSoft,
-                        height: 1.55,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Studio Announcement · ${a.timeAgo}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: WebTheme.bodyStyle(
+                            size: 11.5, color: WebTheme.inkMuted),
                       ),
                     ),
-                    if (a.expiresAt != null) ...[
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Icon(Icons.schedule_rounded,
-                              size: 13,
-                              color: expired ? WebTheme.danger : WebTheme.inkFaint),
-                          const SizedBox(width: 5),
-                          Text(
-                            expired
-                                ? 'Expired'
-                                : 'Expires ${_formatExpiry(a.expiresAt!)}',
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w600,
-                              color:
-                                  expired ? WebTheme.danger : WebTheme.inkFaint,
-                            ),
-                          ),
-                        ],
+                    if (a.expiresAt != null)
+                      Text(
+                        expired
+                            ? 'EXPIRED'
+                            : 'EXPIRES ${DateFormat('d MMM').format(a.expiresAt!).toUpperCase()}',
+                        style: WebTheme.label(
+                            size: 8.5,
+                            color: expired
+                                ? WebTheme.danger
+                                : WebTheme.inkFaint,
+                            tracking: 0.08),
                       ),
-                    ],
-                    const SizedBox(height: 14),
-                    const Divider(height: 1, color: WebTheme.hairline),
-                    const SizedBox(height: 12),
-                    _ReadStatus(read: a.readCount, total: teamSize),
+                    if (widget.canManage)
+                      _CardMenu(
+                        pinned: false,
+                        dark: false,
+                        onTogglePin: widget.onTogglePin,
+                        onDelete: widget.onDelete,
+                      ),
                   ],
                 ),
-              ),
-              if (a.pinned)
-                const Positioned(
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  child: SizedBox(
-                    width: 3,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(color: WebTheme.orange),
-                    ),
-                  ),
-                ),
-            ],
+                const SizedBox(height: 10),
+                Text(a.title,
+                    style: WebTheme.bodyStyle(
+                        size: 14.5, weight: FontWeight.w700)),
+                const SizedBox(height: 4),
+                Text(a.body,
+                    style: WebTheme.bodyStyle(
+                        size: 12.5,
+                        color: WebTheme.inkSoft,
+                        height: 1.55)),
+                const SizedBox(height: 12),
+                _ReadStatus(
+                    read: a.readCount,
+                    total: widget.teamSize,
+                    dark: false),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-
-  static String _formatExpiry(DateTime date) {
-    final diff = date.difference(DateTime.now());
-    if (diff.isNegative) return 'just now';
-    if (diff.inDays > 0) return 'in ${diff.inDays}d';
-    if (diff.inHours > 0) return 'in ${diff.inHours}h';
-    return 'in ${diff.inMinutes}m';
-  }
 }
 
+// ──────────────────────────────────────────────────────────── PIECES
 class _CardMenu extends StatelessWidget {
   const _CardMenu({
     required this.pinned,
+    required this.dark,
     required this.onTogglePin,
     required this.onDelete,
   });
 
   final bool pinned;
+  final bool dark;
   final VoidCallback? onTogglePin;
   final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
+    if (onTogglePin == null && onDelete == null) {
+      return const SizedBox.shrink();
+    }
     return PopupMenuButton<String>(
       onSelected: (v) {
         if (v == 'pin') onTogglePin?.call();
@@ -420,23 +408,24 @@ class _CardMenu extends StatelessWidget {
       color: WebTheme.surface,
       padding: EdgeInsets.zero,
       splashRadius: 18,
-      icon: const Icon(Icons.more_horiz_rounded,
-          color: WebTheme.inkFaint, size: 20),
+      icon: Icon(Icons.more_horiz_rounded,
+          color: dark ? WebTheme.chromeInkMuted : WebTheme.inkFaint,
+          size: 20),
       itemBuilder: (_) => [
         if (onTogglePin != null)
           PopupMenuItem(
             value: 'pin',
             child: Text(
               pinned ? 'Unpin' : 'Pin',
-              style: const TextStyle(color: WebTheme.ink, fontSize: 13),
+              style: WebTheme.bodyStyle(size: 13),
             ),
           ),
         if (onDelete != null)
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'delete',
             child: Text(
               'Delete',
-              style: TextStyle(color: WebTheme.danger, fontSize: 13),
+              style: WebTheme.bodyStyle(size: 13, color: WebTheme.danger),
             ),
           ),
       ],
@@ -444,65 +433,61 @@ class _CardMenu extends StatelessWidget {
   }
 }
 
-/// Footer read state — "All read ✓" once everyone's seen it, else a stacked
-/// dot cluster + "N of M read". Mirrors the mobile card's honest footer.
+/// Read-receipt dots + "N/M read" (handoff footer). Real counts only.
 class _ReadStatus extends StatelessWidget {
-  const _ReadStatus({required this.read, required this.total});
+  const _ReadStatus({
+    required this.read,
+    required this.total,
+    required this.dark,
+  });
+
   final int read;
   final int total;
-
-  static const _dotColors = [
-    WebTheme.amberDeep,
-    WebTheme.info,
-    WebTheme.success,
-  ];
+  final bool dark;
 
   @override
   Widget build(BuildContext context) {
-    if (read >= total && total > 0) {
-      return const Text(
-        'All read ✓',
-        style: TextStyle(
-          fontSize: 11.5,
-          fontWeight: FontWeight.w700,
-          color: WebTheme.success,
-        ),
-      );
-    }
     final dots = read.clamp(0, 3);
+    final dim = total - read;
+    final labelColor = dark ? WebTheme.chromeInkMuted : WebTheme.inkMuted;
+
     return Row(
       children: [
-        if (dots > 0) ...[
-          SizedBox(
-            width: 20 + (dots - 1) * 13,
-            height: 20,
-            child: Stack(
-              children: [
-                for (var i = 0; i < dots; i++)
-                  Positioned(
-                    left: i * 13.0,
-                    child: Container(
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _dotColors[i % _dotColors.length],
-                        border:
-                            Border.all(color: WebTheme.surface, width: 2),
-                      ),
-                    ),
-                  ),
-              ],
+        for (var i = 0; i < dots; i++)
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: WebTheme.success,
+                shape: BoxShape.circle,
+              ),
             ),
           ),
-          const SizedBox(width: 8),
-        ],
+        if (dim > 0)
+          Container(
+            width: 8,
+            height: 8,
+            margin: const EdgeInsets.only(right: 4),
+            decoration: BoxDecoration(
+              color: dark
+                  ? WebTheme.chromeInkFaint.withValues(alpha: 0.5)
+                  : WebTheme.tan,
+              shape: BoxShape.circle,
+            ),
+          ),
+        const SizedBox(width: 6),
         Text(
-          '$read of $total read',
-          style: const TextStyle(
-            fontSize: 11.5,
-            fontWeight: FontWeight.w500,
-            color: WebTheme.inkMuted,
+          total > 0 && read >= total
+              ? 'All read ✓'
+              : '$read/$total read',
+          style: WebTheme.label(
+            size: 9,
+            color: total > 0 && read >= total
+                ? WebTheme.success
+                : labelColor,
+            tracking: 0.08,
           ),
         ),
       ],
@@ -520,24 +505,22 @@ class _CardSkeleton extends StatelessWidget {
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: WebTheme.surface,
-        borderRadius: BorderRadius.circular(WebTheme.rPanel),
+        borderRadius: BorderRadius.circular(WebTheme.rCard),
         border: Border.all(color: WebTheme.hairline),
       ),
-      child: Column(
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
+        children: [
           Row(
             children: [
-              WebShimmer(width: 38, height: 38, borderRadius: 11),
+              WebShimmer(width: 30, height: 30, borderRadius: 15),
               SizedBox(width: 11),
-              Expanded(child: WebShimmer(height: 14, borderRadius: 6)),
+              Expanded(child: WebShimmer(height: 12, borderRadius: 6)),
             ],
           ),
-          SizedBox(height: 16),
+          SizedBox(height: 14),
           WebShimmer(width: 220, height: 15, borderRadius: 6),
           SizedBox(height: 10),
-          WebShimmer(height: 12, borderRadius: 4),
-          SizedBox(height: 8),
           WebShimmer(height: 12, borderRadius: 4),
         ],
       ),
@@ -546,43 +529,23 @@ class _CardSkeleton extends StatelessWidget {
 }
 
 class _Message extends StatelessWidget {
-  const _Message({required this.icon, required this.text});
-  final IconData icon;
+  const _Message({required this.text});
   final String text;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 64),
+      padding: const EdgeInsets.symmetric(vertical: 56),
       decoration: BoxDecoration(
         color: WebTheme.surface,
-        borderRadius: BorderRadius.circular(WebTheme.rPanel),
+        borderRadius: BorderRadius.circular(WebTheme.rCard),
         border: Border.all(color: WebTheme.hairline),
       ),
       child: Center(
-        child: Column(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: WebTheme.sageTint,
-                borderRadius: BorderRadius.circular(WebTheme.rChip),
-              ),
-              child: Icon(icon, color: WebTheme.inkMuted, size: 24),
-            ),
-            const SizedBox(height: WebTheme.sp3),
-            Text(
-              text,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: WebTheme.inkMuted,
-              ),
-            ),
-          ],
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: WebTheme.bodyStyle(size: 13, color: WebTheme.inkMuted),
         ),
       ),
     );

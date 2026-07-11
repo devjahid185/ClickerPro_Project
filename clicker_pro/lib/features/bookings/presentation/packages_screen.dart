@@ -71,6 +71,8 @@ class _PackagesScreenState extends ConsumerState<PackagesScreen> {
         body: WebPackages(
           canManage: canManage,
           onEdit: (pkg) => _openEditSheet(context, ref, pkg),
+          onAdd: () => _openEditSheet(context, ref, null),
+          onDelete: (pkg) => _deleteFromWeb(context, pkg),
         ),
       );
     }
@@ -120,6 +122,50 @@ class _PackagesScreenState extends ConsumerState<PackagesScreen> {
       ),
       builder: (_) => _PackageEditSheet(package: existing),
     );
+  }
+
+  /// Web card "Delete" — same confirm + repository flow the mobile card menu
+  /// uses, then refreshes the grid.
+  Future<void> _deleteFromWeb(BuildContext context, Package pkg) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Package'),
+        content: Text('Delete "${pkg.name}"? This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final policy = ref.read(bookingsPolicyProvider);
+    try {
+      await ref.read(packageRepositoryProvider).remove(pkg.id, policy: policy);
+      ref.invalidate(packagesProvider);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(const SnackBar(content: Text('Package deleted.')));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text('Delete failed: $e')));
+      }
+    }
   }
 }
 
