@@ -1,0 +1,1762 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;background:#FBF6F0;}
+body{font-family:'DM Sans',sans-serif;color:#2B1D12;-webkit-font-smoothing:antialiased;}
+a{color:#EA5B0C;text-decoration:none;}
+a:hover{color:#B8430A;}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:rgba(234,91,12,0.25);border-radius:4px}
+@keyframes barGrow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:translateX(0)}}
+@keyframes popIn{from{opacity:0;transform:scale(0.92)}to{opacity:1;transform:scale(1)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.45}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#FBF6F0;padding:24px;box-sizing:border-box;">
+  <div style="max-width:1440px;margin:0 auto;display:grid;grid-template-columns:248px 1fr 316px;gap:20px;align-items:start;">
+
+    <!-- ═══ SIDEBAR ═══ -->
+    <aside style="background:#2B1D12;border-radius:30px;padding:28px 0 26px;display:flex;flex-direction:column;gap:24px;min-height:860px;box-sizing:border-box;box-shadow:0 16px 44px rgba(43,29,18,0.22);overflow:hidden;position:sticky;top:24px;">
+      <div style="display:flex;align-items:center;gap:10px;padding:0 24px;">
+        <div style="width:34px;height:34px;border-radius:10px;background:#EA5B0C;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:800;font-size:16px;color:#FFF6EE;">C</div>
+        <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:19px;color:#FFF6EE;letter-spacing:-0.01em;">Clicker<span style="color:#F59E4C;">Pro</span></div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:14px 24px 24px;border-bottom:1px solid rgba(255,246,238,0.10);">
+        <div style="width:92px;height:92px;border-radius:50%;border:2px solid rgba(245,176,46,0.6);padding:4px;box-sizing:border-box;">
+          <div style="width:100%;height:100%;border-radius:50%;background:#3D2A1A;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:700;font-size:28px;color:#F5B02E;">{{ initials }}</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:16px;letter-spacing:0.06em;text-transform:uppercase;color:#FFF6EE;">{{ userName }}</div>
+          <div style="font-size:10.5px;color:#B99C82;margin-top:4px;">{{ userSub }}</div>
+        </div>
+        <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:#F5B02E;background:rgba(245,176,46,0.14);border:1px solid rgba(245,176,46,0.35);padding:3px 12px;border-radius:20px;">{{ roleLabel }}</div>
+      </div>
+
+      <nav style="display:flex;flex-direction:column;gap:8px;">
+        <sc-for list="{{ navItems }}" as="nav" hint-placeholder-count="7">
+          <div onClick="{{ nav.onClick }}" style="display:flex;align-items:center;gap:14px;padding:9px 16px 9px 18px;margin-left:16px;border-radius:999px 0 0 999px;cursor:pointer;background:{{ nav.bg }};transition:background 0.25s;">
+            <span style="width:30px;height:30px;border-radius:50%;border:1px solid {{ nav.iconBorder }};display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:12px;color:{{ nav.iconColor }};flex:none;transition:all 0.25s;">{{ nav.glyph }}</span>
+            <span style="font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:{{ nav.color }};transition:color 0.25s;">{{ nav.label }}</span>
+          </div>
+        </sc-for>
+      </nav>
+
+      <div style="margin-top:auto;padding:0 24px;">
+        <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#F5B02E;margin-bottom:12px;">Active Team</div>
+        <div style="display:flex;align-items:center;">
+          <div style="width:32px;height:32px;border-radius:50%;background:#5C3A1E;border:2px solid #2B1D12;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#F5B02E;">R</div>
+          <div style="width:32px;height:32px;border-radius:50%;background:#4A2E3D;border:2px solid #2B1D12;margin-left:-8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#E8A0BF;">S</div>
+          <div style="width:32px;height:32px;border-radius:50%;background:#2E4A3D;border:2px solid #2B1D12;margin-left:-8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#7ECFA8;">T</div>
+          <div style="width:32px;height:32px;border-radius:50%;background:rgba(234,91,12,0.25);border:2px solid #2B1D12;margin-left:-8px;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:9px;color:#F5B02E;">+5</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ═══ MAIN ═══ -->
+    <section style="display:flex;flex-direction:column;gap:18px;min-width:0;grid-column:{{ mainCol }};">
+
+      <header style="display:flex;align-items:center;gap:16px;animation:fadeUp 0.45s cubic-bezier(0.2,0.8,0.2,1) both;">
+        <div>
+          <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:26px;letter-spacing:-0.01em;color:#2B1D12;">{{ screenTitle }}</div>
+          <div style="font-family:'Space Mono',monospace;font-size:10px;color:#A08469;letter-spacing:0.08em;">SAT · 11 JUL 2026 · DHAKA</div>
+        </div>
+        <div style="flex:1;max-width:420px;margin-left:auto;display:flex;align-items:center;gap:10px;background:#FFFFFF;border:1px solid #EBDDCE;border-radius:999px;padding:10px 18px;box-shadow:0 2px 8px rgba(43,29,18,0.05);">
+          <span style="font-family:'Space Mono',monospace;font-size:12px;color:#EA5B0C;">⌕</span>
+          <span style="font-size:12.5px;color:#B99C82;">Search client, booking, venue…</span>
+        </div>
+        <div style="position:relative;">
+          <div onClick="{{ toggleNotif }}" style="width:42px;height:42px;border-radius:50%;background:{{ bellBg }};border:1px solid #EBDDCE;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;box-shadow:0 2px 8px rgba(43,29,18,0.05);">
+            <span style="font-size:14px;">🔔</span>
+            <span style="position:absolute;top:9px;right:10px;width:7px;height:7px;border-radius:50%;background:#EA5B0C;border:1.5px solid #FFFFFF;animation:pulse 2s infinite;"></span>
+          </div>
+          <sc-if value="{{ notifOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;right:0;top:52px;width:352px;background:#FFFFFF;border:1px solid #EBDDCE;border-radius:18px;box-shadow:0 24px 54px rgba(43,29,18,0.18);z-index:40;padding:8px;animation:popIn 0.25s cubic-bezier(0.2,0.8,0.2,1) both;">
+              <div style="display:flex;align-items:center;padding:10px 14px 8px;">
+                <span style="font-family:'Sora',sans-serif;font-weight:700;font-size:14px;">Notifications</span>
+                <span style="margin-left:auto;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.1em;color:#EA5B0C;cursor:pointer;">MARK ALL READ</span>
+              </div>
+              <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="4">
+                <div style="display:flex;gap:12px;padding:11px 14px;border-radius:12px;cursor:pointer;" style-hover="background:#FBF6F0">
+                  <div style="width:34px;height:34px;border-radius:10px;background:{{ n.bg }};display:flex;align-items:center;justify-content:center;font-size:14px;flex:none;">{{ n.glyph }}</div>
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-weight:700;font-size:12.5px;">{{ n.title }}</div>
+                    <div style="font-size:11px;color:#A08469;margin-top:2px;">{{ n.sub }}</div>
+                    <sc-if value="{{ n.hasAction }}" hint-placeholder-val="{{ false }}">
+                      <span style="display:inline-block;margin-top:7px;font-family:'Space Mono',monospace;font-size:8.5px;letter-spacing:0.1em;color:#B8430A;background:#FFF3E8;border:1px solid #F5C9A3;padding:3px 10px;border-radius:999px;">{{ n.action }}</span>
+                    </sc-if>
+                  </div>
+                  <div style="font-family:'Space Mono',monospace;font-size:9px;color:#B99C82;flex:none;">{{ n.time }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </header>
+
+      <!-- ════════ DASHBOARD ════════ -->
+      <sc-if value="{{ isDash }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:18px;">
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:10px;animation:fadeUp 0.5s 0.05s cubic-bezier(0.2,0.8,0.2,1) both;">
+            <sc-for list="{{ weekDays }}" as="d" hint-placeholder-count="7">
+              <div style="background:{{ d.bg }};border:1px solid {{ d.border }};border-radius:14px;padding:12px 8px;text-align:center;box-shadow:{{ d.shadow }};transition:transform 0.25s;cursor:pointer;" style-hover="transform:translateY(-3px)">
+                <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.12em;color:{{ d.subColor }};">{{ d.dow }}</div>
+                <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:20px;color:{{ d.numColor }};margin:3px 0 5px;">{{ d.num }}</div>
+                <div style="display:flex;gap:3px;justify-content:center;height:5px;">
+                  <sc-for list="{{ d.pips }}" as="p" hint-placeholder-count="1">
+                    <span style="width:5px;height:5px;border-radius:50%;background:{{ p.c }};"></span>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:18px;animation:fadeUp 0.5s 0.1s cubic-bezier(0.2,0.8,0.2,1) both;">
+            <div style="background:linear-gradient(135deg,#EA5B0C,#C2410C);border-radius:22px;padding:28px 30px;position:relative;overflow:hidden;box-shadow:0 16px 40px rgba(234,91,12,0.3);">
+              <div style="position:absolute;width:240px;height:240px;border-radius:50%;background:#F5B02E;filter:blur(90px);opacity:0.35;top:-80px;right:-50px;"></div>
+              <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:#FFD9B8;">Today's Events</div>
+              <div style="display:flex;align-items:flex-end;gap:20px;">
+                <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:104px;line-height:1;color:#FFF6EE;animation:popIn 0.6s 0.25s cubic-bezier(0.34,1.56,0.64,1) both;">03</div>
+                <div style="display:flex;flex-direction:column;gap:8px;padding-bottom:14px;">
+                  <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#FFE4CC;"><span style="width:8px;height:8px;border-radius:50%;background:#FFD166;"></span>2 Day shift</div>
+                  <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#FFE4CC;"><span style="width:8px;height:8px;border-radius:50%;background:#2B1D12;"></span>1 Night shift</div>
+                </div>
+              </div>
+              <div style="font-size:12px;color:#FFD9B8;">Next: Wedding — Community Center, Dhanmondi · reporting 4:30 PM</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:18px;">
+              <div style="flex:1;background:#FFFFFF;border:1px solid #EBDDCE;border-radius:22px;padding:18px 22px;box-shadow:0 6px 20px rgba(43,29,18,0.06);transition:transform 0.25s;" style-hover="transform:translateY(-2px)">
+                <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#A08469;">Upcoming</div>
+                <div style="display:flex;align-items:baseline;gap:8px;"><span style="font-family:'Sora',sans-serif;font-weight:800;font-size:38px;color:#EA5B0C;">12</span><span style="font-size:11px;color:#A08469;">next 30 days</span></div>
+              </div>
+              <div style="flex:1;background:#FFFFFF;border:1px solid #EBDDCE;border-radius:22px;padding:18px 22px;box-shadow:0 6px 20px rgba(43,29,18,0.06);transition:transform 0.25s;" style-hover="transform:translateY(-2px)">
+                <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#A08469;">Total Bookings</div>
+                <div style="display:flex;align-items:baseline;gap:8px;"><span style="font-family:'Sora',sans-serif;font-weight:800;font-size:38px;color:#2B1D12;">148</span><span style="font-size:11px;color:#1E9E6A;">↑ 9 this month</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:22px;padding:18px 26px;display:flex;align-items:center;gap:24px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.5s 0.15s cubic-bezier(0.2,0.8,0.2,1) both;">
+            <div>
+              <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#A08469;">Delivered</div>
+              <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:34px;color:#1E9E6A;line-height:1.1;">96</div>
+            </div>
+            <div style="flex:1;display:flex;align-items:flex-end;gap:6px;height:44px;">{{ deliveredBars }}</div>
+            <div style="font-family:'Space Mono',monospace;font-size:10px;color:#A08469;text-align:right;line-height:1.9;">JAN – JUL<br><span style="color:#1E9E6A;">▲ 12%</span></div>
+          </div>
+
+          <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:22px;padding:22px 26px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.5s 0.2s cubic-bezier(0.2,0.8,0.2,1) both;">
+            <div style="display:flex;align-items:center;margin-bottom:16px;">
+              <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:17px;">Today's Bookings</div>
+              <div onClick="{{ goBookings }}" style="margin-left:auto;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#EA5B0C;cursor:pointer;">VIEW ALL →</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <sc-for list="{{ bookings }}" as="b" hint-placeholder-count="3">
+                <div onClick="{{ openEvent }}" style="display:grid;grid-template-columns:64px 1.4fr 90px 1fr auto;gap:16px;align-items:center;background:#FBF6F0;border:1px solid #F0E4D6;border-left:3px solid {{ b.accent }};border-radius:14px;padding:13px 18px;cursor:pointer;transition:all 0.25s;" style-hover="border-color:#EA5B0C;background:#FFF3E8;transform:translateX(4px)">
+                  <div style="text-align:center;">
+                    <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:21px;line-height:1;color:#2B1D12;">11</div>
+                    <div style="font-family:'Space Mono',monospace;font-size:8px;letter-spacing:0.15em;color:#A08469;">JUL</div>
+                  </div>
+                  <div>
+                    <div style="font-weight:700;font-size:14px;">{{ b.client }}</div>
+                    <div style="font-size:11.5px;color:#A08469;">{{ b.type }}</div>
+                  </div>
+                  <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:{{ b.shiftColor }};background:{{ b.shiftBg }};border:1px solid {{ b.shiftBorder }};border-radius:6px;padding:4px 0;text-align:center;">{{ b.shift }}</div>
+                  <div style="font-size:12px;color:#6B5844;">{{ b.venue }}</div>
+                  <div style="text-align:right;">
+                    <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:14px;color:#2B1D12;">{{ b.total }}</div>
+                    <div style="font-family:'Space Mono',monospace;font-size:10px;color:{{ b.dueColor }};">{{ b.dueText }}</div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;animation:fadeUp 0.5s 0.25s cubic-bezier(0.2,0.8,0.2,1) both;">
+            <sc-for list="{{ quickActions }}" as="q" hint-placeholder-count="4">
+              <div onClick="{{ q.onClick }}" style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:18px;padding:18px;display:flex;align-items:center;gap:12px;cursor:pointer;box-shadow:0 4px 14px rgba(43,29,18,0.05);transition:all 0.25s;" style-hover="border-color:#EA5B0C;transform:translateY(-3px);box-shadow:0 12px 26px rgba(234,91,12,0.15)">
+                <div style="width:38px;height:38px;border-radius:11px;background:{{ q.iconBg }};display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:15px;color:{{ q.iconColor }};">{{ q.glyph }}</div>
+                <div style="font-weight:700;font-size:13px;">{{ q.label }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ════════ BOOKINGS ════════ -->
+      <sc-if value="{{ isBookings }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px;">
+          <div style="display:flex;align-items:center;gap:12px;animation:fadeUp 0.45s 0.05s cubic-bezier(0.2,0.8,0.2,1) both;">
+            <sc-for list="{{ statusChips }}" as="ch" hint-placeholder-count="6">
+              <div onClick="{{ ch.onClick }}" style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;padding:8px 16px;border-radius:999px;cursor:pointer;background:{{ ch.bg }};color:{{ ch.color }};border:1px solid {{ ch.border }};transition:all 0.25s;">{{ ch.label }}</div>
+            </sc-for>
+            <div onClick="{{ goSelfBooking }}" style="margin-left:auto;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.08em;color:#B8430A;background:#FFF3E8;border:1px solid #F5C9A3;padding:9px 16px;border-radius:999px;cursor:pointer;transition:all 0.25s;" style-hover="background:#EA5B0C;color:#FFF6EE">🔗 SELF-BOOKING</div>
+            <div onClick="{{ goNewBooking }}" style="background:#EA5B0C;color:#FFF6EE;font-weight:700;font-size:13px;padding:10px 20px;border-radius:999px;cursor:pointer;box-shadow:0 6px 16px rgba(234,91,12,0.3);transition:all 0.25s;" style-hover="background:#C2410C;transform:translateY(-2px)">+ New Booking</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+            <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:22px;padding:20px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.5s 0.1s cubic-bezier(0.2,0.8,0.2,1) both;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid #F5B02E;">
+                <span style="font-size:15px;">☀</span>
+                <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:15px;">Day Shift</div>
+                <div style="margin-left:auto;font-family:'Space Mono',monospace;font-size:10px;color:#B8430A;background:#FFF3E8;border:1px solid #F5C9A3;padding:3px 10px;border-radius:999px;">{{ dayCount }}</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <sc-for list="{{ dayList }}" as="b" hint-placeholder-count="4">
+                  <div onClick="{{ openEvent }}" style="display:flex;align-items:center;gap:12px;background:#FBF6F0;border:1px solid #F0E4D6;border-left:3px solid #F5B02E;border-radius:12px;padding:11px 14px;cursor:pointer;animation:slideIn 0.4s {{ b.delay }} cubic-bezier(0.2,0.8,0.2,1) both;transition:all 0.2s;" style-hover="background:#FFF3E8;transform:translateX(4px)">
+                    <div style="text-align:center;width:40px;">
+                      <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:17px;line-height:1;">{{ b.day }}</div>
+                      <div style="font-family:'Space Mono',monospace;font-size:7.5px;letter-spacing:0.12em;color:#A08469;">{{ b.mon }}</div>
+                    </div>
+                    <div style="flex:1;">
+                      <div style="font-weight:700;font-size:13px;">{{ b.client }}</div>
+                      <div style="font-size:11px;color:#A08469;">{{ b.type }}</div>
+                    </div>
+                    <span style="color:#B99C82;font-size:14px;">›</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:22px;padding:20px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.5s 0.15s cubic-bezier(0.2,0.8,0.2,1) both;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid #8B5CF6;">
+                <span style="font-size:15px;">☾</span>
+                <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:15px;">Night Shift</div>
+                <div style="margin-left:auto;font-family:'Space Mono',monospace;font-size:10px;color:#6D3FD4;background:#F3EEFD;border:1px solid #D8C8F7;padding:3px 10px;border-radius:999px;">{{ nightCount }}</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <sc-for list="{{ nightList }}" as="b" hint-placeholder-count="4">
+                  <div onClick="{{ openEvent }}" style="display:flex;align-items:center;gap:12px;background:#FBF6F0;border:1px solid #F0E4D6;border-right:3px solid #8B5CF6;border-radius:12px;padding:11px 14px;cursor:pointer;animation:slideIn 0.4s {{ b.delay }} cubic-bezier(0.2,0.8,0.2,1) both;transition:all 0.2s;" style-hover="background:#F3EEFD;transform:translateX(-4px)">
+                    <div style="text-align:center;width:40px;">
+                      <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:17px;line-height:1;">{{ b.day }}</div>
+                      <div style="font-family:'Space Mono',monospace;font-size:7.5px;letter-spacing:0.12em;color:#A08469;">{{ b.mon }}</div>
+                    </div>
+                    <div style="flex:1;">
+                      <div style="font-weight:700;font-size:13px;">{{ b.client }}</div>
+                      <div style="font-size:11px;color:#A08469;">{{ b.type }}</div>
+                    </div>
+                    <span style="color:#B99C82;font-size:14px;">›</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ════════ CALENDAR ════════ -->
+      <sc-if value="{{ isCalendar }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:22px;padding:26px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.5s 0.05s cubic-bezier(0.2,0.8,0.2,1) both;">
+          <div style="display:flex;align-items:center;margin-bottom:20px;">
+            <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:20px;">July 2026</div>
+            <div style="display:flex;gap:6px;margin-left:16px;">
+              <span style="width:30px;height:30px;border-radius:50%;border:1px solid #EBDDCE;display:flex;align-items:center;justify-content:center;font-size:13px;color:#A08469;cursor:pointer;transition:all 0.2s;" style-hover="border-color:#EA5B0C;color:#EA5B0C">‹</span>
+              <span style="width:30px;height:30px;border-radius:50%;border:1px solid #EBDDCE;display:flex;align-items:center;justify-content:center;font-size:13px;color:#A08469;cursor:pointer;transition:all 0.2s;" style-hover="border-color:#EA5B0C;color:#EA5B0C">›</span>
+            </div>
+            <div style="margin-left:auto;display:flex;gap:6px;background:#FBF6F0;border:1px solid #F0E4D6;border-radius:999px;padding:4px;">
+              <span style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.08em;padding:6px 16px;border-radius:999px;background:#EA5B0C;color:#FFF6EE;">MONTH</span>
+              <span style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.08em;padding:6px 16px;border-radius:999px;color:#A08469;cursor:pointer;">WEEK</span>
+              <span style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.08em;padding:6px 16px;border-radius:999px;color:#A08469;cursor:pointer;">DAY</span>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:8px;">
+            <sc-for list="{{ dowLabels }}" as="l" hint-placeholder-count="7">
+              <div style="text-align:center;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.14em;color:{{ l.color }};">{{ l.t }}</div>
+            </sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;">
+            <sc-for list="{{ bigCalCells }}" as="c" hint-placeholder-count="35">
+              <div style="min-height:86px;border-radius:14px;background:{{ c.bg }};border:1px solid {{ c.border }};padding:8px 10px;box-sizing:border-box;cursor:pointer;animation:popIn 0.35s {{ c.delay }} cubic-bezier(0.2,0.8,0.2,1) both;transition:all 0.2s;" style-hover="border-color:#EA5B0C;transform:translateY(-2px)">
+                <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:13px;color:{{ c.color }};">{{ c.num }}</div>
+                <div style="display:flex;flex-direction:column;gap:3px;margin-top:5px;">
+                  <sc-for list="{{ c.events }}" as="e" hint-placeholder-count="0">
+                    <div style="font-size:9.5px;font-weight:600;color:{{ e.color }};background:{{ e.bg }};border-radius:5px;padding:2px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ e.label }}</div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ════════ FINANCE ════════ -->
+      <sc-if value="{{ isFinance }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;animation:fadeUp 0.4s cubic-bezier(0.2,0.8,0.2,1) both;">
+            <sc-for list="{{ finTabs }}" as="t" hint-placeholder-count="6">
+              <div onClick="{{ t.onClick }}" style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.08em;padding:8px 16px;border-radius:999px;cursor:pointer;background:{{ t.bg }};color:{{ t.color }};border:1px solid {{ t.border }};transition:all 0.25s;">{{ t.label }}</div>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{ finOverview }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:18px;">
+          <div style="display:flex;align-items:center;animation:fadeUp 0.45s 0.05s cubic-bezier(0.2,0.8,0.2,1) both;">
+            <div style="display:flex;gap:4px;background:#FFFFFF;border:1px solid #EBDDCE;border-radius:999px;padding:4px;">
+              <span style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.08em;padding:7px 18px;border-radius:999px;background:#EA5B0C;color:#FFF6EE;">MONTHLY</span>
+              <span style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.08em;padding:7px 18px;border-radius:999px;color:#A08469;cursor:pointer;">YEARLY</span>
+            </div>
+            <div style="margin-left:auto;font-family:'Space Mono',monospace;font-size:10px;color:#A08469;letter-spacing:0.08em;">JULY 2026</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+            <sc-for list="{{ finCards }}" as="f" hint-placeholder-count="3">
+              <div style="background:{{ f.bg }};border:1px solid {{ f.border }};border-radius:20px;padding:22px;cursor:pointer;animation:fadeUp 0.5s {{ f.delay }} cubic-bezier(0.2,0.8,0.2,1) both;transition:transform 0.25s;box-shadow:{{ f.shadow }};" style-hover="transform:translateY(-3px)">
+                <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:{{ f.lblColor }};">{{ f.label }}</div>
+                <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:30px;color:{{ f.valColor }};margin-top:6px;">{{ f.value }}</div>
+                <div style="font-size:11px;color:{{ f.subColor }};margin-top:4px;">{{ f.sub }}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:22px;padding:22px 26px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.5s 0.2s cubic-bezier(0.2,0.8,0.2,1) both;">
+            <div style="display:flex;align-items:center;margin-bottom:18px;">
+              <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:16px;">Income vs Expense · 6 months</div>
+              <div style="margin-left:auto;display:flex;gap:16px;font-size:11px;color:#6B5844;">
+                <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:3px;background:#EA5B0C;"></span>Income</span>
+                <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:3px;background:#E3CDB4;"></span>Expense</span>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:20px;align-items:end;height:150px;">
+              <sc-for list="{{ finBars }}" as="m" hint-placeholder-count="6">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;">
+                  <div style="display:flex;gap:5px;align-items:flex-end;width:100%;justify-content:center;flex:1;">
+                    <div style="width:22px;height:{{ m.inH }};border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,#EA5B0C,#F5B02E);transform-origin:bottom;animation:barGrow 0.7s {{ m.delay }} cubic-bezier(0.2,0.8,0.2,1) both;"></div>
+                    <div style="width:22px;height:{{ m.exH }};border-radius:6px 6px 2px 2px;background:#E3CDB4;transform-origin:bottom;animation:barGrow 0.7s {{ m.delay2 }} cubic-bezier(0.2,0.8,0.2,1) both;"></div>
+                  </div>
+                  <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.1em;color:#A08469;">{{ m.label }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:22px;padding:22px 26px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.5s 0.25s cubic-bezier(0.2,0.8,0.2,1) both;">
+            <div style="display:flex;align-items:center;margin-bottom:14px;">
+              <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:16px;">Client Dues</div>
+              <div style="margin-left:auto;background:#EA5B0C;color:#FFF6EE;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;padding:8px 16px;border-radius:999px;cursor:pointer;box-shadow:0 6px 16px rgba(234,91,12,0.3);" style-hover="background:#C2410C">Send Reminders</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <sc-for list="{{ dueClients }}" as="d" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:14px;background:#FBF6F0;border:1px solid #F0E4D6;border-radius:14px;padding:13px 18px;cursor:pointer;animation:slideIn 0.4s {{ d.delay }} cubic-bezier(0.2,0.8,0.2,1) both;transition:all 0.2s;" style-hover="background:#FFF3E8;border-color:#EA5B0C">
+                  <div style="width:38px;height:38px;border-radius:50%;background:{{ d.avBg }};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:{{ d.avColor }};">{{ d.initial }}</div>
+                  <div style="flex:1;">
+                    <div style="font-weight:700;font-size:13.5px;">{{ d.name }}</div>
+                    <div style="font-size:11px;color:#A08469;">{{ d.event }}</div>
+                  </div>
+                  <div style="flex:1;max-width:180px;">
+                    <div style="height:6px;border-radius:3px;background:#F0E4D6;overflow:hidden;"><div style="height:100%;width:{{ d.paidPct }};border-radius:3px;background:linear-gradient(90deg,#EA5B0C,#F5B02E);"></div></div>
+                    <div style="font-family:'Space Mono',monospace;font-size:9px;color:#A08469;margin-top:4px;">{{ d.paidLabel }}</div>
+                  </div>
+                  <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:14px;color:#D64545;">{{ d.due }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          </div>
+          </sc-if>
+
+          <!-- ── Expenses (MOD-18) ── -->
+          <sc-if value="{{ finExpenses }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;animation:fadeUp 0.45s 0.05s cubic-bezier(0.2,0.8,0.2,1) both;">
+              <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:18px;padding:18px 20px;box-shadow:0 4px 14px rgba(43,29,18,0.05);">
+                <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#A08469;">This Month</div>
+                <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:26px;margin-top:4px;">৳ 96,200</div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:18px;padding:18px 20px;box-shadow:0 4px 14px rgba(43,29,18,0.05);">
+                <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#B8430A;">Event-linked</div>
+                <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:26px;color:#EA5B0C;margin-top:4px;">৳ 64,000</div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:18px;padding:18px 20px;box-shadow:0 4px 14px rgba(43,29,18,0.05);">
+                <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#A08469;">General</div>
+                <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:26px;color:#6B5844;margin-top:4px;">৳ 32,200</div>
+              </div>
+            </div>
+            <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:22px;padding:22px 26px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.45s 0.1s cubic-bezier(0.2,0.8,0.2,1) both;">
+              <div style="display:flex;align-items:center;margin-bottom:14px;">
+                <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:16px;">Expenses · July</div>
+                <div style="margin-left:auto;background:#EA5B0C;color:#FFF6EE;font-weight:700;font-size:12px;padding:9px 18px;border-radius:999px;cursor:pointer;box-shadow:0 6px 16px rgba(234,91,12,0.3);" style-hover="background:#C2410C">+ Add Expense</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:9px;">
+                <sc-for list="{{ expenses }}" as="e" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;gap:14px;background:#FBF6F0;border:1px solid #F0E4D6;border-radius:14px;padding:12px 16px;cursor:pointer;animation:slideIn 0.4s {{ e.delay }} cubic-bezier(0.2,0.8,0.2,1) both;transition:all 0.2s;" style-hover="background:#FFF3E8">
+                    <div style="width:36px;height:36px;border-radius:10px;background:{{ e.bg }};display:flex;align-items:center;justify-content:center;font-size:14px;">{{ e.glyph }}</div>
+                    <div style="flex:1;">
+                      <div style="font-weight:700;font-size:13px;">{{ e.title }}</div>
+                      <div style="font-size:10.5px;color:#A08469;margin-top:2px;">{{ e.date }}<sc-if value="{{ e.receipt }}" hint-placeholder-val="{{ false }}"> · 📎 receipt</sc-if></div>
+                    </div>
+                    <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:{{ e.tagColor }};background:{{ e.tagBg }};border:1px solid {{ e.tagBorder }};padding:4px 12px;border-radius:999px;">{{ e.tag }}</div>
+                    <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:13.5px;color:#D64545;width:90px;text-align:right;">{{ e.amt }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+          </sc-if>
+
+          <!-- ── Cash Flow Timeline (MOD-53) ── -->
+          <sc-if value="{{ finCashflow }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:22px;padding:24px 28px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.45s 0.05s cubic-bezier(0.2,0.8,0.2,1) both;">
+            <div style="display:flex;align-items:center;margin-bottom:6px;">
+              <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:16px;">Cash Flow · next 3 months</div>
+              <div style="margin-left:auto;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.1em;color:#B8430A;background:#FFF3E8;border:1px solid #F5C9A3;padding:7px 16px;border-radius:999px;cursor:pointer;" style-hover="background:#EA5B0C;color:#FFF6EE">PDF ↓</div>
+            </div>
+            <div style="display:flex;gap:18px;font-size:11px;color:#6B5844;margin-bottom:20px;">
+              <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:3px;background:linear-gradient(180deg,#EA5B0C,#F5B02E);"></span>Confirmed income</span>
+              <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:3px;background:repeating-linear-gradient(45deg,rgba(234,91,12,0.45) 0 3px,transparent 3px 6px);border:1px solid rgba(234,91,12,0.45);"></span>Pending</span>
+              <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:3px;background:#E3CDB4;"></span>Expense (projected)</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:32px;align-items:end;height:190px;">
+              <sc-for list="{{ cashflow }}" as="m" hint-placeholder-count="3">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:10px;height:100%;justify-content:flex-end;">
+                  <div style="display:flex;gap:8px;align-items:flex-end;flex:1;">
+                    <div style="width:34px;height:{{ m.confH }};border-radius:8px 8px 2px 2px;background:linear-gradient(180deg,#EA5B0C,#F5B02E);transform-origin:bottom;animation:barGrow 0.7s {{ m.d1 }} cubic-bezier(0.2,0.8,0.2,1) both;"></div>
+                    <div style="width:34px;height:{{ m.pendH }};border-radius:8px 8px 2px 2px;background:repeating-linear-gradient(45deg,rgba(234,91,12,0.4) 0 5px,rgba(234,91,12,0.08) 5px 10px);border:1.5px dashed rgba(234,91,12,0.55);box-sizing:border-box;transform-origin:bottom;animation:barGrow 0.7s {{ m.d2 }} cubic-bezier(0.2,0.8,0.2,1) both;"></div>
+                    <div style="width:34px;height:{{ m.expH }};border-radius:8px 8px 2px 2px;background:#E3CDB4;transform-origin:bottom;animation:barGrow 0.7s {{ m.d3 }} cubic-bezier(0.2,0.8,0.2,1) both;"></div>
+                  </div>
+                  <div style="text-align:center;">
+                    <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#2B1D12;font-weight:700;">{{ m.label }}</div>
+                    <div style="font-family:'Space Mono',monospace;font-size:9px;color:#A08469;margin-top:2px;">{{ m.total }}</div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          </sc-if>
+
+          <!-- ── Petty Cash Book (MOD-54) ── -->
+          <sc-if value="{{ finPetty }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div style="display:flex;gap:14px;animation:fadeUp 0.45s 0.05s cubic-bezier(0.2,0.8,0.2,1) both;">
+              <div style="flex:1;background:#2B1D12;border-radius:18px;padding:18px 22px;box-shadow:0 12px 32px rgba(43,29,18,0.25);">
+                <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#F5B02E;">Opening Balance · July</div>
+                <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:26px;color:#FFF6EE;margin-top:4px;">৳ 10,000</div>
+              </div>
+              <div style="flex:1;background:#FFFFFF;border:1px solid #EBDDCE;border-radius:18px;padding:18px 22px;box-shadow:0 4px 14px rgba(43,29,18,0.05);">
+                <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#A08469;">Current Balance</div>
+                <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:26px;color:#1E9E6A;margin-top:4px;">৳ 8,660</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px;justify-content:center;">
+                <div style="background:#EA5B0C;color:#FFF6EE;font-weight:700;font-size:12px;padding:9px 20px;border-radius:999px;cursor:pointer;box-shadow:0 6px 16px rgba(234,91,12,0.3);text-align:center;" style-hover="background:#C2410C">+ Entry</div>
+                <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.1em;color:#B8430A;background:#FFF3E8;border:1px solid #F5C9A3;padding:7px 16px;border-radius:999px;cursor:pointer;text-align:center;">PDF ↓</div>
+              </div>
+            </div>
+            <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:22px;padding:20px 26px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.45s 0.1s cubic-bezier(0.2,0.8,0.2,1) both;">
+              <div style="display:flex;flex-direction:column;gap:9px;">
+                <sc-for list="{{ pettyEntries }}" as="p" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;gap:14px;background:#FBF6F0;border:1px solid #F0E4D6;border-radius:14px;padding:12px 16px;animation:slideIn 0.4s {{ p.delay }} cubic-bezier(0.2,0.8,0.2,1) both;">
+                    <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:{{ p.catColor }};background:{{ p.catBg }};border:1px solid {{ p.catBorder }};padding:4px 12px;border-radius:999px;width:76px;text-align:center;">{{ p.cat }}</div>
+                    <div style="flex:1;">
+                      <div style="font-weight:700;font-size:13px;">{{ p.desc }}</div>
+                      <div style="font-size:10.5px;color:#A08469;margin-top:2px;">{{ p.date }}</div>
+                    </div>
+                    <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:13px;color:#D64545;">{{ p.amt }}</div>
+                    <div style="font-family:'Space Mono',monospace;font-size:10px;color:#A08469;width:80px;text-align:right;">{{ p.bal }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+          </sc-if>
+
+          <!-- ── Team Salary Sheet (MOD-58) ── -->
+          <sc-if value="{{ finSalary }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:22px;padding:22px 26px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.45s 0.05s cubic-bezier(0.2,0.8,0.2,1) both;">
+            <div style="display:flex;align-items:center;margin-bottom:16px;">
+              <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:16px;">Salary Sheet · July</div>
+              <div style="margin-left:auto;display:flex;gap:8px;">
+                <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.1em;color:#B8430A;background:#FFF3E8;border:1px solid #F5C9A3;padding:8px 16px;border-radius:999px;cursor:pointer;">PDF ↓</div>
+                <div style="background:#1E9E6A;color:#FFF6EE;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.1em;padding:8px 16px;border-radius:999px;cursor:pointer;" style-hover="background:#177E54">MARK ALL PAID</div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1.4fr 70px 90px 100px 100px 100px 90px;gap:10px;padding:0 16px 10px;font-family:'Space Mono',monospace;font-size:8.5px;letter-spacing:0.12em;text-transform:uppercase;color:#A08469;">
+              <div>Member</div><div style="text-align:center;">Events</div><div style="text-align:right;">Rate</div><div style="text-align:right;">Earned</div><div style="text-align:right;">Paid</div><div style="text-align:right;">Due</div><div></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <sc-for list="{{ salaryRows }}" as="s" hint-placeholder-count="4">
+                <div style="display:grid;grid-template-columns:1.4fr 70px 90px 100px 100px 100px 90px;gap:10px;align-items:center;background:#FBF6F0;border:1px solid #F0E4D6;border-radius:14px;padding:12px 16px;animation:slideIn 0.4s {{ s.delay }} cubic-bezier(0.2,0.8,0.2,1) both;">
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="width:32px;height:32px;border-radius:50%;background:{{ s.avBg }};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:{{ s.avColor }};">{{ s.initial }}</div>
+                    <div style="font-weight:700;font-size:13px;">{{ s.name }}</div>
+                  </div>
+                  <div style="text-align:center;font-family:'Space Mono',monospace;font-size:12px;">{{ s.events }}</div>
+                  <div style="text-align:right;font-family:'Space Mono',monospace;font-size:12px;color:#6B5844;">{{ s.rate }}</div>
+                  <div style="text-align:right;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;">{{ s.earned }}</div>
+                  <div style="text-align:right;font-family:'Space Mono',monospace;font-size:12px;color:#1E9E6A;">{{ s.paid }}</div>
+                  <div style="text-align:right;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:{{ s.dueColor }};">{{ s.due }}</div>
+                  <div style="text-align:center;font-family:'Space Mono',monospace;font-size:8.5px;letter-spacing:0.08em;color:{{ s.btnColor }};background:{{ s.btnBg }};border:1px solid {{ s.btnBorder }};padding:5px 0;border-radius:999px;cursor:pointer;">{{ s.btnLabel }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          </sc-if>
+
+          <!-- ── Payouts (MOD-16) ── -->
+          <sc-if value="{{ finPayouts }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px;">
+            <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:22px;padding:22px 26px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.45s 0.05s cubic-bezier(0.2,0.8,0.2,1) both;">
+              <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:16px;margin-bottom:14px;">Payout Requests</div>
+              <div style="display:flex;flex-direction:column;gap:9px;">
+                <sc-for list="{{ payouts }}" as="p" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;gap:12px;background:#FBF6F0;border:1px solid #F0E4D6;border-radius:14px;padding:12px 16px;animation:slideIn 0.4s {{ p.delay }} cubic-bezier(0.2,0.8,0.2,1) both;">
+                    <div style="width:34px;height:34px;border-radius:50%;background:{{ p.avBg }};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:{{ p.avColor }};">{{ p.initial }}</div>
+                    <div style="flex:1;">
+                      <div style="font-weight:700;font-size:13px;">{{ p.name }}</div>
+                      <div style="font-size:10.5px;color:#A08469;">{{ p.meta }}</div>
+                    </div>
+                    <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#6D3FD4;background:#F3EEFD;border:1px solid #D8C8F7;padding:4px 12px;border-radius:999px;">{{ p.method }}</div>
+                    <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:13.5px;">{{ p.amount }}</div>
+                    <sc-if value="{{ p.pending }}" hint-placeholder-val="{{ true }}">
+                      <div style="display:flex;gap:6px;">
+                        <div style="font-size:11px;font-weight:700;color:#FFF6EE;background:#1E9E6A;padding:6px 14px;border-radius:999px;cursor:pointer;" style-hover="background:#177E54">Approve</div>
+                        <div style="font-size:11px;font-weight:700;color:#D64545;border:1px solid #F3BCBC;background:#FDECEC;padding:6px 14px;border-radius:999px;cursor:pointer;">Reject</div>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ p.approved }}" hint-placeholder-val="{{ false }}">
+                      <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#1E9E6A;background:#E9F7F0;border:1px solid #BCE3CF;padding:6px 14px;border-radius:999px;">PAID ✓</div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:22px;padding:22px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.45s 0.1s cubic-bezier(0.2,0.8,0.2,1) both;">
+                <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:15px;margin-bottom:12px;">Payment Methods</div>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <div style="display:flex;align-items:center;gap:10px;background:#FBF6F0;border:1px solid #F0E4D6;border-radius:12px;padding:11px 14px;">
+                    <span style="font-weight:700;font-size:12.5px;color:#D6367B;">bKash</span>
+                    <span style="font-family:'Space Mono',monospace;font-size:11px;color:#6B5844;margin-left:auto;">017XX-XXX455</span>
+                    <span style="font-family:'Space Mono',monospace;font-size:8px;letter-spacing:0.1em;color:#1E9E6A;background:#E9F7F0;border:1px solid #BCE3CF;padding:3px 8px;border-radius:999px;">DEFAULT</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:10px;background:#FBF6F0;border:1px solid #F0E4D6;border-radius:12px;padding:11px 14px;">
+                    <span style="font-weight:700;font-size:12.5px;color:#E8590C;">Nagad</span>
+                    <span style="font-family:'Space Mono',monospace;font-size:11px;color:#6B5844;margin-left:auto;">018XX-XXX100</span>
+                  </div>
+                  <div style="text-align:center;font-weight:700;font-size:12px;color:#EA5B0C;border:1px dashed #F5C9A3;border-radius:12px;padding:10px;cursor:pointer;" style-hover="background:#FFF3E8">+ Add bKash / Nagad / Bank</div>
+                </div>
+              </div>
+              <div style="background:#2B1D12;border-radius:22px;padding:22px;box-shadow:0 12px 32px rgba(43,29,18,0.25);animation:fadeUp 0.45s 0.15s cubic-bezier(0.2,0.8,0.2,1) both;">
+                <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#F5B02E;margin-bottom:8px;">Pending Total</div>
+                <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:28px;color:#FFF6EE;">৳ 23,500</div>
+                <div style="font-size:11.5px;color:#B99C82;margin-top:6px;">2 requests awaiting approval · payouts go out on the 15th</div>
+              </div>
+            </div>
+          </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- ════════ TEAM ════════ -->
+      <sc-if value="{{ isTeam }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px;">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">
+            <sc-for list="{{ teamStats }}" as="s" hint-placeholder-count="4">
+              <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:18px;padding:18px 20px;animation:fadeUp 0.5s {{ s.delay }} cubic-bezier(0.2,0.8,0.2,1) both;box-shadow:0 4px 14px rgba(43,29,18,0.05);">
+                <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#A08469;">{{ s.label }}</div>
+                <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:28px;color:{{ s.color }};margin-top:4px;">{{ s.value }}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="background:linear-gradient(135deg,#F5B02E,#E89A0C);border-radius:22px;padding:20px 26px;display:flex;align-items:center;gap:16px;box-shadow:0 14px 34px rgba(245,176,46,0.35);animation:fadeUp 0.5s 0.15s cubic-bezier(0.2,0.8,0.2,1) both;">
+            <div style="width:52px;height:52px;border-radius:50%;background:#2B1D12;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:700;font-size:19px;color:#F5B02E;">K</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:8px;"><span style="font-family:'Sora',sans-serif;font-weight:700;font-size:16px;color:#2B1D12;">Kamrul Islam</span><span style="font-size:13px;">★</span></div>
+              <div style="font-size:12px;color:#5C3A1E;">Chief Photographer · 82 events</div>
+            </div>
+            <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;background:#2B1D12;color:#F5B02E;padding:7px 16px;border-radius:999px;">Chief</div>
+          </div>
+
+          <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:22px;padding:22px 26px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.5s 0.2s cubic-bezier(0.2,0.8,0.2,1) both;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+              <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:16px;">Members</div>
+              <div style="display:flex;gap:6px;margin-left:16px;">
+                <span style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.08em;padding:5px 12px;border-radius:999px;background:#EA5B0C;color:#FFF6EE;">ALL</span>
+                <span style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.08em;padding:5px 12px;border-radius:999px;border:1px solid #EBDDCE;color:#A08469;cursor:pointer;">📷 PHOTO</span>
+                <span style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.08em;padding:5px 12px;border-radius:999px;border:1px solid #EBDDCE;color:#A08469;cursor:pointer;">🎬 CINE</span>
+              </div>
+              <div style="margin-left:auto;background:#EA5B0C;color:#FFF6EE;font-weight:700;font-size:12px;padding:8px 18px;border-radius:999px;cursor:pointer;box-shadow:0 6px 16px rgba(234,91,12,0.3);" style-hover="background:#C2410C">+ Invite</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:9px;">
+              <sc-for list="{{ members }}" as="m" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;gap:14px;background:#FBF6F0;border:1px solid #F0E4D6;border-radius:14px;padding:12px 16px;cursor:pointer;animation:slideIn 0.4s {{ m.delay }} cubic-bezier(0.2,0.8,0.2,1) both;transition:all 0.2s;" style-hover="background:#FFF3E8;transform:translateX(4px)">
+                  <div style="position:relative;">
+                    <div style="width:40px;height:40px;border-radius:50%;background:{{ m.avBg }};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:{{ m.avColor }};">{{ m.initial }}</div>
+                    <span style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:{{ m.statusColor }};border:2px solid #FBF6F0;"></span>
+                  </div>
+                  <div style="flex:1;">
+                    <div style="font-weight:700;font-size:13.5px;">{{ m.name }}</div>
+                    <div style="font-size:11px;color:#A08469;">{{ m.phone }}</div>
+                  </div>
+                  <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:{{ m.roleColor }};background:{{ m.roleBg }};padding:4px 12px;border-radius:999px;">{{ m.role }}</div>
+                  <div style="font-family:'Space Mono',monospace;font-size:11px;color:#6B5844;width:70px;text-align:right;">{{ m.events }} ev</div>
+                  <div style="width:32px;height:32px;border-radius:50%;border:1px solid #EBDDCE;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;transition:all 0.2s;" style-hover="border-color:#1E9E6A;background:#E9F7F0">✆</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ════════ PACKAGES ════════ -->
+      <sc-if value="{{ isPackages }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px;">
+          <div style="display:flex;align-items:center;animation:fadeUp 0.45s 0.05s cubic-bezier(0.2,0.8,0.2,1) both;">
+            <div style="font-size:13px;color:#6B5844;">Selecting a package in the booking form auto-fills the payment total.</div>
+            <div style="margin-left:auto;background:#EA5B0C;color:#FFF6EE;font-weight:700;font-size:13px;padding:10px 20px;border-radius:999px;cursor:pointer;box-shadow:0 6px 16px rgba(234,91,12,0.3);transition:all 0.25s;" style-hover="background:#C2410C;transform:translateY(-2px)">+ Add Package</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+            <sc-for list="{{ packages }}" as="p" hint-placeholder-count="3">
+              <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-top:4px solid {{ p.accent }};border-radius:20px;padding:22px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.5s {{ p.delay }} cubic-bezier(0.2,0.8,0.2,1) both;transition:all 0.25s;" style-hover="transform:translateY(-4px);box-shadow:0 16px 34px rgba(43,29,18,0.12)">
+                <div style="display:flex;align-items:baseline;gap:8px;">
+                  <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:18px;">{{ p.name }}</div>
+                  <div style="margin-left:auto;font-family:'Space Mono',monospace;font-size:9px;color:{{ p.accent }};background:{{ p.tagBg }};padding:3px 10px;border-radius:999px;">{{ p.tag }}</div>
+                </div>
+                <div style="display:flex;align-items:baseline;gap:10px;margin:10px 0 16px;">
+                  <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:26px;color:#EA5B0C;">{{ p.net }}</div>
+                  <div style="font-family:'Space Mono',monospace;font-size:12px;color:#B99C82;text-decoration:line-through;">{{ p.original }}</div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+                  <sc-for list="{{ p.specs }}" as="s" hint-placeholder-count="4">
+                    <div style="background:#FBF6F0;border:1px solid #F0E4D6;border-radius:10px;padding:9px 12px;">
+                      <div style="font-family:'Space Mono',monospace;font-size:7.5px;letter-spacing:0.12em;text-transform:uppercase;color:#A08469;">{{ s.k }}</div>
+                      <div style="font-size:12px;font-weight:700;margin-top:2px;">{{ s.v }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="display:flex;gap:8px;">
+                  <div style="flex:1;text-align:center;font-weight:700;font-size:12px;color:#EA5B0C;border:1px solid #F5C9A3;background:#FFF3E8;padding:9px;border-radius:10px;cursor:pointer;transition:all 0.2s;" style-hover="background:#EA5B0C;color:#FFF6EE">Edit</div>
+                  <div style="flex:1;text-align:center;font-weight:700;font-size:12px;color:#D64545;border:1px solid #F3BCBC;background:#FDECEC;padding:9px;border-radius:10px;cursor:pointer;transition:all 0.2s;" style-hover="background:#D64545;color:#FFF6EE">Delete</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ════════ CLIENT SELF-BOOKING (MOD-13) ════════ -->
+      <sc-if value="{{ isSelfBooking }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div onClick="{{ goBookings }}" style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#A08469;cursor:pointer;animation:fadeUp 0.4s both;" style-hover="color:#EA5B0C">← BACK TO BOOKINGS</div>
+
+          <div style="background:#2B1D12;border-radius:20px;padding:18px 24px;display:flex;align-items:center;gap:14px;box-shadow:0 12px 32px rgba(43,29,18,0.25);animation:fadeUp 0.45s 0.05s cubic-bezier(0.2,0.8,0.2,1) both;">
+            <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#F5B02E;flex:none;">🔗 Public Link</div>
+            <div style="flex:1;font-family:'Space Mono',monospace;font-size:12px;color:#FFF6EE;background:rgba(255,246,238,0.08);border:1px solid rgba(255,246,238,0.15);border-radius:10px;padding:9px 14px;">clickerpro.app/book/lens-and-light</div>
+            <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.1em;background:rgba(245,176,46,0.15);border:1px solid rgba(245,176,46,0.4);color:#F5B02E;padding:8px 16px;border-radius:999px;cursor:pointer;">COPY</div>
+            <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.1em;background:rgba(30,158,106,0.18);border:1px solid rgba(30,158,106,0.45);color:#5ED4A4;padding:8px 16px;border-radius:999px;cursor:pointer;">WHATSAPP</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1.2fr;gap:18px;">
+            <div style="animation:fadeUp 0.45s 0.1s cubic-bezier(0.2,0.8,0.2,1) both;">
+              <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#A08469;margin-bottom:10px;">What clients see</div>
+              <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:24px;padding:26px;box-shadow:0 16px 40px rgba(43,29,18,0.1);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+                  <div style="width:36px;height:36px;border-radius:10px;background:#EA5B0C;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:800;font-size:16px;color:#FFF6EE;">L</div>
+                  <div>
+                    <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:15px;">Lens &amp; Light Studio</div>
+                    <div style="font-size:10.5px;color:#A08469;">Book your event · Dhaka</div>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                  <div style="background:#FBF6F0;border:1px solid #EBDDCE;border-radius:12px;padding:12px 16px;font-size:13px;color:#B99C82;">Your name</div>
+                  <div style="background:#FBF6F0;border:1px solid #EBDDCE;border-radius:12px;padding:12px 16px;font-size:13px;color:#B99C82;">Phone number</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                    <span style="font-size:11.5px;font-weight:600;background:#EA5B0C;color:#FFF6EE;border-radius:999px;padding:7px 14px;">Wedding</span>
+                    <span style="font-size:11.5px;font-weight:600;background:#FBF6F0;border:1px solid #EBDDCE;color:#6B5844;border-radius:999px;padding:7px 14px;">Holud</span>
+                    <span style="font-size:11.5px;font-weight:600;background:#FBF6F0;border:1px solid #EBDDCE;color:#6B5844;border-radius:999px;padding:7px 14px;">Birthday</span>
+                    <span style="font-size:11.5px;font-weight:600;background:#FBF6F0;border:1px solid #EBDDCE;color:#6B5844;border-radius:999px;padding:7px 14px;">Corporate</span>
+                  </div>
+                  <div style="background:#FBF6F0;border:1px solid #EBDDCE;border-radius:12px;padding:12px 16px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;"><span style="color:#EA5B0C;">▦</span>Preferred date</div>
+                  <div style="background:#FBF6F0;border:1px solid #EBDDCE;border-radius:12px;padding:12px 16px;font-size:13px;color:#B99C82;min-height:48px;">Tell us about your event…</div>
+                  <div style="background:#EA5B0C;color:#FFF6EE;font-weight:700;font-size:13.5px;text-align:center;padding:13px;border-radius:12px;cursor:pointer;box-shadow:0 6px 16px rgba(234,91,12,0.3);">Request Booking</div>
+                  <div style="text-align:center;font-family:'Space Mono',monospace;font-size:8.5px;color:#B99C82;letter-spacing:0.1em;">POWERED BY CLICKERPRO</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="animation:fadeUp 0.45s 0.15s cubic-bezier(0.2,0.8,0.2,1) both;">
+              <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#A08469;margin-bottom:10px;">Approval queue · 2 pending</div>
+              <div style="display:flex;flex-direction:column;gap:12px;">
+                <sc-for list="{{ selfQueue }}" as="q" hint-placeholder-count="2">
+                  <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-left:3px solid #F5B02E;border-radius:18px;padding:18px 22px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:slideIn 0.4s {{ q.delay }} cubic-bezier(0.2,0.8,0.2,1) both;">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                      <div style="width:40px;height:40px;border-radius:50%;background:{{ q.avBg }};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:{{ q.avColor }};">{{ q.initial }}</div>
+                      <div style="flex:1;">
+                        <div style="font-weight:700;font-size:14px;">{{ q.name }}</div>
+                        <div style="font-size:11px;color:#A08469;">{{ q.event }} · {{ q.date }}</div>
+                      </div>
+                      <div style="font-family:'Space Mono',monospace;font-size:11px;color:#6B5844;">{{ q.phone }}</div>
+                    </div>
+                    <div style="font-size:12px;color:#6B5844;background:#FBF6F0;border:1px solid #F0E4D6;border-radius:10px;padding:10px 14px;margin:12px 0;line-height:1.6;">{{ q.note }}</div>
+                    <div style="display:flex;gap:8px;">
+                      <div style="flex:1;text-align:center;font-weight:700;font-size:12.5px;color:#FFF6EE;background:#1E9E6A;padding:10px;border-radius:10px;cursor:pointer;" style-hover="background:#177E54">✓ Approve → Booking</div>
+                      <div style="flex:1;text-align:center;font-weight:700;font-size:12.5px;color:#D64545;background:#FDECEC;border:1px solid #F3BCBC;padding:10px;border-radius:10px;cursor:pointer;">✕ Reject</div>
+                      <div style="width:44px;text-align:center;font-size:14px;color:#1E9E6A;background:#E9F7F0;border:1px solid #BCE3CF;padding:10px 0;border-radius:10px;cursor:pointer;">✆</div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ════════ NEW BOOKING (Form v6 / FL-12) ════════ -->
+      <sc-if value="{{ isNewBooking }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:16px;max-width:860px;">
+
+          <div style="position:sticky;top:24px;z-index:5;background:#FFFFFF;border:1px solid #EBDDCE;border-radius:18px;padding:14px 20px;display:flex;align-items:center;gap:14px;box-shadow:0 10px 26px rgba(43,29,18,0.1);animation:fadeUp 0.4s cubic-bezier(0.2,0.8,0.2,1) both;">
+            <div onClick="{{ goBookings }}" style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#A08469;cursor:pointer;" style-hover="color:#EA5B0C">← BACK</div>
+            <div style="font-family:'Space Mono',monospace;font-size:10px;color:#1E9E6A;margin-left:auto;">Saved ✓ · auto-save on</div>
+            <div style="background:#EA5B0C;color:#FFF6EE;font-weight:700;font-size:13px;padding:10px 26px;border-radius:999px;cursor:pointer;box-shadow:0 6px 16px rgba(234,91,12,0.3);transition:all 0.25s;" style-hover="background:#C2410C;transform:translateY(-1px)">Save Booking</div>
+          </div>
+
+          <sc-if value="{{ isFreelancer }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:20px;padding:22px 24px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.45s 0.05s cubic-bezier(0.2,0.8,0.2,1) both;">
+              <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:15px;margin-bottom:14px;">Booked By</div>
+              <div style="display:flex;gap:4px;background:#FBF6F0;border:1px solid #F0E4D6;border-radius:999px;padding:4px;max-width:340px;">
+                <span style="flex:1;text-align:center;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.08em;padding:8px 0;border-radius:999px;background:#EA5B0C;color:#FFF6EE;">FREELANCER</span>
+                <span style="flex:1;text-align:center;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.08em;padding:8px 0;border-radius:999px;color:#A08469;cursor:pointer;">COMPANY</span>
+              </div>
+              <div style="margin-top:14px;">
+                <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#A08469;margin-bottom:6px;">Company Name</div>
+                <div style="background:#FBF6F0;border:1px solid #EBDDCE;border-radius:12px;padding:12px 16px;font-size:13px;color:#B99C82;">e.g. Lens &amp; Light Studio</div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ fullForm }}" hint-placeholder-val="{{ true }}">
+            <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:20px;padding:22px 24px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.45s 0.05s cubic-bezier(0.2,0.8,0.2,1) both;">
+              <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:15px;margin-bottom:14px;">Client <span style="color:#D64545;">*</span></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div>
+                  <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#A08469;margin-bottom:6px;">Client Name *</div>
+                  <div style="background:#FBF6F0;border:1px solid #EBDDCE;border-radius:12px;padding:12px 16px;font-size:13px;color:#B99C82;">e.g. Rafiq &amp; Mim</div>
+                </div>
+                <div>
+                  <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#A08469;margin-bottom:6px;">Phone Number *</div>
+                  <div style="background:#FBF6F0;border:1px solid #EBDDCE;border-radius:12px;padding:12px 16px;font-size:13px;color:#B99C82;">+880 1XXX-XXXXXX</div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:20px;padding:22px 24px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.45s 0.1s cubic-bezier(0.2,0.8,0.2,1) both;">
+            <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:15px;margin-bottom:14px;">Schedule <span style="color:#D64545;">*</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+              <div>
+                <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#A08469;margin-bottom:6px;">Shift *</div>
+                <div style="display:flex;gap:8px;">
+                  <sc-for list="{{ shiftPills }}" as="s" hint-placeholder-count="2">
+                    <div onClick="{{ s.onClick }}" style="flex:1;text-align:center;font-weight:700;font-size:12px;padding:12px 0;border-radius:12px;cursor:pointer;background:{{ s.bg }};color:{{ s.color }};border:1px solid {{ s.border }};transition:all 0.25s;">{{ s.label }}</div>
+                  </sc-for>
+                </div>
+              </div>
+              <div>
+                <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#A08469;margin-bottom:6px;">Date * · tap = calendar</div>
+                <div style="background:#FBF6F0;border:1px solid #EBDDCE;border-radius:12px;padding:12px 16px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;cursor:pointer;" style-hover="border-color:#EA5B0C"><span style="color:#EA5B0C;">▦</span>Sat, 11 July 2026</div>
+              </div>
+            </div>
+            <div style="margin-bottom:14px;">
+              <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#A08469;margin-bottom:6px;">Venue</div>
+              <div style="background:#FBF6F0;border:1px solid #EBDDCE;border-radius:12px;padding:12px 16px;font-size:13px;color:#B99C82;">e.g. Community Center, Dhanmondi</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#FBF6F0;border:1px solid #F0E4D6;border-radius:12px;">
+              <div style="flex:1;">
+                <div style="font-weight:700;font-size:13px;">Outdoor Event</div>
+                <div style="font-size:11px;color:#A08469;">On → Location + Reporting Time fields expand</div>
+              </div>
+              <div onClick="{{ toggleOutdoor }}" style="width:44px;height:24px;border-radius:999px;background:{{ outdoorBg }};position:relative;cursor:pointer;transition:background 0.25s;">
+                <span style="position:absolute;top:3px;left:{{ outdoorKnob }};width:18px;height:18px;border-radius:50%;background:#FFFFFF;box-shadow:0 2px 5px rgba(0,0,0,0.2);transition:left 0.25s;"></span>
+              </div>
+            </div>
+            <sc-if value="{{ outdoorOn }}" hint-placeholder-val="{{ false }}">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;animation:fadeUp 0.35s cubic-bezier(0.2,0.8,0.2,1) both;">
+                <div style="background:#FBF6F0;border:1px solid #EBDDCE;border-radius:12px;padding:12px 16px;font-size:13px;color:#B99C82;">Outdoor location…</div>
+                <div style="background:#FBF6F0;border:1px solid #EBDDCE;border-radius:12px;padding:12px 16px;font-size:13px;color:#B99C82;">Reporting time · 4:30 PM</div>
+              </div>
+            </sc-if>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:14px;background:#FDECEC;border:1px solid #F3BCBC;border-radius:12px;padding:11px 16px;">
+              <span style="font-size:13px;">⚠</span>
+              <div style="font-size:12px;color:#B23A3A;"><strong>Conflict:</strong> a Day-shift booking already exists on 11 Jul — Rafiq &amp; Mim. Distribution mode allows saving anyway.</div>
+            </div>
+          </div>
+
+          <sc-if value="{{ fullForm }}" hint-placeholder-val="{{ true }}">
+            <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:20px;padding:22px 24px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.45s 0.15s cubic-bezier(0.2,0.8,0.2,1) both;">
+              <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:15px;margin-bottom:4px;">Package</div>
+              <div style="font-size:11.5px;color:#A08469;margin-bottom:14px;">Selecting a package auto-fills the payment total.</div>
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+                <sc-for list="{{ pkgPills }}" as="p" hint-placeholder-count="4">
+                  <div onClick="{{ p.onClick }}" style="border:1px solid {{ p.border }};border-left:4px solid {{ p.accent }};background:{{ p.bg }};border-radius:14px;padding:13px 14px;cursor:pointer;transition:all 0.25s;" style-hover="transform:translateY(-2px)">
+                    <div style="font-weight:700;font-size:13px;">{{ p.name }}</div>
+                    <div style="font-family:'Space Mono',monospace;font-size:11px;color:#EA5B0C;margin-top:3px;">{{ p.price }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:20px;padding:22px 24px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.45s 0.2s cubic-bezier(0.2,0.8,0.2,1) both;">
+              <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:15px;margin-bottom:14px;">Team</div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#FFF7E5;border:1px solid #F2DFAE;border-radius:12px;margin-bottom:12px;">
+                <div style="flex:1;">
+                  <div style="font-weight:700;font-size:13px;color:#8a6508;">★ Chief Photographer</div>
+                </div>
+                <div onClick="{{ toggleChief }}" style="width:44px;height:24px;border-radius:999px;background:{{ chiefBg }};position:relative;cursor:pointer;transition:background 0.25s;">
+                  <span style="position:absolute;top:3px;left:{{ chiefKnob }};width:18px;height:18px;border-radius:50%;background:#FFFFFF;box-shadow:0 2px 5px rgba(0,0,0,0.2);transition:left 0.25s;"></span>
+                </div>
+              </div>
+              <sc-if value="{{ chiefOn }}" hint-placeholder-val="{{ true }}">
+                <div style="background:#FBF6F0;border:1px solid #EBDDCE;border-radius:12px;padding:12px 16px;font-size:13px;font-weight:600;margin-bottom:14px;animation:fadeUp 0.3s both;">Kamrul Islam</div>
+              </sc-if>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div>
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                    <span style="font-size:12px;font-weight:700;color:#B8430A;">📷 Photographers</span>
+                    <span style="margin-left:auto;font-family:'Space Mono',monospace;font-size:10px;color:#B8430A;background:#FFF3E8;border:1px solid #F5C9A3;padding:2px 9px;border-radius:999px;">2</span>
+                  </div>
+                  <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                    <span style="font-size:12px;font-weight:600;background:#FFF3E8;border:1px solid #F5C9A3;border-radius:999px;padding:6px 12px;">Rasel Mia <span style="color:#B8430A;cursor:pointer;">✕</span></span>
+                    <span style="font-size:12px;font-weight:600;background:#FFF3E8;border:1px solid #F5C9A3;border-radius:999px;padding:6px 12px;">Mithila R. <span style="color:#B8430A;cursor:pointer;">✕</span></span>
+                    <span style="font-size:12px;font-weight:700;color:#EA5B0C;border:1px dashed #F5C9A3;border-radius:999px;padding:6px 12px;cursor:pointer;" style-hover="background:#FFF3E8">+ Add</span>
+                  </div>
+                </div>
+                <div>
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                    <span style="font-size:12px;font-weight:700;color:#6D3FD4;">🎬 Cinematographers</span>
+                    <span style="margin-left:auto;font-family:'Space Mono',monospace;font-size:10px;color:#6D3FD4;background:#F3EEFD;border:1px solid #D8C8F7;padding:2px 9px;border-radius:999px;">1</span>
+                  </div>
+                  <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                    <span style="font-size:12px;font-weight:600;background:#F3EEFD;border:1px solid #D8C8F7;border-radius:999px;padding:6px 12px;">Sumi Akter <span style="color:#6D3FD4;cursor:pointer;">✕</span></span>
+                    <span style="font-size:12px;font-weight:700;color:#6D3FD4;border:1px dashed #D8C8F7;border-radius:999px;padding:6px 12px;cursor:pointer;" style-hover="background:#F3EEFD">+ Add</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:20px;padding:22px 24px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.45s 0.25s cubic-bezier(0.2,0.8,0.2,1) both;">
+            <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:15px;margin-bottom:14px;">Event Type</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">
+              <sc-for list="{{ eventChips }}" as="e" hint-placeholder-count="9">
+                <div onClick="{{ e.onClick }}" style="font-size:12px;font-weight:600;padding:8px 16px;border-radius:999px;cursor:pointer;background:{{ e.bg }};color:{{ e.color }};border:1px solid {{ e.border }};transition:all 0.2s;">{{ e.label }}</div>
+              </sc-for>
+            </div>
+          </div>
+
+          <sc-if value="{{ isFreelancer }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:20px;padding:22px 24px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.45s 0.3s cubic-bezier(0.2,0.8,0.2,1) both;">
+              <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:15px;margin-bottom:14px;">Notes</div>
+              <div style="background:#FBF6F0;border:1px solid #EBDDCE;border-radius:12px;padding:12px 16px;font-size:13px;color:#B99C82;min-height:64px;">Anything to remember…</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:11.5px;color:#A08469;"><span style="width:6px;height:6px;border-radius:50%;background:#C99414;"></span>Max 2 events per day — 1 of 2 used on this date</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ fullForm }}" hint-placeholder-val="{{ true }}">
+            <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:20px;padding:22px 24px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.45s 0.3s cubic-bezier(0.2,0.8,0.2,1) both;">
+              <div style="display:flex;align-items:center;margin-bottom:14px;">
+                <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:15px;">Payment</div>
+                <div style="margin-left:auto;display:flex;align-items:center;gap:6px;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.1em;color:#A08469;cursor:pointer;" style-hover="color:#EA5B0C">👁 HIDE FROM TEAM</div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;">
+                <div style="background:#FFF3E8;border:1px solid #F5C9A3;border-radius:14px;padding:14px;">
+                  <div style="font-family:'Space Mono',monospace;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;color:#B8430A;">Total · auto</div>
+                  <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:18px;color:#EA5B0C;margin-top:4px;">{{ payTotal }}</div>
+                </div>
+                <div style="background:#FBF6F0;border:1px solid #EBDDCE;border-radius:14px;padding:14px;">
+                  <div style="font-family:'Space Mono',monospace;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;color:#A08469;">Advance</div>
+                  <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:18px;margin-top:4px;">৳ 25,000</div>
+                </div>
+                <div style="background:#FDECEC;border:1px solid #F3BCBC;border-radius:14px;padding:14px;">
+                  <div style="font-family:'Space Mono',monospace;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;color:#B23A3A;">Due · auto</div>
+                  <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:18px;color:#D64545;margin-top:4px;">{{ payDue }}</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <sc-for list="{{ methodPills }}" as="m" hint-placeholder-count="3">
+                  <div onClick="{{ m.onClick }}" style="font-size:12px;font-weight:700;padding:9px 20px;border-radius:999px;cursor:pointer;background:{{ m.bg }};color:{{ m.color }};border:1px solid {{ m.border }};transition:all 0.2s;">{{ m.label }}</div>
+                </sc-for>
+              </div>
+              <div style="font-size:11px;color:#A08469;margin-top:12px;">Invoice is generated after save — "Saved ✓ — Invoice →"</div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- ════════ EVENT DETAILS ════════ -->
+      <sc-if value="{{ isEventDetails }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px;">
+          <div onClick="{{ goBookings }}" style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#A08469;cursor:pointer;animation:fadeUp 0.4s both;" style-hover="color:#EA5B0C">← BACK TO BOOKINGS</div>
+
+          <div style="background:linear-gradient(135deg,#EA5B0C,#C2410C);border-radius:22px;padding:26px 30px;position:relative;overflow:hidden;box-shadow:0 16px 40px rgba(234,91,12,0.3);animation:fadeUp 0.5s 0.05s cubic-bezier(0.2,0.8,0.2,1) both;">
+            <div style="position:absolute;width:220px;height:220px;border-radius:50%;background:#F5B02E;filter:blur(90px);opacity:0.35;top:-70px;right:-40px;"></div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#FFD9B8;">Wedding · Premium Package</span>
+              <span style="margin-left:auto;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;background:rgba(255,246,238,0.18);border:1px solid rgba(255,246,238,0.35);color:#FFF6EE;padding:4px 12px;border-radius:999px;">Confirmed</span>
+            </div>
+            <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:34px;color:#FFF6EE;margin:8px 0 10px;">Rafiq &amp; Mim</div>
+            <div style="display:flex;gap:18px;font-size:12.5px;color:#FFE4CC;flex-wrap:wrap;">
+              <span>▦ Sat, 11 July 2026</span><span>☀ Day shift · 12–5 PM</span><span>◎ Community Center, Dhanmondi</span>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+            <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:20px;padding:20px 22px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.5s 0.1s cubic-bezier(0.2,0.8,0.2,1) both;">
+              <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#A08469;margin-bottom:12px;">Client</div>
+              <div style="font-weight:700;font-size:15px;">Rafiq Hasan</div>
+              <div style="font-family:'Space Mono',monospace;font-size:12px;color:#6B5844;margin:4px 0 14px;">+880 1712-556677</div>
+              <div style="display:flex;gap:8px;">
+                <div style="flex:1;text-align:center;font-weight:700;font-size:12px;color:#1E9E6A;background:#E9F7F0;border:1px solid #BCE3CF;padding:9px;border-radius:10px;cursor:pointer;" style-hover="background:#1E9E6A;color:#FFF6EE">✆ Call</div>
+                <div style="flex:1;text-align:center;font-weight:700;font-size:12px;color:#B8430A;background:#FFF3E8;border:1px solid #F5C9A3;padding:9px;border-radius:10px;cursor:pointer;" style-hover="background:#EA5B0C;color:#FFF6EE">WhatsApp</div>
+              </div>
+            </div>
+            <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:20px;padding:20px 22px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.5s 0.15s cubic-bezier(0.2,0.8,0.2,1) both;">
+              <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#A08469;margin-bottom:12px;">Payment</div>
+              <div style="display:flex;flex-direction:column;gap:8px;font-size:12.5px;">
+                <div style="display:flex;"><span style="color:#6B5844;">Total</span><span style="margin-left:auto;font-family:'Space Mono',monospace;font-weight:700;">৳ 85,000</span></div>
+                <div style="display:flex;"><span style="color:#6B5844;">Advance</span><span style="margin-left:auto;font-family:'Space Mono',monospace;font-weight:700;color:#1E9E6A;">৳ 55,000</span></div>
+                <div style="display:flex;border-top:1px solid #F0E4D6;padding-top:8px;"><span style="color:#6B5844;">Due</span><span style="margin-left:auto;font-family:'Space Mono',monospace;font-weight:700;color:#D64545;">৳ 30,000</span></div>
+              </div>
+              <div style="height:6px;border-radius:3px;background:#F0E4D6;overflow:hidden;margin-top:12px;"><div style="height:100%;width:65%;border-radius:3px;background:linear-gradient(90deg,#EA5B0C,#F5B02E);"></div></div>
+              <div style="font-family:'Space Mono',monospace;font-size:9px;color:#A08469;margin-top:5px;">65% PAID · bKash</div>
+            </div>
+            <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:20px;padding:20px 22px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.5s 0.2s cubic-bezier(0.2,0.8,0.2,1) both;">
+              <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#A08469;margin-bottom:12px;">Delivery Checklist</div>
+              <div style="display:flex;flex-direction:column;gap:9px;font-size:12.5px;">
+                <div style="display:flex;align-items:center;gap:8px;"><span style="color:#1E9E6A;">☑</span><span style="color:#6B5844;text-decoration:line-through;">Photos culled</span></div>
+                <div style="display:flex;align-items:center;gap:8px;"><span style="color:#1E9E6A;">☑</span><span style="color:#6B5844;text-decoration:line-through;">Trailer edited</span></div>
+                <div style="display:flex;align-items:center;gap:8px;"><span style="color:#B99C82;">☐</span><span>Album printed</span></div>
+                <div style="display:flex;align-items:center;gap:8px;"><span style="color:#B99C82;">☐</span><span>Pendrive handover</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:20px;padding:20px 24px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.5s 0.25s cubic-bezier(0.2,0.8,0.2,1) both;">
+            <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#A08469;margin-bottom:14px;">Assigned Team</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+              <div style="display:flex;align-items:center;gap:10px;background:#FFF7E5;border:1px solid #F2DFAE;border-radius:12px;padding:10px 14px;">
+                <div style="width:34px;height:34px;border-radius:50%;background:#2B1D12;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#F5B02E;">K</div>
+                <div style="flex:1;"><div style="font-weight:700;font-size:12.5px;">Kamrul Islam ★</div><div style="font-size:10.5px;color:#A08469;">Chief · +880 1911-002233</div></div>
+                <span style="color:#1E9E6A;cursor:pointer;">✆</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;background:#FFF3E8;border:1px solid #F5C9A3;border-radius:12px;padding:10px 14px;">
+                <div style="width:34px;height:34px;border-radius:50%;background:#FFF6EE;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#B8430A;">R</div>
+                <div style="flex:1;"><div style="font-weight:700;font-size:12.5px;">Rasel Mia</div><div style="font-size:10.5px;color:#A08469;">📷 Photo · +880 1712-334455</div></div>
+                <span style="color:#1E9E6A;cursor:pointer;">✆</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;background:#F3EEFD;border:1px solid #D8C8F7;border-radius:12px;padding:10px 14px;">
+                <div style="width:34px;height:34px;border-radius:50%;background:#FFF6EE;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#6D3FD4;">S</div>
+                <div style="flex:1;"><div style="font-weight:700;font-size:12.5px;">Sumi Akter</div><div style="font-size:10.5px;color:#A08469;">🎬 Cine · +880 1898-221100</div></div>
+                <span style="color:#1E9E6A;cursor:pointer;">✆</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:12px;animation:fadeUp 0.5s 0.3s cubic-bezier(0.2,0.8,0.2,1) both;">
+            <div onClick="{{ toggleInvoice }}" style="background:#EA5B0C;color:#FFF6EE;font-weight:700;font-size:13px;padding:12px 24px;border-radius:999px;cursor:pointer;box-shadow:0 6px 16px rgba(234,91,12,0.3);transition:all 0.25s;" style-hover="background:#C2410C">⚡ Auto-generate Invoice</div>
+            <div style="background:#FFFFFF;color:#6B5844;font-weight:700;font-size:13px;padding:12px 24px;border:1px solid #EBDDCE;border-radius:999px;cursor:pointer;" style-hover="border-color:#EA5B0C;color:#EA5B0C">Re-edit Request</div>
+            <div style="background:#FFFFFF;color:#D64545;font-weight:700;font-size:13px;padding:12px 24px;border:1px solid #F3BCBC;border-radius:999px;cursor:pointer;margin-left:auto;" style-hover="background:#FDECEC">Cancel Booking</div>
+          </div>
+
+          <sc-if value="{{ invoiceOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#2B1D12;border-radius:20px;padding:24px 28px;box-shadow:0 14px 34px rgba(43,29,18,0.3);animation:fadeUp 0.4s cubic-bezier(0.2,0.8,0.2,1) both;">
+              <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#F5B02E;margin-bottom:14px;">⚡ Generated Invoice</div>
+              <div style="font-family:'Space Mono',monospace;font-size:12px;line-height:2.1;color:#FFF6EE;white-space:pre-wrap;">DATE     : 11 JULY 2026
+TIME     : DAY SHIFT · 12–5 PM
+EVENT    : WEDDING
+CLIENT   : RAFIQ &amp; MIM
+PHONE    : +880 1712-556677
+VENUE    : COMMUNITY CENTER, DHANMONDI
+CHIEF    : KAMRUL ISLAM
+TEAM     : RASEL MIA (PHOTO) · SUMI AKTER (CINE)
+TEAM NO  : +880 1911-002233
+TOTAL    : ৳ 85,000
+ADVANCE  : ৳ 55,000
+DUE      : <span style="color:#FF9B7A;">৳ 30,000</span></div>
+              <div style="display:flex;gap:10px;margin-top:16px;">
+                <div style="background:rgba(245,176,46,0.15);border:1px solid rgba(245,176,46,0.4);color:#F5B02E;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.1em;padding:9px 18px;border-radius:999px;cursor:pointer;">COPY</div>
+                <div style="background:rgba(30,158,106,0.18);border:1px solid rgba(30,158,106,0.45);color:#5ED4A4;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.1em;padding:9px 18px;border-radius:999px;cursor:pointer;">WHATSAPP</div>
+                <div style="background:rgba(139,92,246,0.18);border:1px solid rgba(139,92,246,0.45);color:#C4ADF9;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.1em;padding:9px 18px;border-radius:999px;cursor:pointer;">MESSENGER</div>
+                <div style="margin-left:auto;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#B99C82;cursor:pointer;padding:9px 0;">PDF ↓ · BN/EN</div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- ════════ TEAM CHAT ════════ -->
+      <sc-if value="{{ isChat }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:22px;box-shadow:0 6px 20px rgba(43,29,18,0.06);display:flex;flex-direction:column;height:720px;overflow:hidden;animation:fadeUp 0.5s 0.05s cubic-bezier(0.2,0.8,0.2,1) both;">
+          <div style="display:flex;align-items:center;gap:12px;padding:16px 22px;border-bottom:1px solid #F0E4D6;">
+            <div style="width:40px;height:40px;border-radius:12px;background:#FFF3E8;display:flex;align-items:center;justify-content:center;font-size:16px;">✉</div>
+            <div style="flex:1;">
+              <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:15px;">Lens &amp; Light — Team</div>
+              <div style="font-size:11px;color:#1E9E6A;">● 6 online · text-only · offline queue on</div>
+            </div>
+            <div style="display:flex;">
+              <div style="width:28px;height:28px;border-radius:50%;background:#FFF3E8;border:2px solid #FFFFFF;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#B8430A;">R</div>
+              <div style="width:28px;height:28px;border-radius:50%;background:#F3EEFD;border:2px solid #FFFFFF;margin-left:-8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#6D3FD4;">S</div>
+              <div style="width:28px;height:28px;border-radius:50%;background:#E9F7F0;border:2px solid #FFFFFF;margin-left:-8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#1E9E6A;">T</div>
+            </div>
+          </div>
+          <div style="flex:1;overflow-y:auto;padding:22px;display:flex;flex-direction:column;gap:14px;background:#FBF6F0;">
+            <div style="align-self:center;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.15em;color:#B99C82;background:#FFFFFF;border:1px solid #F0E4D6;padding:4px 14px;border-radius:999px;">TODAY · 11 JUL</div>
+            <sc-for list="{{ chatMsgs }}" as="m" hint-placeholder-count="5">
+              <div style="display:flex;gap:10px;justify-content:{{ m.justify }};animation:fadeUp 0.35s {{ m.delay }} cubic-bezier(0.2,0.8,0.2,1) both;">
+                <sc-if value="{{ m.other }}" hint-placeholder-val="{{ true }}">
+                  <div style="width:32px;height:32px;border-radius:50%;background:{{ m.avBg }};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:{{ m.avColor }};flex:none;">{{ m.initial }}</div>
+                </sc-if>
+                <div style="max-width:58%;">
+                  <sc-if value="{{ m.other }}" hint-placeholder-val="{{ true }}">
+                    <div style="font-size:10.5px;font-weight:700;color:{{ m.avColor }};margin-bottom:3px;">{{ m.name }}</div>
+                  </sc-if>
+                  <div style="background:{{ m.bubbleBg }};color:{{ m.bubbleColor }};border:1px solid {{ m.bubbleBorder }};border-radius:{{ m.radius }};padding:10px 15px;font-size:13px;line-height:1.55;box-shadow:0 2px 8px rgba(43,29,18,0.05);">{{ m.text }}</div>
+                  <div style="font-family:'Space Mono',monospace;font-size:8.5px;color:#B99C82;margin-top:4px;text-align:{{ m.timeAlign }};">{{ m.time }}</div>
+                </div>
+              </div>
+            </sc-for>
+            <div style="display:flex;gap:10px;align-items:center;">
+              <div style="width:32px;height:32px;border-radius:50%;background:#F3EEFD;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#6D3FD4;">S</div>
+              <div style="background:#FFFFFF;border:1px solid #F0E4D6;border-radius:16px 16px 16px 4px;padding:12px 16px;display:flex;gap:4px;">
+                <span style="width:6px;height:6px;border-radius:50%;background:#B99C82;animation:pulse 1.2s 0s infinite;"></span>
+                <span style="width:6px;height:6px;border-radius:50%;background:#B99C82;animation:pulse 1.2s 0.2s infinite;"></span>
+                <span style="width:6px;height:6px;border-radius:50%;background:#B99C82;animation:pulse 1.2s 0.4s infinite;"></span>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;border-top:1px solid #F0E4D6;background:#FFFFFF;">
+            <div style="flex:1;background:#FBF6F0;border:1px solid #EBDDCE;border-radius:999px;padding:12px 20px;font-size:13px;color:#B99C82;">Message the team…</div>
+            <div style="width:44px;height:44px;border-radius:50%;background:#EA5B0C;display:flex;align-items:center;justify-content:center;color:#FFF6EE;font-size:16px;cursor:pointer;box-shadow:0 6px 16px rgba(234,91,12,0.3);transition:all 0.25s;" style-hover="background:#C2410C;transform:scale(1.06)">➤</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ════════ ANNOUNCEMENTS ════════ -->
+      <sc-if value="{{ isAnnouncements }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:16px;max-width:860px;">
+          <div style="display:flex;align-items:center;animation:fadeUp 0.4s both;">
+            <div style="font-size:13px;color:#6B5844;">Pinned posts show on every member's dashboard with read receipts.</div>
+            <div style="margin-left:auto;background:#EA5B0C;color:#FFF6EE;font-weight:700;font-size:13px;padding:10px 20px;border-radius:999px;cursor:pointer;box-shadow:0 6px 16px rgba(234,91,12,0.3);transition:all 0.25s;" style-hover="background:#C2410C;transform:translateY(-2px)">+ New Post</div>
+          </div>
+
+          <div style="background:#2B1D12;border-radius:20px;padding:22px 26px;box-shadow:0 12px 32px rgba(43,29,18,0.25);animation:fadeUp 0.45s 0.06s cubic-bezier(0.2,0.8,0.2,1) both;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+              <span style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#F5B02E;">📌 Pinned</span>
+              <span style="margin-left:auto;font-family:'Space Mono',monospace;font-size:9px;color:#B99C82;">expires 13 Jul</span>
+            </div>
+            <div style="font-weight:700;font-size:15px;color:#FFF6EE;margin-bottom:6px;">Gear check before Friday's wedding</div>
+            <div style="font-size:12.5px;color:#B99C82;line-height:1.7;">All photographers: batteries + memory cards ready by Thursday night. Drone team confirm weather window.</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:14px;">
+              <span style="width:7px;height:7px;border-radius:50%;background:#1E9E6A;"></span><span style="width:7px;height:7px;border-radius:50%;background:#1E9E6A;"></span><span style="width:7px;height:7px;border-radius:50%;background:#1E9E6A;"></span><span style="width:7px;height:7px;border-radius:50%;background:rgba(255,246,238,0.2);"></span>
+              <span style="font-family:'Space Mono',monospace;font-size:9px;color:#B99C82;margin-left:6px;">3/4 read</span>
+              <span style="margin-left:auto;font-family:'Space Mono',monospace;font-size:9px;color:#F5B02E;cursor:pointer;">💬 2 COMMENTS</span>
+            </div>
+          </div>
+
+          <sc-for list="{{ annPosts }}" as="a" hint-placeholder-count="3">
+            <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:20px;padding:20px 26px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.45s {{ a.delay }} cubic-bezier(0.2,0.8,0.2,1) both;transition:all 0.25s;" style-hover="transform:translateY(-2px);border-color:#EA5B0C">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                <div style="width:30px;height:30px;border-radius:50%;background:{{ a.avBg }};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:{{ a.avColor }};">{{ a.initial }}</div>
+                <div style="font-size:11.5px;color:#A08469;">{{ a.meta }}</div>
+              </div>
+              <div style="font-weight:700;font-size:14.5px;margin-bottom:5px;">{{ a.title }}</div>
+              <div style="font-size:12.5px;color:#6B5844;line-height:1.65;">{{ a.body }}</div>
+              <div style="display:flex;align-items:center;gap:12px;margin-top:12px;font-family:'Space Mono',monospace;font-size:9px;color:#A08469;">
+                <span>{{ a.reads }}</span><span style="color:#B8430A;cursor:pointer;">💬 {{ a.comments }}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <!-- ════════ AUTH (MOD-01/02: Splash → OTP → Role) ════════ -->
+      <sc-if value="{{ isAuth }}" hint-placeholder-val="{{ false }}">
+        <div style="position:fixed;inset:0;background:#2B1D12;z-index:60;display:flex;align-items:center;justify-content:center;overflow:auto;padding:40px 20px;box-sizing:border-box;">
+          <div style="position:absolute;width:520px;height:520px;border-radius:50%;background:#EA5B0C;filter:blur(160px);opacity:0.22;top:-160px;right:-120px;"></div>
+          <div style="position:absolute;width:420px;height:420px;border-radius:50%;background:#F5B02E;filter:blur(150px);opacity:0.14;bottom:-140px;left:-100px;"></div>
+
+          <div style="position:relative;width:440px;display:flex;flex-direction:column;align-items:center;gap:26px;">
+            <div style="display:flex;gap:8px;">
+              <sc-for list="{{ authDots }}" as="d" hint-placeholder-count="3">
+                <div onClick="{{ d.onClick }}" style="width:{{ d.w }};height:8px;border-radius:999px;background:{{ d.bg }};cursor:pointer;transition:all 0.3s;"></div>
+              </sc-for>
+            </div>
+
+            <sc-if value="{{ authSplash }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center;animation:fadeUp 0.5s cubic-bezier(0.2,0.8,0.2,1) both;">
+                <div style="width:96px;height:96px;border-radius:26px;background:linear-gradient(135deg,#EA5B0C,#C2410C);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:800;font-size:44px;color:#FFF6EE;box-shadow:0 24px 54px rgba(234,91,12,0.4);animation:popIn 1.2s cubic-bezier(0.34,1.56,0.64,1) both;">C</div>
+                <div>
+                  <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:34px;color:#FFF6EE;letter-spacing:-0.01em;">Clicker<span style="color:#F59E4C;">Pro</span></div>
+                  <div style="font-size:13.5px;color:#B99C82;margin-top:8px;">Bookings, finance &amp; team — one studio app</div>
+                </div>
+                <div onClick="{{ authNext }}" style="background:#EA5B0C;color:#FFF6EE;font-weight:700;font-size:14px;padding:14px 44px;border-radius:999px;cursor:pointer;box-shadow:0 10px 26px rgba(234,91,12,0.4);transition:all 0.25s;" style-hover="background:#C2410C;transform:translateY(-2px)">Get Started →</div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ authLogin }}" hint-placeholder-val="{{ false }}">
+              <div style="width:100%;background:#FFFFFF;border-radius:26px;padding:30px 32px;box-sizing:border-box;box-shadow:0 30px 70px rgba(0,0,0,0.35);animation:fadeUp 0.45s cubic-bezier(0.2,0.8,0.2,1) both;">
+                <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:22px;">Sign in</div>
+                <div style="font-size:12.5px;color:#A08469;margin:5px 0 20px;">We'll send a one-time code to your phone.</div>
+                <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#A08469;margin-bottom:6px;">Phone Number</div>
+                <div style="display:flex;gap:8px;margin-bottom:16px;">
+                  <div style="background:#FBF6F0;border:1px solid #EBDDCE;border-radius:12px;padding:12px 14px;font-size:13px;font-weight:700;">+880</div>
+                  <div style="flex:1;background:#FBF6F0;border:1px solid #EBDDCE;border-radius:12px;padding:12px 16px;font-size:13px;color:#B99C82;">1XXX-XXXXXX</div>
+                </div>
+                <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#A08469;margin-bottom:6px;">OTP · sent ✓</div>
+                <div style="display:flex;gap:8px;margin-bottom:20px;">
+                  <div style="flex:1;aspect-ratio:0.9;background:#FFF3E8;border:1.5px solid #EA5B0C;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-weight:700;font-size:18px;color:#EA5B0C;">4</div>
+                  <div style="flex:1;aspect-ratio:0.9;background:#FFF3E8;border:1.5px solid #EA5B0C;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-weight:700;font-size:18px;color:#EA5B0C;">7</div>
+                  <div style="flex:1;aspect-ratio:0.9;background:#FFF3E8;border:1.5px solid #EA5B0C;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-weight:700;font-size:18px;color:#EA5B0C;">2</div>
+                  <div style="flex:1;aspect-ratio:0.9;background:#FBF6F0;border:1px solid #EBDDCE;border-radius:12px;"></div>
+                  <div style="flex:1;aspect-ratio:0.9;background:#FBF6F0;border:1px solid #EBDDCE;border-radius:12px;"></div>
+                  <div style="flex:1;aspect-ratio:0.9;background:#FBF6F0;border:1px solid #EBDDCE;border-radius:12px;"></div>
+                </div>
+                <div onClick="{{ authNext }}" style="background:#EA5B0C;color:#FFF6EE;font-weight:700;font-size:14px;text-align:center;padding:13px;border-radius:12px;cursor:pointer;box-shadow:0 6px 16px rgba(234,91,12,0.3);transition:all 0.25s;" style-hover="background:#C2410C">Verify →</div>
+                <div style="display:flex;align-items:center;gap:12px;margin:18px 0;">
+                  <div style="flex:1;height:1px;background:#F0E4D6;"></div>
+                  <span style="font-family:'Space Mono',monospace;font-size:9px;color:#B99C82;">OR</span>
+                  <div style="flex:1;height:1px;background:#F0E4D6;"></div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                  <div style="text-align:center;font-weight:700;font-size:12.5px;border:1px solid #EBDDCE;border-radius:12px;padding:11px;cursor:pointer;" style-hover="border-color:#EA5B0C">G · Google</div>
+                  <div style="text-align:center;font-weight:700;font-size:12.5px;border:1px solid #EBDDCE;border-radius:12px;padding:11px;cursor:pointer;" style-hover="border-color:#EA5B0C">✉ Email</div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ authRole }}" hint-placeholder-val="{{ false }}">
+              <div style="width:100%;display:flex;flex-direction:column;gap:18px;animation:fadeUp 0.45s cubic-bezier(0.2,0.8,0.2,1) both;">
+                <div style="text-align:center;">
+                  <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:24px;color:#FFF6EE;">How do you work?</div>
+                  <div style="font-size:12.5px;color:#B99C82;margin-top:6px;">This sets your permissions — you can change it later.</div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                  <sc-for list="{{ roleCards }}" as="r" hint-placeholder-count="4">
+                    <div onClick="{{ r.onClick }}" style="background:{{ r.bg }};border:1.5px solid {{ r.border }};border-radius:18px;padding:18px;cursor:pointer;transition:all 0.25s;" style-hover="transform:translateY(-2px)">
+                      <div style="font-size:22px;margin-bottom:8px;">{{ r.glyph }}</div>
+                      <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:15px;color:{{ r.nameColor }};">{{ r.name }}</div>
+                      <div style="font-size:11px;color:{{ r.descColor }};margin-top:4px;line-height:1.5;">{{ r.desc }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div onClick="{{ enterApp }}" style="background:#EA5B0C;color:#FFF6EE;font-weight:700;font-size:14px;text-align:center;padding:14px;border-radius:999px;cursor:pointer;box-shadow:0 10px 26px rgba(234,91,12,0.4);transition:all 0.25s;" style-hover="background:#C2410C;transform:translateY(-2px)">Enter App →</div>
+              </div>
+            </sc-if>
+
+            <div onClick="{{ enterApp }}" style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.15em;color:#B99C82;cursor:pointer;" style-hover="color:#F5B02E">SKIP — BACK TO APP</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ════════ SETTINGS ════════ -->
+      <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px;max-width:760px;">
+          <div style="background:#2B1D12;border-radius:22px;padding:26px;display:flex;align-items:center;gap:20px;box-shadow:0 14px 34px rgba(43,29,18,0.25);animation:fadeUp 0.5s 0.05s cubic-bezier(0.2,0.8,0.2,1) both;">
+            <div style="width:72px;height:72px;border-radius:50%;border:2px solid rgba(245,176,46,0.6);padding:3px;box-sizing:border-box;">
+              <div style="width:100%;height:100%;border-radius:50%;background:#3D2A1A;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:700;font-size:24px;color:#F5B02E;">{{ initials }}</div>
+            </div>
+            <div style="flex:1;">
+              <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:19px;color:#FFF6EE;">{{ userName }}</div>
+              <div style="font-size:12px;color:#B99C82;margin-top:3px;">+880 17XX-XXXXXX · {{ userSub }}</div>
+            </div>
+            <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:#F5B02E;background:rgba(245,176,46,0.14);border:1px solid rgba(245,176,46,0.35);padding:5px 14px;border-radius:20px;">{{ roleLabel }}</div>
+          </div>
+
+          <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:22px;padding:8px 26px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.5s 0.1s cubic-bezier(0.2,0.8,0.2,1) both;">
+            <sc-for list="{{ settingRows }}" as="r" hint-placeholder-count="7">
+              <div style="display:flex;align-items:center;gap:14px;padding:16px 0;border-bottom:1px solid #F0E4D6;cursor:pointer;animation:slideIn 0.4s {{ r.delay }} cubic-bezier(0.2,0.8,0.2,1) both;">
+                <div style="width:36px;height:36px;border-radius:10px;background:{{ r.iconBg }};display:flex;align-items:center;justify-content:center;font-size:14px;">{{ r.glyph }}</div>
+                <div style="flex:1;">
+                  <div style="font-weight:700;font-size:13.5px;">{{ r.label }}</div>
+                  <div style="font-size:11px;color:#A08469;">{{ r.sub }}</div>
+                </div>
+                <sc-if value="{{ r.isToggle }}" hint-placeholder-val="{{ false }}">
+                  <div style="width:44px;height:24px;border-radius:999px;background:{{ r.toggleBg }};position:relative;transition:background 0.25s;">
+                    <span style="position:absolute;top:3px;left:{{ r.knobLeft }};width:18px;height:18px;border-radius:50%;background:#FFFFFF;box-shadow:0 2px 5px rgba(0,0,0,0.2);transition:left 0.25s;"></span>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ r.isChevron }}" hint-placeholder-val="{{ true }}">
+                  <span style="color:#B99C82;font-size:15px;">›</span>
+                </sc-if>
+              </div>
+            </sc-for>
+            <div onClick="{{ goAuth }}" style="display:flex;align-items:center;gap:14px;padding:16px 0;cursor:pointer;">
+              <div style="width:36px;height:36px;border-radius:10px;background:#FDECEC;display:flex;align-items:center;justify-content:center;font-size:14px;">⏻</div>
+              <div style="flex:1;font-weight:700;font-size:13.5px;color:#D64545;">Logout</div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </section>
+
+    <!-- ═══ RIGHT PANEL (dashboard only) ═══ -->
+    <aside style="display:{{ rightDisplay }};flex-direction:column;gap:18px;">
+
+      <sc-if value="{{ isOwnerLike }}" hint-placeholder-val="{{ true }}">
+        <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:22px;padding:22px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.5s 0.15s cubic-bezier(0.2,0.8,0.2,1) both;">
+          <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:16px;margin-bottom:16px;">Finance · July</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;">
+            <div style="background:#FFF3E8;border:1px solid #F5C9A3;border-radius:14px;padding:14px;">
+              <div style="font-family:'Space Mono',monospace;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;color:#B8430A;">Collection</div>
+              <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:18px;color:#EA5B0C;margin-top:4px;">৳ 2,84,500</div>
+            </div>
+            <div style="background:#FDECEC;border:1px solid #F3BCBC;border-radius:14px;padding:14px;">
+              <div style="font-family:'Space Mono',monospace;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;color:#B23A3A;">Due</div>
+              <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:18px;color:#D64545;margin-top:4px;">৳ 68,000</div>
+            </div>
+          </div>
+          <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#A08469;margin-bottom:10px;">Top Dues</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;align-items:center;gap:10px;font-size:12.5px;"><span style="flex:1;color:#6B5844;">Rafiq &amp; Mim — Wedding</span><span style="font-family:'Space Mono',monospace;color:#D64545;">৳ 30,000</span></div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:12.5px;"><span style="flex:1;color:#6B5844;">Sadia — Birthday</span><span style="font-family:'Space Mono',monospace;color:#D64545;">৳ 20,000</span></div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:12.5px;"><span style="flex:1;color:#6B5844;">Nexus Corp — Corporate</span><span style="font-family:'Space Mono',monospace;color:#D64545;">৳ 18,000</span></div>
+          </div>
+          <div style="margin-top:16px;background:#EA5B0C;color:#FFF6EE;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;text-align:center;padding:11px;border-radius:10px;cursor:pointer;box-shadow:0 6px 16px rgba(234,91,12,0.3);transition:all 0.25s;" style-hover="background:#C2410C">Send Reminders</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isFreelancer }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:22px;padding:22px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.5s 0.15s cubic-bezier(0.2,0.8,0.2,1) both;">
+          <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:16px;margin-bottom:16px;">My Earnings · July</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div style="background:#E9F7F0;border:1px solid #BCE3CF;border-radius:14px;padding:14px;">
+              <div style="font-family:'Space Mono',monospace;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;color:#1E9E6A;">Received</div>
+              <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:18px;color:#1E9E6A;margin-top:4px;">৳ 42,000</div>
+            </div>
+            <div style="background:#FFF7E5;border:1px solid #F2DFAE;border-radius:14px;padding:14px;">
+              <div style="font-family:'Space Mono',monospace;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;color:#B8860B;">Pending</div>
+              <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:18px;color:#C99414;margin-top:4px;">৳ 15,500</div>
+            </div>
+          </div>
+          <div style="margin-top:16px;background:#EA5B0C;color:#FFF6EE;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;text-align:center;padding:11px;border-radius:10px;cursor:pointer;box-shadow:0 6px 16px rgba(234,91,12,0.3);">Request Payment</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isManager }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:22px;padding:22px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.5s 0.15s cubic-bezier(0.2,0.8,0.2,1) both;">
+          <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:16px;margin-bottom:10px;">Finance</div>
+          <div style="font-size:12px;color:#A08469;line-height:1.7;">Income &amp; profit hidden for the Manager role. Client dues remain visible below.</div>
+          <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;align-items:center;gap:10px;font-size:12.5px;"><span style="flex:1;color:#6B5844;">Rafiq &amp; Mim — Wedding</span><span style="font-family:'Space Mono',monospace;color:#D64545;">৳ 30,000</span></div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:12.5px;"><span style="flex:1;color:#6B5844;">Sadia — Birthday</span><span style="font-family:'Space Mono',monospace;color:#D64545;">৳ 20,000</span></div>
+          </div>
+        </div>
+      </sc-if>
+
+      <div onClick="{{ goAnnouncements }}" style="background:#2B1D12;border-radius:22px;padding:22px;box-shadow:0 12px 32px rgba(43,29,18,0.25);animation:fadeUp 0.5s 0.2s cubic-bezier(0.2,0.8,0.2,1) both;cursor:pointer;transition:transform 0.25s;" style-hover="transform:translateY(-2px)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <span style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#F5B02E;">📌 Announcement</span>
+        </div>
+        <div style="font-weight:700;font-size:13.5px;margin-bottom:6px;color:#FFF6EE;">Gear check before Friday's wedding</div>
+        <div style="font-size:12px;color:#B99C82;line-height:1.7;">All photographers: batteries + memory cards ready by Thursday night. Drone team confirm weather window.</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:12px;">
+          <span style="width:7px;height:7px;border-radius:50%;background:#1E9E6A;"></span>
+          <span style="width:7px;height:7px;border-radius:50%;background:#1E9E6A;"></span>
+          <span style="width:7px;height:7px;border-radius:50%;background:#1E9E6A;"></span>
+          <span style="width:7px;height:7px;border-radius:50%;background:rgba(255,246,238,0.2);"></span>
+          <span style="font-family:'Space Mono',monospace;font-size:9px;color:#B99C82;margin-left:6px;">3/4 read</span>
+        </div>
+      </div>
+
+      <div style="background:#FFFFFF;border:1px solid #EBDDCE;border-radius:22px;padding:22px;box-shadow:0 6px 20px rgba(43,29,18,0.06);animation:fadeUp 0.5s 0.25s cubic-bezier(0.2,0.8,0.2,1) both;">
+        <div style="display:flex;align-items:center;margin-bottom:14px;">
+          <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:16px;">July 2026</div>
+          <div style="margin-left:auto;display:flex;gap:6px;">
+            <span style="width:26px;height:26px;border-radius:50%;border:1px solid #EBDDCE;display:flex;align-items:center;justify-content:center;font-size:12px;color:#A08469;cursor:pointer;" style-hover="border-color:#EA5B0C;color:#EA5B0C">‹</span>
+            <span style="width:26px;height:26px;border-radius:50%;border:1px solid #EBDDCE;display:flex;align-items:center;justify-content:center;font-size:12px;color:#A08469;cursor:pointer;" style-hover="border-color:#EA5B0C;color:#EA5B0C">›</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px;">
+          <div style="text-align:center;font-family:'Space Mono',monospace;font-size:8px;letter-spacing:0.1em;color:#A08469;">MO</div>
+          <div style="text-align:center;font-family:'Space Mono',monospace;font-size:8px;letter-spacing:0.1em;color:#A08469;">TU</div>
+          <div style="text-align:center;font-family:'Space Mono',monospace;font-size:8px;letter-spacing:0.1em;color:#A08469;">WE</div>
+          <div style="text-align:center;font-family:'Space Mono',monospace;font-size:8px;letter-spacing:0.1em;color:#A08469;">TH</div>
+          <div style="text-align:center;font-family:'Space Mono',monospace;font-size:8px;letter-spacing:0.1em;color:#A08469;">FR</div>
+          <div style="text-align:center;font-family:'Space Mono',monospace;font-size:8px;letter-spacing:0.1em;color:#EA5B0C;">SA</div>
+          <div style="text-align:center;font-family:'Space Mono',monospace;font-size:8px;letter-spacing:0.1em;color:#EA5B0C;">SU</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">
+          <sc-for list="{{ calCells }}" as="c" hint-placeholder-count="35">
+            <div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:10px;background:{{ c.bg }};font-size:11.5px;font-weight:600;color:{{ c.color }};cursor:pointer;">
+              <span>{{ c.num }}</span>
+              <span style="width:4px;height:4px;border-radius:50%;background:{{ c.dot }};margin-top:2px;"></span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;border-top:1px solid #F0E4D6;margin-top:12px;padding-top:12px;font-size:11.5px;color:#6B5844;">
+          <span style="width:6px;height:6px;border-radius:50%;background:#1E9E6A;"></span>
+          Next holiday: Ashura · 17 Jul
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;role&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;owner&quot;, &quot;both&quot;, &quot;manager&quot;, &quot;freelancer&quot;], &quot;default&quot;: &quot;owner&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Role&quot;}}">
+class Component extends DCLogic {
+  state = {
+    screen: 'dashboard', chip: 0, settingToggles: { distribution: true, notifications: true },
+    form: { shift: 0, pkg: 0, evType: 0, method: 0, outdoor: false, chief: true },
+    invoiceOpen: false,
+    notifOpen: false, finTab: 0, authStep: 0, pickRole: 0,
+  };
+
+  renderVals() {
+    const role = this.props.role ?? 'owner';
+    const isFreelancer = role === 'freelancer';
+    const isManager = role === 'manager';
+    const isOwnerLike = role === 'owner' || role === 'both';
+
+    const roleLabel = { owner: 'Owner', both: 'Both', manager: 'Manager', freelancer: 'Freelancer' }[role] || 'Owner';
+    const userName = isFreelancer ? 'Tanvir Ahmed' : 'Arif Hossain';
+    const userSub = isFreelancer ? 'tanvir.photo@gmail.com' : 'Lens & Light Studio · Dhaka';
+    const initials = userName.split(' ').map(w => w[0]).join('');
+
+    const screen = this.state.screen;
+    const isDash = screen === 'dashboard';
+    const titles = {
+      dashboard: 'Dashboard', bookings: 'Bookings', calendar: 'Calendar', finance: 'Finance',
+      team: isFreelancer ? 'My Companies' : 'My Team', packages: 'Packages', settings: 'Settings',
+      newbooking: 'New Booking', eventdetails: 'Event Details', chat: 'Team Chat', announcements: 'Announcements',
+      selfbooking: 'Client Self-Booking', auth: 'Dashboard',
+    };
+    const screenTitle = titles[screen];
+    const mainCol = isDash ? '2 / 3' : '2 / 4';
+    const rightDisplay = isDash ? 'flex' : 'none';
+
+    const dim = '#B99C82';
+    const navDefs = [
+      { label: 'Dashboard', glyph: '◈', key: 'dashboard' },
+      { label: 'Bookings', glyph: '▤', key: 'bookings' },
+      { label: 'Calendar', glyph: '▦', key: 'calendar' },
+      { label: 'Finance', glyph: '৳', key: 'finance' },
+      { label: isFreelancer ? 'My Companies' : 'Team', glyph: '◎', key: 'team' },
+      { label: 'Chat', glyph: '✉', key: 'chat' },
+      { label: 'Announce', glyph: '✦', key: 'announcements' },
+      { label: 'Packages', glyph: '❖', key: 'packages' },
+      { label: 'Settings', glyph: '⚙', key: 'settings' },
+    ];
+    const navKey = { newbooking: 'bookings', eventdetails: 'bookings', selfbooking: 'bookings', auth: 'dashboard' }[screen] || screen;
+    const navItems = navDefs.map((n) => {
+      const active = n.key === navKey;
+      return {
+        ...n,
+        bg: active ? '#FBF6F0' : 'transparent',
+        color: active ? '#2B1D12' : dim,
+        iconColor: active ? '#EA5B0C' : '#F5B02E',
+        iconBorder: active ? 'rgba(234,91,12,0.35)' : 'rgba(245,176,46,0.35)',
+        onClick: () => this.setState({ screen: n.key }),
+      };
+    });
+    const goBookings = () => this.setState({ screen: 'bookings' });
+    const goNewBooking = () => this.setState({ screen: 'newbooking', invoiceOpen: false });
+    const goAnnouncements = () => this.setState({ screen: 'announcements' });
+    const openEvent = () => this.setState({ screen: 'eventdetails', invoiceOpen: false });
+    const toggleInvoice = () => this.setState(s => ({ invoiceOpen: !s.invoiceOpen }));
+    const goSelfBooking = () => this.setState({ screen: 'selfbooking' });
+    const goAuth = () => this.setState({ screen: 'auth', authStep: 0 });
+    const toggleNotif = () => this.setState(s => ({ notifOpen: !s.notifOpen }));
+    const enterApp = () => this.setState({ screen: 'dashboard', authStep: 0 });
+
+    const gold = '#F5B02E', plum = '#8B5CF6';
+    const pip = c => ({ c });
+    const weekDefs = [
+      { dow: 'MON', num: '06', pips: [pip(gold)] },
+      { dow: 'TUE', num: '07', pips: [] },
+      { dow: 'WED', num: '08', pips: [pip(gold), pip(plum)] },
+      { dow: 'THU', num: '09', pips: [] },
+      { dow: 'FRI', num: '10', pips: [pip(gold), pip(plum)] },
+      { dow: 'SAT', num: '11', pips: [pip(gold), pip(gold), pip(plum)], today: true },
+      { dow: 'SUN', num: '12', pips: [] },
+    ];
+    const weekDays = weekDefs.map(d => ({
+      ...d,
+      bg: d.today ? '#EA5B0C' : '#FFFFFF',
+      border: d.today ? '#EA5B0C' : '#EBDDCE',
+      shadow: d.today ? '0 8px 22px rgba(234,91,12,0.35)' : '0 2px 8px rgba(43,29,18,0.04)',
+      numColor: d.today ? '#FFF6EE' : '#2B1D12',
+      subColor: d.today ? '#FFD9B8' : '#A08469',
+    }));
+
+    const dayShift = { shift: 'DAY', accent: '#EA5B0C', shiftColor: '#B8430A', shiftBg: '#FFF3E8', shiftBorder: '#F5C9A3' };
+    const nightShift = { shift: 'NIGHT', accent: plum, shiftColor: '#6D3FD4', shiftBg: '#F3EEFD', shiftBorder: '#D8C8F7' };
+    const bookings = [
+      { ...dayShift, client: 'Rafiq & Mim', type: 'Wedding · Package: Premium', venue: 'Community Center, Dhanmondi', total: '৳ 85,000', dueText: 'Due ৳ 30,000', dueColor: '#D64545' },
+      { ...dayShift, client: 'Nexus Corp', type: 'Corporate · Annual Meet', venue: 'Hotel Sarina, Banani', total: '৳ 45,000', dueText: 'Paid ✓', dueColor: '#1E9E6A' },
+      { ...nightShift, client: 'Sadia & Family', type: 'Birthday · 1st Anniversary', venue: 'Rooftop, Uttara 7', total: '৳ 25,000', dueText: 'Due ৳ 20,000', dueColor: '#D64545' },
+    ];
+
+    const qa = (label, glyph, color, bg, key) => ({ label, glyph, iconColor: color, iconBg: bg, onClick: () => this.setState({ screen: key }) });
+    const quickActions = isFreelancer
+      ? [qa('Calendar', '▦', '#B8430A', '#FFF3E8', 'calendar'), qa('Company', '◎', '#C99414', '#FFF7E5', 'team'), qa('Chat', '✉', '#6D3FD4', '#F3EEFD', 'chat'), qa('Expense', '৳', '#1E9E6A', '#E9F7F0', 'finance')]
+      : [qa('Calendar', '▦', '#B8430A', '#FFF3E8', 'calendar'), qa('Invoice', '▤', '#C99414', '#FFF7E5', 'finance'), qa('Chat', '✉', '#6D3FD4', '#F3EEFD', 'chat'), qa('Team', '◎', '#1E9E6A', '#E9F7F0', 'team')];
+
+    const heights = [18, 26, 22, 34, 30, 40, 44];
+    const deliveredBars = React.createElement('div', { style: { display: 'flex', alignItems: 'flex-end', gap: '6px', height: '44px', flex: 1 } },
+      heights.map((h, i) => React.createElement('div', {
+        key: i,
+        style: {
+          flex: 1, height: h + 'px', borderRadius: '4px 4px 2px 2px',
+          background: i === heights.length - 1 ? 'linear-gradient(180deg,#EA5B0C,#F5B02E)' : 'rgba(234,91,12,0.18)',
+          transformOrigin: 'bottom', animation: `barGrow 0.7s ${i * 0.06}s cubic-bezier(0.2,0.8,0.2,1) both`,
+        },
+      }))
+    );
+
+    // mini calendar (right panel)
+    const eventDays = { 6: gold, 8: gold, 10: plum, 12: gold, 18: plum, 25: gold };
+    const today = 11;
+    const calCells = [];
+    for (let i = 0; i < 2; i++) calCells.push({ num: '', bg: 'transparent', color: 'transparent', dot: 'transparent' });
+    for (let d = 1; d <= 31; d++) {
+      const isToday = d === today;
+      calCells.push({
+        num: String(d),
+        bg: isToday ? '#EA5B0C' : 'transparent',
+        color: isToday ? '#FFF6EE' : '#2B1D12',
+        dot: isToday ? '#FFF6EE' : (eventDays[d] || 'transparent'),
+      });
+    }
+    while (calCells.length % 7 !== 0) calCells.push({ num: '', bg: 'transparent', color: 'transparent', dot: 'transparent' });
+
+    // ══ BOOKINGS screen ══
+    const chips = ['All', 'Pending', 'Confirmed', 'Successful', 'Delivered', 'Cancelled'];
+    const statusChips = chips.map((label, i) => ({
+      label,
+      bg: i === this.state.chip ? '#EA5B0C' : '#FFFFFF',
+      color: i === this.state.chip ? '#FFF6EE' : '#A08469',
+      border: i === this.state.chip ? '#EA5B0C' : '#EBDDCE',
+      onClick: () => this.setState({ chip: i }),
+    }));
+    const dl = (i) => ({ delay: (0.12 + i * 0.06).toFixed(2) + 's' });
+    const dayList = [
+      { day: '11', mon: 'JUL', client: 'Rafiq & Mim', type: 'Wedding · Dhanmondi' },
+      { day: '11', mon: 'JUL', client: 'Nexus Corp', type: 'Corporate · Banani' },
+      { day: '14', mon: 'JUL', client: 'Imran & Nusrat', type: 'Holud · Mirpur DOHS' },
+      { day: '18', mon: 'JUL', client: 'Ayaan Portraits', type: 'Portrait · Studio' },
+      { day: '25', mon: 'JUL', client: 'Farhan & Richi', type: 'Engagement · Gulshan 2' },
+    ].map((b, i) => ({ ...b, ...dl(i) }));
+    const nightList = [
+      { day: '11', mon: 'JUL', client: 'Sadia & Family', type: 'Birthday · Uttara 7' },
+      { day: '12', mon: 'JUL', client: 'Mehedi & Tuli', type: 'Reception · Bashundhara' },
+      { day: '19', mon: 'JUL', client: 'Zara\'s Aqiqah', type: 'Aqiqah · Banasree' },
+      { day: '26', mon: 'JUL', client: 'BDApps Ltd', type: 'Corporate Gala · Radisson' },
+    ].map((b, i) => ({ ...b, ...dl(i) }));
+    const dayCount = dayList.length + ' events';
+    const nightCount = nightList.length + ' events';
+
+    // ══ CALENDAR screen ══
+    const dowLabels = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map((t, i) => ({ t, color: i >= 5 ? '#EA5B0C' : '#A08469' }));
+    const evD = (label) => ({ label, color: '#B8430A', bg: '#FFF3E8' });
+    const evN = (label) => ({ label, color: '#6D3FD4', bg: '#F3EEFD' });
+    const bigEvents = {
+      6: [evD('Holud — Imran')],
+      8: [evD('Corporate'), evN('Reception')],
+      10: [evN('Mehendi')],
+      11: [evD('Wedding — Rafiq'), evD('Corporate'), evN('Birthday')],
+      12: [evN('Reception — Mehedi')],
+      14: [evD('Holud — Imran')],
+      18: [evD('Portrait')],
+      19: [evN('Aqiqah')],
+      25: [evD('Engagement')],
+      26: [evN('Corporate Gala')],
+    };
+    const bigCalCells = [];
+    for (let i = 0; i < 2; i++) bigCalCells.push({ num: '', bg: 'transparent', border: 'transparent', color: 'transparent', events: [], delay: '0s' });
+    for (let d = 1; d <= 31; d++) {
+      const isToday = d === today;
+      bigCalCells.push({
+        num: String(d),
+        bg: isToday ? '#FFF3E8' : '#FBF6F0',
+        border: isToday ? '#EA5B0C' : '#F0E4D6',
+        color: isToday ? '#EA5B0C' : '#2B1D12',
+        events: bigEvents[d] || [],
+        delay: (0.1 + (d + 1) * 0.012).toFixed(3) + 's',
+      });
+    }
+    while (bigCalCells.length % 7 !== 0) bigCalCells.push({ num: '', bg: 'transparent', border: 'transparent', color: 'transparent', events: [], delay: '0s' });
+
+    // ══ FINANCE screen ══
+    const finCards = [
+      { label: 'Income', value: '৳ 2,84,500', sub: '↑ 14% vs June', bg: 'linear-gradient(135deg,#EA5B0C,#C2410C)', border: 'transparent', lblColor: '#FFD9B8', valColor: '#FFF6EE', subColor: '#FFE4CC', shadow: '0 14px 34px rgba(234,91,12,0.3)', delay: '0.08s' },
+      { label: 'Expense', value: '৳ 96,200', sub: 'Gear rent + travel + prints', bg: '#FFFFFF', border: '#EBDDCE', lblColor: '#A08469', valColor: '#2B1D12', subColor: '#A08469', shadow: '0 6px 20px rgba(43,29,18,0.06)', delay: '0.14s' },
+      { label: 'Net Profit', value: '৳ 1,88,300', sub: 'Tap for source breakdown', bg: '#FFFFFF', border: '#BCE3CF', lblColor: '#1E9E6A', valColor: '#1E9E6A', subColor: '#A08469', shadow: '0 6px 20px rgba(43,29,18,0.06)', delay: '0.2s' },
+    ];
+    const finData = [[62, 40], [78, 44], [70, 52], [96, 58], [88, 46], [120, 60]];
+    const finMonths = ['FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL'];
+    const finBars = finData.map(([inc, ex], i) => ({
+      label: finMonths[i],
+      inH: Math.round(inc / 120 * 100) + '%',
+      exH: Math.round(ex / 120 * 100) + '%',
+      delay: (0.25 + i * 0.07).toFixed(2) + 's',
+      delay2: (0.29 + i * 0.07).toFixed(2) + 's',
+    }));
+    const dueClients = [
+      { initial: 'R', name: 'Rafiq & Mim', event: 'Wedding · 11 Jul', due: '৳ 30,000', paidPct: '65%', paidLabel: '65% PAID OF ৳ 85,000', avBg: '#FFF3E8', avColor: '#B8430A', delay: '0.3s' },
+      { initial: 'S', name: 'Sadia & Family', event: 'Birthday · 11 Jul', due: '৳ 20,000', paidPct: '20%', paidLabel: '20% PAID OF ৳ 25,000', avBg: '#F3EEFD', avColor: '#6D3FD4', delay: '0.36s' },
+      { initial: 'N', name: 'Nexus Corp', event: 'Corporate · 3 Jul', due: '৳ 18,000', paidPct: '60%', paidLabel: '60% PAID OF ৳ 45,000', avBg: '#E9F7F0', avColor: '#1E9E6A', delay: '0.42s' },
+    ];
+
+    // ══ TEAM screen ══
+    const teamStats = [
+      { label: 'Members', value: '9', color: '#2B1D12', delay: '0.05s' },
+      { label: 'Photographers', value: '5', color: '#EA5B0C', delay: '0.1s' },
+      { label: 'Cinematographers', value: '3', color: '#6D3FD4', delay: '0.15s' },
+      { label: 'Active Today', value: '6', color: '#1E9E6A', delay: '0.2s' },
+    ];
+    const members = [
+      { initial: 'R', name: 'Rasel Mia', phone: '+880 1712-334455', role: 'Photo', roleColor: '#B8430A', roleBg: '#FFF3E8', events: 46, statusColor: '#1E9E6A', avBg: '#FFF3E8', avColor: '#B8430A' },
+      { initial: 'S', name: 'Sumi Akter', phone: '+880 1898-221100', role: 'Cine', roleColor: '#6D3FD4', roleBg: '#F3EEFD', events: 38, statusColor: '#1E9E6A', avBg: '#F3EEFD', avColor: '#6D3FD4' },
+      { initial: 'T', name: 'Tanvir Ahmed', phone: '+880 1633-889977', role: 'Photo', roleColor: '#B8430A', roleBg: '#FFF3E8', events: 31, statusColor: '#C99414', avBg: '#E9F7F0', avColor: '#1E9E6A' },
+      { initial: 'J', name: 'Jahid Hasan', phone: '+880 1555-667788', role: 'Cine', roleColor: '#6D3FD4', roleBg: '#F3EEFD', events: 24, statusColor: '#1E9E6A', avBg: '#FFF7E5', avColor: '#C99414' },
+      { initial: 'M', name: 'Mithila Rahman', phone: '+880 1911-445566', role: 'Photo', roleColor: '#B8430A', roleBg: '#FFF3E8', events: 18, statusColor: '#B99C82', avBg: '#FDECEC', avColor: '#D64545' },
+    ].map((m, i) => ({ ...m, delay: (0.24 + i * 0.06).toFixed(2) + 's' }));
+
+    // ══ PACKAGES screen ══
+    const packages = [
+      {
+        name: 'Premium', tag: 'POPULAR', accent: '#EA5B0C', tagBg: '#FFF3E8', net: '৳ 85,000', original: '৳ 95,000', delay: '0.08s',
+        specs: [{ k: 'Prints', v: '4 × 12×18' }, { k: 'Album', v: 'Premium 40p' }, { k: 'Trailer', v: '1 / event' }, { k: 'Full Video', v: '1 / event' }, { k: 'Delivery', v: 'Drive + Pendrive' }, { k: 'Team', v: '4 + Chief' }],
+      },
+      {
+        name: 'Standard', tag: 'VALUE', accent: '#F5B02E', tagBg: '#FFF7E5', net: '৳ 45,000', original: '৳ 52,000', delay: '0.16s',
+        specs: [{ k: 'Prints', v: '2 × 10×12' }, { k: 'Album', v: 'Classic 24p' }, { k: 'Trailer', v: '1 / event' }, { k: 'Full Video', v: '—' }, { k: 'Delivery', v: 'Google Drive' }, { k: 'Team', v: '2 + Chief' }],
+      },
+      {
+        name: 'Basic', tag: 'STARTER', accent: '#8B5CF6', tagBg: '#F3EEFD', net: '৳ 25,000', original: '৳ 28,000', delay: '0.24s',
+        specs: [{ k: 'Prints', v: '1 × 8×10' }, { k: 'Album', v: '—' }, { k: 'Trailer', v: '—' }, { k: 'Full Video', v: '—' }, { k: 'Delivery', v: 'Google Drive' }, { k: 'Team', v: '2' }],
+      },
+    ];
+
+    // ══ SETTINGS screen ══
+    const t = this.state.settingToggles;
+    const row = (glyph, iconBg, label, sub, opts = {}) => ({
+      glyph, iconBg, label, sub,
+      isToggle: !!opts.toggleKey,
+      isChevron: !opts.toggleKey,
+      toggleBg: opts.toggleKey ? (t[opts.toggleKey] ? '#EA5B0C' : '#E3CDB4') : '',
+      knobLeft: opts.toggleKey ? (t[opts.toggleKey] ? '23px' : '3px') : '',
+    });
+    const settingRowsBase = [
+      row('👤', '#FFF3E8', 'Account', 'Name, phone, email, profile photo'),
+      ...(isOwnerLike ? [row('🏢', '#FFF7E5', 'Studio', 'Studio name, logo, signature')] : []),
+      row('🌐', '#E9F7F0', 'Language', 'বাংলা ⇄ English'),
+      row('◐', '#F3EEFD', 'Theme', 'Light · Sunset Studio'),
+      ...(isOwnerLike ? [row('⇄', '#FFF3E8', 'Distribution Mode', 'Multiple bookings on same date/shift', { toggleKey: 'distribution' })] : []),
+      row('🔔', '#FDECEC', 'Notifications', 'Deadline, payment due, milestone alerts', { toggleKey: 'notifications' }),
+      ...(isOwnerLike ? [row('🛡', '#E9F7F0', 'Team Access', 'Manager permission toggles')] : []),
+    ];
+    const settingRows = settingRowsBase.map((r, i) => ({ ...r, delay: (0.12 + i * 0.05).toFixed(2) + 's' }));
+
+    // ══ NEW BOOKING form ══
+    const f = this.state.form;
+    const setForm = (k, v) => this.setState(s => ({ form: { ...s.form, [k]: v } }));
+    const fullForm = !isFreelancer;
+    const shiftPills = [
+      { label: '☀ DAY · 12–5', idx: 0 }, { label: '☾ NIGHT · 6–11', idx: 1 },
+    ].map(s => ({
+      ...s,
+      bg: f.shift === s.idx ? (s.idx === 0 ? '#EA5B0C' : '#8B5CF6') : '#FBF6F0',
+      color: f.shift === s.idx ? '#FFF6EE' : '#A08469',
+      border: f.shift === s.idx ? 'transparent' : '#EBDDCE',
+      onClick: () => setForm('shift', s.idx),
+    }));
+    const pkgDefs = [
+      { name: 'Premium', price: '৳ 85,000', total: 85000, accent: '#EA5B0C' },
+      { name: 'Standard', price: '৳ 45,000', total: 45000, accent: '#F5B02E' },
+      { name: 'Basic', price: '৳ 25,000', total: 25000, accent: '#8B5CF6' },
+      { name: 'Custom', price: 'manual', total: 0, accent: '#B99C82' },
+    ];
+    const pkgPills = pkgDefs.map((p, i) => ({
+      ...p,
+      bg: f.pkg === i ? '#FFF3E8' : '#FFFFFF',
+      border: f.pkg === i ? '#F5C9A3' : '#EBDDCE',
+      onClick: () => setForm('pkg', i),
+    }));
+    const fmt = n => '৳ ' + n.toLocaleString('en-IN');
+    const totalNum = pkgDefs[f.pkg].total;
+    const payTotal = totalNum ? fmt(totalNum) : '— manual';
+    const payDue = totalNum ? fmt(Math.max(0, totalNum - 25000)) : '—';
+    const evTypes = ['Wedding', 'Holud', 'Reception', 'Corporate', 'Birthday', 'Engagement', 'Aqiqah', 'Portrait', 'Other'];
+    const eventChips = evTypes.map((label, i) => ({
+      label,
+      bg: f.evType === i ? '#EA5B0C' : '#FBF6F0',
+      color: f.evType === i ? '#FFF6EE' : '#6B5844',
+      border: f.evType === i ? '#EA5B0C' : '#EBDDCE',
+      onClick: () => setForm('evType', i),
+    }));
+    const methodPills = ['bKash', 'Bank', 'Cash'].map((label, i) => ({
+      label,
+      bg: f.method === i ? '#EA5B0C' : '#FBF6F0',
+      color: f.method === i ? '#FFF6EE' : '#6B5844',
+      border: f.method === i ? '#EA5B0C' : '#EBDDCE',
+      onClick: () => setForm('method', i),
+    }));
+    const toggleOutdoor = () => setForm('outdoor', !f.outdoor);
+    const toggleChief = () => setForm('chief', !f.chief);
+    const outdoorOn = f.outdoor, chiefOn = f.chief;
+    const outdoorBg = f.outdoor ? '#EA5B0C' : '#E3CDB4';
+    const outdoorKnob = f.outdoor ? '23px' : '3px';
+    const chiefBg = f.chief ? '#F5B02E' : '#E3CDB4';
+    const chiefKnob = f.chief ? '23px' : '3px';
+
+    // ══ NOTIFICATIONS (MOD-44) ══
+    const notifOpen = this.state.notifOpen;
+    const bellBg = notifOpen ? '#FFF3E8' : '#FFFFFF';
+    const notifs = [
+      { glyph: '⏰', bg: '#FFF3E8', title: 'Delivery deadline in 2 days', sub: 'Rafiq & Mim — album print pending', time: '2h', hasAction: true, action: 'VIEW EVENT' },
+      { glyph: '৳', bg: '#FDECEC', title: 'Payment due reminder', sub: 'Sadia & Family — ৳ 20,000 due', time: '5h', hasAction: true, action: 'SEND REMINDER' },
+      { glyph: '🌦', bg: '#F3EEFD', title: 'Weather alert — outdoor event', sub: 'Evening shower likely · Rooftop, Uttara 7', time: '6h', hasAction: false, action: '' },
+      { glyph: '🎉', bg: '#E9F7F0', title: 'Milestone: 148 total bookings', sub: '2 away from 150 — keep going!', time: '1d', hasAction: false, action: '' },
+    ];
+
+    // ══ FINANCE TABS ══
+    const finTab = this.state.finTab;
+    const finTabDefs = ['OVERVIEW', 'EXPENSES', 'CASH FLOW', 'PETTY CASH', 'SALARY', 'PAYOUTS'];
+    const finTabs = finTabDefs.map((label, i) => ({
+      label,
+      bg: finTab === i ? '#EA5B0C' : '#FFFFFF',
+      color: finTab === i ? '#FFF6EE' : '#A08469',
+      border: finTab === i ? '#EA5B0C' : '#EBDDCE',
+      onClick: () => this.setState({ finTab: i }),
+    }));
+    const finOverview = finTab === 0, finExpenses = finTab === 1, finCashflow = finTab === 2,
+      finPetty = finTab === 3, finSalary = finTab === 4, finPayouts = finTab === 5;
+
+    const expenses = [
+      { glyph: '🚐', bg: '#FFF3E8', title: 'Microbus rent — Rafiq & Mim', date: '11 Jul', tag: 'WEDDING', tagColor: '#B8430A', tagBg: '#FFF3E8', tagBorder: '#F5C9A3', amt: '− ৳ 8,500', receipt: true },
+      { glyph: '🖨', bg: '#FFF7E5', title: 'Album prints — Nexus Corp', date: '8 Jul', tag: 'CORPORATE', tagColor: '#C99414', tagBg: '#FFF7E5', tagBorder: '#F2DFAE', amt: '− ৳ 12,000', receipt: true },
+      { glyph: '🔋', bg: '#E9F7F0', title: 'Batteries + memory cards', date: '6 Jul', tag: 'GENERAL', tagColor: '#6B5844', tagBg: '#FBF6F0', tagBorder: '#EBDDCE', amt: '− ৳ 6,200', receipt: false },
+      { glyph: '💡', bg: '#F3EEFD', title: 'Studio light rental', date: '3 Jul', tag: 'GENERAL', tagColor: '#6B5844', tagBg: '#FBF6F0', tagBorder: '#EBDDCE', amt: '− ৳ 4,000', receipt: true },
+    ].map((e, i) => ({ ...e, delay: (0.14 + i * 0.06).toFixed(2) + 's' }));
+
+    const cfData = [
+      { label: 'AUG', conf: 72, pend: 38, exp: 40, total: '৳ 1.1L proj.' },
+      { label: 'SEP', conf: 64, pend: 30, exp: 36, total: '৳ 0.9L proj.' },
+      { label: 'OCT', conf: 88, pend: 52, exp: 44, total: '৳ 1.4L proj.' },
+    ];
+    const cashflow = cfData.map((m, i) => ({
+      ...m,
+      confH: m.conf + '%', pendH: m.pend + '%', expH: m.exp + '%',
+      d1: (0.15 + i * 0.1).toFixed(2) + 's', d2: (0.2 + i * 0.1).toFixed(2) + 's', d3: (0.25 + i * 0.1).toFixed(2) + 's',
+    }));
+
+    const pettyDefs = [
+      { cat: 'TRANSPORT', catColor: '#B8430A', catBg: '#FFF3E8', catBorder: '#F5C9A3', desc: 'Rickshaw — Dhanmondi venue visit', date: '10 Jul', amt: '− ৳ 180', bal: '৳ 8,660' },
+      { cat: 'FOOD', catColor: '#1E9E6A', catBg: '#E9F7F0', catBorder: '#BCE3CF', desc: 'Team lunch — Nexus Corp shoot', date: '8 Jul', amt: '− ৳ 640', bal: '৳ 8,840' },
+      { cat: 'PRINT', catColor: '#6D3FD4', catBg: '#F3EEFD', catBorder: '#D8C8F7', desc: 'Sample prints for client review', date: '5 Jul', amt: '− ৳ 320', bal: '৳ 9,480' },
+      { cat: 'PHONE', catColor: '#C99414', catBg: '#FFF7E5', catBorder: '#F2DFAE', desc: 'Mobile recharge — team SIM', date: '2 Jul', amt: '− ৳ 200', bal: '৳ 9,800' },
+    ];
+    const pettyEntries = pettyDefs.map((p, i) => ({ ...p, delay: (0.14 + i * 0.06).toFixed(2) + 's' }));
+
+    const salaryDefs = [
+      { initial: 'K', avBg: '#FFF7E5', avColor: '#C99414', name: 'Kamrul Islam ★', events: '8', rate: '৳ 4,000', earned: '৳ 32,000', paid: '৳ 24,000', due: '৳ 8,000', paidFull: false },
+      { initial: 'R', avBg: '#FFF3E8', avColor: '#B8430A', name: 'Rasel Mia', events: '6', rate: '৳ 2,500', earned: '৳ 15,000', paid: '৳ 15,000', due: '৳ 0', paidFull: true },
+      { initial: 'S', avBg: '#F3EEFD', avColor: '#6D3FD4', name: 'Sumi Akter', events: '5', rate: '৳ 3,000', earned: '৳ 15,000', paid: '৳ 10,000', due: '৳ 5,000', paidFull: false },
+      { initial: 'T', avBg: '#E9F7F0', avColor: '#1E9E6A', name: 'Tanvir Ahmed', events: '4', rate: '৳ 2,500', earned: '৳ 10,000', paid: '৳ 6,000', due: '৳ 4,000', paidFull: false },
+    ];
+    const salaryRows = salaryDefs.map((s, i) => ({
+      ...s,
+      dueColor: s.paidFull ? '#1E9E6A' : '#D64545',
+      btnLabel: s.paidFull ? 'PAID ✓' : 'PAY',
+      btnColor: s.paidFull ? '#1E9E6A' : '#FFF6EE',
+      btnBg: s.paidFull ? '#E9F7F0' : '#EA5B0C',
+      btnBorder: s.paidFull ? '#BCE3CF' : 'transparent',
+      delay: (0.14 + i * 0.06).toFixed(2) + 's',
+    }));
+
+    const payoutDefs = [
+      { initial: 'T', avBg: '#E9F7F0', avColor: '#1E9E6A', name: 'Tanvir Ahmed', meta: 'Requested 9 Jul · 3 events', method: 'bKash', amount: '৳ 15,500', pending: true },
+      { initial: 'J', avBg: '#FFF7E5', avColor: '#C99414', name: 'Jahid Hasan', meta: 'Requested 8 Jul · 2 events', method: 'Bank', amount: '৳ 8,000', pending: true },
+      { initial: 'S', avBg: '#F3EEFD', avColor: '#6D3FD4', name: 'Sumi Akter', meta: 'Approved 5 Jul', method: 'Nagad', amount: '৳ 10,000', pending: false },
+    ];
+    const payouts = payoutDefs.map((p, i) => ({ ...p, approved: !p.pending, delay: (0.12 + i * 0.07).toFixed(2) + 's' }));
+
+    // ══ SELF-BOOKING (MOD-13) ══
+    const selfQueue = [
+      { initial: 'N', avBg: '#FFF3E8', avColor: '#B8430A', name: 'Nusrat Jahan', event: 'Engagement', date: '2 Aug · Day', phone: '+880 1777-889900', note: '"Rooftop engagement, around 80 guests. Need drone if possible. Budget flexible for the premium package."' },
+      { initial: 'H', avBg: '#F3EEFD', avColor: '#6D3FD4', name: 'Hasan Mahmud', event: 'Corporate', date: '9 Aug · Night', phone: '+880 1888-334455', note: '"Annual dinner at Gulshan club, 200 people. Need photos + a 2-minute highlight video by next morning."' },
+    ].map((q, i) => ({ ...q, delay: (0.18 + i * 0.09).toFixed(2) + 's' }));
+
+    // ══ AUTH (MOD-01/02) ══
+    const authStep = this.state.authStep;
+    const authDots = [0, 1, 2].map(i => ({
+      w: authStep === i ? '26px' : '8px',
+      bg: authStep === i ? '#EA5B0C' : 'rgba(255,246,238,0.25)',
+      onClick: () => this.setState({ authStep: i }),
+    }));
+    const authNext = () => this.setState(s => ({ authStep: Math.min(2, s.authStep + 1) }));
+    const roleDefs = [
+      { glyph: '👑', name: 'Owner', desc: 'Full access — bookings, finance, team' },
+      { glyph: '📸', name: 'Both', desc: 'Owner who also shoots events' },
+      { glyph: '🗂', name: 'Manager', desc: 'Runs ops — income & profit hidden' },
+      { glyph: '🕊', name: 'Freelancer', desc: 'Solo — own bookings & earnings' },
+    ];
+    const roleCards = roleDefs.map((r, i) => {
+      const sel = this.state.pickRole === i;
+      return {
+        ...r,
+        bg: sel ? '#FFF6EE' : 'rgba(255,246,238,0.06)',
+        border: sel ? '#EA5B0C' : 'rgba(255,246,238,0.14)',
+        nameColor: sel ? '#2B1D12' : '#FFF6EE',
+        descColor: sel ? '#6B5844' : '#B99C82',
+        onClick: () => this.setState({ pickRole: i }),
+      };
+    });
+
+    // ══ CHAT ══
+    const me = { other: false, justify: 'flex-end', bubbleBg: '#EA5B0C', bubbleColor: '#FFF6EE', bubbleBorder: 'transparent', radius: '16px 16px 4px 16px', timeAlign: 'right' };
+    const other = (initial, name, avBg, avColor) => ({ other: true, justify: 'flex-start', initial, name, avBg, avColor, bubbleBg: '#FFFFFF', bubbleColor: '#2B1D12', bubbleBorder: '#F0E4D6', radius: '16px 16px 16px 4px', timeAlign: 'left' });
+    const chatMsgs = [
+      { ...other('R', 'Rasel Mia', '#FFF3E8', '#B8430A'), text: 'Boss, batteries charged. Memory cards formatted — 4×128GB ready.', time: '10:12 AM' },
+      { ...me, text: 'Great. Reporting 4:30 PM at Community Center. Sumi, trailer rig goes with you.', time: '10:14 AM' },
+      { ...other('S', 'Sumi Akter', '#F3EEFD', '#6D3FD4'), text: 'Got it. Gimbal + drone packed. Weather looks okay for the evening.', time: '10:15 AM' },
+      { ...other('T', 'Tanvir Ahmed', '#E9F7F0', '#1E9E6A'), text: 'I will reach by 4. Anyone bringing the extra flash stand?', time: '10:18 AM' },
+      { ...me, text: 'Taking it myself. Everyone check the announcement — gear checklist pinned.', time: '10:20 AM' },
+    ].map((m, i) => ({ ...m, delay: (0.1 + i * 0.08).toFixed(2) + 's' }));
+
+    // ══ ANNOUNCEMENTS ══
+    const annPosts = [
+      { initial: 'A', avBg: '#FFF3E8', avColor: '#B8430A', meta: 'Arif Hossain · Owner · 9 Jul', title: 'July payout cycle', body: 'Freelancer payouts go out on the 15th. Submit any pending expense entries before the 14th.', reads: '7/9 READ', comments: '4' },
+      { initial: 'A', avBg: '#FFF3E8', avColor: '#B8430A', meta: 'Arif Hossain · Owner · 6 Jul', title: 'New Premium package live', body: 'Premium now includes 1 full video per event. Quote the new spec to clients from today.', reads: '9/9 READ', comments: '2' },
+      { initial: 'K', avBg: '#FFF7E5', avColor: '#C99414', meta: 'Kamrul Islam · Chief · 2 Jul', title: 'Editing turnaround', body: 'Culling within 48h of every event please — album deadlines are getting tight this season.', reads: '8/9 READ', comments: '6' },
+    ].map((a, i) => ({ ...a, delay: (0.12 + i * 0.07).toFixed(2) + 's' }));
+
+    return {
+      isFreelancer, isManager, isOwnerLike, roleLabel, userName, userSub, initials,
+      screen, screenTitle, mainCol, rightDisplay, goBookings, goNewBooking, goAnnouncements, openEvent, toggleInvoice,
+      invoiceOpen: this.state.invoiceOpen,
+      isNewBooking: screen === 'newbooking', isEventDetails: screen === 'eventdetails',
+      isChat: screen === 'chat', isAnnouncements: screen === 'announcements',
+      isSelfBooking: screen === 'selfbooking', isAuth: screen === 'auth',
+      goSelfBooking, goAuth, toggleNotif, enterApp, notifOpen, bellBg, notifs,
+      finTabs, finOverview, finExpenses, finCashflow, finPetty, finSalary, finPayouts,
+      expenses, cashflow, pettyEntries, salaryRows, payouts, selfQueue,
+      authDots, authNext, authSplash: authStep === 0, authLogin: authStep === 1, authRole: authStep === 2, roleCards,
+      fullForm, shiftPills, pkgPills, payTotal, payDue, eventChips, methodPills,
+      toggleOutdoor, toggleChief, outdoorOn, chiefOn, outdoorBg, outdoorKnob, chiefBg, chiefKnob,
+      chatMsgs, annPosts,
+      isDash, isBookings: screen === 'bookings', isCalendar: screen === 'calendar', isFinance: screen === 'finance',
+      isTeam: screen === 'team', isPackages: screen === 'packages', isSettings: screen === 'settings',
+      navItems, weekDays, bookings, quickActions, deliveredBars, calCells,
+      statusChips, dayList, nightList, dayCount, nightCount,
+      dowLabels, bigCalCells,
+      finCards, finBars, dueClients,
+      teamStats, members, packages, settingRows,
+    };
+  }
+}
+</script>
+</body>
+</html>
