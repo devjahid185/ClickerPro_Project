@@ -887,6 +887,7 @@ class _Sidebar extends ConsumerWidget {
                   initials: _initials(name),
                   name: name,
                   sub: sub,
+                  email: user?.email ?? '',
                   roleLabel: _roleLabel(role),
                 ),
                 const SizedBox(height: 16),
@@ -947,12 +948,14 @@ class _ProfileBlock extends StatelessWidget {
     required this.initials,
     required this.name,
     required this.sub,
+    required this.email,
     required this.roleLabel,
   });
 
   final String initials;
   final String name;
   final String sub;
+  final String email;
   final String roleLabel;
 
   @override
@@ -1013,6 +1016,20 @@ class _ProfileBlock extends StatelessWidget {
               textAlign: TextAlign.center,
               style: WebTheme.bodyStyle(
                   size: 10.5, color: WebTheme.chromeInkMuted),
+            ),
+          ],
+          // Always surface the signed-in email so the user can confirm which
+          // account they're on (same account works on web + mobile). Skipped
+          // only when the line above already IS the email (no company name).
+          if (email.isNotEmpty && email != sub) ...[
+            const SizedBox(height: 3),
+            Text(
+              email,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: WebTheme.bodyStyle(
+                  size: 9.5, color: WebTheme.chromeInkMuted),
             ),
           ],
           const SizedBox(height: 12),

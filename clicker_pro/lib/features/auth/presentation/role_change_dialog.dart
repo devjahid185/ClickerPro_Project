@@ -152,8 +152,6 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
         return 'Manage packages';
       case Capability.accessDelivery:
         return 'Access delivery system';
-      case Capability.accessDailyTasks:
-        return 'Access daily tasks';
       case Capability.accessFollowup:
         return 'Access client follow-up';
       case Capability.accessReminders:

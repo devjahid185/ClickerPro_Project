@@ -302,6 +302,46 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   const SizedBox(height: 30),
                   _sectionHeader('Account'),
                   _buildSettingsGroup([
+                    // Read-only: the email this device is signed in with. The
+                    // same account signs into both the web and mobile apps and
+                    // shows the same data, so surfacing it here removes any
+                    // doubt about which account is active.
+                    if ((user?.email ?? '').isNotEmpty)
+                      ListTile(
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 4),
+                        leading: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: _settingsTint(Icons.email_outlined)
+                                .withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(9),
+                          ),
+                          child: Icon(
+                            Icons.email_outlined,
+                            size: 18,
+                            color: _settingsTint(Icons.email_outlined),
+                          ),
+                        ),
+                        title: Text(
+                          'Signed in as',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.filmDim,
+                          ),
+                        ),
+                        subtitle: Text(
+                          user!.email,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.film,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     _buildListItem(
                       label: t('menu_logout'),
                       icon: Icons.logout_rounded,

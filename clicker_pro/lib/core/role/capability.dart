@@ -51,7 +51,6 @@ enum Capability {
   accessTax,
   accessPackages,
   accessDelivery,
-  accessDailyTasks,
   accessFollowup,
   accessReminders,
   accessWaitlist,

@@ -120,11 +120,6 @@ class RolePolicy {
     Capability.accessTax: {UserRole.owner, UserRole.both},
     Capability.accessPackages: {UserRole.owner, UserRole.both, UserRole.manager},
     Capability.accessDelivery: {UserRole.owner, UserRole.both, UserRole.manager},
-    Capability.accessDailyTasks: {
-      UserRole.owner,
-      UserRole.both,
-      UserRole.manager,
-    },
     Capability.accessFollowup: {UserRole.owner, UserRole.both, UserRole.manager},
     Capability.accessReminders: {
       UserRole.owner,

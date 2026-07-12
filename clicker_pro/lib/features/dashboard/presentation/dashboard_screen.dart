@@ -2431,6 +2431,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
+                            // Signed-in email — so it's clear which account is
+                            // active (the same account works on web + mobile).
+                            if ((user?.email ?? '').isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                user!.email,
+                                style: TextStyle(
+                                  fontFamily: AppText.body.fontFamily,
+                                  fontSize: 11,
+                                  color: AppColors.filmDim,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -2524,11 +2539,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   // Expenses (petty cash is treated as an expense in profit +
                   // cash flow). Expenses above is the single entry point.
                   _sbGroup('OPERATIONS'),
-                  if (policy.can(Capability.accessDailyTasks))
-                    _sbItem(Icons.task_alt, 'Daily Tasks', () {
-                      Navigator.pop(context);
-                      _pushNamed(RouteNames.bookings);
-                    }),
                   _sbItem(Icons.camera_alt_outlined, 'Gear & Equipment', () {
                     Navigator.pop(context);
                     _pushNamed(RouteNames.gear);
