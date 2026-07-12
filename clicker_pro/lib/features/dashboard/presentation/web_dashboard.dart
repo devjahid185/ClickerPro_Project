@@ -263,7 +263,14 @@ class _SplitHero extends ConsumerWidget {
 
     return LayoutBuilder(builder: (context, constraints) {
       final narrow = constraints.maxWidth < 640;
-      final hero = _HeroCard(metrics: m, next: _nextEvent(bookings));
+      // Tapping the hero opens today's bookings — same as the mobile
+      // dashboard's today card (parity: "মোবাইল এপের ফিচার যা কাজ করে ওয়েব
+      // এপ ও সেই কাজ করবে").
+      final hero = _HoverTranslate(
+        dy: -2,
+        onTap: () => DashboardNav.openToday(ref, context),
+        child: _HeroCard(metrics: m, next: _nextEvent(bookings)),
+      );
       final stats = Column(
         children: [
           Expanded(
@@ -273,6 +280,7 @@ class _SplitHero extends ConsumerWidget {
               valueColor: WebTheme.orange,
               sub: 'scheduled ahead',
               subColor: WebTheme.inkMuted,
+              onTap: () => DashboardNav.openUpcoming(ref, context),
             ),
           ),
           const SizedBox(height: 18),
@@ -283,6 +291,7 @@ class _SplitHero extends ConsumerWidget {
               valueColor: WebTheme.ink,
               sub: '↑ $thisMonth this month',
               subColor: WebTheme.success,
+              onTap: () => DashboardNav.openAll(ref, context),
             ),
           ),
         ],
@@ -454,6 +463,7 @@ class _StatCard extends StatelessWidget {
     required this.valueColor,
     required this.sub,
     required this.subColor,
+    this.onTap,
   });
 
   final String label;
@@ -461,11 +471,13 @@ class _StatCard extends StatelessWidget {
   final Color valueColor;
   final String sub;
   final Color subColor;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return _HoverTranslate(
       dy: -2,
+      onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
         decoration: BoxDecoration(
@@ -547,7 +559,10 @@ class _DeliveredStrip extends ConsumerWidget {
     final deltaPct =
         prev > 0 ? (((last - prev) / prev) * 100).round() : null;
 
-    return Container(
+    return _HoverTranslate(
+      dy: -2,
+      onTap: () => DashboardNav.openDelivered(ref, context),
+      child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 18),
       decoration: BoxDecoration(
         color: WebTheme.surface,
@@ -625,6 +640,7 @@ class _DeliveredStrip extends ConsumerWidget {
             ],
           ),
         ],
+      ),
       ),
     );
   }
@@ -1717,6 +1733,82 @@ class _GrowBarState extends State<_GrowBar>
           );
         },
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────── DASHBOARD NAV
+/// Opens the booking list pre-filtered exactly like the mobile dashboard's
+/// tappable cards, so a web card tap behaves identically (parity). Each
+/// helper sets [bookingFilterProvider] then navigates to the Bookings route.
+class DashboardNav {
+  const DashboardNav._();
+
+  static void _go(WidgetRef ref, BuildContext context, BookingFilter filter) {
+    ref.read(bookingFilterProvider.notifier).state = filter;
+    Navigator.of(context).pushNamed(RouteNames.bookings);
+  }
+
+  /// Today's events (today card / hero).
+  static void openToday(WidgetRef ref, BuildContext context) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    _go(
+      ref,
+      context,
+      ref.read(bookingFilterProvider).copyWith(
+            from: today,
+            to: today.add(const Duration(days: 1)),
+            statuses: {},
+          ),
+    );
+  }
+
+  /// Upcoming = future, still-to-do events (no upper bound).
+  static void openUpcoming(WidgetRef ref, BuildContext context) {
+    final now = DateTime.now();
+    final tomorrow = DateTime(now.year, now.month, now.day + 1);
+    _go(
+      ref,
+      context,
+      ref.read(bookingFilterProvider).copyWith(
+            from: tomorrow,
+            clearTo: true,
+            statuses: {
+              BookingStatus.pending,
+              BookingStatus.confirmed,
+              BookingStatus.inProgress,
+              BookingStatus.shotComplete,
+            },
+          ),
+    );
+  }
+
+  /// Total = every booking, no date/status filter.
+  static void openAll(WidgetRef ref, BuildContext context) {
+    _go(
+      ref,
+      context,
+      ref
+          .read(bookingFilterProvider)
+          .copyWith(clearFrom: true, clearTo: true, statuses: {}),
+    );
+  }
+
+  /// Delivered = shot-complete + delivered + completed, any date.
+  static void openDelivered(WidgetRef ref, BuildContext context) {
+    _go(
+      ref,
+      context,
+      ref.read(bookingFilterProvider).copyWith(
+            statuses: {
+              BookingStatus.shotComplete,
+              BookingStatus.delivered,
+              BookingStatus.completed,
+            },
+            clearFrom: true,
+            clearTo: true,
+          ),
     );
   }
 }
