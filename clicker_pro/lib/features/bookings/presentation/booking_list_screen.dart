@@ -761,21 +761,29 @@ class _BookingColumnRow extends ConsumerWidget {
         .watch(languageControllerProvider)
         .maybeWhen(data: (c) => c, orElse: () => 'en');
 
-    // A pure Freelancer works FOR studios, not for end clients — they book
-    // through the owner and get paid by the owner. So on their booking list
-    // the "who" slot shows the COMPANY (studio owner) name, not the client's
-    // (Heaven: "কোম্পানি নাম থাকবে ক্লায়েন্ট এর যায়গায়"). The owner name comes
-    // from the freelancer earnings overview, keyed by event id; when a given
-    // event isn't in that map yet we fall back to a neutral "Company event".
+    // A Freelancer works FOR companies, not for end clients — each booking is
+    // for whichever COMPANY hired them. That company name is what the
+    // freelancer types into the "Company Name" field of the freelancer booking
+    // form, which is persisted in `clientName` (see booking_edit_screen). So
+    // the row shows that typed company name — NOT the client's name and NOT the
+    // freelancer's own studio (Heaven: "ফ্রিলান্সার তো অনেক কোম্পানির কাজ করবে").
+    // For events the owner assigned to this freelancer (no typed company), fall
+    // back to the studio owner's name from the earnings overview, then to a
+    // neutral label so a row always shows *who* it's for.
     final role = ref.watch(currentUserProvider).valueOrNull?.role;
     final String displayName;
     if (role == UserRole.freelancer) {
-      final ownerName = ref.watch(
-        flEventOwnerNameProvider(booking.remoteId ?? booking.id),
-      );
-      displayName = (ownerName?.trim().isNotEmpty ?? false)
-          ? ownerName!
-          : 'Company event';
+      final typedCompany = booking.clientName?.trim();
+      if (typedCompany != null && typedCompany.isNotEmpty) {
+        displayName = typedCompany;
+      } else {
+        final ownerName = ref.watch(
+          flEventOwnerNameProvider(booking.remoteId ?? booking.id),
+        );
+        displayName = (ownerName?.trim().isNotEmpty ?? false)
+            ? ownerName!
+            : 'Company event';
+      }
     } else {
       // Prefer the joined client record, but fall back to the name typed on
       // the booking itself (offline bookings may have no separate client row)

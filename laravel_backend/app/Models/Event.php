@@ -11,7 +11,8 @@ class Event extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'owner_id', 'client_id', 'package_id', 'title', 'event_type',
+        'owner_id', 'booking_context', 'client_id', 'package_id', 'title',
+        'event_type',
         'date', 'venue', 'shift', 'status', 'price', 'advance_paid',
         'due_amount', 'notes', 'internal_notes', 'delivered_at',
         'completed_at', 'sync_status', 'remote_rev',

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Event;
+use App\Models\Notification;
 use App\Models\PublicBookingRequest;
 use App\Models\User;
 use App\Services\PushService;
@@ -66,10 +67,22 @@ class PublicBookingController extends Controller
         $data['owner_id'] = $owner->id;
         $item = PublicBookingRequest::create($data);
 
+        $message = $data['name'] . ' requested a booking for ' . $data['date'];
+
+        // Durable in-app notification so the owner sees the request in their
+        // notification bell even when FCM push isn't configured on the host.
+        // This is the reliable path — the push below is best-effort on top.
+        Notification::create([
+            'user_id' => $owner->id,
+            'category' => 'OPERATIONS',
+            'message' => $message,
+            'deeplink' => '/bookings/pending-public',
+        ]);
+
         $this->push->sendToUser(
             $owner->id,
             'New booking request',
-            $data['name'] . ' requested a booking for ' . $data['date'],
+            $message,
             ['type' => 'public_booking_request', 'request_id' => (string) $item->id],
         );
 

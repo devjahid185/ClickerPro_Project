@@ -78,6 +78,20 @@ class BookingController extends Controller
             ->with('client')
             ->orderBy('date', 'desc');
 
+        // Keep each role's bookings separate. A Freelancer sees only the
+        // bookings they created as a freelancer; the Owner view sees OWNER
+        // bookings plus legacy rows (booking_context NULL, created before this
+        // feature) so nothing already saved disappears. BOTH sees everything.
+        $context = $request->user()->bookingContext();
+        if ($context === 'FREELANCER') {
+            $query->where('booking_context', 'FREELANCER');
+        } elseif ($context === 'OWNER') {
+            $query->where(function ($q) {
+                $q->where('booking_context', 'OWNER')
+                  ->orWhereNull('booking_context');
+            });
+        }
+
         if ($request->has('status') && $request->status) {
             $query->where('status', $request->status);
         }
@@ -108,6 +122,10 @@ class BookingController extends Controller
             ->all();
 
         $data['owner_id'] = $request->user()->studioId();
+        // Stamp the role that created this booking so a later role switch keeps
+        // it in the right view. BOTH resolves to null → the Owner view (its
+        // OR-NULL filter) still shows it, and the Freelancer view hides it.
+        $data['booking_context'] = $request->user()->bookingContext() ?? 'OWNER';
         $data['shift'] = $data['shift'] ?? 'DAY';
         $data['status'] = $data['status'] ?? 'PENDING';
         $this->resolveClientId($request, $data);

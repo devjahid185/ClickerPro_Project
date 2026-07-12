@@ -202,6 +202,9 @@ Route::middleware(['auth:sanctum', 'throttle:120,1', 'touch.active'])->group(fun
 
     // Notifications & Broadcasts
     Route::get('notifications', [NotificationController::class, 'index']);
+    // App sends { notificationId } in the body (no id in the path); keep the
+    // legacy /{id}/read route too so older builds still mark-read.
+    Route::patch('notifications/read', [NotificationController::class, 'markRead']);
     Route::patch('notifications/{id}/read', [NotificationController::class, 'markRead']);
     // Owner→team announcements
     Route::get('announcements', [\App\Http\Controllers\Api\AnnouncementController::class, 'index']);

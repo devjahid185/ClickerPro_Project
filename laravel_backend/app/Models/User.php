@@ -113,6 +113,27 @@ class User extends Authenticatable
     }
 
     /**
+     * The booking-context this user's role creates and sees. A single account
+     * can switch between Owner and Freelancer (Profile → Change role); each
+     * role keeps its own bookings so switching doesn't carry over the other
+     * role's data. BOTH is the hybrid — it sees everything, so it has no
+     * single context (null → no context filter applied).
+     *
+     *   FREELANCER → 'FREELANCER'
+     *   OWNER      → 'OWNER'
+     *   BOTH       → null (sees both)
+     *   other      → 'OWNER' (office staff etc. live in the studio's owner view)
+     */
+    public function bookingContext(): ?string
+    {
+        return match ($this->role) {
+            'FREELANCER' => 'FREELANCER',
+            'BOTH' => null,
+            default => 'OWNER',
+        };
+    }
+
+    /**
      * Resolves the id of the studio (owner account) this user's bookings,
      * clients, packages, etc. belong to.
      *
