@@ -23,11 +23,13 @@
 
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/booking_status/booking_status.dart';
 import '../../../core/format/currency.dart';
 import '../../../core/notifications/event_reminder_service.dart';
 import '../../../core/role/capability.dart';
@@ -36,11 +38,15 @@ import '../../../l10n/app_localizations.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../shared/widgets/celebration.dart';
+import '../../../shared/widgets/web_form_kit.dart';
+import '../../../shared/widgets/web_motion.dart';
 import '../../../shared/widgets/web_shell.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/web_theme.dart';
 
 import '../../auth/domain/user_role.dart';
+import '../../team/application/team_providers.dart';
 import '../../calendar_sync/data/calendar_sync_service.dart';
 import '../../profile/application/profile_controllers.dart';
 import '../../../core/providers.dart';
@@ -58,6 +64,8 @@ import '../domain/shift.dart';
 import 'widgets/assignments_editor.dart';
 import 'widgets/lens_form_fields.dart';
 import 'widgets/team_member_picker_sheet.dart';
+
+part 'web_booking_form.dart';
 
 class BookingEditScreen extends ConsumerStatefulWidget {
   const BookingEditScreen({super.key, this.bookingId});
@@ -114,6 +122,10 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
 
   /// Whether the hide-payment eye is toggled on.
   bool _hidePaymentVisible = true;
+
+  /// Payment method for the advance recorded on save (web form's
+  /// bKash / Bank / Cash chips; mobile keeps the old 'cash' default).
+  String _advanceMethod = 'cash';
 
   /// Collapsible section states.
   bool _eventTypesExpanded = false;
@@ -224,6 +236,10 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
       });
     }
 
+    // On wide web the WebNavShell owns the chrome; render the Sunset Studio
+    // form column (Screen 7 of the handoff). Mobile + narrow web unchanged.
+    final webWide = kIsWeb && MediaQuery.sizeOf(context).width >= 900;
+
     return PopScope(
       canPop: !_dirty,
       onPopInvokedWithResult: (didPop, _) async {
@@ -234,7 +250,24 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
           Navigator.of(this.context).pop();
         }
       },
-      child: Scaffold(
+      child: webWide
+          ? Scaffold(
+              backgroundColor: Colors.transparent,
+              body: draftAsync.when(
+                loading: () => const Center(child: LensLoader()),
+                error: (err, _) => Center(
+                  child: ErrorState(
+                    message: 'Could not open the booking editor.',
+                    onRetry: () => ref.invalidate(controllerProv),
+                  ),
+                ),
+                data: (draft) {
+                  if (!_seeded) _seedFrom(draft);
+                  return _WebBookingForm(state: this, draft: draft);
+                },
+              ),
+            )
+          : Scaffold(
         backgroundColor: AppColors.voidBlack,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
@@ -1534,7 +1567,19 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     if (result.useCustomPrice) {
       controller.setCustomPrice(0);
     } else if (result.package != null) {
-      final pkg = result.package!;
+      await _applyPackage(result.package!, draft, controller);
+    }
+  }
+
+  /// Applies a picked package to the draft: price/coverage, chief prompt,
+  /// requirements auto-fill, flash + team-composition snack. Shared by the
+  /// mobile picker sheet and the web package tiles.
+  Future<void> _applyPackage(
+    Package pkg,
+    BookingDraft draft,
+    BookingEditController controller,
+  ) async {
+    {
       controller.setPackage(
         packageId: pkg.id,
         coverageHours: pkg.coverageHours,
@@ -1739,7 +1784,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                 bookingId: saved.id,
                 kind: PaymentKind.advance,
                 amount: typedAdvance,
-                method: 'cash',
+                method: _advanceMethod,
                 note: 'Advance (booking form)',
                 paidAt: now,
                 createdAt: now,
@@ -1942,6 +1987,17 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
 
   void _markDirty() {
     if (!_dirty) setState(() => _dirty = true);
+  }
+
+  /// Lets the web form (a separate widget in the same library) mutate this
+  /// state's private fields inside a proper setState.
+  void _webSet(VoidCallback fn) => setState(fn);
+
+  /// Web "← BACK" — same discard guard as the mobile appbar close.
+  Future<void> _webBack() async {
+    final shouldDiscard = !_dirty || await _confirmDiscard();
+    if (!mounted) return;
+    if (shouldDiscard) Navigator.of(context).maybePop();
   }
 
   void _showSnack(String message) {

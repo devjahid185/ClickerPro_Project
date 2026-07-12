@@ -36,12 +36,16 @@ import '../../../core/navigation/route_names.dart';
 import '../../../core/notifications/event_reminder_service.dart';
 import '../../../core/pdf/pdf_export.dart';
 import '../../../core/role/capability.dart';
+import '../../../core/role/role_policy.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../shared/states/offline_banner.dart';
 import '../../../shared/widgets/status_conflict_listener.dart';
+import '../../../shared/widgets/web_form_kit.dart';
+import '../../../shared/widgets/web_motion.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/web_theme.dart';
 
 import '../../auth/domain/user_role.dart';
 import '../../profile/application/profile_controllers.dart';
@@ -51,6 +55,7 @@ import '../../team/application/team_providers.dart';
 import '../../team/domain/team_member.dart';
 import '../application/booking_detail_controller.dart';
 import '../application/booking_providers.dart';
+import '../domain/assignment_role.dart';
 import '../domain/booking.dart';
 import '../domain/booking_detail_envelope.dart';
 import '../domain/shift.dart';
@@ -63,6 +68,8 @@ import 'widgets/payment_summary_card.dart';
 import 'widgets/re_edit_section.dart';
 import 'widgets/status_timeline.dart';
 import 'widgets/task_progress_section.dart';
+
+part 'web_booking_detail.dart';
 
 class BookingDetailScreen extends ConsumerWidget {
   const BookingDetailScreen({super.key, required this.bookingId});
@@ -82,6 +89,33 @@ class BookingDetailScreen extends ConsumerWidget {
     // that hurt readability; use a transparent scaffold (WebShell backdrop
     // shows through) and cap the body width so the detail reads as a column.
     final webWide = kIsWeb && MediaQuery.sizeOf(context).width >= 900;
+
+    // Sunset Studio web-native detail (handoff Screen 8) — hero, 3-col info
+    // grid, team tiles, action row + dark invoice panel. Mobile unchanged.
+    if (webWide) {
+      return StatusConflictListener(
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: detailAsync.when(
+            loading: () => const Center(child: LensLoader()),
+            error: (err, _) => Center(
+              child: ErrorState(
+                message: 'Could not load this booking.',
+                onRetry: () =>
+                    ref.invalidate(bookingDetailControllerProvider(bookingId)),
+              ),
+            ),
+            data: (envelope) => _WebBookingDetail(
+              screen: this,
+              envelope: envelope,
+              policy: policy,
+              currentUserId: currentUserId,
+              lang: lang,
+            ),
+          ),
+        ),
+      );
+    }
 
     return StatusConflictListener(
       child: Scaffold(

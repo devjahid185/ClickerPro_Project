@@ -32,6 +32,7 @@ import '../../../screens/dashboard_screen.dart';
 import '../../../shared/widgets/auth_glass_field.dart';
 import '../../../shared/widgets/clicker_logo.dart';
 import '../../../shared/widgets/video_backdrop.dart';
+import '../../../shared/widgets/web_form_kit.dart';
 import '../../../shared/widgets/web_shell.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_strings.dart';
@@ -76,13 +77,6 @@ PageRouteBuilder<T> slideFromRightRoute<T>(Widget page) {
 /// Firebase (Authentication → Google enabled) and a refreshed
 /// google-services.json — see the deploy notes.
 const bool kSocialLoginEnabled = true;
-
-/// Web login backdrop artwork. On the web the looping brand video is skipped
-/// (autoplay is unreliable and the clip is heavy to ship), so a still hero
-/// image is used instead. Drop the artwork at this exact path — the folder
-/// `assets/Login/` is already declared in pubspec, so no manifest change is
-/// needed. Until the file exists the backdrop falls back to solid black.
-const String kWebLoginImage = 'assets/Login/login_web_bg.jpg';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -285,6 +279,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                   vertical: 32,
                 ),
                 child: WebFormWidth(
+                  child: WebAuthCard(
+                  enabled: kIsWeb,
                   child: Form(
                   key: _formKey,
                   child: AnimatedBuilder(
@@ -498,6 +494,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                   ),
                 ),
                 ),
+                ),
               ),
             ),
           ),
@@ -655,19 +652,9 @@ class _LoginBackdrop extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (kIsWeb) {
-      return Stack(
-        fit: StackFit.expand,
-        children: [
-          Image.asset(
-            kWebLoginImage,
-            fit: BoxFit.cover,
-            // Degrade to solid black (never a broken-image glyph) until the
-            // artwork file is dropped into assets/Login/.
-            errorBuilder: (_, _, _) => const ColoredBox(color: Colors.black),
-          ),
-          const Positioned.fill(child: _scrim),
-        ],
-      );
+      // Sunset Studio auth overlay: dark #2B1D12 canvas with orange/gold
+      // glow blobs (handoff Auth spec) — replaces the old hero-image slot.
+      return const WebAuthBackdrop();
     }
     return const VideoBackdrop(
       asset: 'assets/Login/Login.mp4',

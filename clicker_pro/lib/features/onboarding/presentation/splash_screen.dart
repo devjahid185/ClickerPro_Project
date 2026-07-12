@@ -17,6 +17,7 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -26,8 +27,10 @@ import '../../../screens/dashboard_screen.dart';
 import '../../../screens/login_screen.dart';
 import '../../../shared/states/lens_loader.dart';
 import '../../../shared/widgets/clicker_logo.dart';
+import '../../../shared/widgets/web_form_kit.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/web_theme.dart';
 import '../../auth/domain/session.dart';
 import '../application/onboarding_controller.dart';
 import 'onboarding_intro_screen.dart';
@@ -164,8 +167,126 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     super.dispose();
   }
 
+  /// Sunset Studio web splash — dark canvas + glow blobs, orange-gradient
+  /// logo square (radius 26, orange glow) popping in with the overshoot
+  /// curve, Sora wordmark and the brand loader. Routing is unchanged.
+  Widget _buildWebSplash() {
+    return Scaffold(
+      backgroundColor: WebTheme.chrome,
+      body: Stack(
+        children: [
+          const Positioned.fill(child: WebAuthBackdrop()),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                AnimatedBuilder(
+                  animation: Listenable.merge([_logoCtrl, _pulseCtrl]),
+                  builder: (_, _) {
+                    final pulse = 0.75 + (_pulseCtrl.value * 0.25);
+                    return Opacity(
+                      opacity: _logoFade.value.clamp(0.0, 1.0),
+                      child: Transform.scale(
+                        scale: _logoScale.value,
+                        child: Container(
+                          width: 96,
+                          height: 96,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            gradient: WebTheme.sunset,
+                            borderRadius: BorderRadius.circular(26),
+                            boxShadow: [
+                              BoxShadow(
+                                color: WebTheme.orange.withValues(
+                                  alpha: 0.45 * pulse,
+                                ),
+                                blurRadius: 64 * pulse,
+                                offset: const Offset(0, 18),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            'G7',
+                            style: WebTheme.displayStyle(
+                              size: 38,
+                              color: WebTheme.chromeInk,
+                              weight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 26),
+                FadeTransition(
+                  opacity: _brandFade,
+                  child: Text.rich(
+                    TextSpan(
+                      style: WebTheme.displayStyle(
+                        size: 34,
+                        color: WebTheme.chromeInk,
+                        weight: FontWeight.w800,
+                      ),
+                      children: [
+                        const TextSpan(text: 'Graphy'),
+                        TextSpan(
+                          text: '7',
+                          style: TextStyle(color: WebTheme.orangeLight),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                FadeTransition(
+                  opacity: _brandFade,
+                  child: Text(
+                    'PHOTOGRAPHY MANAGEMENT',
+                    style: WebTheme.label(
+                      size: 9.5,
+                      color: WebTheme.chromeInkMuted,
+                      tracking: 0.3,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                FadeTransition(
+                  opacity: _brandFade,
+                  child: const LensLoader(size: 26),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            bottom: 40,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: FadeTransition(
+                opacity: _brandFade,
+                child: Text(
+                  'v1.0.0',
+                  style: WebTheme.label(
+                    size: 9,
+                    color: WebTheme.chromeInkFaint,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Sunset Studio web splash (handoff Auth overlay, Step 1): dark #2B1D12
+    // canvas + glow blobs, 96px orange-gradient logo square with the 1.2s
+    // overshoot pop-in, Sora wordmark. Mobile keeps the photo splash.
+    if (kIsWeb) return _buildWebSplash();
+
     return Scaffold(
       // Full-screen brand splash image (dark→sunset gradient). Scaffold sits
       // on black so there is no seam behind the cover-fitted image.
