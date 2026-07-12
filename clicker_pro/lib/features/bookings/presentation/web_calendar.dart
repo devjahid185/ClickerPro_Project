@@ -268,17 +268,24 @@ class _MonthGrid extends StatelessWidget {
         const SizedBox(height: 8),
         for (var row = 0; row * 7 < totalCells; row++) ...[
           if (row != 0) const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (var col = 0; col < 7; col++) ...[
-                if (col != 0) const SizedBox(width: 8),
-                Expanded(
-                  child: _cell(context, row * 7 + col, leading,
-                      daysInMonth, byDay),
-                ),
+          // IntrinsicHeight bounds the row so `stretch` can equalise the
+          // cell heights. A bare stretch here sat in an UNBOUNDED height
+          // context (Column inside the page ListView) — debug asserts,
+          // release silently laid out to infinity and painted NOTHING,
+          // which blanked the whole calendar screen.
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (var col = 0; col < 7; col++) ...[
+                  if (col != 0) const SizedBox(width: 8),
+                  Expanded(
+                    child: _cell(context, row * 7 + col, leading,
+                        daysInMonth, byDay),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ],
       ],
@@ -496,7 +503,9 @@ class _WeekRow extends StatelessWidget {
       children: [
         const _DowLabels(),
         const SizedBox(height: 8),
-        Row(
+        // Same unbounded-height guard as the month grid (see _MonthGrid).
+        IntrinsicHeight(
+          child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             for (var i = 0; i < 7; i++) ...[
@@ -538,6 +547,7 @@ class _WeekRow extends StatelessWidget {
               ),
             ],
           ],
+          ),
         ),
       ],
     );

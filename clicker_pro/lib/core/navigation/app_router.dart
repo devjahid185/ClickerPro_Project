@@ -85,10 +85,25 @@ import '../../theme/app_theme.dart';
 class AppRouter {
   AppRouter._();
 
+  /// The settings of the named route currently being generated. Lets
+  /// [lensPageRoute] stamp the route NAME onto the PageRouteBuilder it
+  /// creates — without it every named push produced an anonymous route, so
+  /// the web shell's route observer never saw navigation: the sidebar pill
+  /// and header title froze on the first screen and "already active" checks
+  /// blocked re-navigation (the Graphy7-logo-home bug).
+  static RouteSettings? _generatingSettings;
+
   /// Hook for `MaterialApp.onGenerateRoute`. Resolves a named route to a
   /// `lensPageRoute`-wrapped widget. Unknown routes fall back to a "Coming
   /// soon" screen so deep links survive the Foundation slice.
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
+    _generatingSettings = settings;
+    final route = _routeFor(settings);
+    _generatingSettings = null;
+    return route;
+  }
+
+  static Route<dynamic> _routeFor(RouteSettings settings) {
     // Web deep-link: the public self-booking page is shared as a path URL
     // `/book/<token>` (matching the old web app's link format). On Flutter
     // web, `settings.name` is that full path, so it won't hit any exact
@@ -381,6 +396,9 @@ class AppRouter {
   /// Same animation tokens as the auth-screen slide-from-right transition.
   static Route<T> lensPageRoute<T>(Widget page) {
     return PageRouteBuilder<T>(
+      // Carries the route NAME through named navigation (see
+      // [_generatingSettings]); direct widget pushes stay anonymous as before.
+      settings: _generatingSettings,
       transitionDuration: const Duration(milliseconds: 280),
       reverseTransitionDuration: const Duration(milliseconds: 200),
       pageBuilder: (_, animation, secondaryAnimation) => page,

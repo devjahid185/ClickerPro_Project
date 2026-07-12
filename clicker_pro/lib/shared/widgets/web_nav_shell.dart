@@ -225,7 +225,7 @@ class WebNavShell extends ConsumerStatefulWidget {
       case RouteNames.notifications:
         return 'Notifications';
       default:
-        return 'Clicker Pro';
+        return 'Graphy7';
     }
   }
 
@@ -826,46 +826,53 @@ class _Sidebar extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── Logo row ─────────────────────────────────────────────────
+          // ── Logo row — tapping the brand always goes home ────────────
           WebEntrance(
             offset: 4,
             duration: const Duration(milliseconds: 420),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Row(
-                children: [
-                  Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      color: WebTheme.orange,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Center(
-                      child: Text('G',
-                          style: WebTheme.displayStyle(
-                              size: 16,
-                              weight: FontWeight.w800,
-                              color: WebTheme.chromeInk)),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text.rich(
-                    TextSpan(
-                      text: 'Graphy',
-                      style: WebTheme.displayStyle(
-                          size: 19,
-                          weight: FontWeight.w800,
-                          color: WebTheme.chromeInk),
-                      children: const [
-                        TextSpan(
-                          text: '7',
-                          style: TextStyle(color: WebTheme.orangeLight),
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => onTap(RouteNames.dashboard),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: WebTheme.orange,
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                      ],
-                    ),
+                        child: Center(
+                          child: Text('G',
+                              style: WebTheme.displayStyle(
+                                  size: 16,
+                                  weight: FontWeight.w800,
+                                  color: WebTheme.chromeInk)),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text.rich(
+                        TextSpan(
+                          text: 'Graphy',
+                          style: WebTheme.displayStyle(
+                              size: 19,
+                              weight: FontWeight.w800,
+                              color: WebTheme.chromeInk),
+                          children: const [
+                            TextSpan(
+                              text: '7',
+                              style: TextStyle(color: WebTheme.orangeLight),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
