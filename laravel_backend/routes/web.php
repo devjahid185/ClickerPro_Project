@@ -48,10 +48,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::patch('users/{id}/suspend', [UsersController::class, 'suspend'])->name('users.suspend');
 
         // --- Bookings / Payments / Finance ---
-        // REMOVED by request: the admin console must NOT expose any user's
-        // bookings, payments, income, or expenses. These routes (and their
-        // sidebar links, dashboard cards, and API endpoints) are intentionally
-        // disabled so studio finance/booking data stays private to the owner.
+        // Re-enabled 2026-07-12 by Heaven's request ("সব কিছু এডমিন পেনেল থেকে
+        // কন্ট্রোল করতে চাই") — reversing the earlier privacy removal. These are
+        // READ-ONLY platform-wide lists; owner-side actions (approve/decline,
+        // freelancer payouts, dues reminders) deliberately stay in the owner app.
+        Route::get('bookings', [\App\Http\Controllers\Admin\BookingsController::class, 'index'])->name('bookings');
+        Route::get('payments', [\App\Http\Controllers\Admin\PaymentsController::class, 'index'])->name('payments');
+        Route::get('finance', [\App\Http\Controllers\Admin\FinanceController::class, 'index'])->name('finance');
 
         // --- Analytics ---
         Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics');

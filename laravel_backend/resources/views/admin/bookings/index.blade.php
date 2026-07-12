@@ -12,15 +12,27 @@
 
     <form method="GET" action="{{ route('admin.bookings') }}" class="toolbar">
         <input class="input toolbar__search" type="search" name="search"
-               value="{{ $search }}" placeholder="Search title or venue…">
-        <select class="select" name="status" onchange="this.form.submit()">
-            <option value="">All statuses</option>
-            @foreach ($statuses as $s)
-                <option value="{{ $s }}" @selected($status === $s)>{{ $s }}</option>
-            @endforeach
-        </select>
-        <button type="submit" class="btn btn--ghost">Filter</button>
+               value="{{ $search }}" placeholder="Search by client or venue…">
+        @if ($status)
+            <input type="hidden" name="status" value="{{ $status }}">
+        @endif
+        <button type="submit" class="btn btn--ghost">
+            <span class="material-symbols-rounded" aria-hidden="true">search</span>
+            Search
+        </button>
     </form>
+
+    {{-- Design's filter chip row — active chip filled, others outlined. --}}
+    <div class="chip-row">
+        <a class="chip {{ $status === '' ? 'is-active' : '' }}"
+           href="{{ route('admin.bookings', array_filter(['search' => $search])) }}">All</a>
+        @foreach ($statuses as $s)
+            <a class="chip {{ $status === $s ? 'is-active' : '' }}"
+               href="{{ route('admin.bookings', array_filter(['search' => $search, 'status' => $s])) }}">
+                {{ ucwords(strtolower(str_replace('_', ' ', $s))) }}
+            </a>
+        @endforeach
+    </div>
 
     <div class="card">
         <div class="table-wrap">

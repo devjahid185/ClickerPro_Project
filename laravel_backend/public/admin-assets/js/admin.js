@@ -1,32 +1,10 @@
 /* ============================================================
-   Clicker Pro Admin - minimal interactivity
-   Theme toggle, mobile sidebar, and modal helpers.
+   Graphy7 Admin - minimal interactivity
+   Mobile sidebar + modal helpers. The Graphy7 Admin design is
+   dark-only, so the old light/dark theme toggle is gone.
    ============================================================ */
 (function () {
   'use strict';
-
-  var THEME_KEY = 'cp_admin_theme';
-  var root = document.documentElement;
-
-  function applyTheme(theme) {
-    root.setAttribute('data-theme', theme);
-    var icon = document.querySelector('[data-theme-toggle] .material-symbols-rounded');
-    if (icon) icon.textContent = theme === 'dark' ? 'light_mode' : 'dark_mode';
-  }
-
-  function initTheme() {
-    var saved = localStorage.getItem(THEME_KEY);
-    if (!saved) {
-      saved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    applyTheme(saved);
-  }
-
-  function toggleTheme() {
-    var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    localStorage.setItem(THEME_KEY, next);
-    applyTheme(next);
-  }
 
   function initSidebar() {
     var sidebar = document.querySelector('.sidebar');
@@ -50,12 +28,5 @@
     if (scrim) scrim.addEventListener('click', close);
   }
 
-  initTheme();
-
-  document.addEventListener('DOMContentLoaded', function () {
-    initTheme();
-    initSidebar();
-    var toggle = document.querySelector('[data-theme-toggle]');
-    if (toggle) toggle.addEventListener('click', toggleTheme);
-  });
+  document.addEventListener('DOMContentLoaded', initSidebar);
 })();

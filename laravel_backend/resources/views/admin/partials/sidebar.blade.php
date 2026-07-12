@@ -1,17 +1,20 @@
-{{-- Admin sidebar --}}
+{{-- Admin sidebar — Graphy7 Admin design --}}
 @php
     $navGroups = [
         ['label' => 'Overview', 'items' => [
-            ['route' => 'admin.dashboard', 'label' => 'Dashboard', 'icon' => 'dashboard'],
+            ['route' => 'admin.dashboard', 'label' => 'Dashboard', 'icon' => 'grid_view'],
             ['route' => 'admin.analytics', 'label' => 'Analytics', 'icon' => 'monitoring'],
         ]],
         ['label' => 'Users', 'items' => [
             ['route' => 'admin.users',   'label' => 'All Users',  'icon' => 'groups'],
             ['route' => 'admin.studios', 'label' => 'Businesses', 'icon' => 'storefront'],
         ]],
-        // NOTE: Bookings / Finance / Payments were intentionally removed -
-        // the admin console must not expose any user's booking or finance data.
+        // Bookings / Payments / Finance: read-only platform-wide lists.
+        // Owner-side actions (approve/decline, payouts) stay in the owner app.
         ['label' => 'Operations', 'items' => [
+            ['route' => 'admin.bookings',      'label' => 'Bookings',      'icon' => 'event_note'],
+            ['route' => 'admin.payments',      'label' => 'Payments',      'icon' => 'payments'],
+            ['route' => 'admin.finance',       'label' => 'Finance',       'icon' => 'account_balance_wallet'],
             ['route' => 'admin.subscriptions', 'label' => 'Subscriptions', 'icon' => 'workspace_premium'],
             ['route' => 'admin.coupons',       'label' => 'Coupons',       'icon' => 'sell'],
         ]],
@@ -30,10 +33,10 @@
 
 <aside class="sidebar">
     <div class="sidebar__brand">
-        <div class="sidebar__brand-mark">CP</div>
+        <div class="sidebar__brand-mark">G7</div>
         <div>
-            <div class="sidebar__brand-name">Clicker<span>Pro</span></div>
-            <div class="sidebar__brand-sub">Studio Admin</div>
+            <div class="sidebar__brand-name">Graphy<span>7</span></div>
+            <div class="sidebar__brand-sub">Admin Control</div>
         </div>
     </div>
 
@@ -54,13 +57,6 @@
     </nav>
 
     <div class="sidebar__footer">
-        <div class="sidebar-card">
-            <div class="sidebar-card__top">
-                <span class="material-symbols-rounded" aria-hidden="true">verified_user</span>
-                <span>Admin Scope</span>
-            </div>
-            <p>Platform controls only. Studio bookings and finances stay private.</p>
-        </div>
         <form method="POST" action="{{ route('admin.logout') }}">
             @csrf
             <button type="submit" class="btn btn--ghost w-full">

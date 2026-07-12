@@ -1,4 +1,4 @@
-{{-- Admin topbar --}}
+{{-- Admin topbar — Graphy7 Admin design (dark-only, lime accent) --}}
 @php $admin = auth()->user(); @endphp
 <header class="topbar">
     <div class="topbar__brand">
@@ -7,21 +7,15 @@
         </button>
         <div>
             <span class="topbar__title">@yield('title', 'Dashboard')</span>
-            <div class="topbar__subtitle">Platform Control Room</div>
+            <div class="topbar__subtitle">Graphy7 · Platform Control</div>
         </div>
     </div>
 
     <div class="topbar__actions">
         <form class="topbar__search" method="GET" action="{{ route('admin.users') }}">
             <span class="material-symbols-rounded" aria-hidden="true">search</span>
-            <input type="search" name="search" placeholder="Search users or studios">
+            <input type="search" name="search" placeholder="Search users — name, phone, email">
         </form>
-        <a class="icon-button" href="{{ route('admin.support') }}" aria-label="Support">
-            <span class="material-symbols-rounded" aria-hidden="true">inbox</span>
-        </a>
-        <button class="icon-button" data-theme-toggle aria-label="Toggle theme">
-            <span class="material-symbols-rounded" aria-hidden="true">dark_mode</span>
-        </button>
         @if ($admin)
             <div class="topbar__profile">
                 <div class="avatar">{{ strtoupper(substr($admin->name ?? $admin->email, 0, 1)) }}</div>

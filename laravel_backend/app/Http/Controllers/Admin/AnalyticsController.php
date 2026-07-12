@@ -6,8 +6,9 @@ use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Controller;
 
 /**
- * Admin analytics (Blade). Shows privacy-safe platform growth metrics from
- * the cached AdminController::analytics payload.
+ * Admin analytics (Blade). Platform growth metrics from the cached
+ * AdminController::analytics payload — signups + bookings-per-month
+ * (bookings re-enabled 2026-07-12 by Heaven's request).
  */
 class AnalyticsController extends Controller
 {
@@ -17,6 +18,7 @@ class AnalyticsController extends Controller
 
         return view('admin.analytics.index', [
             'signups' => $data['signups'] ?? [],
+            'bookings' => $data['bookings'] ?? [],
         ]);
     }
 }

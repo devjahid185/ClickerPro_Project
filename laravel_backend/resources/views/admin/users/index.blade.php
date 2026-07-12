@@ -20,7 +20,7 @@
 
     <form method="GET" action="{{ route('admin.users') }}" class="toolbar">
         <input class="input toolbar__search" type="search" name="search"
-               value="{{ $search }}" placeholder="Search name or email">
+               value="{{ $search }}" placeholder="Search by name, phone, or email">
         <select class="select" name="role" onchange="this.form.submit()">
             <option value="">All roles</option>
             @foreach ($roles as $r)

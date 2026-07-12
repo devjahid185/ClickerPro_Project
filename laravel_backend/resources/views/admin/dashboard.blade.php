@@ -4,21 +4,20 @@
 
 @section('content')
     @php
-        // The admin dashboard intentionally avoids studio bookings, revenue,
-        // payments, income, and expense data. Keep these metrics platform-safe.
         $totalUsers = (int) ($stats['totalUsers'] ?? 0);
         $owners = (int) ($stats['owners'] ?? 0);
         $freelancers = (int) ($stats['freelancers'] ?? 0);
         $admins = (int) ($stats['admins'] ?? 0);
         $clients = (int) ($stats['totalClients'] ?? 0);
+        $bookings = (int) ($stats['totalBookings'] ?? 0);
         $broadcasts = (int) ($stats['activeBroadcasts'] ?? 0);
         $tickets = (int) ($stats['openTickets'] ?? 0);
         $accountBase = max(1, $owners + $freelancers + $admins);
 
         $cards = [
             ['label' => 'Total Users', 'value' => number_format($totalUsers), 'icon' => 'groups', 'tone' => 'orange', 'meta' => 'All registered accounts'],
-            ['label' => 'Studio Owners', 'value' => number_format($owners), 'icon' => 'storefront', 'tone' => 'teal', 'meta' => 'Owner or both roles'],
-            ['label' => 'Freelancers', 'value' => number_format($freelancers), 'icon' => 'badge', 'tone' => 'green', 'meta' => 'Freelancer or both roles'],
+            ['label' => 'Bookings', 'value' => number_format($bookings), 'icon' => 'event_note', 'tone' => 'teal', 'meta' => 'Across all studios'],
+            ['label' => 'Studio Owners', 'value' => number_format($owners), 'icon' => 'storefront', 'tone' => 'green', 'meta' => 'Owner or both roles'],
             ['label' => 'Open Tickets', 'value' => number_format($tickets), 'icon' => 'support_agent', 'tone' => $tickets > 0 ? 'red' : 'green', 'meta' => 'Needs admin attention'],
         ];
 
@@ -34,25 +33,42 @@
             ['label' => 'Feature Flags', 'value' => 'Manage', 'icon' => 'workspace_premium', 'href' => route('admin.subscriptions')],
             ['label' => 'Security Center', 'value' => 'Review', 'icon' => 'shield_lock', 'href' => route('admin.security')],
         ];
+
+        $heroAmount = (float) ($hero['amount'] ?? 0);
+        $heroPct = $hero['pct'] ?? null;
     @endphp
 
     <div class="page-header">
         <div>
-            <span class="eyebrow">Clicker Pro Admin</span>
+            <span class="eyebrow">Graphy7 Admin</span>
             <h1>Platform Overview</h1>
-            <p class="page-header__sub">Monitor accounts, support load, broadcasts, and system controls without exposing studio-private work.</p>
+            <p class="page-header__sub">Accounts, bookings, revenue, support load, and system controls — the whole platform in one place.</p>
         </div>
         <div class="page-header__actions">
-            <a href="{{ route('landing') }}" class="btn btn--ghost">
-                <span class="material-symbols-rounded" aria-hidden="true">open_in_new</span>
-                Landing
-            </a>
             <a href="{{ route('admin.settings') }}" class="btn btn--primary">
                 <span class="material-symbols-rounded" aria-hidden="true">tune</span>
                 Settings
             </a>
         </div>
     </div>
+
+    {{-- Lime revenue hero — the design's "REVENUE · JULY" card. --}}
+    <section class="hero-card mb-4">
+        <div class="hero-card__top">
+            <span class="hero-card__label">Revenue · {{ $hero['monthLabel'] ?? '' }}</span>
+            <span class="material-symbols-rounded" aria-hidden="true">payments</span>
+        </div>
+        <div class="hero-card__value">৳{{ number_format($heroAmount) }}</div>
+        <div class="hero-card__trend">
+            @if ($heroPct !== null)
+                <span class="material-symbols-rounded" aria-hidden="true">{{ $heroPct >= 0 ? 'trending_up' : 'trending_down' }}</span>
+                <span>{{ abs($heroPct) }}%</span>
+                <small>vs {{ $hero['prevMonthLabel'] ?? 'last month' }}</small>
+            @else
+                <small>Payments recorded across all studios this month</small>
+            @endif
+        </div>
+    </section>
 
     <div class="stat-grid">
         @foreach ($cards as $c)
@@ -113,6 +129,38 @@
     </div>
 
     <div class="dashboard-grid mt-4">
+        {{-- Design's "Recent bookings" card — read-only rows, avatar chips,
+             status pills. Row click → full bookings list. --}}
+        <section class="card">
+            <div class="card__header">
+                <div>
+                    <span class="card__title">Recent bookings</span>
+                    <p class="card__meta">Latest activity across all studios.</p>
+                </div>
+                <a class="mono" style="font-size:10px;letter-spacing:0.08em;color:var(--primary)" href="{{ route('admin.bookings') }}">VIEW ALL</a>
+            </div>
+            <div class="card__body" style="padding:8px 0">
+                @forelse ($recent as $r)
+                    <div class="flex items-center gap-3" style="padding:11px 18px;{{ !$loop->first ? 'border-top:1px solid var(--hairline)' : '' }}">
+                        <div class="avatar">{{ strtoupper(mb_substr($r['title'] ?: 'B', 0, 2)) }}</div>
+                        <div style="flex:1;min-width:0">
+                            <div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $r['title'] ?: 'Booking' }}</div>
+                            <div class="text-muted" style="font-size:11px">{{ $r['sub'] }}</div>
+                        </div>
+                        @if ($r['amount'] !== null)
+                            <span style="font-size:13px;font-weight:700">৳{{ number_format($r['amount']) }}</span>
+                        @endif
+                        @include('admin.partials.status_badge', ['status' => $r['status']])
+                    </div>
+                @empty
+                    <div class="empty-state">
+                        <span class="material-symbols-rounded empty-state__icon" aria-hidden="true">event_note</span>
+                        <p>No bookings yet.</p>
+                    </div>
+                @endforelse
+            </div>
+        </section>
+
         <section class="card">
             <div class="card__header">
                 <div>
@@ -146,25 +194,6 @@
                         </div>
                         <span class="badge badge--neutral">System</span>
                     </a>
-                </div>
-            </div>
-        </section>
-
-        <section class="card">
-            <div class="card__header">
-                <div>
-                    <span class="card__title">Privacy Boundary</span>
-                    <p class="card__meta">Current console policy.</p>
-                </div>
-                <span class="badge badge--success">Protected</span>
-            </div>
-            <div class="card__body">
-                <div class="privacy-box">
-                    <span class="material-symbols-rounded" aria-hidden="true">lock</span>
-                    <div>
-                        <strong>Studio operations stay owner-controlled.</strong>
-                        <p>Admin screens are scoped to accounts, platform settings, support, security, and broadcasts. Booking and finance dashboards are intentionally absent.</p>
-                    </div>
                 </div>
             </div>
         </section>

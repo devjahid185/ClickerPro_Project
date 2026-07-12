@@ -11,13 +11,20 @@
         $maxSignup = max(1, $signupSeries->max('value') ?? 1);
         $totalSignups = $signupSeries->sum('value');
         $latest = $signupSeries->last()['value'] ?? 0;
+
+        $bookingSeries = collect($bookings ?? [])->map(fn ($r) => [
+            'label' => isset($r['month']) ? \Illuminate\Support\Str::of($r['month'])->afterLast('-') : '',
+            'value' => (int) ($r['count'] ?? 0),
+        ])->take(-12)->values();
+        $maxBooking = max(1, $bookingSeries->max('value') ?? 1);
+        $totalBookings = $bookingSeries->sum('value');
     @endphp
 
     <div class="page-header">
         <div>
-            <span class="eyebrow">Privacy-Safe Analytics</span>
+            <span class="eyebrow">Platform Analytics</span>
             <h1>Growth Overview</h1>
-            <p class="page-header__sub">Track platform account growth without exposing any studio booking, payment, income, or expense records.</p>
+            <p class="page-header__sub">Account growth and booking activity across the platform, month by month.</p>
         </div>
     </div>
 
@@ -40,11 +47,11 @@
         </section>
         <section class="stat-card stat-card--green">
             <div class="stat-card__top">
-                <span class="material-symbols-rounded stat-card__icon" aria-hidden="true">lock</span>
-                <span class="stat-card__label">Privacy</span>
+                <span class="material-symbols-rounded stat-card__icon" aria-hidden="true">event_note</span>
+                <span class="stat-card__label">Bookings</span>
             </div>
-            <div class="stat-card__value">On</div>
-            <div class="stat-card__meta">No bookings or finance analytics displayed</div>
+            <div class="stat-card__value">{{ number_format($totalBookings) }}</div>
+            <div class="stat-card__meta">Booked events in the trend window</div>
         </section>
     </div>
 
@@ -80,28 +87,28 @@
         <section class="card">
             <div class="card__header">
                 <div>
-                    <span class="card__title">Data Boundary</span>
-                    <p class="card__meta">What this page intentionally excludes.</p>
+                    <span class="card__title">Bookings per month</span>
+                    <p class="card__meta">Event volume across all studios.</p>
                 </div>
-                <span class="badge badge--success">Protected</span>
+                <span class="count-pill">{{ $bookingSeries->count() }} months</span>
             </div>
             <div class="card__body">
-                <div class="system-list">
-                    <div class="system-row">
-                        <span class="material-symbols-rounded" aria-hidden="true">event_busy</span>
-                        <div>
-                            <strong>No booking analytics</strong>
-                            <p>Studio schedules remain owner-private.</p>
-                        </div>
+                @if ($bookingSeries->isEmpty())
+                    <div class="empty-state">
+                        <span class="material-symbols-rounded empty-state__icon" aria-hidden="true">event_note</span>
+                        <p>No booking data yet.</p>
                     </div>
-                    <div class="system-row">
-                        <span class="material-symbols-rounded" aria-hidden="true">payments</span>
-                        <div>
-                            <strong>No finance analytics</strong>
-                            <p>Payments, income, and expenses are not surfaced.</p>
-                        </div>
+                @else
+                    <div class="bar-chart">
+                        @foreach ($bookingSeries as $pt)
+                            <div class="bar-chart__col">
+                                <span class="bar-chart__val">{{ $pt['value'] }}</span>
+                                <div class="bar-chart__bar" style="height: {{ max(6, round($pt['value'] / $maxBooking * 132)) }}px"></div>
+                                <span class="bar-chart__label">{{ $pt['label'] }}</span>
+                            </div>
+                        @endforeach
                     </div>
-                </div>
+                @endif
             </div>
         </section>
     </div>

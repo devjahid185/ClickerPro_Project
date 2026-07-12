@@ -23,15 +23,16 @@ class AdminController extends Controller
     public function stats()
     {
         $data = Cache::remember('admin.stats', self::DASHBOARD_TTL, function () {
-            // PRIVACY: admin must NOT see any user's finance or booking data.
-            // Revenue (totalRevenueMinor) and totalBookings were intentionally
-            // removed — only non-financial platform counts are reported.
+            // Booking count re-enabled 2026-07-12 by Heaven's request — the
+            // admin console now surfaces platform-wide booking/finance lists
+            // (read-only; owner actions stay in the owner app).
             return [
                 'totalUsers'        => User::count(),
                 'owners'            => User::whereIn('role', ['OWNER', 'BOTH'])->count(),
                 'freelancers'       => User::whereIn('role', ['FREELANCER', 'BOTH'])->count(),
                 'admins'            => User::where('role', 'ADMIN')->count(),
                 'totalClients'      => Client::count(),
+                'totalBookings'     => Event::count(),
                 'activeBroadcasts'  => Broadcast::where('is_active', true)->count(),
                 'openTickets'       => SupportTicket::whereIn('status', ['OPEN', 'IN_PROGRESS'])->count(),
             ];
@@ -43,18 +44,24 @@ class AdminController extends Controller
     public function analytics()
     {
         $data = Cache::remember('admin.analytics', self::DASHBOARD_TTL, function () {
-            // PRIVACY: booking-derived analytics (monthly bookings, status
-            // breakdown, top studios by bookings) were intentionally removed —
-            // the admin must not see any user's booking activity. Only the
-            // non-financial signups trend remains.
             $signups = User::select(
                     DB::raw("TO_CHAR(created_at, 'YYYY-MM') as month"),
                     DB::raw('COUNT(*) as count')
                 )
                 ->groupBy('month')->orderBy('month')->limit(12)->get();
 
+            // Monthly bookings series re-enabled 2026-07-12 (Heaven's request)
+            // — feeds the admin Finance page's bookings-per-month bar chart.
+            $bookings = Event::select(
+                    DB::raw("TO_CHAR(date, 'YYYY-MM') as month"),
+                    DB::raw('COUNT(*) as count')
+                )
+                ->groupBy('month')->orderBy('month', 'desc')->limit(12)->get()
+                ->sortBy('month')->values();
+
             return [
                 'signups' => $signups,
+                'bookings' => $bookings,
             ];
         });
 
