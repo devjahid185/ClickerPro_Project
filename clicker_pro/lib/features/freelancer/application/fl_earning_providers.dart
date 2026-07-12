@@ -44,3 +44,21 @@ final flEarningOverviewControllerProvider =
     AsyncNotifierProvider<FlEarningOverviewController, FlEarningsOverview>(
       FlEarningOverviewController.new,
     );
+
+// ─── 3. Event → owner (company) name lookup ───────────────────────────
+//
+// The freelancer booking list shows the studio/company name in place of the
+// client. The earnings overview already carries a per-event owner name (for
+// unpaid events), so we expose a keyed lookup instead of a new endpoint.
+// Returns null when the event isn't in the overview yet — the caller then
+// shows a neutral fallback.
+final flEventOwnerNameProvider = Provider.family<String?, String>((ref, eventId) {
+  final overview = ref.watch(flEarningOverviewControllerProvider).valueOrNull;
+  if (overview == null) return null;
+  for (final e in overview.pendingEvents) {
+    if (e.eventId == eventId) {
+      return e.ownerName.trim().isEmpty ? null : e.ownerName;
+    }
+  }
+  return null;
+});

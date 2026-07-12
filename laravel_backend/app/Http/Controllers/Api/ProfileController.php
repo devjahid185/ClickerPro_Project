@@ -18,9 +18,14 @@ class ProfileController extends Controller
         $data = $request->validate([
             'name' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:30',
+            // WhatsApp number for client contact; kept separate from phone.
+            'whatsapp' => 'nullable|string|max:30',
             'bio' => 'nullable|string',
             'staff_position' => 'nullable|string|max:100',
             'business_name' => 'nullable|string|max:255',
+            // Studio address + specialization — persisted so they survive logout.
+            'studio_address' => 'nullable|string|max:500',
+            'specialization' => 'nullable|string|max:120',
             'avatar' => 'nullable|string',
             // Studio logo + digital signature (remote URL or base64 data-URI).
             'logo_url' => 'nullable|string',
@@ -33,6 +38,8 @@ class ProfileController extends Controller
             'vat_enabled' => 'nullable|boolean',
             'vat_rate_pct' => 'nullable|numeric|min:0|max:999.99',
             'vat_label' => 'nullable|string|max:20',
+            // Tax identification number (BIN) printed on invoices.
+            'vat_bin' => 'nullable|string|max:50',
         ]);
 
         $user = $request->user();

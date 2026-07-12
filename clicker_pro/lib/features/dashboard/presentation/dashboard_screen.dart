@@ -1222,6 +1222,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           color: AppColors.purple,
           label: 'Team',
           routeName: RouteNames.team,
+        )
+      // A pure Freelancer has no studio team of their own, but they DO join
+      // one or more studios. "Team" for them opens My Companies — the list of
+      // studios they're attached to (Heaven: "কোন কোন টিমে জয়েন আছে দেখাবে").
+      else if (policy.can(Capability.editGearInventory))
+        _qaBtn(
+          icon: Icons.groups_rounded,
+          color: AppColors.purple,
+          label: 'Team',
+          routeName: RouteNames.freelancerCompanies,
         ),
       if (policy.can(Capability.viewFinancials))
         _qaBtn(
@@ -2569,21 +2579,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     Navigator.pop(context);
                     _pushNamed(RouteNames.calendarSyncSettings);
                   }),
-                  if (policy.can(Capability.editGearInventory)) ...[
-                    Container(
-                      height: 1,
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 8,
-                      ),
-                      color: AppColors.line(0.05),
-                    ),
-                    _sbGroup('FREELANCER'),
-                    _sbItem(Icons.beach_access_outlined, 'Leave Request', () {
-                      Navigator.pop(context);
-                      _pushNamed(RouteNames.freelancerLeave);
-                    }),
-                  ],
                   if (policy.can(Capability.viewFinancials)) ...[
                     Container(
                       height: 1,

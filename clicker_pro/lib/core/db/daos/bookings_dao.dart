@@ -154,6 +154,14 @@ class BookingsDao extends DatabaseAccessor<AppDatabase>
     await into(bookingsTable).insertOnConflictUpdate(row);
   }
 
+  /// Wipes every cached booking and its crew assignments. Used on role change
+  /// so the previous role's events do not carry into the new (clean) profile;
+  /// the server re-populates under the new role scope on the next sync.
+  Future<void> clearAll() async {
+    await delete(assignmentsTable).go();
+    await delete(bookingsTable).go();
+  }
+
   Future<void> markPending(String id, {bool pending = true}) async {
     await (update(bookingsTable)..where((t) => t.id.equals(id))).write(
       BookingsTableCompanion(

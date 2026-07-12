@@ -5,11 +5,10 @@
 //
 //   1. API + Repository providers — thin construction over `apiClientProvider`.
 //   2. Blackout list controller   — AsyncNotifier for blackout dates.
-//   3. Leave request controller    — AsyncNotifier for leave requests.
-//   4. Work history provider       — FutureProvider, refreshes on demand.
-//   5. Dashboard events provider   — FutureProvider for multi-owner view.
-//   6. Conflicts provider          — FutureProvider for overlap warnings.
-//   7. Check-in controller         — AsyncNotifier for live check-in state.
+//   3. Work history provider       — FutureProvider, refreshes on demand.
+//   4. Dashboard events provider   — FutureProvider for multi-owner view.
+//   5. Conflicts provider          — FutureProvider for overlap warnings.
+//   6. Check-in controller         — AsyncNotifier for live check-in state.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -18,7 +17,6 @@ import '../data/fl_tools_api.dart';
 import '../data/fl_tools_repository_impl.dart';
 import '../domain/fl_blackout_date.dart';
 import '../domain/fl_checkin.dart';
-import '../domain/fl_leave_request.dart';
 import '../domain/fl_tools_repository.dart';
 
 // ─── 1. API + Repository ──────────────────────────────────────────────
@@ -71,50 +69,7 @@ final flBlackoutControllerProvider =
       FlBlackoutController.new,
     );
 
-// ─── 3. Leave Requests (FL-07) ───────────────────────────────────────
-
-class FlLeaveRequestController extends AsyncNotifier<List<FlLeaveRequest>> {
-  @override
-  Future<List<FlLeaveRequest>> build() async {
-    return ref.read(flToolsRepositoryProvider).listLeaveRequests();
-  }
-
-  Future<void> refresh() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(
-      () => ref.read(flToolsRepositoryProvider).listLeaveRequests(),
-    );
-  }
-
-  Future<FlLeaveRequest> submit(FlLeaveRequest draft) async {
-    final saved = await ref
-        .read(flToolsRepositoryProvider)
-        .createLeaveRequest(draft);
-    state.whenData((current) {
-      state = AsyncData(<FlLeaveRequest>[saved, ...current]);
-    });
-    return saved;
-  }
-
-  Future<void> cancel(String id) async {
-    final updated = await ref
-        .read(flToolsRepositoryProvider)
-        .cancelLeaveRequest(id);
-    state.whenData((current) {
-      state = AsyncData([
-        for (final r in current)
-          if (r.id == id) updated else r,
-      ]);
-    });
-  }
-}
-
-final flLeaveRequestControllerProvider =
-    AsyncNotifierProvider<FlLeaveRequestController, List<FlLeaveRequest>>(
-      FlLeaveRequestController.new,
-    );
-
-// ─── 4. Work History (FL-06) ─────────────────────────────────────────
+// ─── 3. Work History (FL-06) ─────────────────────────────────────────
 
 final flWorkHistoryProvider = FutureProvider<List<Map<String, dynamic>>>(
   (ref) => ref.read(flToolsRepositoryProvider).listWorkHistory(),

@@ -1,13 +1,10 @@
-import 'dart:io';
-
 import 'package:drift/drift.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/db/app_database.dart';
 import '../../expenses/domain/expense_repository.dart';
 import '../domain/export_config.dart';
+import 'csv_saver.dart';
 
 class ExportService {
   ExportService({
@@ -194,52 +191,46 @@ class ExportService {
     return '$header\n$rowsCsv';
   }
 
-  Future<void> shareExport(ExportConfig config) async {
-    final dir = await getTemporaryDirectory();
-    final files = <String>[];
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
+  /// Builds every selected scope as an in-memory CSV. Shared by both the
+  /// share-sheet export and the Google Sheets export so the two paths never
+  /// drift apart.
+  Future<List<CsvFile>> _buildCsvFiles(ExportConfig config) async {
+    final all = config.scopes.contains(ExportScope.all);
+    final files = <CsvFile>[];
 
-    if (config.scopes.contains(ExportScope.bookings) ||
-        config.scopes.contains(ExportScope.all)) {
-      final csv = await exportBookingsCsv(config.dateRange);
-      final file = File('${dir.path}/bookings_$timestamp.csv');
-      await file.writeAsString(csv);
-      files.add(file.path);
-    }
-
-    if (config.scopes.contains(ExportScope.clients) ||
-        config.scopes.contains(ExportScope.all)) {
-      final csv = await exportClientsCsv();
-      final file = File('${dir.path}/clients_$timestamp.csv');
-      await file.writeAsString(csv);
-      files.add(file.path);
-    }
-
-    if (config.scopes.contains(ExportScope.payments) ||
-        config.scopes.contains(ExportScope.all)) {
-      final csv = await exportPaymentsCsv(config.dateRange);
-      final file = File('${dir.path}/payments_$timestamp.csv');
-      await file.writeAsString(csv);
-      files.add(file.path);
-    }
-
-    if (config.scopes.contains(ExportScope.expenses) ||
-        config.scopes.contains(ExportScope.all)) {
-      final csv = await exportExpensesCsv(config.dateRange);
-      final file = File('${dir.path}/expenses_$timestamp.csv');
-      await file.writeAsString(csv);
-      files.add(file.path);
-    }
-
-    if (files.isEmpty) return;
-
-    if (files.length == 1) {
-      await SharePlus.instance.share(ShareParams(files: [XFile(files.first)]));
-    } else {
-      await SharePlus.instance.share(
-        ShareParams(files: files.map(XFile.new).toList()),
+    if (all || config.scopes.contains(ExportScope.bookings)) {
+      files.add(
+        CsvFile(
+          name: 'bookings',
+          contents: await exportBookingsCsv(config.dateRange),
+        ),
       );
     }
+    if (all || config.scopes.contains(ExportScope.clients)) {
+      files.add(CsvFile(name: 'clients', contents: await exportClientsCsv()));
+    }
+    if (all || config.scopes.contains(ExportScope.payments)) {
+      files.add(
+        CsvFile(
+          name: 'payments',
+          contents: await exportPaymentsCsv(config.dateRange),
+        ),
+      );
+    }
+    if (all || config.scopes.contains(ExportScope.expenses)) {
+      files.add(
+        CsvFile(
+          name: 'expenses',
+          contents: await exportExpensesCsv(config.dateRange),
+        ),
+      );
+    }
+    return files;
+  }
+
+  Future<void> shareExport(ExportConfig config) async {
+    final files = await _buildCsvFiles(config);
+    await deliverCsvFiles(files);
   }
 
   /// Exports the selected scopes as CSV and hands them to Google Sheets.
@@ -254,42 +245,14 @@ class ExportService {
   ///   3. return the file paths so the caller can offer to open Google
   ///      Sheets afterwards for the import step.
   ///
-  /// Returns the generated file paths (empty when nothing was selected).
-  Future<List<String>> exportToGoogleSheets(ExportConfig config) async {
-    final dir = await getTemporaryDirectory();
-    final files = <String>[];
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-
-    Future<void> add(String name, Future<String> Function() build) async {
-      final csv = await build();
-      final file = File('${dir.path}/${name}_$timestamp.csv');
-      await file.writeAsString(csv);
-      files.add(file.path);
-    }
-
-    final all = config.scopes.contains(ExportScope.all);
-    if (all || config.scopes.contains(ExportScope.bookings)) {
-      await add('bookings', () => exportBookingsCsv(config.dateRange));
-    }
-    if (all || config.scopes.contains(ExportScope.clients)) {
-      await add('clients', exportClientsCsv);
-    }
-    if (all || config.scopes.contains(ExportScope.payments)) {
-      await add('payments', () => exportPaymentsCsv(config.dateRange));
-    }
-    if (all || config.scopes.contains(ExportScope.expenses)) {
-      await add('expenses', () => exportExpensesCsv(config.dateRange));
-    }
-
-    if (files.isEmpty) return const [];
-
-    await SharePlus.instance.share(
-      ShareParams(
-        files: files.map(XFile.new).toList(),
-        subject: 'Clicker Pro export — import into Google Sheets',
-      ),
+  /// Returns `true` when at least one CSV was delivered.
+  Future<bool> exportToGoogleSheets(ExportConfig config) async {
+    final files = await _buildCsvFiles(config);
+    if (files.isEmpty) return false;
+    return deliverCsvFiles(
+      files,
+      subject: 'Clicker Pro export — import into Google Sheets',
     );
-    return files;
   }
 
   /// Opens Google Sheets so the user can import the CSV they just saved.

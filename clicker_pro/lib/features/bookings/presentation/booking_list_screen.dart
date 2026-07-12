@@ -31,6 +31,8 @@ import '../../../theme/app_colors.dart';
 import '../../../theme/app_theme.dart';
 
 import '../../auth/domain/user_role.dart';
+import '../../freelancer/application/fl_earning_providers.dart';
+import '../../profile/application/profile_controllers.dart';
 import '../../public_booking/application/public_booking_providers.dart';
 import '../../settings/application/language_controller.dart';
 import '../application/booking_providers.dart';
@@ -40,7 +42,7 @@ import '../domain/event_type_vibe.dart';
 import '../domain/shift.dart';
 import 'web_bookings.dart';
 
-enum _StatusChip { all, pending, confirmed, successful, delivered, cancelled }
+enum _StatusChip { all, complete, delivered, cancelled }
 
 enum _DateRangePreset { any, today, week, month, lastMonth }
 
@@ -69,7 +71,6 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
     _filterController = ref.read(bookingFilterProvider.notifier);
     // Pull fresh self-booking requests so the pending badge is accurate
     // as soon as the list opens (fail-soft inside refreshPending).
@@ -80,7 +81,6 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
 
   @override
   void dispose() {
-    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _searchController.dispose();
     // `bookingFilterProvider` is shared app-wide so a dashboard card (Today /
@@ -92,15 +92,6 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
     // out so every fresh entry starts unfiltered unless a card sets it again.
     _filterController.state = const BookingFilter();
     super.dispose();
-  }
-
-  void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
-      // Reached near the bottom, increment page
-      final currentPage = ref.read(bookingListPageProvider);
-      ref.read(bookingListPageProvider.notifier).state = currentPage + 1;
-    }
   }
 
   _StatusChip get _activeChip {
@@ -132,11 +123,10 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
     switch (chip) {
       case _StatusChip.all:
         return {};
-      case _StatusChip.pending:
-        return {BookingStatus.pending};
-      case _StatusChip.confirmed:
-        return {BookingStatus.confirmed};
-      case _StatusChip.successful:
+      // "Complete" = the shoot is done but not yet handed over: covers the
+      // whole in-progress → shot-complete → completed run. Delivered has its
+      // own tab, so it is intentionally excluded here.
+      case _StatusChip.complete:
         return {
           BookingStatus.inProgress,
           BookingStatus.shotComplete,
@@ -206,7 +196,14 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
   @override
   Widget build(BuildContext context) {
     final filter = ref.watch(bookingFilterProvider);
-    final listAsync = ref.watch(bookingListProvider(filter));
+    // Use the UNPAGINATED stream. The old paginated provider re-keyed its
+    // stream every time infinite-scroll bumped the page cursor, which rebuilt
+    // the whole scroll view and snapped the position back — on the "Total"
+    // card (every booking, well past one 20-row page) that made the list feel
+    // un-scrollable, while "Delivery" (a short list, never past page 0) stayed
+    // smooth. Reading the full set renders one stable list that scrolls
+    // normally. (Aggregate screens already read this same provider.)
+    final listAsync = ref.watch(bookingListAllProvider(filter));
     final policy = ref.watch(bookingsPolicyProvider);
     final loc = AppLocalizations.of(context);
     final bookings = listAsync.valueOrNull;
@@ -393,7 +390,6 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                 color: AppColors.teal,
                 backgroundColor: AppColors.voidElevated,
                 onRefresh: () async {
-                  ref.read(bookingListPageProvider.notifier).state = 0;
                   await ref.read(bookingRepositoryProvider).refreshFromRemote();
                 },
                 child: listAsync.when(
@@ -409,7 +405,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                       child: ErrorState(
                         message: loc.bookings_could_not_load,
                         onRetry: () =>
-                            ref.invalidate(bookingListProvider(filter)),
+                            ref.invalidate(bookingListAllProvider(filter)),
                       ),
                     ),
                   ),
@@ -527,14 +523,13 @@ class _StatusChips extends StatelessWidget {
   final _StatusChip selected;
   final ValueChanged<_StatusChip> onSelected;
 
-  // Design (Booking List): All · Pending · Confirmed · Delivered, plus a
-  // Cancelled tab so cancelled events (hidden from "All") stay reachable.
+  // Booking List tabs (Heaven 2026-07-12): All · Complete · Delivery · Cancel.
+  // "All" hides cancelled; Cancel keeps them reachable.
   static const _chips = [
     (_StatusChip.all, 'All'),
-    (_StatusChip.pending, 'Pending'),
-    (_StatusChip.confirmed, 'Confirmed'),
-    (_StatusChip.delivered, 'Delivered'),
-    (_StatusChip.cancelled, 'Cancelled'),
+    (_StatusChip.complete, 'Complete'),
+    (_StatusChip.delivered, 'Delivery'),
+    (_StatusChip.cancelled, 'Cancel'),
   ];
 
   @override
@@ -766,17 +761,34 @@ class _BookingColumnRow extends ConsumerWidget {
         .watch(languageControllerProvider)
         .maybeWhen(data: (c) => c, orElse: () => 'en');
 
-    // Prefer the joined client record, but fall back to the name typed on
-    // the booking itself (offline bookings may have no separate client row)
-    // and finally the booking title, so a row always shows *who* it's for.
-    final lookedUpName = booking.clientId == null
-        ? null
-        : ref.watch(clientByIdProvider(booking.clientId!)).value?.name;
-    final displayName = (lookedUpName?.trim().isNotEmpty ?? false)
-        ? lookedUpName!
-        : (booking.clientName?.trim().isNotEmpty ?? false)
-        ? booking.clientName!
-        : booking.title;
+    // A pure Freelancer works FOR studios, not for end clients — they book
+    // through the owner and get paid by the owner. So on their booking list
+    // the "who" slot shows the COMPANY (studio owner) name, not the client's
+    // (Heaven: "কোম্পানি নাম থাকবে ক্লায়েন্ট এর যায়গায়"). The owner name comes
+    // from the freelancer earnings overview, keyed by event id; when a given
+    // event isn't in that map yet we fall back to a neutral "Company event".
+    final role = ref.watch(currentUserProvider).valueOrNull?.role;
+    final String displayName;
+    if (role == UserRole.freelancer) {
+      final ownerName = ref.watch(
+        flEventOwnerNameProvider(booking.remoteId ?? booking.id),
+      );
+      displayName = (ownerName?.trim().isNotEmpty ?? false)
+          ? ownerName!
+          : 'Company event';
+    } else {
+      // Prefer the joined client record, but fall back to the name typed on
+      // the booking itself (offline bookings may have no separate client row)
+      // and finally the booking title, so a row always shows *who* it's for.
+      final lookedUpName = booking.clientId == null
+          ? null
+          : ref.watch(clientByIdProvider(booking.clientId!)).value?.name;
+      displayName = (lookedUpName?.trim().isNotEmpty ?? false)
+          ? lookedUpName!
+          : (booking.clientName?.trim().isNotEmpty ?? false)
+          ? booking.clientName!
+          : booking.title;
+    }
 
     // Design (.dc.html): mono date "APR 12" on top, client name, then a
     // "Wedding · 12–5" meta line (event type + compact time range).

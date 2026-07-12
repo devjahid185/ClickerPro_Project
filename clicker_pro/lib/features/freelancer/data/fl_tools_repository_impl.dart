@@ -8,7 +8,6 @@
 
 import '../domain/fl_blackout_date.dart';
 import '../domain/fl_checkin.dart';
-import '../domain/fl_leave_request.dart';
 import '../domain/fl_tools_repository.dart';
 import 'fl_tools_api.dart';
 
@@ -34,19 +33,6 @@ class FlToolsRepositoryImpl implements FlToolsRepository {
   @override
   Future<List<Map<String, dynamic>>> listWorkHistory() =>
       _api.listWorkHistory();
-
-  // ─── Leave Requests (FL-07) ─────────────────────────────────────
-
-  @override
-  Future<List<FlLeaveRequest>> listLeaveRequests() => _api.listLeaveRequests();
-
-  @override
-  Future<FlLeaveRequest> createLeaveRequest(FlLeaveRequest draft) =>
-      _api.createLeaveRequest(draft);
-
-  @override
-  Future<FlLeaveRequest> cancelLeaveRequest(String id) =>
-      _api.cancelLeaveRequest(id);
 
   // ─── Multi-Owner Dashboard (FL-08) ──────────────────────────────
 

@@ -52,4 +52,11 @@ class ClientsDao extends DatabaseAccessor<AppDatabase> with _$ClientsDaoMixin {
   Future<void> upsert(ClientsTableCompanion row) async {
     await into(clientsTable).insertOnConflictUpdate(row);
   }
+
+  /// Wipes every cached client. Used on role change so the previous role's
+  /// data does not bleed into the new (clean) profile — the server copy is
+  /// re-pulled under the new role scope by the background sync.
+  Future<void> clearAll() async {
+    await delete(clientsTable).go();
+  }
 }

@@ -155,11 +155,31 @@ class SessionController extends AsyncNotifier<Session?> {
       state = const AsyncData(null);
     }
     // A role switch changes which data the user is allowed to see (owner
-    // bookings vs freelancer earnings, team, finance, dues…). The cached
-    // providers still hold the OLD role's data until something refetches —
-    // that stale data is the "আগের রোলের ডাটা থেকে যায়" bug. Invalidate the
-    // role-scoped data providers so each refetches for the new role.
+    // bookings vs freelancer earnings, team, finance, dues…). Heaven wants the
+    // new role to start on a CLEAN profile — the previous role's bookings /
+    // clients / payments must not linger. So we wipe the local cache for those
+    // tables, then invalidate the role-scoped providers and pull fresh data
+    // for the new role. The server copy is untouched: switching back re-pulls
+    // whatever that role is still allowed to see.
+    await _clearRoleScopedLocalData();
     _invalidateRoleScopedData();
+    _syncStudioDataInBackground();
+  }
+
+  /// Empties the on-device cache of role-scoped tables so a role change lands
+  /// on an empty list instead of the previous role's rows. Fail-soft: a wipe
+  /// error must never block the role switch itself.
+  Future<void> _clearRoleScopedLocalData() async {
+    try {
+      final db = ref.read(appDatabaseProvider);
+      await db.bookingsDao.clearAll();
+      await db.clientsDao.clearAll();
+      await db.paymentsDao.clearAll();
+      await db.expensesDao.clearAll();
+    } catch (e, st) {
+      AppLogger.w('session', 'role-change local wipe failed: $e');
+      AppLogger.e('session', e, st);
+    }
   }
 
   /// Drops cached, role-dependent data so it refetches under the new role.

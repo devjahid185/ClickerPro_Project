@@ -30,6 +30,8 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'phone' => $this->phone,
+            // WhatsApp contact (snake_case + camelCase aliases).
+            'whatsapp' => $this->whatsapp,
             'role' => $this->role,
             'plan' => $this->plan,
             'is_active' => (bool) $this->is_active,
@@ -37,8 +39,18 @@ class UserResource extends JsonResource
             // Business profile (snake_case + camelCase aliases for both clients)
             'business_name' => $this->business_name,
             'businessName' => $this->business_name,
+            // Studio address + specialization (persisted device-side fields).
+            'studio_address' => $this->studio_address,
+            'studioAddress' => $this->studio_address,
+            'specialization' => $this->specialization,
             'bio' => $this->bio,
             'avatar' => $this->avatar,
+
+            // Payout details (needed so re-login can restore what was saved).
+            'bkash_number' => $this->bkash_number,
+            'bkashNumber' => $this->bkash_number,
+            'bank_details' => $this->bank_details,
+            'bankDetails' => $this->bank_details,
 
             // Office staff position (Photo Editor / HR / Office Boy / …)
             'staff_position' => $this->staff_position,
@@ -63,6 +75,8 @@ class UserResource extends JsonResource
                 : (float) $this->vat_rate_pct,
             'vat_label' => $this->vat_label,
             'vatLabel' => $this->vat_label,
+            'vat_bin' => $this->vat_bin,
+            'vatBin' => $this->vat_bin,
 
             // Owner's own public booking link (needed by Settings).
             'public_booking_token' => $this->public_booking_token,

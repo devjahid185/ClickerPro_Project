@@ -34,7 +34,6 @@ import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/dashboard/presentation/dashboard_customize_screen.dart';
 import '../../features/expenses/presentation/expenses_screen.dart';
 import '../../features/freelancer/presentation/fl_companies_screen.dart';
-import '../../features/freelancer/presentation/fl_leave_request_screen.dart';
 import '../../features/gear/presentation/gear_screen.dart';
 import '../../features/help/presentation/help_screen.dart';
 import '../../features/data_export/presentation/data_export_screen.dart';
@@ -227,8 +226,6 @@ class AppRouter {
         return lensPageRoute<void>(const AnnouncementsScreen());
       case RouteNames.freelancerCompanies:
         return lensPageRoute<void>(const FlCompaniesScreen());
-      case RouteNames.freelancerLeave:
-        return lensPageRoute<void>(const FlLeaveRequestScreen());
       case RouteNames.teamSalarySheet:
         return lensPageRoute<void>(
           const RoleGatedScreen(
@@ -249,9 +246,17 @@ class AppRouter {
           _ComingSoonRoute(name: 'Public booking (missing token)'),
         );
       case RouteNames.publicBookingSuccess:
-        final requestId = settings.arguments as String?;
+        final args = settings.arguments;
+        // New callers pass PublicBookingSuccessArgs (id + studio name); keep
+        // accepting a bare String id so older deep links don't crash.
+        final successArgs = args is PublicBookingSuccessArgs
+            ? args
+            : PublicBookingSuccessArgs(requestId: args as String?);
         return lensPageRoute<void>(
-          PublicBookingSuccessScreen(requestId: requestId),
+          PublicBookingSuccessScreen(
+            requestId: successArgs.requestId,
+            studioName: successArgs.studioName,
+          ),
         );
       case RouteNames.pendingPublicBookings:
         return lensPageRoute<void>(const PendingPublicBookingsScreen());

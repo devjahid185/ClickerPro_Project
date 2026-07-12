@@ -20,13 +20,13 @@ class User extends Authenticatable
     // authorized code paths (admin endpoints, invite flow) using forceFill(),
     // so unfiltered input can never escalate a user's role/plan.
     protected $fillable = [
-        'name', 'email', 'phone', 'password', 'staff_position',
-        'business_name', 'bio', 'avatar',
+        'name', 'email', 'phone', 'whatsapp', 'password', 'staff_position',
+        'business_name', 'studio_address', 'specialization', 'bio', 'avatar',
         'logo_url', 'signature_url',
         'bkash_number', 'bank_details',
         'public_booking_token',
         'totp_secret', 'totp_enabled',
-        'currency_code', 'vat_enabled', 'vat_rate_pct', 'vat_label',
+        'currency_code', 'vat_enabled', 'vat_rate_pct', 'vat_label', 'vat_bin',
     ];
 
     // Privilege fields — never mass-assignable.

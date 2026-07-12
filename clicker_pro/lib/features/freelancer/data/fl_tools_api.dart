@@ -11,11 +11,6 @@
 //   Work history:
 //     GET    /api/freelancer/work-history     → list past events
 //
-//   Leave requests:
-//     GET    /api/freelancer/leaves           → list
-//     POST   /api/freelancer/leaves           → create
-//     PATCH  /api/freelancer/leaves/:id       → update (cancel)
-//
 //   Multi-owner dashboard:
 //     GET    /api/freelancer/dashboard/events → all events across owners
 //     GET    /api/freelancer/dashboard/conflicts → overlap warnings
@@ -30,7 +25,6 @@
 import '../../../core/network/api_client.dart';
 import '../domain/fl_blackout_date.dart';
 import '../domain/fl_checkin.dart';
-import '../domain/fl_leave_request.dart';
 
 class FlToolsApi {
   FlToolsApi(this._client);
@@ -69,37 +63,6 @@ class FlToolsApi {
             as Map<String, dynamic>;
     final raw = (r['data'] as List?) ?? const <dynamic>[];
     return raw.cast<Map<String, dynamic>>().toList(growable: false);
-  }
-
-  // ─── Leave Requests (FL-07) ─────────────────────────────────────
-
-  Future<List<FlLeaveRequest>> listLeaveRequests() async {
-    final r =
-        await _client.get('/api/freelancer/leaves') as Map<String, dynamic>;
-    final raw = (r['data'] as List?) ?? const <dynamic>[];
-    return raw
-        .cast<Map<String, dynamic>>()
-        .map(FlLeaveRequest.fromJson)
-        .toList(growable: false);
-  }
-
-  Future<FlLeaveRequest> createLeaveRequest(FlLeaveRequest draft) async {
-    final r =
-        await _client.post('/api/freelancer/leaves', body: draft.toJson())
-            as Map<String, dynamic>;
-    final created = (r['data'] as Map).cast<String, dynamic>();
-    return FlLeaveRequest.fromJson(created);
-  }
-
-  Future<FlLeaveRequest> cancelLeaveRequest(String id) async {
-    final r =
-        await _client.patch(
-              '/api/freelancer/leaves/$id',
-              body: {'status': 'cancelled'},
-            )
-            as Map<String, dynamic>;
-    final updated = (r['data'] as Map).cast<String, dynamic>();
-    return FlLeaveRequest.fromJson(updated);
   }
 
   // ─── Multi-Owner Dashboard (FL-08) ──────────────────────────────

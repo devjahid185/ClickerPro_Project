@@ -44,7 +44,6 @@ class RouteNames {
   static const String team = '/team';
   static const String announcements = '/announcements';
   static const String freelancerCompanies = '/freelancer/companies';
-  static const String freelancerLeave = '/freelancer/leave';
   static const String teamSalarySheet = '/team/salary-sheet';
   static const String profile = '/profile';
   static const String settings = '/settings';

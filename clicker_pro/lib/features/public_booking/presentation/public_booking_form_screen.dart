@@ -43,6 +43,7 @@ import '../application/public_booking_providers.dart';
 import '../domain/public_booking_request.dart';
 import '../domain/public_booking_request_status.dart';
 import '../domain/public_booking_token.dart';
+import 'public_booking_success_screen.dart';
 import '../../../theme/app_theme.dart';
 import '../../../shared/widgets/web_shell.dart';
 
@@ -440,7 +441,10 @@ class _FormState extends ConsumerState<_Form> {
       if (!mounted) return;
       Navigator.of(context).pushReplacementNamed(
         RouteNames.publicBookingSuccess,
-        arguments: requestId,
+        arguments: PublicBookingSuccessArgs(
+          requestId: requestId,
+          studioName: widget.meta.studioName,
+        ),
       );
     } catch (e) {
       if (!mounted) return;

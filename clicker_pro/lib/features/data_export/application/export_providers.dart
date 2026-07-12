@@ -157,8 +157,7 @@ class ExportController extends Notifier<ExportControllerState> {
         dateRange: state.dateRange,
       );
       if (state.type == ExportType.googleSheets) {
-        final files = await service.exportToGoogleSheets(config);
-        return files.isNotEmpty;
+        return await service.exportToGoogleSheets(config);
       }
       await service.shareExport(config);
       return false;

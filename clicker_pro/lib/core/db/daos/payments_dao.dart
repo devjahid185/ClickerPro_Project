@@ -51,6 +51,12 @@ class PaymentsDao extends DatabaseAccessor<AppDatabase>
     await into(paymentsTable).insertOnConflictUpdate(row);
   }
 
+  /// Wipes every cached payment. Used on role change so the previous role's
+  /// money data does not carry into the new (clean) profile.
+  Future<void> clearAll() async {
+    await delete(paymentsTable).go();
+  }
+
   /// Sum of payments collected in `[from, to)` grouped by payment method
   /// (cash / bkash / bank / …). Powers the "which channel" breakdown on the
   /// dashboard's Today Collection card. A null method is bucketed as 'cash'

@@ -125,10 +125,19 @@ class UserModel {
           json['companyName'] as String? ??
           json['businessName'] as String? ??
           json['business_name'] as String?,
-      vatBin: json['vatBin'] as String?,
-      studioAddress: json['studioAddress'] as String?,
-      bkash: json['bkash'] as String?,
-      bankDetails: json['bankDetails'] as String?,
+      vatBin: (json['vatBin'] ?? json['vat_bin']) as String?,
+      studioAddress:
+          (json['studioAddress'] ?? json['studio_address']) as String?,
+      // Server serialises payout details as bkash_number / bank_details
+      // (with camelCase aliases). Accept every spelling so a re-login
+      // restores what was saved instead of nulling it out.
+      bkash:
+          (json['bkash'] ??
+                  json['bkashNumber'] ??
+                  json['bkash_number'])
+              as String?,
+      bankDetails:
+          (json['bankDetails'] ?? json['bank_details']) as String?,
       signatureUrl: (json['signatureUrl'] ?? json['signature_url']) as String?,
       logoUrl: (json['logoUrl'] ?? json['logo_url']) as String?,
       invoiceUrl: (json['invoiceUrl'] ?? json['invoice_url']) as String?,
@@ -150,18 +159,31 @@ class UserModel {
     if (phone != null) 'phone': phone,
     if (whatsapp != null) 'whatsapp': whatsapp,
     if (bio != null) 'bio': bio,
-    if (avatarUrl != null) 'avatarUrl': avatarUrl,
     if (specialization != null) 'specialization': specialization,
     if (companyName != null) 'companyName': companyName,
-    if (vatBin != null) 'vatBin': vatBin,
     if (studioAddress != null) 'studioAddress': studioAddress,
-    if (bkash != null) 'bkash': bkash,
-    if (bankDetails != null) 'bankDetails': bankDetails,
-    if (signatureUrl != null) 'signatureUrl': signatureUrl,
-    if (logoUrl != null) 'logoUrl': logoUrl,
     if (invoiceUrl != null) 'invoiceUrl': invoiceUrl,
     if (ownerId != null) 'ownerId': ownerId,
     if (deletedAt != null) 'deletedAt': deletedAt!.toIso8601String(),
+    // The Laravel ProfileController validates snake_case keys and silently
+    // drops anything else, so device fields that used to be sent only in
+    // camelCase (avatar, logo, signature, business name, bkash, bank, VAT
+    // BIN) never persisted. Emit BOTH spellings: snake_case for the server
+    // to save, camelCase so our own fromJson round-trips locally.
+    if (avatarUrl != null) ...{'avatarUrl': avatarUrl, 'avatar': avatarUrl},
+    if (companyName != null) 'business_name': companyName,
+    if (studioAddress != null) 'studio_address': studioAddress,
+    if (vatBin != null) ...{'vatBin': vatBin, 'vat_bin': vatBin},
+    if (bkash != null) ...{'bkash': bkash, 'bkash_number': bkash},
+    if (bankDetails != null) ...{
+      'bankDetails': bankDetails,
+      'bank_details': bankDetails,
+    },
+    if (signatureUrl != null) ...{
+      'signatureUrl': signatureUrl,
+      'signature_url': signatureUrl,
+    },
+    if (logoUrl != null) ...{'logoUrl': logoUrl, 'logo_url': logoUrl},
   };
 
   UserModel copyWith({
