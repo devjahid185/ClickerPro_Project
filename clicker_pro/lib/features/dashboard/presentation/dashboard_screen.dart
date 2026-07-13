@@ -34,6 +34,7 @@
 
 import 'dart:convert';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -475,7 +476,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       }
     }
     if (raw.startsWith('http://') || raw.startsWith('https://')) {
-      return NetworkImage(raw);
+      return CachedNetworkImageProvider(raw);
     }
     return null;
   }

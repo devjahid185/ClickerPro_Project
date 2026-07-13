@@ -56,6 +56,10 @@ dependencies:
   device_calendar: ^4.3.3
   # Full-screen looping brand video on the login backdrop.
   video_player: ^2.9.2
+  # Disk-cached network images: avatars, booking photos and broadcast banners
+  # are cached to disk with a placeholder + fade, so scrolling team/booking
+  # lists no longer re-download the same image (smoother scroll, less data).
+  cached_network_image: ^3.4.1
 
 dev_dependencies:
   flutter_test:

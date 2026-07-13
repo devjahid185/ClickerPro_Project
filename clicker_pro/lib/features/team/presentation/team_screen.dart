@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -603,7 +604,7 @@ class _TeamMemberTile extends ConsumerWidget {
               color: tintBg,
               image: hasAvatar
                   ? DecorationImage(
-                      image: NetworkImage(member.avatarUrl!),
+                      image: CachedNetworkImageProvider(member.avatarUrl!),
                       fit: BoxFit.cover,
                     )
                   : null,
@@ -786,7 +787,7 @@ class _MemberProfileSheet extends ConsumerWidget {
                   backgroundColor: AppColors.orangeSoft,
                   backgroundImage:
                       (member.avatarUrl != null && member.avatarUrl!.isNotEmpty)
-                      ? NetworkImage(member.avatarUrl!)
+                      ? CachedNetworkImageProvider(member.avatarUrl!)
                       : null,
                   child: (member.avatarUrl == null || member.avatarUrl!.isEmpty)
                       ? Text(

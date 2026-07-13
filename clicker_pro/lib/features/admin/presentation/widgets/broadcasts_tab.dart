@@ -7,6 +7,7 @@
 
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -381,7 +382,10 @@ class _BroadcastComposerSheetState extends ConsumerState<_BroadcastComposerSheet
             height: 160,
             child: _pickedImage != null
                 ? Image.file(_pickedImage!, fit: BoxFit.cover)
-                : Image.network(_existingImageUrl!, fit: BoxFit.cover),
+                : CachedNetworkImage(
+                    imageUrl: _existingImageUrl!,
+                    fit: BoxFit.cover,
+                  ),
           ),
         ),
         if (_uploadingImage)

@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -71,28 +72,25 @@ class _BroadcastBannerState extends ConsumerState<BroadcastBanner> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (b.imageUrl != null)
-                    Image.network(
-                      b.imageUrl!,
+                    CachedNetworkImage(
+                      imageUrl: b.imageUrl!,
                       height: 130,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                      loadingBuilder: (ctx, child, progress) {
-                        if (progress == null) return child;
-                        return Container(
-                          height: 130,
-                          color: accent.withValues(alpha: 0.06),
-                          child: Center(
-                            child: SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: accent.withValues(alpha: 0.6),
-                              ),
+                      errorWidget: (_, _, _) => const SizedBox.shrink(),
+                      placeholder: (ctx, _) => Container(
+                        height: 130,
+                        color: accent.withValues(alpha: 0.06),
+                        child: Center(
+                          child: SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: accent.withValues(alpha: 0.6),
                             ),
                           ),
-                        );
-                      },
+                        ),
+                      ),
                     ),
                   Padding(
                 padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),

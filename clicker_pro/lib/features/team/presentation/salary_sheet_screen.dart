@@ -8,6 +8,7 @@
 // Data: `staffPayoutsProvider` (GET /api/team/payouts). Settling a payout
 // goes through `teamControllerProvider.markPayoutPaid`.
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -624,7 +625,7 @@ class _StaffPayoutCard extends ConsumerWidget {
                   backgroundColor: AppColors.teal.withValues(alpha: 0.15),
                   backgroundImage:
                       (payout.avatar != null && payout.avatar!.isNotEmpty)
-                      ? NetworkImage(payout.avatar!)
+                      ? CachedNetworkImageProvider(payout.avatar!)
                       : null,
                   child: (payout.avatar == null || payout.avatar!.isEmpty)
                       ? Text(

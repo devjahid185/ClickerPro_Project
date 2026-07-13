@@ -22,6 +22,7 @@
 // "Booking Detail Screen". Validates Requirements 5.1–5.11, 3.4, 3.5,
 // 3.7, 3.8, 7.1.
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1725,10 +1726,10 @@ class _InvoiceSheet extends StatelessWidget {
           if (data.invoiceUrl != null && data.invoiceUrl!.isNotEmpty) ...[
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: Image.network(
-                data.invoiceUrl!,
+              child: CachedNetworkImage(
+                imageUrl: data.invoiceUrl!,
                 fit: BoxFit.fitWidth,
-                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                errorWidget: (_, _, _) => const SizedBox.shrink(),
               ),
             ),
             const SizedBox(height: 16),
@@ -2079,10 +2080,10 @@ class _InvoiceSheet extends StatelessWidget {
             SizedBox(
               width: 140,
               height: 48,
-              child: Image.network(
-                data.signatureUrl!,
+              child: CachedNetworkImage(
+                imageUrl: data.signatureUrl!,
                 fit: BoxFit.contain,
-                errorBuilder: (_, _, _) => const SizedBox(height: 48),
+                errorWidget: (_, _, _) => const SizedBox(height: 48),
               ),
             )
           else

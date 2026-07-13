@@ -19,6 +19,7 @@
 //   • Curves.easeOutCubic 220ms           — section card mount
 //   • slideFromRightRoute (from login)    — manager invite navigation
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -412,7 +413,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         // Uploaded profile photo when present; gradient initials otherwise.
         image: hasPhoto
             ? DecorationImage(
-                image: NetworkImage(user.avatarUrl!),
+                image: CachedNetworkImageProvider(user.avatarUrl!),
                 fit: BoxFit.cover,
               )
             : null,

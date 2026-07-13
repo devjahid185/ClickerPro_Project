@@ -9,6 +9,7 @@
 // null = sheet dismissed). Members whose userId is in [excludedUserIds]
 // are shown disabled so the same person can't be double-assigned.
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -229,7 +230,7 @@ class _TeamMemberPickerSheetState extends ConsumerState<TeamMemberPickerSheet> {
         radius: 16,
         backgroundColor: _accent.withValues(alpha: 0.15),
         backgroundImage: (m.avatarUrl != null && m.avatarUrl!.isNotEmpty)
-            ? NetworkImage(m.avatarUrl!)
+            ? CachedNetworkImageProvider(m.avatarUrl!)
             : null,
         child: (m.avatarUrl == null || m.avatarUrl!.isEmpty)
             ? Text(

@@ -18,6 +18,7 @@
 
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -259,18 +260,18 @@ class _ReEditRow extends ConsumerWidget {
                             builder: (_) => Dialog(
                               backgroundColor: Colors.black,
                               child: InteractiveViewer(
-                                child: Image.network(url),
+                                child: CachedNetworkImage(imageUrl: url),
                               ),
                             ),
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(6),
-                            child: Image.network(
-                              url,
+                            child: CachedNetworkImage(
+                              imageUrl: url,
                               width: 48,
                               height: 48,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => Container(
+                              errorWidget: (_, _, _) => Container(
                                 width: 48,
                                 height: 48,
                                 color: AppColors.voidElevated,

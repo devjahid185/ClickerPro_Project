@@ -11,6 +11,8 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:cached_network_image/cached_network_image.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -203,13 +205,13 @@ class _BroadcastPopupDialogState extends State<_BroadcastPopupDialog>
                   if (b.imageUrl != null && b.imageUrl!.trim().isNotEmpty)
                     Stack(
                       children: [
-                        Image.network(
-                          b.imageUrl!,
+                        CachedNetworkImage(
+                          imageUrl: b.imageUrl!,
                           width: double.infinity,
                           fit: BoxFit.cover,
                           // Cap height so very tall images don't dominate, but
                           // let normal banners show fully.
-                          errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                          errorWidget: (_, _, _) => const SizedBox.shrink(),
                         ),
                         Positioned(
                           top: 10,
