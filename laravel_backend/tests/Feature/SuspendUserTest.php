@@ -59,4 +59,30 @@ class SuspendUserTest extends TestCase
         // through — a 200 list, never the suspend 403.
         $this->getJson('/api/bookings')->assertOk();
     }
+
+    /**
+     * Suspension is role-agnostic — it keys only on is_active, so every
+     * account type (owner, freelancer, both, manager) is blocked the same way.
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('roleProvider')]
+    public function test_suspend_blocks_every_role(string $role): void
+    {
+        $victim = User::factory()->create(['role' => $role]);
+        $victim->forceFill(['is_active' => false])->save();
+        Sanctum::actingAs($victim);
+
+        $this->getJson('/api/bookings')
+            ->assertStatus(403)
+            ->assertJsonPath('code', 'ACCOUNT_SUSPENDED');
+    }
+
+    public static function roleProvider(): array
+    {
+        return [
+            'owner' => ['OWNER'],
+            'freelancer' => ['FREELANCER'],
+            'both' => ['BOTH'],
+            'manager' => ['MANAGER'],
+        ];
+    }
 }

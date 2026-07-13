@@ -30,6 +30,10 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            // Match real registrations (AuthController sets this true). Without
+            // it, sqlite test DBs leave is_active null, which the `active`
+            // middleware now treats as suspended — breaking unrelated tests.
+            'is_active' => true,
         ];
     }
 
