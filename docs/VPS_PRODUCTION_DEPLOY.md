@@ -111,18 +111,13 @@ BROADCAST_CONNECTION=log
 SANCTUM_STATEFUL_DOMAINS=app.NEW_DOMAIN,NEW_DOMAIN
 SESSION_DOMAIN=.NEW_DOMAIN
 
-# Mail — set real SMTP for OTP/password-reset emails to actually send
+# Mail — see section 3d below; pick ONE provider block and paste it here.
 MAIL_MAILER=smtp
-MAIL_HOST=smtp.your-provider.com
-MAIL_PORT=587
-MAIL_USERNAME=...
-MAIL_PASSWORD=...
-MAIL_ENCRYPTION=tls
 MAIL_FROM_ADDRESS=noreply@NEW_DOMAIN
 MAIL_FROM_NAME="Graphy7"
 ```
 
-> ⚠️ **OTP/login emails:** shared hosting used `MAIL_MAILER=log` (no real email). For production, **real SMTP is required** or users can't receive OTP / password-reset. Confirm the studio's SMTP (or a service like Postmark/SES/Mailgun).
+> ⚠️ **OTP/login emails:** shared hosting used `MAIL_MAILER=log` (no real email). For production, **real SMTP is required** or users can't receive OTP / password-reset. Provider not yet chosen — pick one from **3d** below.
 
 ### 3b. Migrate + optimise
 
@@ -164,6 +159,71 @@ PHP
 ```
 
 > Verified against current code: admin gate is `role === 'ADMIN'` (uppercase); `AppSetting::setValue(key, value)` exists. If tinker feels risky, skip the version lines here and set the same 4 keys from the admin panel → App Settings after first login.
+
+### 3d. SMTP — pick ONE provider, paste into `.env`
+
+**Real SMTP is mandatory** — without it OTP + password-reset emails silently fail and users can't log in. Provider is not chosen yet; here are ready-to-paste blocks. Replace only the `MAIL_USERNAME` / `MAIL_PASSWORD` values.
+
+**Option A — Gmail / Google Workspace** (needs an [App Password](https://myaccount.google.com/apppasswords), not the account password; 2FA must be on):
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your@gmail.com
+MAIL_PASSWORD=your-16-char-app-password
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=your@gmail.com
+MAIL_FROM_NAME="Graphy7"
+```
+> Gmail limit ≈ 500 emails/day. Fine to start; move to a transactional service if signups grow.
+
+**Option B — Postmark** (best OTP deliverability; recommended at scale):
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.postmarkapp.com
+MAIL_PORT=587
+MAIL_USERNAME=your-postmark-server-token
+MAIL_PASSWORD=your-postmark-server-token
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=noreply@NEW_DOMAIN
+MAIL_FROM_NAME="Graphy7"
+```
+
+**Option B2 — Amazon SES** (cheap at volume):
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=email-smtp.us-east-1.amazonaws.com   # match your SES region
+MAIL_PORT=587
+MAIL_USERNAME=your-ses-smtp-username
+MAIL_PASSWORD=your-ses-smtp-password
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=noreply@NEW_DOMAIN
+MAIL_FROM_NAME="Graphy7"
+```
+
+**Option C — cPanel / hosting mailbox on the new domain:**
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=mail.NEW_DOMAIN
+MAIL_PORT=465
+MAIL_USERNAME=noreply@NEW_DOMAIN
+MAIL_PASSWORD=the-mailbox-password
+MAIL_ENCRYPTION=ssl
+MAIL_FROM_ADDRESS=noreply@NEW_DOMAIN
+MAIL_FROM_NAME="Graphy7"
+```
+
+**After editing `.env`, re-cache and send a real test:**
+```bash
+php artisan config:cache
+php artisan tinker <<'PHP'
+\Illuminate\Support\Facades\Mail::raw('Graphy7 SMTP test — it works.', function ($m) {
+    $m->to('YOUR_OWN_EMAIL@example.com')->subject('Graphy7 SMTP test');
+});
+PHP
+```
+Inbox gets it → SMTP is live. Nothing arrives / exception → fix credentials before launch.
+> **Deliverability:** add SPF + DKIM DNS records for the sending domain, or OTP mail may land in spam. Each provider gives the exact records.
 
 ---
 
@@ -244,18 +304,28 @@ Certbot rewrites the config to 443 + auto-renews.
 
 The app self-updates via `GET /api/app/version`. Build a release APK, host it, and match the version.
 
+**Set the domain once, then the whole build is copy-paste:**
+
 ```bash
+# ── set this ONE value once the production domain is chosen ──
+DOMAIN=NEW_DOMAIN            # e.g. graphy7.com
+
 cd clicker_pro
 flutter build apk --release --flavor clickerPro \
-  --dart-define=API_BASE_URL=https://api.NEW_DOMAIN \
+  --dart-define=API_BASE_URL=https://api.$DOMAIN \
   --dart-define=ENVIRONMENT=production
 # output: build/app/outputs/apk/clickerPro/release/app-clickerPro-release.apk
+
+cp build/app/outputs/apk/clickerPro/release/app-clickerPro-release.apk Graphy7.apk
+scp Graphy7.apk root@VPS_IP:/var/www/clickerpro/laravel_backend/public/Graphy7.apk
 ```
 
-- Rename to `Graphy7.apk`, upload to `/var/www/clickerpro/laravel_backend/public/Graphy7.apk`
-  → served at `https://NEW_DOMAIN/Graphy7.apk` (matches `app_apk_url` from 3c).
+Served at `https://$DOMAIN/Graphy7.apk` — matches `app_apk_url` from 3c.
+
 - **pubspec is `3.10.0+40`** → `versionCode 40`. The OTA row (3c) is also `40` → consistent, no false "update available" loop.
 - proAdmin (platform admin) app: same build with `--flavor proAdmin` if the admin uses the mobile admin app.
+
+> ✅ **Signing — verified wired:** release keystore is `keystores/clicker_pro.jks`, read via `clicker_pro/android/key.properties` (alias `clickerpro`), and `build.gradle` uses it for release builds (falls back to a debug key only if `key.properties` is missing). So build on a machine that has **both** the `.jks` file and `key.properties` present → the APK is production-signed and OTA updates work. **Back up `clicker_pro.jks` + its passwords off-machine** — lose it and you can never ship another OTA update to installed users.
 
 > **Play Store:** if publishing to Play Store instead of OTA-sideload, build an **AAB** (`flutter build appbundle --flavor clickerPro ...`) and upload to Play Console. OTA and Play Store are independent channels.
 
