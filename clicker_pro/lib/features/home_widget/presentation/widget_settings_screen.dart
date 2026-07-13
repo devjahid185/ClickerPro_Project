@@ -150,7 +150,7 @@ class _WidgetSettingsScreenState extends State<WidgetSettingsScreen> {
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     Text(
-                      'Clicker Pro',
+                      'Graphy7',
                       style: AppText.body.copyWith(fontWeight: FontWeight.w600),
                     ),
                   ],
@@ -274,7 +274,7 @@ class _WidgetSettingsScreenState extends State<WidgetSettingsScreen> {
           Text(
             '1. Long-press the home screen\n'
             '2. Tap "Widgets"\n'
-            '3. Find "Clicker Pro" in the list\n'
+            '3. Find "Graphy7" in the list\n'
             '4. Drag the widget to your home screen',
             style: AppText.bodyDim.copyWith(fontSize: 13, height: 1.6),
           ),
@@ -287,7 +287,7 @@ class _WidgetSettingsScreenState extends State<WidgetSettingsScreen> {
           Text(
             '1. Long-press the home screen\n'
             '2. Tap the "+" button\n'
-            '3. Search for "Clicker Pro"\n'
+            '3. Search for "Graphy7"\n'
             '4. Add the widget to your home screen',
             style: AppText.bodyDim.copyWith(fontSize: 13, height: 1.6),
           ),

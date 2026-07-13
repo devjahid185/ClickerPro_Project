@@ -996,7 +996,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             children: [
               Expanded(
                 child: _themeCard(
-                  title: 'ClickerPro',
+                  title: 'Graphy7',
                   subtitle: 'Editorial · default',
                   selected: currentMode == AppThemeMode.clickerPro,
                   swatch: const [

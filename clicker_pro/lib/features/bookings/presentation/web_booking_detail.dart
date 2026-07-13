@@ -838,7 +838,7 @@ class _WebBookingDetailState extends ConsumerState<_WebBookingDetail> {
     final me = ref.read(currentUserProvider).valueOrNull;
     final studioName = (me?.companyName?.trim().isNotEmpty ?? false)
         ? me!.companyName!.trim()
-        : (me?.name ?? 'CLICKER PRO');
+        : (me?.name ?? 'GRAPHY7');
     final mePhone = (me?.phone ?? '').trim();
     final copyText = [
       for (final (k, v, _) in rows) '$k: $v',

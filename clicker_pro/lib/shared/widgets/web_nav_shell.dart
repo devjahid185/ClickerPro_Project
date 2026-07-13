@@ -807,7 +807,7 @@ class _Sidebar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final name = user?.name ?? 'Clicker Pro';
+    final name = user?.name ?? 'Graphy7';
     final sub = user?.companyName?.isNotEmpty == true
         ? user!.companyName!
         : (user?.email ?? '');

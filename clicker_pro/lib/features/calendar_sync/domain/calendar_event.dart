@@ -23,7 +23,7 @@ class CalendarEvent {
     final buf = StringBuffer()
       ..writeln('BEGIN:VCALENDAR')
       ..writeln('VERSION:2.0')
-      ..writeln('PRODID:-//Clicker Pro//Calendar Sync//EN')
+      ..writeln('PRODID:-//Graphy7//Calendar Sync//EN')
       ..writeln('CALSCALE:GREGORIAN')
       ..writeln('METHOD:PUBLISH')
       ..writeln('BEGIN:VEVENT')

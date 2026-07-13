@@ -251,7 +251,7 @@ class ExportService {
     if (files.isEmpty) return false;
     return deliverCsvFiles(
       files,
-      subject: 'Clicker Pro export — import into Google Sheets',
+      subject: 'Graphy7 export — import into Google Sheets',
     );
   }
 

@@ -105,7 +105,7 @@ class AppConfig {
   static const Duration networkTimeout = Duration(seconds: 15);
   static const Duration sessionRestoreTimeout = Duration(seconds: 10);
 
-  static const String appName = 'CLICKER PRO';
+  static const String appName = 'GRAPHY7';
   static const String companyName = 'waLidu Tech';
   static const String appVersionLabel = 'v3.8';
 

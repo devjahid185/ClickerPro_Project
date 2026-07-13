@@ -2339,7 +2339,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final initials = user?.avatarInitials ?? '..';
     final name = user?.name ?? 'Welcome';
     final headerLine =
-        '${(user?.role ?? UserRole.owner).displayLabel} · ${user?.studioLabel.split(' · ').last ?? 'Clicker Pro'}';
+        '${(user?.role ?? UserRole.owner).displayLabel} · ${user?.studioLabel.split(' · ').last ?? 'Graphy7'}';
 
     return Drawer(
       backgroundColor: Colors.transparent,
@@ -2642,7 +2642,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Clicker Pro',
+                    'Graphy7',
                     style: TextStyle(
                       fontFamily: AppText.sectionTitle.fontFamily,
                       fontSize: 9,
@@ -2678,7 +2678,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           side: BorderSide(color: AppColors.line(0.08)),
         ),
         title: Text(
-          'Sign out of Clicker Pro?',
+          'Sign out of Graphy7?',
           style: TextStyle(
             color: AppColors.film,
             fontFamily: AppText.brand.fontFamily,

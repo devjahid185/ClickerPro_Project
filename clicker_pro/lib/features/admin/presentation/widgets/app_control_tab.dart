@@ -192,7 +192,7 @@ class _VersionFormState extends ConsumerState<_VersionForm> {
             border: Border.all(color: AppColors.orange.withValues(alpha: 0.25)),
           ),
           child: Text(
-            'Every CLICKER PRO app checks these values on launch. '
+            'Every GRAPHY7 app checks these values on launch. '
             'Raise the version code to push an update prompt to all studios.',
             style: TextStyle(color: AppColors.filmDim, fontSize: 12.5, height: 1.5),
           ),
@@ -225,7 +225,7 @@ class _VersionFormState extends ConsumerState<_VersionForm> {
           keyboardType: TextInputType.url,
           decoration: const InputDecoration(
             labelText: 'APK Download URL',
-            hintText: 'https://…/ClickerPro.apk',
+            hintText: 'https://…/Graphy7.apk',
           ),
         ),
         const SizedBox(height: 12),

@@ -1873,7 +1873,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
         final description = [
           if (saved.clientName != null) 'Client: ${saved.clientName}',
           if (saved.clientPhone != null) 'Phone: ${saved.clientPhone}',
-          'Booked via CLICKER PRO',
+          'Booked via GRAPHY7',
         ].join('\n');
         // With auto-sync ON we first try the SILENT device-calendar write
         // (which is what syncs to the phone's Google account). If that
