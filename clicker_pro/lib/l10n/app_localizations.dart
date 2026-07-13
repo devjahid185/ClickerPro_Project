@@ -1625,7 +1625,7 @@ abstract class AppLocalizations {
   /// No description provided for @help_contact_email.
   ///
   /// In en, this message translates to:
-  /// **'support@clickerpro.app'**
+  /// **'support@graphy7.app'**
   String get help_contact_email;
 
   /// No description provided for @help_email_us.

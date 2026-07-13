@@ -799,7 +799,7 @@ class AppLocalizationsBn extends AppLocalizations {
       'আমাদের একটি টিকিট পাঠান, ২৪ ঘণ্টার মধ্যে উত্তর দেব।';
 
   @override
-  String get help_contact_email => 'support@clickerpro.app';
+  String get help_contact_email => 'support@graphy7.app';
 
   @override
   String get help_email_us => 'ইমেইল করুন';

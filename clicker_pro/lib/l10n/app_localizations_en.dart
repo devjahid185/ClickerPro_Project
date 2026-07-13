@@ -794,7 +794,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Send us a ticket and we will get back within 24 hours.';
 
   @override
-  String get help_contact_email => 'support@clickerpro.app';
+  String get help_contact_email => 'support@graphy7.app';
 
   @override
   String get help_email_us => 'Email us';

@@ -121,6 +121,6 @@ Provided as-is. No warranty for outages or data loss beyond reasonable backups.
 Laws of Bangladesh apply.
 
 **Contact**
-support@clickerpro.app
+support@graphy7.app
 ''';
 
