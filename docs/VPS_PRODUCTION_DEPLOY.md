@@ -334,7 +334,98 @@ Served at `https://$DOMAIN/Graphy7.apk` — matches `app_apk_url` from 3c.
 
 ---
 
-## 7. Go-live checklist
+## 7. Monitoring, logging & backup
+
+The single most important production discipline. Set these up **on day one** — a monitoring gap you notice after an outage is too late, and a backup you didn't take can't be restored.
+
+### 7a. Error logging (Laravel)
+
+The staging `.env` shipped `LOG_LEVEL=debug` + `LOG_STACK=single`. **Both are wrong for production:**
+- `debug` logs every query/verbose line → the log file grows without bound and can leak sensitive data.
+- `single` writes one ever-growing file with no rotation.
+
+Set in the production `.env` (section 3a):
+```env
+LOG_CHANNEL=daily
+LOG_LEVEL=warning
+LOG_DAILY_DAYS=14
+```
+`daily` rotates and keeps 14 days; `warning` records real problems (errors, exceptions) without the noise. Logs live at `storage/logs/laravel-YYYY-MM-DD.log`. Tail live errors:
+```bash
+tail -f /var/www/clickerpro/laravel_backend/storage/logs/laravel-$(date +%F).log
+```
+> Optional upgrade: add **Sentry** (`sentry/sentry-laravel`) for grouped, alerting error tracking. Not required to launch — the daily log + the crash screen below cover the essentials.
+
+### 7b. Crash reporting — already built in ✅
+
+The app has a **full-stack crash pipeline, no third party needed**:
+- Mobile + Flutter-web wrap every entrypoint in `runGuarded` → `CrashService` → **`POST /api/crash-reports`**.
+- The backend stores them; the **admin panel → Bugs screen** (`GET /api/crash-reports`) shows platform, stack trace, breadcrumbs, with resolve/delete.
+
+Nothing to install. Just confirm after go-live that a real crash appears in the admin Bugs screen (see the go-live checklist).
+
+### 7c. Server monitoring (CPU / memory / disk)
+
+At 100K+ users the first things to run out are **disk** (Postgres data + logs) and **memory**. Lightweight setup:
+```bash
+# quick manual look
+htop          # apt install htop — live CPU/RAM per process
+df -h         # disk usage — watch the / and Postgres partitions
+free -h       # memory
+```
+For continuous monitoring pick one (all have free tiers):
+- **Netdata** (`apt install netdata`) — self-hosted real-time dashboard, 1-command install, per-second CPU/RAM/disk/Postgres metrics.
+- **UptimeRobot / Better Stack / Grafana Cloud** — hosted; add CPU/disk alerts via their agent.
+
+Set alerts for: **disk > 80 %**, **memory > 90 %**, **CPU sustained > 85 %**.
+
+### 7d. Uptime monitoring (is the site up?)
+
+Free external checks — configure them to hit real endpoints, not just the homepage:
+| Monitor | URL | Expect |
+|---|---|---|
+| API health | `https://api.NEW_DOMAIN/api/app/version` | 200 + JSON |
+| Landing | `https://NEW_DOMAIN/` | 200 |
+| Web app | `https://app.NEW_DOMAIN/` | 200 |
+| Admin | `https://api.NEW_DOMAIN/admin/login` | 200 |
+
+Use **UptimeRobot** (50 monitors free, 5-min interval) or **Better Stack**. Point alerts at the admin's email/WhatsApp/Telegram. A monitor that emails only *you* is enough at launch.
+
+### 7e. Backup strategy (PostgreSQL) — do this before launch
+
+Production data is irreplaceable. Automate a nightly dump and, critically, **copy it off the VPS** (a backup on the same server dies with the server).
+
+Create `/usr/local/bin/pg_backup.sh`:
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+STAMP=$(date +%F_%H%M)
+DIR=/var/backups/clickerpro
+mkdir -p "$DIR"
+# compressed logical dump
+PGPASSWORD='CHANGE_ME_STRONG_PASSWORD' pg_dump -U clickerpro -h 127.0.0.1 clickerpro \
+  | gzip > "$DIR/clickerpro_$STAMP.sql.gz"
+# keep 14 days locally
+find "$DIR" -name 'clickerpro_*.sql.gz' -mtime +14 -delete
+# OFF-SITE copy (pick one): rclone to S3/Backblaze/Google Drive, or scp to another host
+# rclone copy "$DIR/clickerpro_$STAMP.sql.gz" remote:clickerpro-backups
+```
+```bash
+chmod +x /usr/local/bin/pg_backup.sh
+# run nightly at 02:30
+( crontab -l 2>/dev/null; echo "30 2 * * * /usr/local/bin/pg_backup.sh" ) | crontab -
+```
+Also back up **uploaded files** (`storage/app/public` — invoices, broadcast images) the same way, and keep the **`.env`** somewhere safe (it has DB + mail + APP_KEY; without APP_KEY, encrypted data can't be read).
+
+**Test a restore once** — an untested backup is a hope, not a backup:
+```bash
+gunzip -c /var/backups/clickerpro/clickerpro_XXXX.sql.gz | \
+  PGPASSWORD='...' psql -U clickerpro -h 127.0.0.1 -d clickerpro_restore_test
+```
+
+---
+
+## 8. Go-live checklist
 
 - [ ] DNS A-records resolve to VPS IP (all 4 hostnames)
 - [ ] `https://api.NEW_DOMAIN/` → landing loads (200)
@@ -345,11 +436,17 @@ Served at `https://$DOMAIN/Graphy7.apk` — matches `app_apk_url` from 3c.
 - [ ] `GET https://api.NEW_DOMAIN/api/app/version` → returns `versionCode 40 / 3.10`
 - [ ] Fresh APK installs + logs in against the new API
 - [ ] `APP_DEBUG=false` (never leak stack traces in production)
-- [ ] DB backup cron set up (`pg_dump` daily)
+- [ ] `LOG_CHANNEL=daily` + `LOG_LEVEL=warning` (not `debug`/`single`) — section 7a
+- [ ] Force a test crash in the app → it shows up in **admin panel → Bugs** (7b)
+- [ ] Uptime monitor live on all 4 hostnames, alert reaches you (7d)
+- [ ] Server monitor running, disk/memory alerts set (7c)
+- [ ] Nightly `pg_dump` cron **+ off-site copy** (7e)
+- [ ] **Restore-tested** at least one backup into a scratch DB (7e)
+- [ ] `.env` + `clicker_pro.jks` + APP_KEY backed up off-machine
 
 ---
 
-## 8. What is intentionally NOT here
+## 9. What is intentionally NOT here
 
 - **No test-data migration** — production starts empty by design.
 - **No Redis / Supervisor / queue worker** — backend uses DB drivers and dispatches no jobs. Add later only under load.
@@ -357,7 +454,7 @@ Served at `https://$DOMAIN/Graphy7.apk` — matches `app_apk_url` from 3c.
 
 ---
 
-## 9. Redeploy (future updates)
+## 10. Redeploy (future updates)
 
 ```bash
 cd /var/www/clickerpro && git pull
