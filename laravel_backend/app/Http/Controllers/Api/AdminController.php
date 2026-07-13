@@ -211,6 +211,15 @@ class AdminController extends Controller
         $user = User::findOrFail($id);
         // suspended=true → soft-deactivate; false → reactivate
         $user->forceFill(['is_active' => !$data['suspended']])->save();
+
+        // Revoke all Sanctum tokens so an already-logged-in session ends
+        // immediately — without this, suspension only blocks a fresh login
+        // while the user's existing token keeps every API call working. The
+        // `active` middleware is the safety net; this makes it instant.
+        if ($data['suspended']) {
+            $user->tokens()->delete();
+        }
+
         return response()->json(['data' => $user->fresh()]);
     }
 

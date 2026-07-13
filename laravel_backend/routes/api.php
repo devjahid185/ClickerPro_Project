@@ -74,7 +74,7 @@ Route::middleware('throttle:30,1')->group(function () {
 // Protected routes — authenticated + general per-user throttle.
 // touch.active stamps last_active_at (throttled) so the admin console can
 // show "last seen" and Active/Inactive status for each account.
-Route::middleware(['auth:sanctum', 'throttle:120,1', 'touch.active'])->group(function () {
+Route::middleware(['auth:sanctum', 'active', 'throttle:120,1', 'touch.active'])->group(function () {
     Route::post('auth/logout', [AuthController::class, 'logout']);
     Route::post('auth/change-password', [AuthController::class, 'changePassword']);
 
