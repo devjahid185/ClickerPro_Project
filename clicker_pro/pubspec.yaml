@@ -1,7 +1,7 @@
 name: clicker_pro
 description: "Clicker Pro — photography & event management. Deep Ocean theme. Offline-first. Bilingual."
 publish_to: 'none'
-version: 3.8.1+39
+version: 3.10.0+40
 
 environment:
   sdk: ^3.12.0

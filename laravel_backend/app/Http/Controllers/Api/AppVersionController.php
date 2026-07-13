@@ -25,9 +25,9 @@ class AppVersionController extends Controller
         return response()->json([
             'data' => [
                 // Integer build number — the app compares this against its own.
-                'versionCode' => (int) AppSetting::getValue('app_version_code', 38),
+                'versionCode' => (int) AppSetting::getValue('app_version_code', 40),
                 // Human label shown in the dialog.
-                'versionName' => AppSetting::getValue('app_version_name', '3.8.0'),
+                'versionName' => AppSetting::getValue('app_version_name', '3.10'),
                 // Where to download the latest APK.
                 'apkUrl' => AppSetting::getValue(
                     'app_apk_url',
