@@ -30,7 +30,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     // Guest (login)
     Route::get('login', [AdminAuthController::class, 'showLogin'])->name('login');
-    Route::post('login', [AdminAuthController::class, 'login'])->name('login.submit');
+    // Admin is the highest-privilege surface, so the credential-checking POST
+    // gets a strict rate limit (5 attempts/min per IP) to blunt brute force.
+    // The GET form stays open so a locked-out admin can still see the page.
+    Route::post('login', [AdminAuthController::class, 'login'])
+        ->middleware('throttle:5,1')
+        ->name('login.submit');
 
     // Authenticated + ADMIN role
     Route::middleware(['auth', 'admin.web'])->group(function () {

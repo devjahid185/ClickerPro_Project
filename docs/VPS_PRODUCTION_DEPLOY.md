@@ -110,6 +110,9 @@ BROADCAST_CONNECTION=log
 # Sanctum / CORS — allow the app + landing origins
 SANCTUM_STATEFUL_DOMAINS=app.NEW_DOMAIN,NEW_DOMAIN
 SESSION_DOMAIN=.NEW_DOMAIN
+# CORS: config defaults to "*" (safe — bearer-token auth, no cookie creds).
+# In production, lock it to your real origins instead of leaving it open:
+CORS_ALLOWED_ORIGINS=https://app.NEW_DOMAIN,https://NEW_DOMAIN,https://www.NEW_DOMAIN
 
 # Mail — see section 3d below; pick ONE provider block and paste it here.
 MAIL_MAILER=smtp
