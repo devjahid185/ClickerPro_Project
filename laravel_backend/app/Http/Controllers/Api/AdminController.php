@@ -8,6 +8,7 @@ use App\Models\Payment;
 use App\Models\User;
 use App\Models\Client;
 use App\Models\Broadcast;
+use App\Models\CrashReport;
 use App\Models\SupportTicket;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -35,6 +36,7 @@ class AdminController extends Controller
                 'totalBookings'     => Event::count(),
                 'activeBroadcasts'  => Broadcast::where('is_active', true)->count(),
                 'openTickets'       => SupportTicket::whereIn('status', ['OPEN', 'IN_PROGRESS'])->count(),
+                'unresolvedCrashes' => CrashReport::whereNull('resolved_at')->count(),
             ];
         });
 

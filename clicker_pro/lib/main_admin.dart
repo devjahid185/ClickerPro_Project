@@ -20,6 +20,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/crash/crash_bootstrap.dart';
 import 'features/admin/presentation/admin_home_screen.dart';
 import 'features/admin/presentation/admin_login_screen.dart';
 import 'features/auth/application/session_controller.dart';
@@ -37,7 +38,12 @@ Future<void> main() async {
     // .env not bundled or unreadable; AppConfig falls back to safe defaults.
   }
 
-  runApp(const ProviderScope(child: ProAdminApp()));
+  // Guarded zone forwards any admin-app crash to the same /api/crash-reports
+  // pipeline the studio app uses, so the admin sees its own crashes too.
+  runGuarded(
+    container: ProviderContainer(),
+    appBuilder: () => const ProAdminApp(),
+  );
 }
 
 class ProAdminApp extends StatelessWidget {

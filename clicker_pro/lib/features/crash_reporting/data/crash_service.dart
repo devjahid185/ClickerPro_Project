@@ -13,6 +13,11 @@ import '../../../core/providers.dart';
 
 const _uuid = Uuid();
 
+/// Surface the crash happened on, so the admin console can tell a mobile crash
+/// from a web one. `kIsWeb` wins because `defaultTargetPlatform` reports the
+/// host OS (android/ios) even in a browser, which would mislabel web crashes.
+String get _crashPlatform => kIsWeb ? 'web' : defaultTargetPlatform.name;
+
 class CrashBreadcrumb {
   final String id;
   final String message;
@@ -135,7 +140,7 @@ class CrashService {
         'stackTrace': report.stackTrace,
         'userRole': report.userRole,
         'breadcrumbs': report.breadcrumbs.map((b) => b.toJson()).toList(),
-        'platform': defaultTargetPlatform.name,
+        'platform': _crashPlatform,
       });
     } catch (_) {/* swallow — telemetry must not crash the app */}
 

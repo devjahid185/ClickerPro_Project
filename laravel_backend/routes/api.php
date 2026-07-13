@@ -315,6 +315,12 @@ Route::middleware(['auth:sanctum', 'throttle:120,1', 'touch.active'])->group(fun
         Route::patch('faqs/{id}', [FaqController::class, 'adminUpdate']);
         Route::delete('faqs/{id}', [FaqController::class, 'adminDestroy']);
 
+        // Crash / bug reports — admin reads what the apps (mobile/web/landing)
+        // sent to the public POST /api/crash-reports endpoint.
+        Route::get('crash-reports', [\App\Http\Controllers\Api\CrashReportController::class, 'adminIndex']);
+        Route::patch('crash-reports/{id}/resolve', [\App\Http\Controllers\Api\CrashReportController::class, 'adminResolve']);
+        Route::delete('crash-reports/{id}', [\App\Http\Controllers\Api\CrashReportController::class, 'adminDestroy']);
+
         Route::get('coupons', [CouponController::class, 'index']);
         Route::post('coupons', [CouponController::class, 'store']);
         Route::patch('coupons/{id}', [CouponController::class, 'update']);

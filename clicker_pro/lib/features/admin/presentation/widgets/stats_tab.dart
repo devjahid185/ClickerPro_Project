@@ -13,6 +13,7 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_theme.dart';
 import '../../application/admin_providers.dart';
 import '../../domain/admin_stats.dart';
+import '../admin_bugs_screen.dart';
 import '../admin_ticket_list_screen.dart';
 import '../admin_user_list_screen.dart';
 
@@ -66,6 +67,13 @@ class _StatsGrid extends StatelessWidget {
     );
   }
 
+  void _openBugs(BuildContext context) {
+    Navigator.push<void>(
+      context,
+      MaterialPageRoute(builder: (_) => const AdminBugsScreen()),
+    );
+  }
+
   void _totalClientsUnavailable(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Client list isn\'t available platform-wide yet.')),
@@ -116,6 +124,14 @@ class _StatsGrid extends StatelessWidget {
         Icons.support_agent_outlined,
         AppColors.gold,
         onTap: () => _openTickets(context),
+      ),
+      _StatTile(
+        'Crashes & Bugs',
+        stats.unresolvedCrashes,
+        Icons.bug_report_outlined,
+        // Red when something's unresolved so it draws the eye; neutral when clear.
+        stats.unresolvedCrashes > 0 ? AppColors.red : AppColors.green,
+        onTap: () => _openBugs(context),
       ),
     ];
 

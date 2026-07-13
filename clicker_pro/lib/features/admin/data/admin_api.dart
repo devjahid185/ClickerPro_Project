@@ -9,6 +9,7 @@
 
 import '../../../core/network/api_client.dart';
 import '../domain/admin_broadcast.dart';
+import '../domain/admin_crash_report.dart';
 import '../domain/admin_setting.dart';
 import '../domain/admin_stats.dart';
 import '../domain/admin_ticket.dart';
@@ -221,5 +222,25 @@ class AdminApi {
 
   Future<void> updateSettings(Map<String, String> changes) async {
     await _client.post('/api/admin/settings', body: {'settings': changes});
+  }
+
+  // ── Crash / bug reports (CrashReportController admin methods) ──
+  // The apps (mobile/web) and the landing page POST crashes to the public
+  // /api/crash-reports; these admin-only calls read and manage them.
+
+  Future<List<AdminCrashReport>> crashReports() async {
+    final r = await _client.get('/api/admin/crash-reports');
+    return _list(r).map(AdminCrashReport.fromJson).toList(growable: false);
+  }
+
+  Future<void> resolveCrashReport(String id, {bool resolved = true}) async {
+    await _client.patch(
+      '/api/admin/crash-reports/$id/resolve',
+      body: {'resolved': resolved},
+    );
+  }
+
+  Future<void> deleteCrashReport(String id) async {
+    await _client.delete('/api/admin/crash-reports/$id');
   }
 }

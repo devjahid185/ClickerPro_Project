@@ -13,6 +13,7 @@ class AdminStats {
     required this.totalClients,
     required this.activeBroadcasts,
     required this.openTickets,
+    this.unresolvedCrashes = 0,
   });
 
   final int totalUsers;
@@ -22,6 +23,7 @@ class AdminStats {
   final int totalClients;
   final int activeBroadcasts;
   final int openTickets;
+  final int unresolvedCrashes;
 
   factory AdminStats.fromJson(Map<String, dynamic> json) {
     int n(Object? v) => (v is num) ? v.toInt() : int.tryParse('$v') ?? 0;
@@ -33,6 +35,7 @@ class AdminStats {
       totalClients: n(json['totalClients']),
       activeBroadcasts: n(json['activeBroadcasts']),
       openTickets: n(json['openTickets']),
+      unresolvedCrashes: n(json['unresolvedCrashes']),
     );
   }
 
@@ -44,5 +47,6 @@ class AdminStats {
     totalClients: 0,
     activeBroadcasts: 0,
     openTickets: 0,
+    unresolvedCrashes: 0,
   );
 }

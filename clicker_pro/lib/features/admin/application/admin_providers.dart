@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers.dart';
 import '../data/admin_api.dart';
 import '../domain/admin_broadcast.dart';
+import '../domain/admin_crash_report.dart';
 import '../domain/admin_setting.dart';
 import '../domain/admin_stats.dart';
 import '../domain/admin_ticket.dart';
@@ -55,6 +56,14 @@ final adminUsersProvider = FutureProvider.autoDispose
 
 final adminTicketsProvider = FutureProvider.autoDispose<List<AdminTicket>>(
   (ref) => ref.read(adminApiProvider).tickets(),
+);
+
+/// Crash/bug reports from every surface (mobile/web/landing), unresolved
+/// first (backend-ordered). The Bugs screen watches this; resolve/delete
+/// actions invalidate it to refresh.
+final adminCrashReportsProvider =
+    FutureProvider.autoDispose<List<AdminCrashReport>>(
+  (ref) => ref.read(adminApiProvider).crashReports(),
 );
 
 /// Current OTA update channel values (versionCode/versionName/apkUrl/

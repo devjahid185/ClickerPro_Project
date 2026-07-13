@@ -252,5 +252,39 @@
 
     <script type="module" src="{{ asset('landing/js/mountain-scene.js') }}"></script>
     <script src="{{ asset('landing/js/landing.js') }}"></script>
+
+    {{-- Landing crash/bug reporter: forwards uncaught JS errors + promise
+         rejections to the same /api/crash-reports pipeline the apps use, so the
+         admin console sees landing-page failures too. Best-effort and silent —
+         it must never interfere with the page. --}}
+    <script>
+    (function () {
+      var sent = 0;
+      function report(message, stack) {
+        if (sent >= 5) return; // cap per page load so a loop can't spam
+        sent++;
+        try {
+          fetch('/api/crash-reports', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({
+              error: String(message || 'Unknown landing error').slice(0, 1000),
+              stackTrace: stack ? String(stack).slice(0, 4000) : null,
+              platform: 'landing',
+              breadcrumbs: [{ message: 'url: ' + location.pathname, timestamp: new Date().toISOString() }]
+            }),
+            keepalive: true
+          }).catch(function () {});
+        } catch (e) { /* swallow */ }
+      }
+      window.addEventListener('error', function (e) {
+        report(e.message, e.error && e.error.stack);
+      });
+      window.addEventListener('unhandledrejection', function (e) {
+        var r = e.reason;
+        report(r && r.message ? r.message : r, r && r.stack);
+      });
+    })();
+    </script>
 </body>
 </html>

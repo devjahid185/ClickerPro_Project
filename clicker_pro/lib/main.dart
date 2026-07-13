@@ -5,6 +5,7 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'app.dart';
+import 'core/crash/crash_bootstrap.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<void> main() async {
@@ -25,12 +26,16 @@ Future<void> main() async {
     // .env not bundled or unreadable; continue with defaults.
   }
 
-  // Paint the UI immediately, then initialize Firebase in the background.
-  // Blocking `runApp` on Firebase's network-bound init was the main cause of
-  // the long white native-launch flash and the "slow to open" feel. Nothing
-  // on the first screen (splash) needs Firebase, so let it warm up after the
-  // first frame instead.
-  runApp(const ProviderScope(child: ClickerProApp()));
+  // Paint the UI immediately (inside a guarded zone that forwards any crash to
+  // the admin console via CrashService), then initialize Firebase in the
+  // background. Blocking `runApp` on Firebase's network-bound init was the main
+  // cause of the long white native-launch flash; nothing on the first screen
+  // (splash) needs Firebase, so let it warm up after the first frame instead.
+  final container = ProviderContainer();
+  runGuarded(
+    container: container,
+    appBuilder: () => const ClickerProApp(),
+  );
 
   Firebase.initializeApp(options: DefaultFirebaseOptions.android)
       .catchError((Object e) {
