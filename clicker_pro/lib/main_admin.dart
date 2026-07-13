@@ -45,11 +45,16 @@ class ProAdminApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    AppColors.active = ActivePalette.clickerPro;
+    // PRO ADMIN ships in the Graphy7 Noir look (near-black canvas + lime
+    // #C8F252, Space Grotesk + JetBrains Mono) — matches the admin design
+    // handoff. Locking the palette here means every theme-aware AppColors
+    // getter (orange→lime, surface→near-black, film→light text) resolves to
+    // the dark set app-wide, so the studio-app light theme never leaks in.
+    AppColors.active = ActivePalette.noirDark;
     return MaterialApp(
       title: 'Graphy7 — Admin',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.clickerPro(),
+      theme: AppTheme.noirDark(),
       home: const _AdminRoot(),
     );
   }

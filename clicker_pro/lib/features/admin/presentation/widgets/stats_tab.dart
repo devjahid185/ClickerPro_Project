@@ -76,13 +76,6 @@ class _StatsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final tiles = <_StatTile>[
       _StatTile(
-        'Total Users',
-        stats.totalUsers,
-        Icons.people_outline,
-        AppColors.orange,
-        onTap: () => _openUsers(context, 'Total Users', null),
-      ),
-      _StatTile(
         'Studio Owners',
         stats.owners,
         Icons.storefront_outlined,
@@ -126,18 +119,119 @@ class _StatsGrid extends StatelessWidget {
       ),
     ];
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(20),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        // 1.3 clipped the label under the number on real devices (the card
-        // wasn't tall enough for icon + number + label at this padding).
-        childAspectRatio: 1.0,
+    return ListView(
+      // Bottom padding clears the floating nav pill (64 bar + 14 inset + FAB).
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 110),
+      children: [
+        _HeroStatCard(
+          eyebrow: 'TOTAL USERS · PLATFORM',
+          value: stats.totalUsers,
+          caption: '${stats.owners} owners · ${stats.freelancers} freelancers',
+          onTap: () => _openUsers(context, 'Total Users', null),
+        ),
+        const SizedBox(height: 12),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.0,
+          ),
+          itemCount: tiles.length,
+          itemBuilder: (context, i) => _StatCard(tile: tiles[i]),
+        ),
+      ],
+    );
+  }
+}
+
+/// The Graphy7 hero card: a solid-lime panel with a large headline number,
+/// a mono eyebrow, and a supporting caption. Used for the single most
+/// important platform metric (total users). Text sits in the on-accent colour
+/// so it stays legible on the bright lime fill.
+class _HeroStatCard extends StatelessWidget {
+  const _HeroStatCard({
+    required this.eyebrow,
+    required this.value,
+    required this.caption,
+    required this.onTap,
+  });
+
+  final String eyebrow;
+  final int value;
+  final String caption;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final onLime = AppColors.onAccent;
+    return Material(
+      color: AppColors.orange,
+      borderRadius: BorderRadius.circular(22),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.orange.withValues(alpha: 0.28),
+                blurRadius: 22,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    eyebrow,
+                    style: TextStyle(
+                      fontFamily: AppText.monoFontFamily,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.2,
+                      color: onLime.withValues(alpha: 0.72),
+                    ),
+                  ),
+                  Icon(Icons.people_alt_rounded,
+                      color: onLime.withValues(alpha: 0.85), size: 20),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Text(
+                '$value',
+                style: TextStyle(
+                  fontFamily: AppText.brandFontFamily,
+                  fontSize: 40,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -1.0,
+                  height: 1.0,
+                  color: onLime,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                caption,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                  color: onLime.withValues(alpha: 0.78),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
-      itemCount: tiles.length,
-      itemBuilder: (context, i) => _StatCard(tile: tiles[i]),
     );
   }
 }

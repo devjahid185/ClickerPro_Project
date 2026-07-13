@@ -236,13 +236,14 @@ class _LandingFormState extends ConsumerState<_LandingForm> {
                 onPressed: _saving ? null : _save,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.orange,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.onAccent,
                 ),
                 child: _saving
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2.2, color: AppColors.onAccent),
                       )
                     : const Text('Save & Publish'),
               ),

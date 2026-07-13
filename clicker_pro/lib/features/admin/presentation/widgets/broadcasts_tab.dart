@@ -28,13 +28,8 @@ class BroadcastsTab extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.orange,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('New Broadcast'),
-        onPressed: () => _openComposer(context, ref),
-      ),
+      // No FAB here — the shared floating nav in AdminHomeScreen owns the
+      // center "+" action, which calls BroadcastsTab.openComposer directly.
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(adminBroadcastsProvider.future),
         child: async.when(
@@ -70,7 +65,10 @@ class BroadcastsTab extends ConsumerWidget {
     );
   }
 
-  void _openComposer(BuildContext context, WidgetRef ref, {AdminBroadcast? existing}) {
+  /// Opens the create/edit broadcast sheet. Public + static so the shared
+  /// floating nav's center "+" button in AdminHomeScreen can trigger a "new
+  /// broadcast" flow without duplicating the composer.
+  static void openComposer(BuildContext context, {AdminBroadcast? existing}) {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -503,15 +501,15 @@ class _BroadcastComposerSheetState extends ConsumerState<_BroadcastComposerSheet
                 onPressed: _submitting ? null : _submit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.orange,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.onAccent,
                 ),
                 child: _submitting
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2.2,
-                          color: Colors.white,
+                          color: AppColors.onAccent,
                         ),
                       )
                     : Text(widget.existing == null ? 'Publish' : 'Save Changes'),

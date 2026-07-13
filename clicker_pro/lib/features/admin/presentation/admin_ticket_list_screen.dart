@@ -272,13 +272,14 @@ class _TicketReplySheetState extends ConsumerState<_TicketReplySheet> {
                 onPressed: _submitting ? null : _submit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.orange,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.onAccent,
                 ),
                 child: _submitting
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2.2, color: AppColors.onAccent),
                       )
                     : const Text('Send Reply & Close'),
               ),

@@ -16,13 +16,14 @@ import '../../auth/application/session_controller.dart';
 import '../../auth/domain/user_role.dart';
 import 'admin_home_screen.dart';
 
-/// This screen is deliberately always-dark regardless of the studio app's
-/// active theme — it must never resolve through `AppColors`. Those getters
-/// are palette-dependent (`AppColors.voidBlack` resolves to warm off-white
-/// under the default ClickerPro palette, not black), which made every
-/// white-on-"black" label here invisible.
-const _kAdminBg = Color(0xFF0A0A0F);
-const _kAdminOrange = Color(0xFFE2620E);
+/// This screen is deliberately hardcoded to the Graphy7 Noir tokens rather
+/// than resolving through `AppColors`, so the login look is stable even before
+/// the palette is applied. Values match the admin design handoff: near-black
+/// screen `#0C0E11`, lime accent `#C8F252`, and near-black text `#0E1206` on
+/// the lime button (lime is too bright for white text on it).
+const _kAdminBg = Color(0xFF0C0E11);
+const _kAdminLime = Color(0xFFC8F252);
+const _kAdminOnLime = Color(0xFF0E1206);
 
 class AdminLoginScreen extends ConsumerStatefulWidget {
   const AdminLoginScreen({super.key});
@@ -109,7 +110,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                       color: Colors.white.withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(22),
                       border: Border.all(
-                        color: _kAdminOrange.withValues(alpha: 0.4),
+                        color: _kAdminLime.withValues(alpha: 0.4),
                         width: 1.5,
                       ),
                     ),
@@ -123,7 +124,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                         const TextSpan(text: 'Graphy'),
                         TextSpan(
                           text: '7',
-                          style: TextStyle(color: _kAdminOrange),
+                          style: TextStyle(color: _kAdminLime),
                         ),
                         const TextSpan(text: ' Admin'),
                       ],
@@ -196,8 +197,8 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                     child: ElevatedButton(
                       onPressed: _submitting ? null : _submit,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _kAdminOrange,
-                        foregroundColor: Colors.white,
+                        backgroundColor: _kAdminLime,
+                        foregroundColor: _kAdminOnLime,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -208,7 +209,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                               height: 22,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2.4,
-                                color: Colors.white,
+                                color: _kAdminOnLime,
                               ),
                             )
                           : const Text(
@@ -245,7 +246,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: _kAdminOrange),
+        borderSide: BorderSide(color: _kAdminLime),
       ),
     );
   }
