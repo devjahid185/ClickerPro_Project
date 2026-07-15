@@ -1199,6 +1199,25 @@ class _WebBookingForm extends ConsumerWidget {
               );
             },
           ),
+          // Inline error under the payment tiles — names the missing
+          // Package/Price or Advance so web users see WHERE the error is
+          // (Heaven 2026-07-15: "কোথায় এরর সেটা দেখাবে").
+          Builder(
+            builder: (_) {
+              final priceErr =
+                  state._validation.errorFor(BookingField.customPrice);
+              final advErr = state._validation.errorFor(BookingField.advance);
+              final msg = priceErr ?? advErr;
+              if (msg == null) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  msg,
+                  style: WebTheme.bodyStyle(size: 12, color: WebTheme.danger),
+                ),
+              );
+            },
+          ),
           const SizedBox(height: 16),
           Row(
             children: [

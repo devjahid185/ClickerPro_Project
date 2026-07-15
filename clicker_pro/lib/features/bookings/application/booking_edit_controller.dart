@@ -289,6 +289,14 @@ class BookingValidation {
 
   bool get isValid => errors.isEmpty;
   String? errorFor(BookingField f) => errors[f];
+
+  /// Returns a copy with [f]'s error cleared — used to drop an inline error
+  /// the moment the user fixes that field.
+  BookingValidation withoutField(BookingField f) {
+    if (!errors.containsKey(f)) return this;
+    final next = Map<BookingField, String>.from(errors)..remove(f);
+    return BookingValidation(next);
+  }
 }
 
 /// Identifies a single field on the booking form. Used as the key for
@@ -306,6 +314,7 @@ enum BookingField {
   groomName,
   driveLink,
   customPrice,
+  advance,
 }
 
 class BookingEditController

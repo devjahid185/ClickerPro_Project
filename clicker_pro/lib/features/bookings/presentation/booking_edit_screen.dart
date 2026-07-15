@@ -1337,7 +1337,21 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                           ),
-                          onChanged: (_) => _markDirty(),
+                          errorText:
+                              _validation.errorFor(BookingField.advance),
+                          onChanged: (v) {
+                            _markDirty();
+                            // Clear the advance error as soon as a valid
+                            // amount is typed, so it doesn't linger.
+                            if ((double.tryParse(v.trim()) ?? 0) > 0 &&
+                                _validation.errorFor(BookingField.advance) !=
+                                    null) {
+                              setState(() {
+                                _validation = _validation
+                                    .withoutField(BookingField.advance);
+                              });
+                            }
+                          },
                         ),
                       ),
                     ],
@@ -1692,22 +1706,39 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     return confirmed ?? false;
   }
 
+  /// Human-readable "these fields are missing" line for the snackbar, so the
+  /// user knows exactly what to fill even before scrolling to the red inline
+  /// errors (Heaven 2026-07-15: "কোথায় এরর সেটা দেখাবে").
+  String _missingFieldsMessage(Map<BookingField, String> errors) {
+    const labels = <BookingField, String>{
+      BookingField.client: 'Name',
+      BookingField.clientPhone: 'Phone',
+      BookingField.date: 'Date',
+      BookingField.shift: 'Shift',
+      BookingField.customPrice: 'Package / Price',
+      BookingField.advance: 'Advance',
+    };
+    final names = errors.keys
+        .map((f) => labels[f])
+        .whereType<String>()
+        .toList();
+    if (names.isEmpty) return 'Please fix the highlighted fields.';
+    return 'Required: ${names.join(', ')}';
+  }
+
   Future<void> _onSave() async {
     final controller = ref.read(
       bookingEditControllerProvider(widget.bookingId).notifier,
     );
-    // Validate up-front so we can shake + show inline errors without
-    // attempting a doomed save round-trip.
-    final validation = controller.validate();
-    if (!validation.isValid) {
-      setState(() => _validation = validation);
-      _shakeCtrl.forward(from: 0);
-      _showSnack('Please fix the highlighted fields.');
-      return;
-    }
-    // Owner rule (Heaven 2026-07-15): a NEW studio booking must carry an
-    // advance amount — the advance field lives on this screen (recorded as a
-    // Payment after save), so it is enforced here, not in the controller.
+    // Validate the controller-owned fields (name / phone / date / package).
+    final baseErrors = Map<BookingField, String>.from(
+      controller.validate().errors,
+    );
+
+    // Owner rule (Heaven 2026-07-15): a NEW studio booking must also carry an
+    // advance amount — the advance field lives on THIS screen (recorded as a
+    // Payment after save), so it's validated here and merged into the same
+    // error map, then surfaced inline under the Advance field.
     final draftForAdvance = ref
         .read(bookingEditControllerProvider(widget.bookingId))
         .valueOrNull;
@@ -1716,10 +1747,18 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
         !draftForAdvance.freelancerMode) {
       final advance = double.tryParse(_advanceCtrl.text.trim()) ?? 0;
       if (advance <= 0) {
-        _shakeCtrl.forward(from: 0);
-        _showSnack('Advance amount is required to save the booking.');
-        return;
+        baseErrors[BookingField.advance] = 'Advance is required.';
       }
+    }
+
+    if (baseErrors.isNotEmpty) {
+      setState(() => _validation = BookingValidation(baseErrors));
+      _shakeCtrl.forward(from: 0);
+      // Name each missing field so the user knows exactly what to fill —
+      // not just a generic "fix the fields" (Heaven 2026-07-15: "কোথায়
+      // এরর সেটা দেখাবে").
+      _showSnack(_missingFieldsMessage(baseErrors));
+      return;
     }
     // Clear any stale inline errors before the save attempt.
     if (_validation.errors.isNotEmpty) {
