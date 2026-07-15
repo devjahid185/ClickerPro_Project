@@ -217,7 +217,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       final session = ref.read(sessionControllerProvider);
       if (session.hasValue && session.value != null) {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+          MaterialPageRoute(
+            // Named so the web nav shell's route tracking shows the chrome.
+            settings: const RouteSettings(name: RouteNames.dashboard),
+            builder: (_) => const DashboardScreen(),
+          ),
           (route) => false,
         );
         return;

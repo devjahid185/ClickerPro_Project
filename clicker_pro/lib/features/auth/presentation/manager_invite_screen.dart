@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/navigation/route_names.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../screens/dashboard_screen.dart';
 import '../../../theme/app_colors.dart';
@@ -156,7 +157,11 @@ class _ManagerInviteScreenState extends ConsumerState<ManagerInviteScreen> {
       }
       if (state.value != null) {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+          MaterialPageRoute(
+            // Named so the web nav shell's route tracking shows the chrome.
+            settings: const RouteSettings(name: RouteNames.dashboard),
+            builder: (_) => const DashboardScreen(),
+          ),
           (route) => false,
         );
       }

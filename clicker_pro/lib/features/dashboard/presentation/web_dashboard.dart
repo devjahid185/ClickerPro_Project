@@ -900,14 +900,14 @@ class _QuickActions extends StatelessWidget {
             (Icons.calendar_month_rounded, 'Calendar', RouteNames.calendar),
             (Icons.business_rounded, 'Company',
                 RouteNames.freelancerCompanies),
-            (Icons.chat_bubble_outline_rounded, 'Chat', RouteNames.chat),
+            (Icons.sticky_note_2_outlined, 'Notes', RouteNames.notes),
             (Icons.shopping_bag_outlined, 'Expense',
                 RouteNames.financeExpenses),
           ]
         : const [
             (Icons.calendar_month_rounded, 'Calendar', RouteNames.calendar),
             (Icons.receipt_long_rounded, 'Invoice', RouteNames.invoice),
-            (Icons.chat_bubble_outline_rounded, 'Chat', RouteNames.chat),
+            (Icons.sticky_note_2_outlined, 'Notes', RouteNames.notes),
             (Icons.groups_rounded, 'Team', RouteNames.team),
           ];
 

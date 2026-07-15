@@ -40,7 +40,6 @@ class RouteNames {
   static const String notifications = '/notifications';
   static const String gear = '/gear';
   static const String rent = '/rent';
-  static const String chat = '/chat';
   static const String team = '/team';
   static const String announcements = '/announcements';
   static const String freelancerCompanies = '/freelancer/companies';

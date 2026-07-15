@@ -69,17 +69,34 @@ class _WebBookingDetailState extends ConsumerState<_WebBookingDetail> {
         BookingStatus.cancelled => (WebTheme.danger, WebTheme.dangerTint, 'Cancelled'),
       };
 
+  // The backend scopes a Freelancer's list to their OWN bookings
+  // (booking_context = FREELANCER); the server re-checks context on write.
+  bool get _isOwnBooking => _policy.role == UserRole.freelancer;
+
   BookingStatus? _nextStatus() {
     final status = _booking.status;
-    final next = _policy.role == UserRole.freelancer
-        ? (BookingStatusMachine.canTransition(
-                _policy.role, status, BookingStatus.shotComplete)
-            ? BookingStatus.shotComplete
-            : null)
-        : BookingStatusMachine.nextForward(status);
+    final BookingStatus? next;
+    if (_policy.role == UserRole.freelancer) {
+      // Own logged booking → straight to Complete; assigned studio event →
+      // Shoot Complete (Heaven 2026-07-15).
+      if (_isOwnBooking &&
+          BookingStatusMachine.canTransition(
+              _policy.role, status, BookingStatus.completed,
+              isOwnBooking: true)) {
+        next = BookingStatus.completed;
+      } else if (BookingStatusMachine.canTransition(
+          _policy.role, status, BookingStatus.shotComplete)) {
+        next = BookingStatus.shotComplete;
+      } else {
+        next = null;
+      }
+    } else {
+      next = BookingStatusMachine.nextForward(status);
+    }
     if (next == null) return null;
     if (!_policy.can(Capability.advanceBookingStatus)) return null;
-    if (!BookingStatusMachine.canTransition(_policy.role, status, next)) {
+    if (!BookingStatusMachine.canTransition(_policy.role, status, next,
+        isOwnBooking: _isOwnBooking)) {
       return null;
     }
     return next;
@@ -101,7 +118,7 @@ class _WebBookingDetailState extends ConsumerState<_WebBookingDetail> {
       _topRow(context),
       _hero(),
       _infoGrid(members),
-      _teamSection(members),
+      if (_policy.role != UserRole.freelancer) _teamSection(members),
       _actionRow(context),
       if (_invoiceOpen) _invoicePanel(context, members),
       if (_isShootDone(_booking.status))
@@ -114,18 +131,22 @@ class _WebBookingDetailState extends ConsumerState<_WebBookingDetail> {
           bookingId: _booking.id,
           bookingTotal: _booking.customPrice ?? _env.package?.netPrice,
         ),
-      DistributorPanel(
-        booking: _booking,
-        assignments: _env.assignments,
-        currentUserId: widget.currentUserId,
-      ),
-      TaskProgressSection(
-        bookingId: _booking.id,
-        assignments: _env.assignments,
-        taskProgress: _env.taskProgress,
-      ),
-      StatusTimeline(entries: _env.statusHistory),
-      ReEditSection(booking: _booking, requests: _env.reEditRequests),
+      // Assignment tools, status history and re-edit history are Owner-side
+      // surfaces — hidden from the Freelancer role (Heaven 2026-07-15).
+      if (_policy.role != UserRole.freelancer) ...[
+        DistributorPanel(
+          booking: _booking,
+          assignments: _env.assignments,
+          currentUserId: widget.currentUserId,
+        ),
+        TaskProgressSection(
+          bookingId: _booking.id,
+          assignments: _env.assignments,
+          taskProgress: _env.taskProgress,
+        ),
+        StatusTimeline(entries: _env.statusHistory),
+        ReEditSection(booking: _booking, requests: _env.reEditRequests),
+      ],
       if (_booking.notes != null && _booking.notes!.isNotEmpty)
         WebFormCard(
           label: 'Notes',
@@ -752,23 +773,31 @@ class _WebBookingDetailState extends ConsumerState<_WebBookingDetail> {
 
   // ───────────────────────────────────────────────── ACTIONS + INVOICE
   Widget _actionRow(BuildContext context) {
-    final canCancel = _policy.can(Capability.cancelBooking) &&
+    final canCancel = (_policy.can(Capability.cancelBooking) ||
+            BookingStatusMachine.canTransition(
+                _policy.role, _booking.status, BookingStatus.cancelled,
+                isOwnBooking: _isOwnBooking)) &&
         _booking.status != BookingStatus.cancelled;
+    // Freelancers keep only the share action — the client invoice (and the
+    // auto-generate panel) are Owner features (Heaven 2026-07-15).
+    final canClientInvoice = _policy.role != UserRole.freelancer;
     return Row(
       children: [
-        WebPillButton(
-          label: _invoiceOpen
-              ? 'Hide Invoice Panel'
-              : '⚡ Auto-generate Invoice',
-          onTap: () => setState(() => _invoiceOpen = !_invoiceOpen),
-        ),
-        const SizedBox(width: 10),
-        WebTintButton(
-          label: 'Client Invoice · PDF',
-          onTap: () =>
-              _invoiceAction._showInvoiceSheet(context, ref, forClient: true),
-        ),
-        const SizedBox(width: 10),
+        if (canClientInvoice) ...[
+          WebPillButton(
+            label: _invoiceOpen
+                ? 'Hide Invoice Panel'
+                : '⚡ Auto-generate Invoice',
+            onTap: () => setState(() => _invoiceOpen = !_invoiceOpen),
+          ),
+          const SizedBox(width: 10),
+          WebTintButton(
+            label: 'Client Invoice · PDF',
+            onTap: () =>
+                _invoiceAction._showInvoiceSheet(context, ref, forClient: true),
+          ),
+          const SizedBox(width: 10),
+        ],
         WebTintButton(
           label: 'Share Event Details',
           accent: WebTheme.nightText,

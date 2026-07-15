@@ -107,7 +107,6 @@ class WebNavShell extends ConsumerStatefulWidget {
         capability: Capability.viewFinancials),
     _NavDest(Icons.groups_rounded, 'Team', RouteNames.team,
         capability: Capability.accessTeam),
-    _NavDest(Icons.chat_bubble_outline_rounded, 'Chat', RouteNames.chat),
     _NavDest(Icons.campaign_outlined, 'Announce', RouteNames.announcements,
         capability: Capability.viewAnnouncements),
     _NavDest(Icons.inventory_2_outlined, 'Packages', RouteNames.packages,
@@ -182,8 +181,6 @@ class WebNavShell extends ConsumerStatefulWidget {
         return 'Finance';
       case RouteNames.team:
         return 'Team';
-      case RouteNames.chat:
-        return 'Team Chat';
       case RouteNames.announcements:
         return 'Announcements';
       case RouteNames.packages:
@@ -222,6 +219,8 @@ class WebNavShell extends ConsumerStatefulWidget {
         return 'Calendar Sync';
       case RouteNames.profile:
         return 'Profile';
+      case RouteNames.pettyCash:
+        return 'Petty Cash';
       case RouteNames.notifications:
         return 'Notifications';
       default:
@@ -267,6 +266,16 @@ class _WebNavShellState extends ConsumerState<WebNavShell> {
         d.capability == null || policy.can(d.capability!);
     final primary = WebNavShell._primary.where(visible).toList();
     final more = WebNavShell._more.where(visible).toList();
+    // A Freelancer has no Finance hub, but still logs their own expenses and
+    // petty cash (Heaven 2026-07-15: "ফ্রিলান্সার রোল এ খরচ এড করো.
+    // প্রিটি ক্যাস এড করো").
+    if (!policy.can(Capability.viewFinancials)) {
+      more.insertAll(0, const [
+        _NavDest(Icons.money_off_rounded, 'Expenses',
+            RouteNames.financeExpenses),
+        _NavDest(Icons.savings_outlined, 'Petty Cash', RouteNames.pettyCash),
+      ]);
+    }
 
     return Material(
       type: MaterialType.transparency,
@@ -798,8 +807,6 @@ class _Sidebar extends ConsumerWidget {
         return 'MANAGER';
       case UserRole.freelancer:
         return 'FREELANCER';
-      case UserRole.officeStaff:
-        return 'OFFICE STAFF';
       case UserRole.webAdmin:
         return 'ADMIN';
     }
@@ -808,9 +815,11 @@ class _Sidebar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final name = user?.name ?? 'Graphy7';
+    // No email fallback — the email must never appear in the sidebar
+    // (Heaven 2026-07-15).
     final sub = user?.companyName?.isNotEmpty == true
         ? user!.companyName!
-        : (user?.email ?? '');
+        : '';
 
     return Container(
       width: WebNavShell._sidebarWidth,
@@ -887,7 +896,6 @@ class _Sidebar extends ConsumerWidget {
                   initials: _initials(name),
                   name: name,
                   sub: sub,
-                  email: user?.email ?? '',
                   roleLabel: _roleLabel(role),
                 ),
                 const SizedBox(height: 16),
@@ -948,14 +956,12 @@ class _ProfileBlock extends StatelessWidget {
     required this.initials,
     required this.name,
     required this.sub,
-    required this.email,
     required this.roleLabel,
   });
 
   final String initials;
   final String name;
   final String sub;
-  final String email;
   final String roleLabel;
 
   @override
@@ -1018,20 +1024,8 @@ class _ProfileBlock extends StatelessWidget {
                   size: 10.5, color: WebTheme.chromeInkMuted),
             ),
           ],
-          // Always surface the signed-in email so the user can confirm which
-          // account they're on (same account works on web + mobile). Skipped
-          // only when the line above already IS the email (no company name).
-          if (email.isNotEmpty && email != sub) ...[
-            const SizedBox(height: 3),
-            Text(
-              email,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: WebTheme.bodyStyle(
-                  size: 9.5, color: WebTheme.chromeInkMuted),
-            ),
-          ],
+          // Email deliberately NOT shown here (Heaven 2026-07-15: "জিমেইল
+          // দেখা যাবে না") — it stays visible in Profile/Settings only.
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),

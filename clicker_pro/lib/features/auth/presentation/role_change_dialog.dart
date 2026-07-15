@@ -381,9 +381,6 @@ class _RoleOption extends StatelessWidget {
         return 'Hybrid. Inherits Owner and Freelancer capabilities.';
       case UserRole.manager:
         return 'Invite-only. Cannot self-register.';
-      case UserRole.officeStaff:
-        return 'Office staff — editor, HR, manager. Set your position '
-            'from Profile after signing in.';
       case UserRole.webAdmin:
         return 'Platform administrator. Full system access.';
     }

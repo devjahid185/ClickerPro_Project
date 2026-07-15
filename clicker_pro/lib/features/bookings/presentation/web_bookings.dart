@@ -27,6 +27,8 @@ import 'package:intl/intl.dart';
 
 import '../../../core/booking_status/booking_status.dart';
 import '../../../core/navigation/route_names.dart';
+import '../../../core/role/capability.dart';
+import '../../auth/domain/user_role.dart';
 import '../../../shared/widgets/web_motion.dart';
 import '../../../theme/web_theme.dart';
 import '../application/booking_providers.dart';
@@ -35,28 +37,25 @@ import '../domain/booking_filter.dart';
 import '../domain/event_type_vibe.dart';
 import '../domain/shift.dart';
 
-/// A status chip in the handoff's filter row.
-enum _Chip { all, pending, confirmed, successful, delivered, cancelled }
+/// A status chip in the filter row — EXACTLY the mobile booking list's tabs
+/// (All · Complete · Delivery · Cancel). The old web-only Pending/Confirmed
+/// chips were removed for mobile parity (Heaven 2026-07-15: "pending,
+/// confirm বাদ যাবে। যা মোবাইলে এপে নেই").
+enum _Chip { all, complete, delivered, cancelled }
 
 extension _ChipX on _Chip {
   String get label => switch (this) {
         _Chip.all => 'ALL',
-        _Chip.pending => 'PENDING',
-        _Chip.confirmed => 'CONFIRMED',
-        _Chip.successful => 'SUCCESSFUL',
-        _Chip.delivered => 'DELIVERED',
-        _Chip.cancelled => 'CANCELLED',
+        _Chip.complete => 'COMPLETE',
+        _Chip.delivered => 'DELIVERY',
+        _Chip.cancelled => 'CANCEL',
       };
 
-  /// The booking statuses this chip keeps. `all` keeps everything.
+  /// The booking statuses this chip keeps — same sets as the mobile tabs.
   Set<BookingStatus> get statuses => switch (this) {
         _Chip.all => const {},
-        _Chip.pending => const {BookingStatus.pending},
-        _Chip.confirmed => const {
-            BookingStatus.confirmed,
+        _Chip.complete => const {
             BookingStatus.inProgress,
-          },
-        _Chip.successful => const {
             BookingStatus.shotComplete,
             BookingStatus.completed,
           },
@@ -81,6 +80,10 @@ class _WebBookingsState extends ConsumerState<WebBookings> {
     // Watch the unfiltered stream once; the chip filters client-side so
     // switching is instant and never re-hits the data layer.
     final async = ref.watch(bookingListProvider(const BookingFilter()));
+    // The dashboard KPI cards (Today / Upcoming / Total / Delivered) preset
+    // this shared filter before navigating here — honour it, otherwise the
+    // card taps "do nothing" on web (Heaven 2026-07-15).
+    final shared = ref.watch(bookingFilterProvider);
 
     return ScrollConfiguration(
       behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
@@ -99,7 +102,7 @@ class _WebBookingsState extends ConsumerState<WebBookings> {
             loading: () => const _LoadingColumns(),
             error: (_, _) => _Message('Could not load bookings.'),
             data: (all) {
-              final filtered = _apply(all);
+              final filtered = _apply(all, shared);
               final day = filtered
                   .where((b) => b.shift != Shift.night)
                   .toList();
@@ -139,12 +142,25 @@ class _WebBookingsState extends ConsumerState<WebBookings> {
     );
   }
 
-  /// Applies the active chip, soonest-first.
-  List<Booking> _apply(List<Booking> all) {
+  /// Applies the shared dashboard filter (date range + preset statuses),
+  /// then the active chip, soonest-first.
+  List<Booking> _apply(List<Booking> all, BookingFilter shared) {
+    Iterable<Booking> rows = all;
+    final from = shared.from;
+    final to = shared.to;
+    if (from != null) {
+      rows = rows.where((b) => !b.date.isBefore(from));
+    }
+    if (to != null) {
+      rows = rows.where((b) => b.date.isBefore(to));
+    }
     final wanted = _chip.statuses;
-    final out = all.where((b) {
-      if (wanted.isEmpty) return b.status != BookingStatus.cancelled;
-      return wanted.contains(b.status);
+    final out = rows.where((b) {
+      if (wanted.isNotEmpty) return wanted.contains(b.status);
+      // "All" honours a dashboard-preset status scope (e.g. Upcoming /
+      // Delivered); otherwise it hides cancelled like the mobile list.
+      if (shared.statuses.isNotEmpty) return shared.statuses.contains(b.status);
+      return b.status != BookingStatus.cancelled;
     }).toList()
       ..sort((a, b) => a.date.compareTo(b.date));
     return out;
@@ -152,33 +168,41 @@ class _WebBookingsState extends ConsumerState<WebBookings> {
 }
 
 // ─────────────────────────────────────────────────────────── CHIP ROW
-class _ChipRow extends StatelessWidget {
+class _ChipRow extends ConsumerWidget {
   const _ChipRow({required this.chip, required this.onChip});
   final _Chip chip;
   final ValueChanged<_Chip> onChip;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final policy = ref.watch(bookingsPolicyProvider);
+    // Mobile parity: a Freelancer's list has no Delivery tab (delivery is
+    // Owner work), no self-booking queue and no full studio booking form.
+    final chips = policy.role == UserRole.freelancer
+        ? _Chip.values.where((c) => c != _Chip.delivered)
+        : _Chip.values;
     return Wrap(
       spacing: 10,
       runSpacing: 10,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        for (final c in _Chip.values)
+        for (final c in chips)
           _StatusChip(
             label: c.label,
             active: c == chip,
             onTap: () => onChip(c),
           ),
         // Right-aligned actions ride the same wrap on narrow widths.
-        _SelfBookingChip(
-          onTap: () => Navigator.of(context)
-              .pushNamed(RouteNames.pendingPublicBookings),
-        ),
-        _NewBookingPill(
-          onTap: () =>
-              Navigator.of(context).pushNamed(RouteNames.bookingNew),
-        ),
+        if (policy.can(Capability.approvePublicBooking))
+          _SelfBookingChip(
+            onTap: () => Navigator.of(context)
+                .pushNamed(RouteNames.pendingPublicBookings),
+          ),
+        if (policy.can(Capability.createOwnBooking))
+          _NewBookingPill(
+            onTap: () =>
+                Navigator.of(context).pushNamed(RouteNames.bookingNew),
+          ),
       ],
     );
   }

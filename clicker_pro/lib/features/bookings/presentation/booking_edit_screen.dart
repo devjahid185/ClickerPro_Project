@@ -675,6 +675,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
           label: 'Company Name',
           controller: _companyNameCtrl,
           hint: 'Studio or brand name',
+          errorText: _validation.errorFor(BookingField.client),
           onChanged: (v) {
             _markDirty();
             // Freelancer's "company" is the client they're shooting for —
@@ -1703,6 +1704,22 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
       _shakeCtrl.forward(from: 0);
       _showSnack('Please fix the highlighted fields.');
       return;
+    }
+    // Owner rule (Heaven 2026-07-15): a NEW studio booking must carry an
+    // advance amount — the advance field lives on this screen (recorded as a
+    // Payment after save), so it is enforced here, not in the controller.
+    final draftForAdvance = ref
+        .read(bookingEditControllerProvider(widget.bookingId))
+        .valueOrNull;
+    if (widget.bookingId == null &&
+        draftForAdvance != null &&
+        !draftForAdvance.freelancerMode) {
+      final advance = double.tryParse(_advanceCtrl.text.trim()) ?? 0;
+      if (advance <= 0) {
+        _shakeCtrl.forward(from: 0);
+        _showSnack('Advance amount is required to save the booking.');
+        return;
+      }
     }
     // Clear any stale inline errors before the save attempt.
     if (_validation.errors.isNotEmpty) {

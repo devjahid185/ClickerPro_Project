@@ -573,7 +573,6 @@ class _RolePill extends StatelessWidget {
     UserRole.owner,
     UserRole.freelancer,
     UserRole.both,
-    UserRole.officeStaff,
   ];
 
   String _label(UserRole r) {
@@ -586,8 +585,6 @@ class _RolePill extends StatelessWidget {
         return 'Both';
       case UserRole.manager:
         return 'Manager';
-      case UserRole.officeStaff:
-        return 'Staff';
       case UserRole.webAdmin:
         return 'Web Admin';
     }

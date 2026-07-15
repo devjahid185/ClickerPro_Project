@@ -88,8 +88,6 @@ class UserModel {
         return 'Freelancer · $firstName';
       case UserRole.manager:
         return 'Manager · $firstName';
-      case UserRole.officeStaff:
-        return 'Staff · $firstName';
       case UserRole.webAdmin:
         return 'Admin · $firstName';
     }

@@ -379,6 +379,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
               ),
             _StatusChips(
               selected: _activeChip,
+              showDelivery: policy.role != UserRole.freelancer,
               onSelected: (chip) {
                 ref.read(bookingFilterProvider.notifier).state = ref
                     .read(bookingFilterProvider)
@@ -518,19 +519,32 @@ class _SearchBar extends StatelessWidget {
 }
 
 class _StatusChips extends StatelessWidget {
-  const _StatusChips({required this.selected, required this.onSelected});
+  const _StatusChips({
+    required this.selected,
+    required this.onSelected,
+    this.showDelivery = true,
+  });
 
   final _StatusChip selected;
   final ValueChanged<_StatusChip> onSelected;
 
+  /// Delivery is an Owner-side pipeline — the Freelancer list shows only
+  /// All · Complete · Cancel (Heaven 2026-07-15: "delivery বাদ যাবে.
+  /// ডেলিভারি অউনার করবে").
+  final bool showDelivery;
+
   // Booking List tabs (Heaven 2026-07-12): All · Complete · Delivery · Cancel.
   // "All" hides cancelled; Cancel keeps them reachable.
-  static const _chips = [
+  static const _allChips = [
     (_StatusChip.all, 'All'),
     (_StatusChip.complete, 'Complete'),
     (_StatusChip.delivered, 'Delivery'),
     (_StatusChip.cancelled, 'Cancel'),
   ];
+
+  List<(_StatusChip, String)> get _chips => showDelivery
+      ? _allChips
+      : _allChips.where((c) => c.$1 != _StatusChip.delivered).toList();
 
   @override
   Widget build(BuildContext context) {

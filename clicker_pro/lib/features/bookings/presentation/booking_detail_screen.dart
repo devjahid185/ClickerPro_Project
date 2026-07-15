@@ -162,7 +162,20 @@ class BookingDetailScreen extends ConsumerWidget {
                 side: BorderSide(color: AppColors.line(0.08)),
               ),
               itemBuilder: (_) {
-                final canCancel = policy.can(Capability.cancelBooking);
+                // Freelancers may cancel THEIR OWN logged bookings even
+                // though they lack the studio-wide cancel capability
+                // (Heaven 2026-07-15).
+                final booking = detailAsync.valueOrNull?.booking;
+                final ownActive = booking != null &&
+                    policy.role == UserRole.freelancer &&
+                    BookingStatusMachine.canTransition(
+                      policy.role,
+                      booking.status,
+                      BookingStatus.cancelled,
+                      isOwnBooking: true,
+                    );
+                final canCancel =
+                    policy.can(Capability.cancelBooking) || ownActive;
                 return [
                   if (canCancel)
                     PopupMenuItem(
@@ -214,25 +227,44 @@ class BookingDetailScreen extends ConsumerWidget {
         floatingActionButton: detailAsync.maybeWhen(
           data: (envelope) {
             final status = envelope.booking.status;
-            // Freelancers get exactly one action — "Mark Shoot Complete" —
-            // available from confirmed or inProgress (the machine's
-            // confirmed → shotComplete shortcut). Owners/managers keep the
-            // normal step-by-step forward chain.
-            final next = policy.role == UserRole.freelancer
-                ? (BookingStatusMachine.canTransition(
-                        policy.role,
-                        status,
-                        BookingStatus.shotComplete,
-                      )
-                      ? BookingStatus.shotComplete
-                      : null)
-                : BookingStatusMachine.nextForward(status);
+            // The backend scopes a Freelancer's list to their OWN bookings
+            // (booking_context = FREELANCER), so locally every booking a
+            // freelancer opens is their own; the server re-checks context.
+            final isOwnBooking = policy.role == UserRole.freelancer;
+            // Freelancers get one action per booking kind:
+            //   • their OWN logged booking → "Move to Complete" (Heaven
+            //     2026-07-15: freelancer bookings must be completable);
+            //   • an assigned studio event → "Mark Shoot Complete".
+            // Owners/managers keep the normal step-by-step forward chain.
+            final BookingStatus? next;
+            if (policy.role == UserRole.freelancer) {
+              if (isOwnBooking &&
+                  BookingStatusMachine.canTransition(
+                    policy.role,
+                    status,
+                    BookingStatus.completed,
+                    isOwnBooking: true,
+                  )) {
+                next = BookingStatus.completed;
+              } else if (BookingStatusMachine.canTransition(
+                policy.role,
+                status,
+                BookingStatus.shotComplete,
+              )) {
+                next = BookingStatus.shotComplete;
+              } else {
+                next = null;
+              }
+            } else {
+              next = BookingStatusMachine.nextForward(status);
+            }
             if (next == null) return null;
             if (!policy.can(Capability.advanceBookingStatus)) return null;
             if (!BookingStatusMachine.canTransition(
               policy.role,
               status,
               next,
+              isOwnBooking: isOwnBooking,
             )) {
               return null;
             }
@@ -240,7 +272,8 @@ class BookingDetailScreen extends ConsumerWidget {
               backgroundColor: AppColors.orange,
               foregroundColor: AppColors.onAccent,
               icon: Icon(
-                next == BookingStatus.shotComplete
+                next == BookingStatus.shotComplete ||
+                        next == BookingStatus.completed
                     ? Icons.check_circle_outline_rounded
                     : Icons.arrow_forward_rounded,
               ),
@@ -249,7 +282,7 @@ class BookingDetailScreen extends ConsumerWidget {
                     ? 'Mark Shoot Complete'
                     : 'Move to ${_titleCase(next.name)}',
               ),
-              onPressed: () => _handleAdvance(context, ref, next),
+              onPressed: () => _handleAdvance(context, ref, next!),
             );
           },
           orElse: () => null,
@@ -664,28 +697,40 @@ class _DetailBody extends StatelessWidget {
             bookingTotal:
                 booking.customPrice ?? envelope.package?.netPrice,
           ),
-        AssignmentsSection(
-          assignments: envelope.assignments,
-          currentUserId: currentUserId,
-          currentRole: policy.role as UserRole,
-          showPayout: showPayment,
-          chiefUserId: booking.chiefPhotographerUserId,
-        ),
-        // Distributor tools — only renders for an assigned freelancer with
-        // Distribution mode ON (add same-role crew / step aside).
-        DistributorPanel(
+        // Assignments, status history and re-edit history are Owner-side
+        // studio-management surfaces — hidden from the Freelancer role
+        // (Heaven 2026-07-15: "এগুলা শুধু অউনার রোলের জন্য").
+        if (policy.role != UserRole.freelancer) ...[
+          AssignmentsSection(
+            assignments: envelope.assignments,
+            currentUserId: currentUserId,
+            currentRole: policy.role as UserRole,
+            showPayout: showPayment,
+            chiefUserId: booking.chiefPhotographerUserId,
+          ),
+          // Distributor tools — only renders for an assigned freelancer with
+          // Distribution mode ON (add same-role crew / step aside).
+          DistributorPanel(
+            booking: booking,
+            assignments: envelope.assignments,
+            currentUserId: currentUserId,
+          ),
+          TaskProgressSection(
+            bookingId: booking.id,
+            assignments: envelope.assignments,
+            taskProgress: envelope.taskProgress,
+          ),
+          StatusTimeline(entries: envelope.statusHistory),
+          ReEditSection(booking: booking, requests: envelope.reEditRequests),
+        ],
+        _InvoiceAction(
           booking: booking,
-          assignments: envelope.assignments,
-          currentUserId: currentUserId,
+          envelope: envelope,
+          lang: lang,
+          // Freelancer keeps only the share action; the client invoice is
+          // an Owner feature.
+          showClientInvoice: policy.role != UserRole.freelancer,
         ),
-        TaskProgressSection(
-          bookingId: booking.id,
-          assignments: envelope.assignments,
-          taskProgress: envelope.taskProgress,
-        ),
-        StatusTimeline(entries: envelope.statusHistory),
-        ReEditSection(booking: booking, requests: envelope.reEditRequests),
-        _InvoiceAction(booking: booking, envelope: envelope, lang: lang),
         if (booking.notes != null && booking.notes!.isNotEmpty)
           DetailSection(
             title: 'Notes',
@@ -1224,36 +1269,43 @@ class _InvoiceAction extends ConsumerWidget {
     required this.booking,
     required this.envelope,
     required this.lang,
+    this.showClientInvoice = true,
   });
 
   final Booking booking;
   final BookingDetailEnvelope envelope;
   final String lang;
 
+  /// Owner-side professional invoice. Freelancers only get the share action.
+  final bool showClientInvoice;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return DetailSection(
-      title: 'Invoice & Share',
+      title: showClientInvoice ? 'Invoice & Share' : 'Share',
       child: Column(
         children: [
           // Client invoice — professional, always carries payment/due.
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.orange,
-                foregroundColor: AppColors.onAccent,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+          if (showClientInvoice) ...[
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.orange,
+                  foregroundColor: AppColors.onAccent,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
+                icon: const Icon(Icons.receipt_long_rounded, size: 18),
+                label: Text('Client Invoice'),
+                onPressed: () =>
+                    _showInvoiceSheet(context, ref, forClient: true),
               ),
-              icon: const Icon(Icons.receipt_long_rounded, size: 18),
-              label: Text('Client Invoice'),
-              onPressed: () => _showInvoiceSheet(context, ref, forClient: true),
             ),
-          ),
-          const SizedBox(height: 10),
+            const SizedBox(height: 10),
+          ],
           // Share event details — for the team / freelancers; payment is
           // hidden unless the owner opted in on the booking.
           SizedBox(

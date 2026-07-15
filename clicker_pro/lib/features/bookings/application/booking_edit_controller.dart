@@ -586,8 +586,10 @@ class BookingEditController
       errors[BookingField.date] = 'Date is required.';
     }
 
-    // Freelancer short-form has no client fields; only Owner/Both require
-    // a client name + phone.
+    // Heaven 2026-07-15: "নাম, নাম্বার, ডেট, সিফট না দিলে বুকিং হবে না" —
+    // name + phone + date are hard requirements (shift always carries a
+    // value); the Owner form additionally needs a package or price (advance
+    // is enforced by the screen, which owns that field).
     if (isOwnerMode) {
       if (draft.clientName == null || draft.clientName!.trim().isEmpty) {
         errors[BookingField.client] = 'Client name is required.';
@@ -597,6 +599,17 @@ class BookingEditController
       } else if (!PhoneValidator.isValid(draft.clientPhone!)) {
         errors[BookingField.clientPhone] =
             'Enter a valid 11-digit number (01XXXXXXXXX).';
+      }
+      if (draft.packageId == null &&
+          (draft.customPrice == null || draft.customPrice! <= 0)) {
+        errors[BookingField.customPrice] =
+            'Select a package or enter the package price.';
+      }
+    } else {
+      // Freelancer short-form: the typed company name is the booking's
+      // identity — required.
+      if (draft.clientName == null || draft.clientName!.trim().isEmpty) {
+        errors[BookingField.client] = 'Company name is required.';
       }
     }
 

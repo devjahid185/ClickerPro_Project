@@ -10,8 +10,17 @@ class AccountController extends Controller
     public function requestDelete(Request $request)
     {
         $user = $request->user();
+        // `deleted_at` doubles as the PURGE DEADLINE: the account is
+        // soft-deleted now and permanently erased once this moment passes.
+        // Logging back in before the deadline restores the account
+        // (AuthController::login), per Heaven 2026-07-15.
         $user->deleted_at = now()->addDays(7);
         $user->save();
+
+        // Force-logout EVERY device/session immediately — web delete must
+        // also end the mobile session ("ডিলিট করলে সব জায়গা থেকে ইউজার
+        // লগউট হয়ে যাবে অটো").
+        $user->tokens()->delete();
 
         return response()->json(['message' => 'Account scheduled for deletion in 7 days']);
     }

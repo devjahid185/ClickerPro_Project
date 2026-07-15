@@ -35,7 +35,6 @@ import '../../../shared/states/offline_banner.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_strings.dart';
 import '../../auth/application/session_controller.dart';
-import '../../auth/domain/user_role.dart';
 import '../../auth/presentation/role_change_dialog.dart';
 import '../../settings/application/language_controller.dart';
 import '../../team/application/team_providers.dart';
@@ -249,16 +248,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               onChanged: (val) =>
                   _updateDraft((d) => d.copyWith(whatsapp: val)),
             ),
-            // Office staff set what they do — Photo Editor, Video Editor,
-            // HR, Office Boy, Manager, … (free text).
-            if (view.role == UserRole.officeStaff)
-              _buildInfoField(
-                label: 'Position (e.g. Photo Editor, HR)',
-                value: view.specialization ?? '',
-                icon: Icons.badge_outlined,
-                onChanged: (val) =>
-                    _updateDraft((d) => d.copyWith(specialization: val)),
-              ),
             _buildInfoField(
               label: 'Email',
               value: view.email,

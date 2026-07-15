@@ -28,7 +28,6 @@ import '../../features/bookings/presentation/booking_edit_screen.dart';
 import '../../features/bookings/presentation/booking_list_screen.dart';
 import '../../features/bookings/presentation/calendar_screen.dart';
 import '../../features/bookings/presentation/packages_screen.dart';
-import '../../features/chat/presentation/chat_screen.dart';
 import '../../features/announcements/presentation/announcements_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/dashboard/presentation/dashboard_customize_screen.dart';
@@ -212,8 +211,6 @@ class AppRouter {
             child: RentScreen(),
           ),
         );
-      case RouteNames.chat:
-        return lensPageRoute<void>(const ChatScreen());
       case RouteNames.team:
         return lensPageRoute<void>(
           const RoleGatedScreen(

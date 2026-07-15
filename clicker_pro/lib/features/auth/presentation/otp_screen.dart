@@ -21,6 +21,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/navigation/route_names.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/providers.dart';
 import '../../../screens/dashboard_screen.dart';
@@ -227,8 +228,16 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
             return;
           }
           if (state.value != null) {
+            // The route MUST be named: the web nav shell tracks the current
+            // route name to decide whether to draw the sidebar chrome. An
+            // unnamed push left it stuck on '/otp' (a fullscreen route), so a
+            // fresh registration landed on a broken, chrome-less dashboard
+            // until a manual refresh (Heaven 2026-07-15).
             Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const DashboardScreen()),
+              MaterialPageRoute(
+                settings: const RouteSettings(name: RouteNames.dashboard),
+                builder: (_) => const DashboardScreen(),
+              ),
               (route) => false,
             );
           }

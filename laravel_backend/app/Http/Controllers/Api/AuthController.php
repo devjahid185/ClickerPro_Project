@@ -21,13 +21,17 @@ class AuthController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'phone' => 'nullable|string|max:30',
+            // One account per phone number (Heaven 2026-07-15: "এক নাম্বার বা
+            // মেইল দিয়ে দুবার রেজিষ্ট্রেশন করা যাবে না").
+            'phone' => 'nullable|string|max:30|unique:users,phone',
             'password' => 'required|string|min:6',
             // Self-service signup may only pick a self-service role. ADMIN and
             // MANAGER are privileged and must NEVER be assignable from public
             // registration (MANAGER comes via the invite flow). Anything else
             // falls back to OWNER.
-            'role' => 'nullable|string|in:OWNER,FREELANCER,BOTH,OFFICE_STAFF',
+            // OFFICE_STAFF removed (Heaven 2026-07-15) — Owner carries all
+            // office-staff capabilities; staff no longer use the app.
+            'role' => 'nullable|string|in:OWNER,FREELANCER,BOTH',
             // Owner/Both provide the company name at registration so they
             // never have to re-enter it — the app was sending this all
             // along but it was silently dropped here.
@@ -76,7 +80,17 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        $user = User::where('email', $data['email'])->first();
+        // Include soft-deleted rows: an account inside its 7-day deletion
+        // grace window can log back in (which restores it); past the window
+        // it is permanently purged (Heaven 2026-07-15).
+        $user = User::withTrashed()->where('email', $data['email'])->first();
+
+        if ($user && $user->trashed() && now()->gte($user->deleted_at)) {
+            // Grace expired — erase the account (FKs cascade) and treat the
+            // login as unknown credentials.
+            $user->forceDelete();
+            $user = null;
+        }
 
         $success = $user && Hash::check($data['password'], $user->password);
 
@@ -94,6 +108,12 @@ class AuthController extends Controller
 
         if (!$user->is_active) {
             return response()->json(['message' => 'Account is disabled'], 403);
+        }
+
+        // Logging in during the 7-day grace window cancels the pending
+        // deletion and restores the account.
+        if ($user->trashed()) {
+            $user->restore();
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;

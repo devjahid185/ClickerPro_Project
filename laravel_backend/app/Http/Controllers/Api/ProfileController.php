@@ -10,7 +10,19 @@ class ProfileController extends Controller
 {
     public function show(Request $request)
     {
-        return response()->json(['data' => new UserResource($request->user())]);
+        $user = $request->user();
+
+        // Accounts created before public self-booking have a NULL
+        // public_booking_token, which made the share link + client booking
+        // form dead ("লিংক শেয়ার ও করা যায় না" — Heaven 2026-07-15).
+        // Backfill it on demand so every account always has a working link.
+        if (empty($user->public_booking_token)) {
+            $user->forceFill([
+                'public_booking_token' => (string) \Illuminate\Support\Str::uuid(),
+            ])->save();
+        }
+
+        return response()->json(['data' => new UserResource($user)]);
     }
 
     public function update(Request $request)
@@ -60,7 +72,7 @@ class ProfileController extends Controller
         ]);
 
         $requested = strtoupper($data['newRole'] ?? $data['role'] ?? '');
-        if (!in_array($requested, ['OWNER', 'FREELANCER', 'BOTH', 'OFFICE_STAFF'], true)) {
+        if (!in_array($requested, ['OWNER', 'FREELANCER', 'BOTH'], true)) {
             return response()->json(['message' => 'Invalid role'], 422);
         }
 

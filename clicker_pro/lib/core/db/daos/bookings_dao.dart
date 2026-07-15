@@ -302,9 +302,7 @@ class BookingsDao extends DatabaseAccessor<AppDatabase>
         );
         break;
       case UserRole.freelancer:
-      case UserRole.officeStaff:
-        // createdBy == userId OR EXISTS assignment. Office staff (editors)
-        // see only events they're assigned to work on, same as freelancers.
+        // createdBy == userId OR EXISTS assignment.
         q.where(
           (t) =>
               t.createdByUserId.equals(currentUserId) |

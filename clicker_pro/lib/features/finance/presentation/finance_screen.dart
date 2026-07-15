@@ -60,11 +60,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   @override
   Widget build(BuildContext context) {
     final policy = ref.watch(bookingsPolicyProvider);
-    // Office staff get the same locked finance view as managers — dues
-    // and client names only, no studio income/profit figures.
-    final isManager =
-        policy.role == UserRole.manager ||
-        policy.role == UserRole.officeStaff;
+    final isManager = policy.role == UserRole.manager;
     final isBoth = policy.role == UserRole.both;
     final isFreelancer = policy.role == UserRole.freelancer;
     // Pure freelancers always see the earnings face of Finance; Both-role

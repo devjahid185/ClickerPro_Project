@@ -22,6 +22,7 @@ import '../../../core/db/daos/outbox_dao.dart';
 import '../../../core/db/daos/status_history_dao.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/role/role_policy.dart';
+import '../../auth/domain/user_role.dart';
 import '../domain/status_history_entry.dart';
 import '../domain/status_repository.dart';
 import 'booking_api.dart';
@@ -79,7 +80,18 @@ class StatusRepositoryImpl implements StatusRepository {
     required RolePolicy policy,
     String? note,
   }) async {
-    if (!BookingStatusMachine.canTransition(policy.role, expectedFrom, to)) {
+    // A freelancer's own logged booking may jump straight to completed /
+    // cancelled (simplified lifecycle). The backend scopes a Freelancer's
+    // booking list to booking_context = FREELANCER (their own rows), so any
+    // booking a freelancer holds locally IS their own; the server re-checks
+    // booking_context as the source of truth.
+    final isOwnBooking = policy.role == UserRole.freelancer;
+    if (!BookingStatusMachine.canTransition(
+      policy.role,
+      expectedFrom,
+      to,
+      isOwnBooking: isOwnBooking,
+    )) {
       throw StatusTransitionDeniedException(
         role: policy.role,
         from: expectedFrom,

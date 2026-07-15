@@ -225,22 +225,33 @@ class BookingController extends Controller
             'note' => 'nullable|string',
         ]);
 
-        // Freelancers may only flip an event to SHOT_COMPLETE, and only on
-        // events they are actually assigned to. One assignee marking the
-        // shoot done completes it for the whole crew.
+        // Freelancer rules (Heaven 2026-07-15):
+        //  • Their OWN logged booking → may move it to COMPLETED or CANCELLED
+        //    (simplified lifecycle — no delivery step for freelancers).
+        //  • An assigned studio event → SHOT_COMPLETE only, and only when
+        //    actually assigned. One assignee marking the shoot done completes
+        //    it for the whole crew.
         $user = $request->user();
         if ($user->role === 'FREELANCER') {
-            if (strtoupper($data['status']) !== 'SHOT_COMPLETE') {
+            $target = strtoupper($data['status']);
+            // A freelancer's own logged booking carries booking_context
+            // FREELANCER (stamped at store()); studio events are OWNER/NULL.
+            $isOwn = $event->booking_context === 'FREELANCER';
+            if ($isOwn && in_array($target, ['COMPLETED', 'CANCELLED'], true)) {
+                // allowed — falls through to the chronology guard below
+                // (CANCELLED is not post-event, COMPLETED unlocks event-day).
+            } elseif ($target === 'SHOT_COMPLETE') {
+                $assigned = \App\Models\Assignment::where('event_id', $event->id)
+                    ->where('user_id', $user->id)
+                    ->exists();
+                if (!$assigned) {
+                    return response()->json([
+                        'message' => 'You are not assigned to this event.',
+                    ], 403);
+                }
+            } else {
                 return response()->json([
-                    'message' => 'Freelancers can only mark the shoot complete.',
-                ], 403);
-            }
-            $assigned = \App\Models\Assignment::where('event_id', $event->id)
-                ->where('user_id', $user->id)
-                ->exists();
-            if (!$assigned) {
-                return response()->json([
-                    'message' => 'You are not assigned to this event.',
+                    'message' => 'Freelancers can only complete/cancel their own bookings or mark an assigned shoot complete.',
                 ], 403);
             }
         }

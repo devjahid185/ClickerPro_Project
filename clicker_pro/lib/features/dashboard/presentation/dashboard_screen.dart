@@ -1211,12 +1211,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         label: t('btn_calendar'),
         routeName: RouteNames.calendar,
       ),
-      _qaBtn(
-        icon: Icons.chat_bubble_rounded,
-        color: AppColors.teal,
-        label: 'Team Chat',
-        routeName: RouteNames.chat,
-      ),
       if (policy.can(Capability.accessTeam))
         _qaBtn(
           icon: Icons.groups_rounded,
@@ -1234,13 +1228,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           label: 'Team',
           routeName: RouteNames.freelancerCompanies,
         ),
-      if (policy.can(Capability.viewFinancials))
-        _qaBtn(
-          icon: Icons.receipt_long_rounded,
-          color: AppColors.orange,
-          label: 'Expense',
-          routeName: RouteNames.financeExpenses,
-        ),
+      // Every role logs expenses — a Freelancer tracks their own costs too
+      // (Heaven 2026-07-15).
+      _qaBtn(
+        icon: Icons.receipt_long_rounded,
+        color: AppColors.orange,
+        label: 'Expense',
+        routeName: RouteNames.financeExpenses,
+      ),
       _qaBtn(
         icon: Icons.calculate_rounded,
         color: AppColors.indigo,
@@ -2487,10 +2482,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       Navigator.pop(context);
                       _pushNamed(RouteNames.reEditRequests);
                     }),
-                  _sbItem(Icons.chat_bubble_outline, 'Team Chat', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.chat);
-                  }),
                   if (policy.can(Capability.accessTeam))
                     _sbItem(Icons.people_outline, 'Team & Staff', () {
                       Navigator.pop(context);
@@ -2506,19 +2497,36 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     _pushNamed(RouteNames.broadcasts);
                   }),
                   _sbGroup('FINANCE'),
-                  _sbItem(Icons.payments_outlined, 'Payments', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.paymentEntry);
-                  }),
+                  // Payments entry is the Owner-side feature — a Freelancer
+                  // requests payment from their due list instead (Heaven
+                  // 2026-07-15).
+                  if (policy.can(Capability.viewBookingPayments))
+                    _sbItem(Icons.payments_outlined, 'Payments', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.paymentEntry);
+                    }),
                   if (policy.can(Capability.accessInvoice))
                     _sbItem(Icons.receipt_long_outlined, 'Invoices', () {
                       Navigator.pop(context);
                       _pushNamed(RouteNames.invoice);
                     }),
+                  // Freelancer lands straight on the expense log (the Finance
+                  // hub shows them the earnings face, not expenses); Petty
+                  // Cash rides along for them too (Heaven 2026-07-15:
+                  // "ফ্রিলান্সার রোল এ খরচ এড করো। প্রিটি ক্যাস এড করো").
                   _sbItem(Icons.money_off_outlined, 'Expenses', () {
                     Navigator.pop(context);
-                    _pushNamed(RouteNames.finance);
+                    _pushNamed(
+                      policy.can(Capability.viewFinancials)
+                          ? RouteNames.finance
+                          : RouteNames.financeExpenses,
+                    );
                   }),
+                  if (!policy.can(Capability.viewFinancials))
+                    _sbItem(Icons.savings_outlined, 'Petty Cash', () {
+                      Navigator.pop(context);
+                      _pushNamed(RouteNames.pettyCash);
+                    }),
                   _sbItem(Icons.bar_chart_outlined, 'Reports & Analytics', () {
                     Navigator.pop(context);
                     _pushNamed(RouteNames.reports);
@@ -2745,7 +2753,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         l.contains('waitlist')) {
       return AppColors.indigo;
     }
-    if (l.contains('team') || l.contains('chat') || l.contains('staff')) {
+    if (l.contains('team') || l.contains('staff')) {
       return AppColors.gold;
     }
     if (l.contains('announce') ||
@@ -2795,26 +2803,29 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   // ─── Bottom navigation ─────────────────────────────────────────────
   Widget _buildBottomNav() {
-    return SafeArea(
-      top: false,
-      child: Container(
+    // Docked flush to the screen's bottom edge (Heaven 2026-07-15: "এটা
+    // মোবাইলের একবারে নিচে থাকবে") — the old floating pill left a visible
+    // gap under the bar. The surface extends behind the gesture/nav inset;
+    // the 56px content row sits just above it.
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    return Container(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border(top: BorderSide(color: AppColors.line(0.06))),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.line(0.10),
+            blurRadius: 20,
+            spreadRadius: -2,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SizedBox(
         // Slim bar — 56px keeps icon + label readable while reclaiming
         // vertical space for content.
         height: 56,
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppColors.line(0.06)),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.line(0.10),
-              blurRadius: 20,
-              spreadRadius: -2,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
         child: Row(
           children: [
             _navTab(

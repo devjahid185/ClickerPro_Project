@@ -1,15 +1,15 @@
 // lib/features/auth/domain/user_role.dart
 //
 // Role system. Manager is invite-bound and cannot self-register.
-// Office Staff (photo/video editors, HR, office boys…) self-register and
-// set their position from the profile screen afterwards.
+// The old OFFICE_STAFF role was removed (Heaven 2026-07-15) — the Owner
+// account carries every office-staff capability instead; legacy accounts
+// that still send OFFICE_STAFF resolve to the fallback role.
 
 enum UserRole {
   owner,
   freelancer,
   both,
   manager,
-  officeStaff,
   webAdmin;
 
   static UserRole fromString(
@@ -20,9 +20,6 @@ enum UserRole {
     final lower = raw.toLowerCase();
     if (lower == 'admin' || lower == 'webadmin' || lower == 'web_admin') {
       return UserRole.webAdmin;
-    }
-    if (lower == 'office_staff' || lower == 'officestaff' || lower == 'staff') {
-      return UserRole.officeStaff;
     }
     for (final r in UserRole.values) {
       if (r.name.toLowerCase() == lower) return r;
@@ -40,18 +37,14 @@ enum UserRole {
         return 'Both';
       case UserRole.manager:
         return 'Manager';
-      case UserRole.officeStaff:
-        return 'Office Staff';
       case UserRole.webAdmin:
         return 'Web Admin';
     }
   }
 
-  /// Wire format used by backend payloads ('owner' | 'freelancer' | 'both' | 'manager' | 'officeStaff' | 'webAdmin').
+  /// Wire format used by backend payloads ('owner' | 'freelancer' | 'both' | 'manager' | 'webAdmin').
   String get wireName => name;
 
   /// UPPERCASE server enum value for the Laravel `users.role` column.
-  /// officeStaff needs the underscore form; the rest are plain uppercase.
-  String get serverName =>
-      this == UserRole.officeStaff ? 'OFFICE_STAFF' : name.toUpperCase();
+  String get serverName => name.toUpperCase();
 }

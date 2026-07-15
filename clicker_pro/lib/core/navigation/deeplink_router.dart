@@ -9,7 +9,6 @@
 //   /bookings/<id>           → bookingDetail
 //   /booking/<id>            → bookingDetail (legacy alias)
 //   /re-edit-requests        → reEditRequests
-//   /chat                    → chat
 //   /reports                 → reports
 //   /finance, /expenses      → finance
 //   /gear, /rent, /team      → matching screens
@@ -107,9 +106,6 @@ class DeeplinkRouter {
           return DeeplinkTarget(RouteNames.publicBooking, arguments: rest[1]);
         }
         return const DeeplinkTarget(RouteNames.dashboard);
-
-      case 'chat':
-        return const DeeplinkTarget(RouteNames.chat);
 
       case 'reports':
         return const DeeplinkTarget(RouteNames.reports);

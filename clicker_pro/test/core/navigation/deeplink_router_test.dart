@@ -134,7 +134,6 @@ void main() {
 
   group('Other top-level routes', () {
     final cases = <String, String>{
-      '/chat': RouteNames.chat,
       '/reports': RouteNames.reports,
       '/finance': RouteNames.finance,
       '/expenses': RouteNames.finance,

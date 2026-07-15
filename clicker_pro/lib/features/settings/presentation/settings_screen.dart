@@ -679,14 +679,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onChanged: (v) =>
                 _saveNotifPrefs(userId, prefs.copyWith(paymentDue: v)),
           ),
-          if (showTeamAndMarketing)
-            _buildBoolRow(
-              label: t('notif_team_messages'),
-              icon: Icons.chat_bubble_outline_rounded,
-              value: prefs.teamMessages,
-              onChanged: (v) =>
-                  _saveNotifPrefs(userId, prefs.copyWith(teamMessages: v)),
-            ),
+          // Team-chat message notifications removed with the Chat module
+          // (Heaven 2026-07-15: "চ্যাট দরকার নাই").
           _buildBoolRow(
             label: t('notif_announcements'),
             icon: Icons.campaign_outlined,
@@ -971,6 +965,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildThemeToggle(String lang, String Function(String) t) {
+    // The web app has its own Sunset Studio design system; the Noir (lime
+    // dark) skin is mobile-only. Offering it on web produced a half-applied,
+    // broken look (Heaven 2026-07-15: "noir থিম কাজ করে না") — so the
+    // switcher is hidden on web until a dedicated web dark design exists.
+    if (kIsWeb) return const SizedBox.shrink();
     final asyncMode = ref.watch(themeModeControllerProvider);
     final currentMode = asyncMode.maybeWhen(
       data: (m) => m,

@@ -76,11 +76,33 @@ class BookingStatusMachine {
   /// Validates Requirements 3.1–3.7. The `Status_Repository` MUST call this
   /// before persisting a `StatusHistory` row; the backend re-runs the same
   /// predicate server-side as the source of truth.
+  ///
+  /// [isOwnBooking] — true when the caller created this booking themselves
+  /// (freelancer self-logged work). A Freelancer's own booking uses a
+  /// simplified lifecycle: any active state may jump straight to `completed`
+  /// or `cancelled` (Heaven 2026-07-15: "ফ্রিল্যান্সার বুকিং move to
+  /// complete, cancel করা যায় না। এড করতে হবে").
   static bool canTransition(
     UserRole role,
     BookingStatus from,
-    BookingStatus to,
-  ) => isAllowedTransition(from, to) && canRoleApply(role, from, to);
+    BookingStatus to, {
+    bool isOwnBooking = false,
+  }) {
+    if (role == UserRole.freelancer && isOwnBooking) {
+      const active = {
+        BookingStatus.pending,
+        BookingStatus.confirmed,
+        BookingStatus.inProgress,
+        BookingStatus.shotComplete,
+        BookingStatus.delivered,
+      };
+      if (active.contains(from) &&
+          (to == BookingStatus.completed || to == BookingStatus.cancelled)) {
+        return true;
+      }
+    }
+    return isAllowedTransition(from, to) && canRoleApply(role, from, to);
+  }
 
   /// The next forward status from [from], or `null` when [from] is a terminal
   /// state (`completed` or `cancelled`). Used by the UI to decide whether to

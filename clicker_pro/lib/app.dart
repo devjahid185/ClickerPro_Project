@@ -35,7 +35,9 @@ class ClickerProApp extends ConsumerWidget {
     // Sync the static palette so every custom-painted surface reads the active
     // theme's colours without needing a BuildContext. Web has its own theme and
     // ignores this flag.
-    AppColors.active = activeTheme == AppThemeMode.noirDark
+    // Web always runs the Sunset design system — a persisted Noir preference
+    // (set on mobile; same account) must not half-apply to web chrome.
+    AppColors.active = !kIsWeb && activeTheme == AppThemeMode.noirDark
         ? ActivePalette.noirDark
         : ActivePalette.clickerPro;
 
