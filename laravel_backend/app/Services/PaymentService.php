@@ -26,13 +26,14 @@ class PaymentService
         $data['recorded_by'] = $recordedBy;
         $data['method'] = $data['method'] ?? 'CASH';
 
-        return DB::transaction(function () use ($data) {
+        $payment = DB::transaction(function () use ($data) {
             $payment = Payment::create($data);
 
             $event = Event::find($data['event_id']);
             if ($event) {
                 if ($data['kind'] === 'ADVANCE') {
                     $event->increment('advance_paid', $data['amount']);
+                    $event->decrement('due_amount', $data['amount']);
                 } elseif ($data['kind'] === 'DUE') {
                     $event->decrement('due_amount', $data['amount']);
                 }
@@ -40,6 +41,10 @@ class PaymentService
 
             return $payment;
         });
+
+        app(GoogleSheetsService::class)->appendPayment($payment->fresh()->load('event.client'), 'CREATED');
+
+        return $payment;
     }
 
     /**
@@ -48,7 +53,7 @@ class PaymentService
      */
     public function update(Payment $payment, array $data): Payment
     {
-        return DB::transaction(function () use ($payment, $data) {
+        $payment = DB::transaction(function () use ($payment, $data) {
             $this->reverseBalanceEffect($payment);
 
             $payment->update($data);
@@ -58,6 +63,7 @@ class PaymentService
             if ($event) {
                 if ($payment->kind === 'ADVANCE') {
                     $event->increment('advance_paid', $payment->amount);
+                    $event->decrement('due_amount', $payment->amount);
                 } elseif ($payment->kind === 'DUE') {
                     $event->decrement('due_amount', $payment->amount);
                 }
@@ -65,6 +71,10 @@ class PaymentService
 
             return $payment;
         });
+
+        app(GoogleSheetsService::class)->appendPayment($payment->fresh()->load('event.client'), 'UPDATED');
+
+        return $payment;
     }
 
     /**
@@ -72,10 +82,14 @@ class PaymentService
      */
     public function delete(Payment $payment): void
     {
+        $snapshot = $payment->fresh()->load('event.client');
+
         DB::transaction(function () use ($payment) {
             $this->reverseBalanceEffect($payment);
             $payment->delete();
         });
+
+        app(GoogleSheetsService::class)->appendPayment($snapshot, 'DELETED');
     }
 
     private function reverseBalanceEffect(Payment $payment): void
@@ -86,6 +100,7 @@ class PaymentService
         }
         if ($payment->kind === 'ADVANCE') {
             $event->decrement('advance_paid', $payment->amount);
+            $event->increment('due_amount', $payment->amount);
         } elseif ($payment->kind === 'DUE') {
             $event->increment('due_amount', $payment->amount);
         }

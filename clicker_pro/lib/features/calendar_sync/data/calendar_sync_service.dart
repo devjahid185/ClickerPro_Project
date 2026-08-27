@@ -16,7 +16,7 @@ class CalendarSyncService {
   static Future<void> shareCalendarEvent(CalendarEvent event) async {
     final icsContent = event.toIcsContent();
     final tempDir = await getTemporaryDirectory();
-    final file = File('${tempDir.path}/clicker_event.ics');
+    final file = File('${tempDir.path}/graphy7_event.ics');
     await file.writeAsString(icsContent);
 
     await SharePlus.instance.share(
@@ -122,6 +122,7 @@ class CalendarSyncService {
     String? venue,
     String? description,
     bool allowWebFallback = true,
+    String? bookingId,
   }) async {
     final silent = await _addToDeviceCalendar(
       title: title,
@@ -130,6 +131,7 @@ class CalendarSyncService {
       endTime: endTime,
       venue: venue,
       description: description,
+      bookingId: bookingId,
     );
     if (silent || !allowWebFallback) return silent;
 
@@ -155,6 +157,7 @@ class CalendarSyncService {
     required String endTime,
     String? venue,
     String? description,
+    String? bookingId,
   }) async {
     try {
       final plugin = DeviceCalendarPlugin();
@@ -170,17 +173,56 @@ class CalendarSyncService {
       final cals = calsResult.data;
       if (cals == null || cals.isEmpty) return false;
 
-      // Prefer the default, writable, non-read-only calendar.
+      // Prefer a writable Google calendar, then fall back to the default
+      // writable calendar on the device.
       final writable = cals.where((c) => c.isReadOnly != true).toList();
-      final target = writable.firstWhere(
-        (c) => c.isDefault == true,
-        orElse: () => writable.isNotEmpty ? writable.first : cals.first,
-      );
+      final googleWritable = writable.where((c) {
+        final source = [
+          c.accountName,
+          c.accountType,
+          c.name,
+        ].whereType<String>().join(' ').toLowerCase();
+        return source.contains('google') || source.contains('gmail.com');
+      }).toList();
+      Calendar target;
+      if (googleWritable.isNotEmpty) {
+        target = googleWritable.firstWhere(
+          (c) => c.isDefault == true,
+          orElse: () => googleWritable.first,
+        );
+      } else {
+        target = writable.firstWhere(
+          (c) => c.isDefault == true,
+          orElse: () => writable.isNotEmpty ? writable.first : cals.first,
+        );
+      }
       if (target.id == null) return false;
 
       final start = _parseTime(date, startTime);
       var end = _parseTime(date, endTime);
       if (!end.isAfter(start)) end = start.add(const Duration(hours: 2));
+      final marker = bookingId == null ? null : 'GRAPHY7_BOOKING_ID:$bookingId';
+      final fullDescription = [
+        ?description?.trim(),
+        ?marker,
+      ].join('\n');
+
+      if (marker != null) {
+        final existing = await plugin.retrieveEvents(
+          target.id!,
+          RetrieveEventsParams(
+            startDate: start.subtract(const Duration(hours: 6)),
+            endDate: end.add(const Duration(hours: 6)),
+          ),
+        );
+        final alreadyAdded = existing.data?.any((event) =>
+                event.description?.contains(marker) == true) ??
+            false;
+        if (alreadyAdded) {
+          AppLogger.i('calendar', 'event already exists silently: ');
+          return true;
+        }
+      }
 
       // tz.local is set by EventReminderService.init(); guard in case the
       // calendar add runs first.
@@ -196,7 +238,7 @@ class CalendarSyncService {
         title: title,
         start: tzd(start),
         end: tzd(end),
-        description: description,
+        description: fullDescription.isEmpty ? null : fullDescription,
         location: venue,
       );
 

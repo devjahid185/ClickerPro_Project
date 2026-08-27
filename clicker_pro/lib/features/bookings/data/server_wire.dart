@@ -83,6 +83,53 @@ double? serverDouble(Object? v) {
   return double.tryParse(v.toString());
 }
 
+int? serverInt(Object? v) {
+  if (v == null) return null;
+  if (v is int) return v;
+  if (v is num) return v.toInt();
+  return int.tryParse(v.toString());
+}
+
+bool? serverBool(Object? v) {
+  if (v == null) return null;
+  if (v is bool) return v;
+  if (v is num) return v != 0;
+  final s = v.toString().trim().toLowerCase();
+  if (s == '1' || s == 'true' || s == 'yes') return true;
+  if (s == '0' || s == 'false' || s == 'no') return false;
+  return null;
+}
+
+List<String>? serverStringList(Object? v) {
+  if (v == null) return null;
+  if (v is List) {
+    final items = v
+        .map((e) => e.toString().trim())
+        .where((e) => e.isNotEmpty)
+        .toList(growable: false);
+    return items.isEmpty ? null : items;
+  }
+  final text = v.toString().trim();
+  if (text.isEmpty) return null;
+  try {
+    final decoded = jsonDecode(text);
+    if (decoded is List) {
+      return decoded
+          .map((e) => e.toString().trim())
+          .where((e) => e.isNotEmpty)
+          .toList(growable: false);
+    }
+  } catch (_) {
+    // Fall through to comma/newline separated text.
+  }
+  final items = text
+      .split(RegExp(r'[\r\n,]+'))
+      .map((e) => e.trim())
+      .where((e) => e.isNotEmpty)
+      .toList(growable: false);
+  return items.isEmpty ? null : items;
+}
+
 DateTime? serverDate(Object? v) {
   if (v == null) return null;
   if (v is DateTime) return v;
@@ -208,7 +255,7 @@ Booking bookingFromServer(Map<String, dynamic> j, {Booking? fallback}) {
     id: fallback?.id ?? serverId ?? '',
     remoteId: serverId ?? fallback?.remoteId,
     studioId: ownerId ?? fallback?.studioId ?? '',
-    createdByUserId: ownerId ?? fallback?.createdByUserId ?? '',
+    createdByUserId: fallback?.createdByUserId ?? ownerId ?? '',
     title: serverString(j, ['title']) ?? fallback?.title ?? '',
     eventType: j.containsKey('event_type') || j.containsKey('eventType')
         ? eventTypeFromServer(
@@ -306,6 +353,7 @@ Map<String, dynamic> bookingToServer(Booking b) {
     'shift': shiftToServer(b.shift),
     'status': bookingStatusToServer(b.status),
     if (b.venue != null) 'venue': b.venue,
+    if (b.packageId != null) 'package_id': int.tryParse(b.packageId!) ?? b.packageId,
     if (b.customPrice != null) 'price': b.customPrice,
     if (b.notes != null) 'notes': b.notes,
     if (b.clientName != null) 'client_name': b.clientName,
@@ -527,22 +575,44 @@ Package packageFromServer(Map<String, dynamic> j, {Package? fallback}) {
         '',
     name: serverString(j, ['name']) ?? fallback?.name ?? '',
     basePrice:
-        serverDouble(j['base_price'] ?? j['basePrice']) ??
+        serverDouble(j['base_price'] ?? j['basePrice'] ?? j['price']) ??
         fallback?.basePrice ??
         0,
-    discount: fallback?.discount ?? 0,
+    discount: serverDouble(j['discount']) ?? fallback?.discount ?? 0,
     coverageHours:
         serverDouble(j['coverage_hours'] ?? j['coverageHours']) ??
         fallback?.coverageHours,
-    extraHourRate: fallback?.extraHourRate,
-    printSize: fallback?.printSize,
-    printQuantity: fallback?.printQuantity,
-    albumText: fallback?.albumText,
-    deliveryMethod: fallback?.deliveryMethod,
-    trailersPerEvent: fallback?.trailersPerEvent,
-    fullVideosPerEvent: fallback?.fullVideosPerEvent,
-    items: fallback?.items,
-    inclusions: fallback?.inclusions,
+    extraHourRate:
+        serverDouble(j['extra_hour_rate'] ?? j['extraHourRate']) ??
+        fallback?.extraHourRate,
+    printSize: serverString(j, ['print_size', 'printSize']) ??
+        fallback?.printSize,
+    printQuantity:
+        serverInt(j['print_quantity'] ?? j['printQuantity']) ??
+        fallback?.printQuantity,
+    albumText:
+        serverString(j, ['album_text', 'albumText']) ?? fallback?.albumText,
+    deliveryMethod:
+        serverString(j, ['delivery_method', 'deliveryMethod']) ??
+        fallback?.deliveryMethod,
+    trailersPerEvent:
+        serverInt(j['trailers_per_event'] ?? j['trailersPerEvent']) ??
+        fallback?.trailersPerEvent,
+    fullVideosPerEvent:
+        serverInt(j['full_videos_per_event'] ?? j['fullVideosPerEvent']) ??
+        fallback?.fullVideosPerEvent,
+    photographerCount:
+        serverInt(j['photographer_count'] ?? j['photographerCount']) ??
+        fallback?.photographerCount,
+    cinematographerCount:
+        serverInt(j['cinematographer_count'] ?? j['cinematographerCount']) ??
+        fallback?.cinematographerCount,
+    includesChief:
+        serverBool(j['includes_chief'] ?? j['includesChief']) ??
+        fallback?.includesChief ??
+        false,
+    items: serverStringList(j['items']) ?? fallback?.items,
+    inclusions: serverStringList(j['inclusions']) ?? fallback?.inclusions,
     createdAt:
         serverDate(j['created_at'] ?? j['createdAt']) ??
         fallback?.createdAt ??
@@ -560,8 +630,26 @@ Map<String, dynamic> packageToServer(Package p) {
   return <String, dynamic>{
     'name': p.name,
     'base_price': p.basePrice,
+    'price': p.basePrice,
+    'discount': p.discount,
     if (p.coverageHours != null)
       'coverage_hours': p.coverageHours!.round(),
+    if (p.extraHourRate != null) 'extra_hour_rate': p.extraHourRate,
+    if (p.printSize != null) 'print_size': p.printSize,
+    if (p.printQuantity != null) 'print_quantity': p.printQuantity,
+    if (p.albumText != null) 'album_text': p.albumText,
+    if (p.deliveryMethod != null) 'delivery_method': p.deliveryMethod,
+    if (p.trailersPerEvent != null)
+      'trailers_per_event': p.trailersPerEvent,
+    if (p.fullVideosPerEvent != null)
+      'full_videos_per_event': p.fullVideosPerEvent,
+    if (p.photographerCount != null)
+      'photographer_count': p.photographerCount,
+    if (p.cinematographerCount != null)
+      'cinematographer_count': p.cinematographerCount,
+    'includes_chief': p.includesChief,
+    if (p.items != null) 'items': p.items,
+    if (p.inclusions != null) 'inclusions': p.inclusions,
     if (p.fullVideosPerEvent != null)
       'has_video': p.fullVideosPerEvent! > 0,
     if (p.albumText != null && p.albumText!.trim().isNotEmpty)

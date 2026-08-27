@@ -39,6 +39,20 @@ class ClientsDao extends DatabaseAccessor<AppDatabase> with _$ClientsDaoMixin {
     )..where((t) => t.phone.equals(phone))).getSingleOrNull();
   }
 
+  /// Exact studio+phone lookup matching the table's unique key. Server pulls
+  /// can return the same human client under a different id; matching this key
+  /// lets the repository update the existing local row instead of tripping the
+  /// unique constraint.
+  Future<ClientRow?> getByStudioPhone({
+    required String studioId,
+    required String phone,
+  }) {
+    return (select(clientsTable)
+          ..where((t) => t.studioId.equals(studioId) & t.phone.equals(phone))
+          ..limit(1))
+        .getSingleOrNull();
+  }
+
   /// Looks up the local row a server row corresponds to. Used by the
   /// remote-refresh merge so a pulled server row updates the existing
   /// local row instead of inserting a duplicate under the server id.

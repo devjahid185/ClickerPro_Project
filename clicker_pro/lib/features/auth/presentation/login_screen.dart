@@ -1,6 +1,6 @@
 ﻿// lib/features/auth/presentation/login_screen.dart
 //
-// Clicker Pro — Login Screen v2 (Dark Luxury Lens)
+// Graphy7 — Login Screen v2 (Dark Luxury Lens)
 //
 // Visual: PRESERVED 1:1 from the v2 design (the "gold standard" in the spec).
 // Wiring: refactored to ConsumerStatefulWidget that talks to:
@@ -8,9 +8,9 @@
 //   • languageControllerProvider    — read/write active locale
 //
 // Routes from this screen:
-//   • Forgot Password?       → ForgotPasswordScreen   (slide-from-right, 280ms, Cubic(0.2, 0.8, 0.2, 1))
-//   • Register Now           → RegisterScreen          (same slide)
-//   • I have an invite code  → ManagerInviteScreen     (same slide)
+//   • Forgot Password?       ? ForgotPasswordScreen   (slide-from-right, 280ms, Cubic(0.2, 0.8, 0.2, 1))
+//   • Register Now           ? RegisterScreen          (same slide)
+//   • I have an invite code  ? ManagerInviteScreen     (same slide)
 //
 // Animation tokens used app-wide (also reused on the other auth screens):
 //   • Page slide-in : Cubic(0.2, 0.8, 0.2, 1) over 280ms
@@ -39,7 +39,9 @@ import '../../../theme/app_strings.dart';
 import '../../../theme/app_theme.dart';
 import '../../settings/application/language_controller.dart';
 import '../application/session_controller.dart';
+import '../domain/otp_purpose.dart';
 import 'forgot_password_screen.dart';
+import 'otp_screen.dart';
 import 'register_screen.dart';
 
 /// Slide-from-right page route shared by every auth-screen transition.
@@ -74,7 +76,7 @@ PageRouteBuilder<T> slideFromRightRoute<T>(Widget page) {
 /// Social sign-in is live: the backend verifies Google/Apple ID tokens
 /// at /api/auth/google and /api/auth/apple. NOTE: Google sign-in on a
 /// device additionally needs the app's SHA fingerprints registered in
-/// Firebase (Authentication → Google enabled) and a refreshed
+/// Firebase (Authentication ? Google enabled) and a refreshed
 /// google-services.json — see the deploy notes.
 const bool kSocialLoginEnabled = true;
 
@@ -95,7 +97,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   bool _appleLoading = false;
   DateTime? _pendingDeleteUntil;
 
-  // ─── Error shake (Task 20.7 / MOD-06) ───────────────────────────
+  // --- Error shake (Task 20.7 / MOD-06) ---------------------------
   // Form translates ±6px over 360ms on auth/network errors.
   late final AnimationController _shakeCtrl;
   late final Animation<double> _shake;
@@ -169,7 +171,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     final error = session.error;
     final String msg;
     if (error is ApiException) {
-      if (error.isUnauthorized) {
+      if (error.statusCode == 428) {
+        final email = _emailController.text.trim();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Please verify your email. A new code has been sent.',
+              style: TextStyle(color: AppColors.film, fontSize: 13),
+            ),
+            backgroundColor: AppColors.voidElevated,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: BorderSide(color: AppColors.gold.withValues(alpha: 0.4)),
+            ),
+          ),
+        );
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (_) =>
+                OtpScreen(identifier: email, purpose: OtpPurpose.signup),
+          ),
+          (route) => false,
+        );
+        return;
+      } else if (error.isUnauthorized) {
         msg = 'Wrong email or password.';
       } else if (error.isRateLimited) {
         msg = 'Too many attempts — wait 1 minute and try again.';
@@ -263,18 +290,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     String t(String key) => AppStrings.get(key, lang);
 
     return Scaffold(
-      // Full-bleed video backdrop → the scaffold sits on black so there is no
+      // Full-bleed video backdrop ? the scaffold sits on black so there is no
       // paper-coloured seam behind the video / status bar.
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // ─── FULL-SCREEN BRAND BACKDROP ──────────────────────────
+          // --- FULL-SCREEN BRAND BACKDROP --------------------------
           // Mobile: a looping, muted ambient clip. Web: a still hero image
           // (see [kWebLoginImage]). Either way a dark gradient scrim keeps the
           // wordmark + form legible over it.
           const Positioned.fill(child: _LoginBackdrop()),
 
-          // ─── MAIN CONTENT ────────────────────────────────────────
+          // --- MAIN CONTENT ----------------------------------------
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -298,15 +325,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       children: [
                         const SizedBox(height: 20),
 
-                        // ── BRAND LOGO ─────────────────────────────
+                        // -- BRAND LOGO -----------------------------
                         _buildBrandLogo(),
                         const SizedBox(height: 32),
 
-                        // ── HEADLINE ───────────────────────────────
+                        // -- HEADLINE -------------------------------
                         RichText(
                           textAlign: TextAlign.center,
                           text: TextSpan(
-                            // ClickerPro wordmark (spec): Hanken 800, tight
+                            // Graphy7 wordmark (spec): Hanken 800, tight
                             // tracking, "Pro" in brand orange — NOT italic.
                             style: TextStyle(
                               fontFamily: AppText.clickerBrandFontFamily,
@@ -344,7 +371,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           const SizedBox(height: 18),
                         ],
 
-                        // ── EMAIL FIELD ────────────────────────────
+                        // -- EMAIL FIELD ----------------------------
                         AuthGlassField(
                           controller: _emailController,
                           label: t('email'),
@@ -356,7 +383,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         ),
                         const SizedBox(height: 16),
 
-                        // ── PASSWORD FIELD ─────────────────────────
+                        // -- PASSWORD FIELD -------------------------
                         AuthGlassField(
                           controller: _passwordController,
                           label: t('password'),
@@ -371,7 +398,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                               : null,
                         ),
 
-                        // ── FORGOT PASSWORD ────────────────────────
+                        // -- FORGOT PASSWORD ------------------------
                         Padding(
                           padding: const EdgeInsets.only(top: 6, right: 4),
                           child: Align(
@@ -399,12 +426,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         ),
                         const SizedBox(height: 20),
 
-                        // ── LOGIN BUTTON (premium gradient) ────────
+                        // -- LOGIN BUTTON (premium gradient) --------
                         _buildLoginButton(t('login')),
 
                         const SizedBox(height: 24),
 
-                        // ── DIVIDER + SOCIAL LOGIN ────────────────
+                        // -- DIVIDER + SOCIAL LOGIN ----------------
                         // Google sign-in removed per product decision. The
                         // only remaining social option is Apple, which exists
                         // on iOS alone — so on Android this whole block is
@@ -452,7 +479,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
                         const SizedBox(height: 20),
 
-                        // ── REGISTER LINK ─────────────────────────
+                        // -- REGISTER LINK -------------------------
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -481,7 +508,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         // out of login per design feedback — managers join
                         // from Register, language lives in Settings.
 
-                        // ── COMPANY BRANDING ──────────────────────
+                        // -- COMPANY BRANDING ----------------------
                         const SizedBox(height: 18),
                         Text(
                           '${AppConfig.appName} ${AppConfig.appVersionLabel} · by ${AppConfig.companyName}',
@@ -507,7 +534,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     );
   }
 
-  // ─── BRAND LOGO (blade-fan hero mark) ──────────────────────────
+  // --- BRAND LOGO (blade-fan hero mark) --------------------------
   Widget _buildBrandLogo() {
     return Center(
       child: Stack(
@@ -528,7 +555,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     );
   }
 
-  // ─── PENDING-DELETE BANNER ─────────────────────────────────────
+  // --- PENDING-DELETE BANNER -------------------------------------
   Widget _buildPendingDeleteBanner(DateTime until) {
     final dateLabel =
         '${until.year}-${until.month.toString().padLeft(2, '0')}-${until.day.toString().padLeft(2, '0')}';
@@ -575,7 +602,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     );
   }
 
-  // ─── LOGIN BUTTON ──────────────────────────────────────────────
+  // --- LOGIN BUTTON ----------------------------------------------
   Widget _buildLoginButton(String label) {
     return Container(
       decoration: BoxDecoration(
@@ -635,7 +662,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   }
 }
 
-// ─── Login backdrop (video on mobile, still image on web) ──────────────────
+// --- Login backdrop (video on mobile, still image on web) ------------------
 class _LoginBackdrop extends StatelessWidget {
   const _LoginBackdrop();
 
@@ -668,7 +695,7 @@ class _LoginBackdrop extends StatelessWidget {
   }
 }
 
-// ─── Apple icon ───────────────────────────────────────────────────────────
+// --- Apple icon -----------------------------------------------------------
 const _kAppleIcon = _AppleIcon();
 
 class _AppleIcon extends StatelessWidget {
@@ -680,7 +707,7 @@ class _AppleIcon extends StatelessWidget {
   }
 }
 
-// ─── Social button ────────────────────────────────────────────────────────
+// --- Social button --------------------------------------------------------
 class _SocialButton extends StatelessWidget {
   const _SocialButton({
     required this.label,

@@ -220,11 +220,8 @@ class BookingRepositoryImpl implements BookingRepository {
         return;
       }
       final result = await _api.list(filter ?? const BookingFilter());
-      for (final booking in result.items) {
-        await _bookings.upsert(
-          await _bookingToCompanion(await _mergeWithLocal(booking),
-              pending: false),
-        );
+      for (final envelope in result.envelopes) {
+        await _upsertEnvelope(envelope);
       }
     } on ApiException catch (e, st) {
       AppLogger.w('booking', 'refreshFromRemote failed: ${e.message}');
@@ -237,8 +234,16 @@ class BookingRepositoryImpl implements BookingRepository {
   Future<Client?> _mergeEnvelopeClient(Client? incoming) async {
     if (incoming == null) return null;
     final remoteId = incoming.remoteId;
-    if (remoteId == null) return incoming;
-    final existingRow = await _clients.getByRemoteId(remoteId);
+    ClientRow? existingRow;
+    if (remoteId != null) {
+      existingRow = await _clients.getByRemoteId(remoteId);
+    }
+    if (existingRow == null && incoming.phone.trim().isNotEmpty) {
+      existingRow = await _clients.getByStudioPhone(
+        studioId: incoming.studioId,
+        phone: incoming.phone,
+      );
+    }
     if (existingRow == null) return incoming;
     if (existingRow.pending) return _rowToClient(existingRow);
     final local = _rowToClient(existingRow);
@@ -300,15 +305,23 @@ class BookingRepositoryImpl implements BookingRepository {
       throw RolePolicyDeniedException(capability: required, role: policy.role);
     }
 
-    final stamped = booking.copyWith(updatedAt: DateTime.now(), pending: true);
+    final normalized = await _stampCurrentOwnership(booking, policy: policy);
+    final stamped = normalized.copyWith(
+      updatedAt: DateTime.now(),
+      pending: true,
+    );
     await _bookings.upsert(await _bookingToCompanion(stamped, pending: true));
 
-    final isCreate = booking.remoteId == null;
+    final isCreate = normalized.remoteId == null;
     try {
+      final serverStamped = await _withServerPackageId(stamped);
       final remote = isCreate
-          ? await _api.create(stamped)
-          : await _api.patch(booking.remoteId!, stamped.toJson());
-      final synced = remote.copyWith(pending: false);
+          ? await _api.create(serverStamped)
+          : await _api.patch(normalized.remoteId!, serverStamped.toJson());
+      var synced = remote.copyWith(pending: false);
+      if (stamped.packageId != null) {
+        synced = synced.copyWith(packageId: stamped.packageId);
+      }
       await _bookings.upsert(await _bookingToCompanion(synced, pending: false));
       return synced;
     } catch (e, st) {
@@ -324,6 +337,33 @@ class BookingRepositoryImpl implements BookingRepository {
       );
       return stamped;
     }
+  }
+
+  Future<Booking> _withServerPackageId(Booking booking) async {
+    final packageId = booking.packageId;
+    if (packageId == null || int.tryParse(packageId) != null) return booking;
+    final row = await _packages.getById(packageId);
+    final remoteId = row?.remoteId;
+    if (remoteId == null || remoteId.isEmpty) return booking;
+    return booking.copyWith(packageId: remoteId);
+  }
+
+  Future<Booking> _stampCurrentOwnership(
+    Booking booking, {
+    required RolePolicy policy,
+  }) async {
+    final user = await _users.getCurrent();
+    if (user == null) return booking;
+
+    final studioId = await _resolveStudioId(policy.role, user.id);
+    final isCreate = booking.remoteId == null;
+
+    return booking.copyWith(
+      studioId: studioId,
+      createdByUserId: isCreate || booking.createdByUserId.isEmpty
+          ? user.id
+          : booking.createdByUserId,
+    );
   }
 
   @override
@@ -424,21 +464,38 @@ class BookingRepositoryImpl implements BookingRepository {
     // Merge against the local row (matched by remoteId) so a detail pull
     // updates in place instead of duplicating under the server id, and so
     // child rows below hang off the correct LOCAL booking id.
-    final booking = await _mergeWithLocal(envelope.booking);
-    await _bookings.upsert(await _bookingToCompanion(booking, pending: false));
     final client = await _mergeEnvelopeClient(envelope.client);
     if (client != null) {
       await _clients.upsert(_clientToCompanion(client, pending: false));
     }
+    final mergedBooking = await _mergeWithLocal(envelope.booking);
+    final booking = client == null
+        ? mergedBooking
+        : mergedBooking.copyWith(
+            clientId: client.id,
+            clientName: client.name,
+            clientPhone: client.phone,
+          );
+    await _bookings.upsert(await _bookingToCompanion(booking, pending: false));
     final pkg = envelope.package;
     if (pkg != null) {
       await _packages.upsert(_packageToCompanion(pkg, pending: false));
     }
     for (final a in envelope.assignments) {
-      await _assignments.upsert(_assignmentToCompanion(a, pending: false));
+      await _assignments.upsert(
+        _assignmentToCompanion(
+          a.copyWith(bookingId: booking.id),
+          pending: false,
+        ),
+      );
     }
     for (final p in envelope.payments) {
-      await _payments.upsert(_paymentToCompanion(p, pending: false));
+      await _payments.upsert(
+        _paymentToCompanion(
+          p.copyWith(bookingId: booking.id),
+          pending: false,
+        ),
+      );
     }
     for (final h in envelope.statusHistory) {
       // Re-point at the merged LOCAL booking id (the wire entry carries
@@ -558,8 +615,19 @@ class BookingRepositoryImpl implements BookingRepository {
     studioId: r.studioId,
     name: r.name,
     basePrice: r.basePrice,
+    discount: r.discount,
     coverageHours: r.coverageHours,
     extraHourRate: r.extraHourRate,
+    printSize: r.printSize,
+    printQuantity: r.printQuantity,
+    albumText: r.albumText,
+    deliveryMethod: r.deliveryMethod,
+    trailersPerEvent: r.trailersPerEvent,
+    fullVideosPerEvent: r.fullVideosPerEvent,
+    photographerCount: r.photographerCount,
+    cinematographerCount: r.cinematographerCount,
+    includesChief: r.includesChief,
+    items: _decodeJsonStringList(r.itemsJson),
     inclusions: _decodeJsonStringList(r.inclusionsJson),
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
@@ -731,8 +799,19 @@ class BookingRepositoryImpl implements BookingRepository {
       studioId: Value(p.studioId),
       name: Value(p.name),
       basePrice: Value(p.basePrice),
+      discount: Value(p.discount),
       coverageHours: Value(p.coverageHours),
       extraHourRate: Value(p.extraHourRate),
+      printSize: Value(p.printSize),
+      printQuantity: Value(p.printQuantity),
+      albumText: Value(p.albumText),
+      deliveryMethod: Value(p.deliveryMethod),
+      trailersPerEvent: Value(p.trailersPerEvent),
+      fullVideosPerEvent: Value(p.fullVideosPerEvent),
+      photographerCount: Value(p.photographerCount),
+      cinematographerCount: Value(p.cinematographerCount),
+      includesChief: Value(p.includesChief),
+      itemsJson: Value(_encodeJsonStringList(p.items)),
       inclusionsJson: Value(_encodeJsonStringList(p.inclusions)),
       createdAt: Value(p.createdAt),
       updatedAt: Value(p.updatedAt),

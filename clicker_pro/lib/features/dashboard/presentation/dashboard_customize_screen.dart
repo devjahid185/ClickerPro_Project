@@ -1,6 +1,6 @@
 // lib/features/dashboard/presentation/dashboard_customize_screen.dart
 //
-// Clicker Pro — Dashboard Customize screen (MOD-62)
+// Graphy7 — Dashboard Customize screen (MOD-62)
 //
 // Reorderable list with drag handles + toggle switches per section.
 // "Reset to Default" button at bottom.

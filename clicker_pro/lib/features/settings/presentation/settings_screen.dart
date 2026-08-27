@@ -1,6 +1,6 @@
 ﻿// lib/features/settings/presentation/settings_screen.dart
 //
-// Clicker Pro — Settings Screen (Claude Design · light "paper" theme)
+// Graphy7 — Settings Screen (Claude Design · light "paper" theme)
 //
 // Visual: white surface group cards on the paper canvas, mono uppercase
 // section headers with the signature orange rule, colour-coded list/toggle
@@ -360,7 +360,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  // ── Async one-shot prefs (distribution / vat / bn numerals) ───
+  // -- Async one-shot prefs (distribution / vat / bn numerals) ---
   Future<void> _loadOneShotPrefs(String userId) async {
     final repo = ref.read(preferencesRepositoryProvider);
     try {
@@ -625,7 +625,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
-  // ── Notification preferences (Drift stream) ───────────────────
+  // -- Notification preferences (Drift stream) -------------------
   Widget _buildNotificationsGroup(
     String userId,
     String Function(String) t, {
@@ -680,7 +680,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 _saveNotifPrefs(userId, prefs.copyWith(paymentDue: v)),
           ),
           // Team-chat message notifications removed with the Chat module
-          // (Heaven 2026-07-15: "চ্যাট দরকার নাই").
+          // (Heaven 2026-07-15: "????? ????? ???").
           _buildBoolRow(
             label: t('notif_announcements'),
             icon: Icons.campaign_outlined,
@@ -713,7 +713,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
-  // ── Logout ────────────────────────────────────────────────────
+  // -- Logout ----------------------------------------------------
   Future<void> _handleLogout() async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -765,7 +765,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  // ── Visual primitives ─────────────────────────────────────────
+  // -- Visual primitives -----------------------------------------
   /// Wide-web page header (H1 + subtitle) — matches every other web screen,
   /// replacing the mobile AppBar title the WebNavShell hides.
   /// Web profile hero — the handoff's dark #2B1D12 card: 72px gold-ring
@@ -967,7 +967,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget _buildThemeToggle(String lang, String Function(String) t) {
     // The web app has its own Sunset Studio design system; the Noir (lime
     // dark) skin is mobile-only. Offering it on web produced a half-applied,
-    // broken look (Heaven 2026-07-15: "noir থিম কাজ করে না") — so the
+    // broken look (Heaven 2026-07-15: "noir ??? ??? ??? ??") — so the
     // switcher is hidden on web until a dedicated web dark design exists.
     if (kIsWeb) return const SizedBox.shrink();
     final asyncMode = ref.watch(themeModeControllerProvider);
@@ -1281,7 +1281,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
         content: Text(
           'Company management for photographers.\n'
-          'Version 3.8 · by waLidu Tech',
+          'Version 1.0.0 · by waLidu Tech',
           style: TextStyle(
             color: AppColors.filmDim.withValues(alpha: 0.85),
             fontSize: 13,
@@ -1323,7 +1323,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
         content: Text(
           'Event reminders need notification access, which is currently blocked.\n\n'
-          'Turn it on:\nPhone Settings → Apps → Graphy7 → Notifications → Allow.\n\n'
+          'Turn it on:\nPhone Settings ? Apps ? Graphy7 ? Notifications ? Allow.\n\n'
           'Then come back and tap Try again.',
           style: TextStyle(color: AppColors.filmDim, fontSize: 14, height: 1.5),
         ),

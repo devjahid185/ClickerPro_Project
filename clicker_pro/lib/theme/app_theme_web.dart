@@ -1,6 +1,6 @@
 // lib/theme/app_theme_web.dart
 //
-// Clicker Pro — WEB-ONLY base ThemeData.
+// Graphy7 — WEB-ONLY base ThemeData.
 //
 // This is the MaterialApp.theme used on the web build (mobile keeps
 // AppTheme.sunsetStudio()). It styles the Material widgets (TextField,
@@ -10,7 +10,7 @@
 // STATUS: SUNSET STUDIO WEB — reads from WebTheme, so it inherited the warm
 // cream / Signal Orange palette automatically when those token values were
 // swapped. Body font is DM Sans to match the design handoff
-// (design_handoff_clickerpro_web / ClickerPro Dashboard v2.dc.html).
+// (design_handoff_clickerpro_web / Graphy7 Dashboard v2.dc.html).
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -121,6 +121,8 @@ class AppThemeWeb {
       snackBarTheme: SnackBarThemeData(
         backgroundColor: WebTheme.ink,
         contentTextStyle: const TextStyle(color: Colors.white, fontSize: 13),
+        actionTextColor: WebTheme.orange,
+        closeIconColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(WebTheme.rChip),
         ),

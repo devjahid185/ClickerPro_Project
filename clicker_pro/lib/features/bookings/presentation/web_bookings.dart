@@ -30,6 +30,7 @@ import '../../../core/navigation/route_names.dart';
 import '../../../core/role/capability.dart';
 import '../../auth/domain/user_role.dart';
 import '../../../shared/widgets/web_motion.dart';
+import '../../../theme/app_colors.dart';
 import '../../../theme/web_theme.dart';
 import '../application/booking_providers.dart';
 import '../domain/booking.dart';
@@ -62,8 +63,28 @@ extension _ChipX on _Chip {
         _Chip.delivered => const {BookingStatus.delivered},
         _Chip.cancelled => const {BookingStatus.cancelled},
       };
+  Color get color => switch (this) {
+        _Chip.all => AppColors.infoTeal,
+        _Chip.complete => AppColors.sageData,
+        _Chip.delivered => AppColors.sageData,
+        _Chip.cancelled => AppColors.red,
+      };
 }
 
+Color _bookingLifecycleColor(Booking booking) {
+  switch (booking.status) {
+    case BookingStatus.shotComplete:
+    case BookingStatus.delivered:
+    case BookingStatus.completed:
+      return AppColors.sageData;
+    case BookingStatus.cancelled:
+      return AppColors.red;
+    case BookingStatus.pending:
+    case BookingStatus.confirmed:
+    case BookingStatus.inProgress:
+      return AppColors.infoTeal;
+  }
+}
 /// The wide-web bookings screen. Pure presentation over existing providers.
 class WebBookings extends ConsumerStatefulWidget {
   const WebBookings({super.key});
@@ -76,10 +97,20 @@ class _WebBookingsState extends ConsumerState<WebBookings> {
   _Chip _chip = _Chip.all;
 
   @override
+  void initState() {
+    super.initState();
+    Future.microtask(() async {
+      try {
+        await ref.read(bookingRepositoryProvider).refreshFromRemote();
+      } catch (_) {}
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     // Watch the unfiltered stream once; the chip filters client-side so
     // switching is instant and never re-hits the data layer.
-    final async = ref.watch(bookingListProvider(const BookingFilter()));
+    final async = ref.watch(bookingListAllProvider(const BookingFilter()));
     // The dashboard KPI cards (Today / Upcoming / Total / Delivered) preset
     // this shared filter before navigating here — honour it, otherwise the
     // card taps "do nothing" on web (Heaven 2026-07-15).
@@ -94,7 +125,13 @@ class _WebBookingsState extends ConsumerState<WebBookings> {
             delay: const Duration(milliseconds: 50),
             child: _ChipRow(
               chip: _chip,
-              onChip: (c) => setState(() => _chip = c),
+              onChip: (c) {
+                setState(() => _chip = c);
+                if (c == _Chip.all) {
+                  ref.read(bookingFilterProvider.notifier).state =
+                      const BookingFilter();
+                }
+              },
             ),
           ),
           const SizedBox(height: 18),
@@ -157,10 +194,8 @@ class _WebBookingsState extends ConsumerState<WebBookings> {
     final wanted = _chip.statuses;
     final out = rows.where((b) {
       if (wanted.isNotEmpty) return wanted.contains(b.status);
-      // "All" honours a dashboard-preset status scope (e.g. Upcoming /
-      // Delivered); otherwise it hides cancelled like the mobile list.
       if (shared.statuses.isNotEmpty) return shared.statuses.contains(b.status);
-      return b.status != BookingStatus.cancelled;
+      return true;
     }).toList()
       ..sort((a, b) => a.date.compareTo(b.date));
     return out;
@@ -190,6 +225,7 @@ class _ChipRow extends ConsumerWidget {
           _StatusChip(
             label: c.label,
             active: c == chip,
+            color: c.color,
             onTap: () => onChip(c),
           ),
         // Right-aligned actions ride the same wrap on narrow widths.
@@ -213,11 +249,13 @@ class _StatusChip extends StatelessWidget {
   const _StatusChip({
     required this.label,
     required this.active,
+    required this.color,
     required this.onTap,
   });
 
   final String label;
   final bool active;
+  final Color color;
   final VoidCallback onTap;
 
   @override
@@ -231,16 +269,16 @@ class _StatusChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: active
-              ? WebTheme.orange
+              ? color
               : hovering
-                  ? WebTheme.orangeTint
+                  ? color.withValues(alpha: 0.12)
                   : WebTheme.surface,
           borderRadius: BorderRadius.circular(WebTheme.rFull),
           border: Border.all(
             color: active
-                ? WebTheme.orange
+                ? color
                 : hovering
-                    ? WebTheme.orangeTintBorder
+                    ? color.withValues(alpha: 0.28)
                     : WebTheme.hairline,
           ),
         ),
@@ -435,7 +473,7 @@ class _ShiftRowState extends State<_ShiftRow> {
   Widget build(BuildContext context) {
     final b = widget.booking;
     final night = widget.night;
-    final accent = night ? WebTheme.night : WebTheme.amber;
+    final accent = _bookingLifecycleColor(b);
     final client = (b.clientName?.trim().isNotEmpty ?? false)
         ? b.clientName!.trim()
         : b.title;
@@ -460,9 +498,7 @@ class _ShiftRowState extends State<_ShiftRow> {
           transform: Matrix4.translationValues(dx, 0, 0),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
           decoration: BoxDecoration(
-            color: _hover
-                ? (night ? WebTheme.nightTint : WebTheme.orangeTint)
-                : WebTheme.pageBg,
+            color: accent.withValues(alpha: _hover ? 0.18 : 0.13),
             borderRadius: BorderRadius.circular(12),
             border: Border(
               left: night

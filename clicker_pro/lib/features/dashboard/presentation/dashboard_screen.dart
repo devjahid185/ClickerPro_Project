@@ -1,9 +1,9 @@
-﻿// lib/features/dashboard/presentation/dashboard_screen.dart
+// lib/features/dashboard/presentation/dashboard_screen.dart
 //
-// Clicker Pro — Dashboard (Dark Luxury Lens)
+// Graphy7 — Dashboard (Dark Luxury Lens)
 //
 // Visual: v12 architecture — Unified Layout, Role-aware Data
-//   • Topbar with menu / Clicker Pro brand + studio subtitle / search / avatar
+//   • Topbar with menu / Graphy7 brand + studio subtitle / search / avatar
 //   • Weekday strip (7 days Mon→Sun, today highlighted teal)
 //   • Split hero (big today count teal glow + Upcoming/Total mini cards)
 //   • Delivered strip (count + mini bar chart)
@@ -75,6 +75,7 @@ import '../../profile/domain/user_model.dart';
 import '../../settings/application/language_controller.dart';
 import '../application/dashboard_preferences.dart';
 import '../application/dashboard_providers.dart';
+import '../application/weather_provider.dart';
 import '../domain/dashboard_section.dart';
 import 'web_dashboard.dart';
 
@@ -126,6 +127,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       showBroadcastPopupIfNeeded(context, ref);
       // Register this device for push notifications (fail-soft).
       initPushNotifications(ref);
+      ref.read(bookingRepositoryProvider).refreshFromRemote().then((_) {
+        ref.invalidate(dashboardMetricsProvider);
+      }).catchError((_) {});
       // Prime the on-device event-reminder channel + permissions so the
       // "1 hour before" alarms can be scheduled (fail-soft), then re-arm a
       // reminder for every upcoming booking. scheduleForBooking only runs on
@@ -222,6 +226,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       // Silent: cached data + OfflineBanner already convey the state.
     }
     ref.invalidate(dashboardMetricsProvider);
+    ref.invalidate(announcementListControllerProvider);
     // Hold the spinner briefly so the gesture feels responsive.
     await Future<void>.delayed(const Duration(milliseconds: 600));
   }
@@ -495,7 +500,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   // ─── Body ───────────────────────────────────────────────────────────
   Widget _buildBody(UserModel? user) {
     final sections = ref.watch(dashboardPrefsProvider);
-    final enabled = sections.where((s) => s.enabled).toList()
+    final enabled = sections.where((s) {
+      if (!s.enabled) return false;
+      // Hidden per UI cleanup request; routes/features stay available.
+      return s.type != DashboardSectionType.announcement &&
+          s.type != DashboardSectionType.weather;
+    }).toList()
       ..sort((a, b) => a.order.compareTo(b.order));
 
     return ListView(
@@ -931,7 +941,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     Color labelColor = Colors.white,
     Color subtitleColor = Colors.white,
   }) {
-    // ClickerPro (light): FILLED data cards (#00898B / #3541AF) with a white
+    // Graphy7 (light): FILLED data cards (#00898B / #3541AF) with a white
     // figure. Noir (dark): per the dark spec §4.1 these are plain dark StatCards
     // — dark `card` surface + hairline, the figure carries the accent colour and
     // the label/subtitle drop to the muted tones.
@@ -1852,7 +1862,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         const SizedBox(width: 10),
         Expanded(
           child: _buildInfoCard(
-            emoji: '❌',
+            emoji: '?',
             number: '${m.cancelledEvents}',
             label: 'Cancelled\nEvents',
             isCancel: true,
@@ -2169,22 +2179,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-  // ─── Weather card (strip + shoot advisory) ─────────────────────────
+  // ─── Weather card (live GPS + Open-Meteo) ─────────────────────────
   Widget _buildWeatherCard() {
+    final weatherAsync = ref.watch(liveWeatherProvider);
     final now = DateTime.now();
-    final hour = now.hour;
-    // Simple time-based weather hint
-    final (emoji, condition, temp) = hour < 6
-        ? ('🌙', 'CLEAR NIGHT', '24')
-        : hour < 10
-        ? ('🌤', 'MORNING SUN', '26')
-        : hour < 15
-        ? ('☀️', 'MOSTLY SUNNY', '32')
-        : hour < 18
-        ? ('⛅', 'PARTLY CLOUDY', '30')
-        : ('🌇', 'EVENING', '28');
 
-    // Is there an outdoor shoot today? Tailors the advisory.
     final monthAsync = ref.watch(
       calendarBookingsProvider((year: now.year, month: now.month)),
     );
@@ -2196,10 +2195,155 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           b.date.day == now.day &&
           b.status != BookingStatus.cancelled,
     );
-    final advisory = _weatherAdvisory(condition, hasOutdoorToday);
 
-    // Compact one-line strip — the old oversized emoji + 30px temperature
-    // crowded the column and collided with neighbouring sections.
+    return weatherAsync.when(
+      loading: () => _weatherShell(
+        child: Row(
+          children: [
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.indigo,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Loading live weather...',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.filmDim,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      error: (error, _) => _weatherShell(
+        child: Row(
+          children: [
+            Icon(Icons.location_off_outlined, size: 18, color: AppColors.gold),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                error is WeatherUnavailable
+                    ? error.message
+                    : 'Could not load live weather.',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.film,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => ref.invalidate(liveWeatherProvider),
+              child: Text('Retry', style: TextStyle(color: AppColors.indigo)),
+            ),
+          ],
+        ),
+      ),
+      data: (weather) {
+        final advisory = _weatherAdvisory(weather, hasOutdoorToday);
+        final temp = weather.temperatureC.round().toString();
+        final observed = DateFormat('h:mm a').format(weather.observedAt);
+
+        return _weatherShell(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    _weatherIcon(weather),
+                    color: AppColors.indigo,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 10),
+                  RichText(
+                    text: TextSpan(
+                      style: TextStyle(
+                        fontFamily: AppText.brand.fontFamily,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.film,
+                      ),
+                      children: [
+                        TextSpan(text: temp),
+                        const TextSpan(text: '°', style: TextStyle(fontSize: 13)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      weather.condition,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: AppText.sectionTitle.fontFamily,
+                        fontSize: 9,
+                        letterSpacing: 1,
+                        color: AppColors.filmDim.withValues(alpha: 0.85),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    'Live GPS',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.film,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 10,
+                runSpacing: 6,
+                children: [
+                  _weatherMetric('Feels ${weather.feelsLikeC.round()}°'),
+                  _weatherMetric('Humidity ${weather.humidity}%'),
+                  _weatherMetric('Wind ${weather.windKmh.round()} km/h'),
+                  _weatherMetric('Rain ${weather.precipitationMm.toStringAsFixed(1)} mm'),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(advisory.icon, size: 14, color: advisory.color),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      advisory.text,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: advisory.color,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${weather.locationLabel} · updated $observed',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 10.5, color: AppColors.filmDim),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _weatherShell({required Widget child}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
@@ -2207,127 +2351,97 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.indigo.withValues(alpha: 0.20)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(emoji, style: TextStyle(fontSize: 22)),
-              const SizedBox(width: 10),
-              RichText(
-                text: TextSpan(
-                  style: TextStyle(
-                    fontFamily: AppText.brand.fontFamily,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.film,
-                  ),
-                  children: [
-                    TextSpan(text: temp),
-                    const TextSpan(text: '°', style: TextStyle(fontSize: 13)),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  condition,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: AppText.sectionTitle.fontFamily,
-                    fontSize: 9,
-                    letterSpacing: 1,
-                    color: AppColors.filmDim.withValues(alpha: 0.85),
-                  ),
-                ),
-              ),
-              Text(
-                'Dhaka, BD',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.film,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(advisory.icon, size: 14, color: advisory.color),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  advisory.text,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: advisory.color,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+      child: child,
+    );
+  }
+
+  Widget _weatherMetric(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(7),
+        border: Border.all(color: AppColors.line(0.06)),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: AppColors.filmDim,
+          fontSize: 10.5,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
 
-  /// Turns the current condition into an actionable shoot advisory — "what to
-  /// do" — biased toward outdoor shoots when one is scheduled today.
-  ({String text, IconData icon, Color color}) _weatherAdvisory(
-    String condition,
-    bool hasOutdoorToday,
-  ) {
-    switch (condition) {
-      case 'MOSTLY SUNNY':
-        return hasOutdoorToday
-            ? (
-                text:
-                    'Perfect for the outdoor shoot — carry a diffuser for harsh sun.',
-                icon: Icons.wb_sunny_outlined,
-                color: AppColors.green,
-              )
-            : (
-                text: 'Great light for outdoor shoots right now.',
-                icon: Icons.wb_sunny_outlined,
-                color: AppColors.green,
-              );
-      case 'PARTLY CLOUDY':
-        return (
-          text:
-              'Soft, even light — ideal for portraits. Keep a rain cover handy.',
-          icon: Icons.wb_cloudy_outlined,
-          color: AppColors.teal,
-        );
-      case 'MORNING SUN':
-        return (
-          text: 'Golden morning light — best window for outdoor frames.',
-          icon: Icons.wb_twilight_outlined,
-          color: AppColors.gold,
-        );
-      case 'EVENING':
-        return (
-          text: 'Golden hour — shoot now, then switch to lights after dusk.',
-          icon: Icons.wb_twilight_outlined,
-          color: AppColors.orange,
-        );
-      case 'CLEAR NIGHT':
-        return (
-          text: 'Clear night — plan lighting for any night shoot.',
-          icon: Icons.nightlight_outlined,
-          color: AppColors.indigo,
-        );
-      default:
-        return (
-          text: 'Check the sky before an outdoor shoot.',
-          icon: Icons.info_outline,
-          color: AppColors.filmDim,
-        );
+  IconData _weatherIcon(LiveWeather weather) {
+    final code = weather.weatherCode;
+    if (code == 0 || code == 1) {
+      return weather.isDay ? Icons.wb_sunny_outlined : Icons.nightlight_outlined;
     }
+    if (code == 2 || code == 3) return Icons.wb_cloudy_outlined;
+    if (code == 45 || code == 48) return Icons.foggy;
+    if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) {
+      return Icons.water_drop_outlined;
+    }
+    if (code >= 95 && code <= 99) return Icons.thunderstorm_outlined;
+    return Icons.cloud_outlined;
   }
 
+  /// Turns live weather into an actionable shoot advisory.
+  ({String text, IconData icon, Color color}) _weatherAdvisory(
+    LiveWeather weather,
+    bool hasOutdoorToday,
+  ) {
+    if (weather.precipitationMm > 0 ||
+        weather.condition == 'RAIN' ||
+        weather.condition == 'SHOWERS' ||
+        weather.condition == 'THUNDERSTORM') {
+      return hasOutdoorToday
+          ? (
+              text: 'Outdoor shoot today: pack rain cover and backup indoor plan.',
+              icon: Icons.umbrella_outlined,
+              color: AppColors.red,
+            )
+          : (
+              text: 'Wet weather nearby - keep gear covers ready.',
+              icon: Icons.umbrella_outlined,
+              color: AppColors.gold,
+            );
+    }
+    if (weather.windKmh >= 28) {
+      return (
+        text: 'Wind is high - secure stands, softboxes, and reflectors.',
+        icon: Icons.air_outlined,
+        color: AppColors.gold,
+      );
+    }
+    if (weather.temperatureC >= 33) {
+      return (
+        text: 'Hot conditions - carry water and plan shade breaks.',
+        icon: Icons.wb_sunny_outlined,
+        color: AppColors.orange,
+      );
+    }
+    if (weather.condition == 'PARTLY CLOUDY' || weather.condition == 'OVERCAST') {
+      return (
+        text: 'Soft light right now - good for portraits and outdoor frames.',
+        icon: Icons.wb_cloudy_outlined,
+        color: AppColors.teal,
+      );
+    }
+    return hasOutdoorToday
+        ? (
+            text: 'Weather looks workable for today\'s outdoor shoot.',
+            icon: Icons.check_circle_outline,
+            color: AppColors.green,
+          )
+        : (
+            text: 'Live weather is clear enough for outdoor planning.',
+            icon: Icons.check_circle_outline,
+            color: AppColors.green,
+          );
+  }
   // ─── Drawer ────────────────────────────────────────────────────────
   Widget _buildSidebar(UserModel? user) {
     final policy = RolePolicy(user?.role ?? UserRole.owner);
@@ -2477,11 +2591,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     Navigator.pop(context);
                     _pushNamed(RouteNames.bookings);
                   }),
-                  if (policy.can(Capability.requestReEdit))
-                    _sbItem(Icons.edit_note_outlined, 'Re-edit Requests', () {
-                      Navigator.pop(context);
-                      _pushNamed(RouteNames.reEditRequests);
-                    }),
                   if (policy.can(Capability.accessTeam))
                     _sbItem(Icons.people_outline, 'Team & Staff', () {
                       Navigator.pop(context);
@@ -2513,7 +2622,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   // Freelancer lands straight on the expense log (the Finance
                   // hub shows them the earnings face, not expenses); Petty
                   // Cash rides along for them too (Heaven 2026-07-15:
-                  // "ফ্রিলান্সার রোল এ খরচ এড করো। প্রিটি ক্যাস এড করো").
+                  // "ফà§রিলানà§সার রোল à¦ খরচ à¦ড করো। পà§রিটি কà§যাস à¦ড করো").
                   _sbItem(Icons.money_off_outlined, 'Expenses', () {
                     Navigator.pop(context);
                     _pushNamed(
@@ -2530,19 +2639,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   _sbItem(Icons.bar_chart_outlined, 'Reports & Analytics', () {
                     Navigator.pop(context);
                     _pushNamed(RouteNames.reports);
-                  }),
-                  _sbItem(Icons.insights_outlined, 'Performance', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.performance);
-                  }),
-                  if (policy.can(Capability.accessTax))
-                    _sbItem(Icons.calculate_outlined, 'Tax / VAT (NBR)', () {
-                      Navigator.pop(context);
-                      _pushNamed(RouteNames.finance);
-                    }),
-                  _sbItem(Icons.timeline_outlined, 'Cash Flow', () {
-                    Navigator.pop(context);
-                    _pushNamed(RouteNames.cashFlow);
                   }),
                   // Petty Cash entry removed per feedback — it overlapped with
                   // Expenses (petty cash is treated as an expense in profit +
@@ -2571,20 +2667,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       Navigator.pop(context);
                       _pushNamed(RouteNames.packages);
                     }),
-                  if (policy.can(Capability.accessFollowup))
-                    _sbItem(
-                      Icons.follow_the_signs_outlined,
-                      'Client Follow-up',
-                      () {
-                        Navigator.pop(context);
-                        _pushNamed(RouteNames.followup);
-                      },
-                    ),
-                  if (policy.can(Capability.accessReminders))
-                    _sbItem(Icons.alarm_outlined, 'Reminders', () {
-                      Navigator.pop(context);
-                      _pushNamed(RouteNames.reminders);
-                    }),
                   if (policy.can(Capability.accessWaitlist))
                     _sbItem(Icons.hourglass_empty_outlined, 'Waitlist', () {
                       Navigator.pop(context);
@@ -2607,15 +2689,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       ),
                       color: AppColors.line(0.05),
                     ),
-                    _sbGroup('ADMIN'),
-                    _sbItem(Icons.history_edu_outlined, 'Audit Log', () {
-                      Navigator.pop(context);
-                      _pushNamed(RouteNames.auditLog);
-                    }),
-                    _sbItem(Icons.bug_report_outlined, 'Crash Reports', () {
-                      Navigator.pop(context);
-                      _pushNamed(RouteNames.crashSettings);
-                    }),
                   ],
                   Container(
                     height: 1,
@@ -2803,8 +2876,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   // ─── Bottom navigation ─────────────────────────────────────────────
   Widget _buildBottomNav() {
-    // Docked flush to the screen's bottom edge (Heaven 2026-07-15: "এটা
-    // মোবাইলের একবারে নিচে থাকবে") — the old floating pill left a visible
+    // Docked flush to the screen's bottom edge (Heaven 2026-07-15: "à¦টা
+    // মোবাইলের à¦কবারে নিচে থাকবে") — the old floating pill left a visible
     // gap under the bar. The surface extends behind the gesture/nav inset;
     // the 56px content row sits just above it.
     final bottomInset = MediaQuery.paddingOf(context).bottom;
@@ -3039,22 +3112,26 @@ class _AnimatedBrand extends StatelessWidget {
           child: child,
         ),
       ),
-      child: Column(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          Flexible(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
           RichText(
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             text: TextSpan(
-              // ClickerPro wordmark (spec): Hanken 800, tight tracking,
+              // Graphy7 wordmark (spec): Hanken 800, tight tracking,
               // "Pro" in brand orange — NOT italic.
               style: TextStyle(
                 fontFamily: AppText.brandFontFamily,
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
                 color: AppColors.film,
-                letterSpacing: -0.03 * 20,
               ),
               children: [
                 const TextSpan(text: 'Graphy'),
@@ -3065,6 +3142,7 @@ class _AnimatedBrand extends StatelessWidget {
               ],
             ),
           ),
+                const SizedBox(height: 1),
           Text(
             subtitle,
             maxLines: 1,
@@ -3075,6 +3153,9 @@ class _AnimatedBrand extends StatelessWidget {
               fontWeight: FontWeight.w600,
               color: AppColors.filmDim.withValues(alpha: 0.85),
               letterSpacing: 1.0,
+            ),
+          ),
+              ],
             ),
           ),
         ],

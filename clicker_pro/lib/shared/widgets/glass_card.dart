@@ -1,6 +1,6 @@
 // lib/shared/widgets/glass_card.dart
 //
-// Clicker Pro — Premium glassmorphism primitives (MOD-UI Phase 1).
+// Graphy7 — Premium glassmorphism primitives (MOD-UI Phase 1).
 //
 // The existing `AppColors.glassCardDecoration` only paints a flat surface with
 // a hairline border, which reads like a plain white card. These widgets add the

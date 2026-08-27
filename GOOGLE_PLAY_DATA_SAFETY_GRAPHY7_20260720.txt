@@ -1,0 +1,617 @@
+Graphy7 - Google Play Console Data Safety Form Draft (Bangla)
+Generated: 2026-07-20
+Package: com.clickerpro.app
+User-er kache app name: Graphy7
+
+Guruttopurno note:
+Ei draft current Flutter/Laravel code scan-er upor based. Play Console-e final
+submit korar age confirm korben production build HTTPS only use korche, ebong
+ei file generate korar por notun kono SDK, ad SDK, analytics SDK, payment
+gateway SDK, ba tracking SDK add kora hoy nai.
+
+Google Play-er official rule:
+"Collect" mane holo app theke user data device-er baire transmit kora. SDK ba
+library data pathaleo eta collection hisebe count hobe. Developer-ke data
+collection, sharing, purpose, encryption in transit, ebong deletion option
+disclose korte hoy.
+
+===============================================================================
+SECTION 1 - DATA COLLECTION AND SECURITY
+===============================================================================
+
+Question: App ki kono required user data type collect ba share kore?
+Answer: YES
+
+Question: App je user data collect kore, sob ki transit-er somoy encrypted?
+Answer: YES
+
+Reason:
+Production app API base URL HTTPS: https://graphy7.tech
+Weather API HTTPS: https://api.open-meteo.com
+Google/Firebase services HTTPS/TLS use kore.
+
+Important warning:
+AndroidManifest-e currently android:usesCleartextTraffic="true" ache dev/server
+compatibility-er jonno. Production Play build-e kokhono HTTP API_BASE_URL use
+korben na. Jodi production build plain HTTP diye user data pathay, tahole ei
+answer YES theke NO korte hobe.
+
+Question: User-er data delete request korar way ache?
+Answer: YES
+
+Reason:
+App-e account deletion/profile delete flow ache, backend-e account deletion
+support ache. Admin workflow diyeo eligible user data remove/delete kora jay.
+
+Privacy Policy URL:
+Play Console-e ei live URL use korben:
+https://graphy7.tech/privacy
+
+Data Deletion URL:
+Play Console-e data deletion link chaile eta use korben:
+https://graphy7.tech/data-deletion
+
+===============================================================================
+SECTION 2 - IS DATA SHARED?
+===============================================================================
+
+Recommended answer: YES
+
+Why:
+Core business data Graphy7-er nijer backend-e jay. Tar sathe kichu third-party
+service provider specific feature-er jonno use hoy:
+- Firebase Cloud Messaging device push token and notification payload receive kore.
+- Open-Meteo live weather-er jonno device latitude/longitude receive kore.
+- Google Calendar/device calendar booking calendar event details receive korte
+  pare, jodi auto calendar sync enabled thake.
+- Google Sign-In / Apple Sign-In social login-er authentication data receive kore.
+
+Play Console jodi data-type by data-type sharing jiggesh kore, niche per-data
+type answer use korben.
+
+===============================================================================
+SECTION 3 - DATA TYPES TO SELECT
+===============================================================================
+
+Play Console-e ei data type gulo select korben:
+
+1. Location
+- Approximate location
+- Precise location
+
+2. Personal info
+- Name
+- Email address
+- User IDs
+- Address
+- Phone number
+- Other info
+
+3. Financial info
+- User payment info
+- Purchase history
+- Other financial info
+
+4. Messages
+- Other in-app messages
+
+5. Photos and videos
+- Photos
+
+6. Files and docs
+- Files and docs
+
+7. Calendar
+- Calendar events
+
+8. App activity
+- App interactions
+- Other user-generated content
+- Other actions
+
+9. App info and performance
+- Crash logs
+- Diagnostics
+
+10. Device or other IDs
+- Device or other IDs
+
+Ei gulo select korben na, jodi future-e app change na hoy:
+- Contacts: app manually typed phone/email store kore, kintu user-er phone
+  contacts read kore na.
+- SMS or MMS: app SMS/WhatsApp link open korte pare, kintu SMS/MMS read kore na.
+- Emails: OTP backend email diye jay, kintu app user-er email inbox read kore na.
+- Audio files / voice recordings / music files: current code-e use hoy na.
+- Installed apps: installed app inventory collection pawa jay nai.
+- Web browsing history: browser history collection pawa jay nai.
+- Health and fitness: use hoy na.
+- Race/ethnicity, political/religious beliefs, sexual orientation: use hoy na.
+- Advertising ID: ad SDK ba advertising identifier use pawa jay nai.
+
+===============================================================================
+SECTION 4 - PER DATA TYPE ANSWERS
+===============================================================================
+
+Protita selected data type-er jonno Play Console-e ei vabe fill korben.
+
+-------------------------------------------------------------------------------
+LOCATION - Approximate location
+-------------------------------------------------------------------------------
+Collected: YES
+Shared: YES
+Required or optional: Optional
+Purpose:
+- App functionality
+- Personalization
+
+Why:
+Dashboard-e live weather show korar jonno use hoy. Location permission sudhu
+weather feature-er jonno request kora hoy. Current weather fetch korar jonno
+coordinates HTTPS diye Open-Meteo-te pathano hoy.
+
+Processed ephemerally: YES, jodi app sudhu weather fetch korar jonno use kore
+and location history server-e store na kore.
+
+-------------------------------------------------------------------------------
+LOCATION - Precise location
+-------------------------------------------------------------------------------
+Collected: YES
+Shared: YES
+Required or optional: Optional
+Purpose:
+- App functionality
+- Personalization
+
+Why:
+App ACCESS_FINE_LOCATION request kore and live weather-er jonno high accuracy GPS
+use korte pare. Coordinates HTTPS diye Open-Meteo-te pathano hoy.
+
+Processed ephemerally: YES, jodi server-e location history store na hoy.
+
+-------------------------------------------------------------------------------
+PERSONAL INFO - Name
+-------------------------------------------------------------------------------
+Collected: YES
+Shared: NO, app run korar jonno needed service provider chara
+Required or optional: Account/profile-er jonno Required; kichu client/team record
+feature-er upor depend kore Optional hote pare
+Purpose:
+- App functionality
+- Account management
+- Developer communications
+- Fraud prevention, security, and compliance
+
+Why:
+Account registration, profile, team, clients, bookings, public booking, invoices,
+support, announcements, ebong admin/account management-e use hoy.
+
+Processed ephemerally: NO
+
+-------------------------------------------------------------------------------
+PERSONAL INFO - Email address
+-------------------------------------------------------------------------------
+Collected: YES
+Shared: YES, social login/email delivery/service provider-er jonno
+Required or optional: Account login/registration-er jonno Required; kichu client
+record-e Optional
+Purpose:
+- App functionality
+- Account management
+- Developer communications
+- Fraud prevention, security, and compliance
+
+Why:
+Login, OTP verification, password reset, profile, support, team invite by email,
+admin account management, Google/Apple sign-in, and transactional email delivery.
+
+Processed ephemerally: NO
+
+-------------------------------------------------------------------------------
+PERSONAL INFO - User IDs
+-------------------------------------------------------------------------------
+Collected: YES
+Shared: YES, auth/push/hosting-er jonno needed service provider-er sathe
+Required or optional: Required
+Purpose:
+- App functionality
+- Account management
+- Fraud prevention, security, and compliance
+- Analytics
+
+Why:
+Backend user id, owner id, team owner id, auth token relation, Firebase/device
+token mapping, notification rows, crash report user relation, audit/security logs.
+
+Processed ephemerally: NO
+
+-------------------------------------------------------------------------------
+PERSONAL INFO - Address
+-------------------------------------------------------------------------------
+Collected: YES
+Shared: NO, app run korar jonno needed service provider chara
+Required or optional: Optional
+Purpose:
+- App functionality
+- Account management
+
+Why:
+Studio address, venue/location text, client address/local client fields, invoice
+and booking details.
+
+Processed ephemerally: NO
+
+-------------------------------------------------------------------------------
+PERSONAL INFO - Phone number
+-------------------------------------------------------------------------------
+Collected: YES
+Shared: NO, app run korar jonno needed service provider chara
+Required or optional: Account-er jonno Optional; client/booking workflow-er upor
+depend kore Required/Optional hote pare
+Purpose:
+- App functionality
+- Account management
+- Developer communications
+- Fraud prevention, security, and compliance
+
+Why:
+User phone, client phone, WhatsApp/SMS share links, public booking, team member
+profiles, invoices, reminders, duplicate-account prevention.
+
+Processed ephemerally: NO
+
+-------------------------------------------------------------------------------
+PERSONAL INFO - Other info
+-------------------------------------------------------------------------------
+Collected: YES
+Shared: NO, app run korar jonno needed service provider chara
+Required or optional: Optional
+Purpose:
+- App functionality
+- Account management
+- Personalization
+
+Why:
+Business/studio name, bio, specialization, staff position, avatar/profile
+metadata, client dates such as DOB/anniversary if used, role and plan information,
+team permissions.
+
+Processed ephemerally: NO
+
+-------------------------------------------------------------------------------
+FINANCIAL INFO - User payment info
+-------------------------------------------------------------------------------
+Collected: YES
+Shared: NO, app run korar jonno needed service provider chara
+Required or optional: Optional
+Purpose:
+- App functionality
+- Account management
+
+Why:
+Team payout details, bKash number, bank details staff payout management-er jonno
+store hote pare. Current code onujayi app manually payment record kore; directly
+card payment process kore bole pawa jay nai.
+
+Processed ephemerally: NO
+
+-------------------------------------------------------------------------------
+FINANCIAL INFO - Purchase history
+-------------------------------------------------------------------------------
+Collected: YES
+Shared: NO, app run korar jonno needed service provider chara
+Required or optional: Optional/feature dependent
+Purpose:
+- App functionality
+- Account management
+- Analytics
+
+Why:
+Booking packages, invoices, payments, due/paid status, expenses, rent, petty cash,
+freelancer payouts, salary/payout history, finance reports.
+
+Processed ephemerally: NO
+
+-------------------------------------------------------------------------------
+FINANCIAL INFO - Other financial info
+-------------------------------------------------------------------------------
+Collected: YES
+Shared: NO, app run korar jonno needed service provider chara
+Required or optional: Optional/feature dependent
+Purpose:
+- App functionality
+- Account management
+- Analytics
+
+Why:
+Amounts, due balances, payment method labels (cash/bank/bkash/nagad/other),
+expenses, payout totals, package prices, VAT/tax settings, currency settings.
+
+Processed ephemerally: NO
+
+-------------------------------------------------------------------------------
+MESSAGES - Other in-app messages
+-------------------------------------------------------------------------------
+Collected: YES
+Shared: NO, app run korar jonno needed service provider chara
+Required or optional: Optional
+Purpose:
+- App functionality
+- Developer communications
+
+Why:
+Team chat messages, support tickets/replies, announcements, notification text,
+broadcast content, re-edit request notes.
+
+Processed ephemerally: NO
+
+-------------------------------------------------------------------------------
+PHOTOS AND VIDEOS - Photos
+-------------------------------------------------------------------------------
+Collected: YES
+Shared: NO, uploaded file store/deliver korar jonno needed service provider chara
+Required or optional: Optional
+Purpose:
+- App functionality
+- Account management
+
+Why:
+Optional uploaded image-er jonno image picker and upload endpoint use hoy, like
+avatar/logo/signature/broadcast image/re-edit reference image. App-e cached
+network image display hoy.
+
+Processed ephemerally: NO for uploaded images. Upload-er age local-only image
+temporary hote pare.
+
+-------------------------------------------------------------------------------
+FILES AND DOCS - Files and docs
+-------------------------------------------------------------------------------
+Collected: YES
+Shared: YES, user Android share sheet/printing provider diye share/export korle
+Required or optional: Optional
+Purpose:
+- App functionality
+
+Why:
+PDF invoice/report export, ICS calendar file create/share, file upload endpoint,
+generated documents, downloaded/shared files.
+
+Processed ephemerally: Mixed. Export/share temp files temporary hote pare;
+uploaded files delete na kora porjonto retained thake.
+
+-------------------------------------------------------------------------------
+CALENDAR - Calendar events
+-------------------------------------------------------------------------------
+Collected: YES
+Shared: YES
+Required or optional: Optional
+Purpose:
+- App functionality
+
+Why:
+App booking event device/Google calendar-e write korte pare and duplicate avoid
+korar jonno nearby calendar event check korte pare. Calendar sync permission
+gated. Calendar event details user-er calendar provider-er maddhome sync hote
+pare.
+
+Processed ephemerally: NO for events saved to user's calendar.
+
+-------------------------------------------------------------------------------
+APP ACTIVITY - App interactions
+-------------------------------------------------------------------------------
+Collected: YES
+Shared: NO, app run korar jonno needed service provider chara
+Required or optional: Core operation/security log-er jonno Required
+Purpose:
+- App functionality
+- Analytics
+- Fraud prevention, security, and compliance
+
+Why:
+Login activity, last active timestamp, notification read state, broadcast view
+and click counts, audit/activity log, admin/app workflow-er user actions.
+
+Processed ephemerally: NO
+
+-------------------------------------------------------------------------------
+APP ACTIVITY - Other user-generated content
+-------------------------------------------------------------------------------
+Collected: YES
+Shared: NO, app run korar jonno needed service provider chara
+Required or optional: Optional/feature dependent
+Purpose:
+- App functionality
+- Account management
+
+Why:
+Booking titles/details, notes, descriptions, task text, support messages,
+announcement body, package descriptions, gear/rent details, waitlist notes,
+re-edit request text, chat content.
+
+Processed ephemerally: NO
+
+-------------------------------------------------------------------------------
+APP ACTIVITY - Other actions
+-------------------------------------------------------------------------------
+Collected: YES
+Shared: NO, app run korar jonno needed service provider chara
+Required or optional: Required/feature dependent
+Purpose:
+- App functionality
+- Analytics
+- Fraud prevention, security, and compliance
+
+Why:
+Booking status updates, assignment actions, payment actions, invite/join team
+actions, read/unread actions, delete/suspend/admin operations.
+
+Processed ephemerally: NO
+
+-------------------------------------------------------------------------------
+APP INFO AND PERFORMANCE - Crash logs
+-------------------------------------------------------------------------------
+Collected: YES
+Shared: NO, host/administer korar jonno needed service provider chara
+Required or optional: Optional if crash reporting disable kora jay; otherwise app
+reliability-er jonno Required
+Purpose:
+- Analytics
+- App functionality
+
+Why:
+App-e CrashService and /api/crash-reports endpoint ache, jeta error, stack trace,
+user role, breadcrumbs, platform, app version, and optional user id collect kore.
+
+Processed ephemerally: NO
+
+-------------------------------------------------------------------------------
+APP INFO AND PERFORMANCE - Diagnostics
+-------------------------------------------------------------------------------
+Collected: YES
+Shared: NO, host/administer korar jonno needed service provider chara
+Required or optional: App reliability/security-er jonno Required
+Purpose:
+- Analytics
+- App functionality
+- Fraud prevention, security, and compliance
+
+Why:
+Connectivity state, sync errors, API errors, login activity, platform/app version
+with push token/crash reports, performance/error diagnostics.
+
+Processed ephemerally: NO
+
+-------------------------------------------------------------------------------
+DEVICE OR OTHER IDS - Device or other IDs
+-------------------------------------------------------------------------------
+Collected: YES
+Shared: YES, Firebase/FCM and service provider-er sathe
+Required or optional: Push notification-er jonno Optional; push enabled hole
+Required
+Purpose:
+- App functionality
+- Developer communications
+- Fraud prevention, security, and compliance
+
+Why:
+Firebase Cloud Messaging token/device token backend-e register hoy booking,
+assignment, announcement, broadcast, and account notification send korar jonno.
+Secure storage/shared preferences/local database app/session identifier store
+korte pare.
+
+Processed ephemerally: NO
+
+===============================================================================
+SECTION 5 - DATA DELETION TEXT
+===============================================================================
+
+Privacy policy / Play Console note-e proyojon hole ei wording use korte paren:
+
+Users can request deletion of their Graphy7 account and associated account data
+from inside the app or by contacting support. Account deletion removes or
+deactivates the account according to the app's deletion flow, and administrators
+can permanently delete eligible accounts from the backend. Some records may be
+retained where required for security, fraud prevention, legal compliance,
+transaction history, or backup integrity.
+
+Bangla meaning:
+User app-er vitore theke ba support-er sathe contact kore Graphy7 account and
+associated account data delete request korte parbe. Account deletion app-er
+deletion flow onujayi account remove/deactivate kore, ebong admin backend theke
+eligible account permanently delete korte pare. Security, fraud prevention, legal
+compliance, transaction history, ba backup integrity-er jonno kichu record retain
+kora hote pare.
+
+Data Deletion URL:
+https://graphy7.tech/data-deletion
+
+===============================================================================
+SECTION 6 - SECURITY PRACTICES
+===============================================================================
+
+Data encrypted in transit:
+YES
+
+Can users request data deletion:
+YES
+
+Independent security review:
+NO, jodi approved independent security review complete na kore thaken. Google
+Play accepted completed review chara YES select korben na.
+
+Committed to follow Play Families Policy:
+NO, jodi app specifically children/families target na kore and full Families
+policy setup complete na thake.
+
+===============================================================================
+SECTION 7 - QUICK PLAY CONSOLE CHECKLIST
+===============================================================================
+
+Data collection and security:
+[x] App collects user data: YES
+[x] Data encrypted in transit: YES
+[x] Users can request deletion: YES
+[x] Data shared: YES
+
+Data types selected:
+[x] Approximate location
+[x] Precise location
+[x] Name
+[x] Email address
+[x] User IDs
+[x] Address
+[x] Phone number
+[x] Other personal info
+[x] User payment info
+[x] Purchase history
+[x] Other financial info
+[x] Other in-app messages
+[x] Photos
+[x] Files and docs
+[x] Calendar events
+[x] App interactions
+[x] Other user-generated content
+[x] Other actions
+[x] Crash logs
+[x] Diagnostics
+[x] Device or other IDs
+
+Do not select:
+[ ] Contacts
+[ ] SMS or MMS
+[ ] Emails
+[ ] Audio files
+[ ] Installed apps
+[ ] Web browsing history
+[ ] Health and fitness
+[ ] Advertising ID
+
+===============================================================================
+SECTION 8 - SOURCE NOTES FROM CODE SCAN
+===============================================================================
+
+Flutter packages/permissions observed:
+- geolocator: ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION
+- firebase_messaging: FCM push tokens and push messages
+- flutter_local_notifications: notification permission, alarms, reminders
+- flutter_timezone: device timezone for reminders
+- device_calendar: READ_CALENDAR, WRITE_CALENDAR
+- image_picker: optional image/photo selection
+- cached_network_image: network image loading/cache
+- google_sign_in and sign_in_with_apple: social sign-in
+- drift/sqlite/shared_preferences/flutter_secure_storage: local storage
+- http: backend/API calls and Open-Meteo weather call
+- pdf/printing/share_plus/path_provider: PDF/ICS export and sharing
+
+Backend/API data observed:
+- Auth/register/login/OTP/password reset/social auth
+- Profile, role, account deletion/security/2FA/login activity
+- Bookings, clients, payments, invoices, expenses, gear, rent, petty cash
+- Team invites, team members, freelancer earnings/check-in/blackouts/leaves
+- Announcements, broadcasts, notifications, support, chat
+- Crash reports
+- Device tokens for FCM
+- File upload endpoint
+
+===============================================================================
+END
+===============================================================================

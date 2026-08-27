@@ -1,4 +1,4 @@
-﻿// lib/features/bookings/presentation/booking_edit_screen.dart
+// lib/features/bookings/presentation/booking_edit_screen.dart
 //
 // Combined create / edit form for a Booking. The screen is keyed by an
 // optional booking local id — `null` opens a fresh draft, a non-null id
@@ -53,6 +53,7 @@ import '../../../core/providers.dart';
 import '../application/booking_conflict.dart';
 import '../application/booking_edit_controller.dart';
 import '../application/booking_providers.dart';
+import '../domain/assignment.dart';
 import '../domain/assignment_role.dart';
 import '../domain/booking.dart';
 import '../domain/booking_filter.dart';
@@ -118,7 +119,8 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
   /// its own date and package price — so the calendar, reminders and
   /// due/collection math all keep working per event.
   bool _multiEventOn = false;
-  final List<({DateTime date, Package package})> _extraEvents = [];
+  final List<({DateTime date, Package? package, double price, String label})>
+      _extraEvents = [];
 
   /// Whether the hide-payment eye is toggled on.
   bool _hidePaymentVisible = true;
@@ -610,16 +612,8 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
             controller.setRequirementsNote(v.isEmpty ? null : v);
           },
         ),
-        // 14. Notes
-        LensTextField(
-          label: 'Notes',
-          controller: _notesCtrl,
-          maxLines: 3,
-          onChanged: (v) {
-            _markDirty();
-            controller.setNotes(v.isEmpty ? null : v);
-          },
-        ),
+        // 14. Notes hidden from the booking form for now. Keep the controller
+        // and stored value intact so existing notes are not deleted.
         // 15. Hide payment from team
         if (policy.can(Capability.toggleHidePayment))
           LensSwitchTile(
@@ -719,15 +713,8 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
         ],
         _buildMapLinkField(controller),
         _buildEventTypeSection(draft, controller),
-        LensTextField(
-          label: 'Notes',
-          controller: _notesCtrl,
-          maxLines: 3,
-          onChanged: (v) {
-            _markDirty();
-            controller.setNotes(v.isEmpty ? null : v);
-          },
-        ),
+        // Notes hidden from the freelancer booking form for now. Existing
+        // notes remain preserved in the draft/model.
         const SizedBox(height: 24),
       ],
     );
@@ -1129,10 +1116,16 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     );
   }
 
+  Set<String> _blockedAssignmentUserIds() {
+    final ownerId = ref.read(currentUserProvider).valueOrNull?.ownerId;
+    if (ownerId == null || ownerId.isEmpty) return const <String>{};
+    return <String>{ownerId};
+  }
   Future<void> _pickChiefFromTeam(BookingEditController controller) async {
     final picked = await TeamMemberPickerSheet.show(
       context,
       title: 'Pick chief photographer',
+      hiddenUserIds: _blockedAssignmentUserIds(),
       multiSelect: false,
       accentColor: AppColors.gold,
     );
@@ -1259,6 +1252,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
       context,
       title: 'Add $roleLabel',
       excludedUserIds: alreadyAssigned,
+      hiddenUserIds: _blockedAssignmentUserIds(),
       accentColor: role == AssignmentRole.cinematographer
           ? AppColors.purple
           : AppColors.teal,
@@ -1276,7 +1270,11 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     dynamic policy,
   ) {
     final pkgPrice = _resolvePackagePrice(draft);
-    final total = draft.customPrice ?? pkgPrice;
+    final primaryTotal = draft.customPrice ?? pkgPrice;
+    final extrasTotal = _multiEventOn
+        ? _extraEvents.fold<double>(0, (s, e) => s + e.price)
+        : 0.0;
+    final total = primaryTotal == null ? null : primaryTotal + extrasTotal;
     if (total != null) {
       _totalCtrl.text = total.toStringAsFixed(0);
     }
@@ -1325,7 +1323,12 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                           ),
                           onChanged: (v) {
                             _markDirty();
-                            controller.setCustomPrice(double.tryParse(v));
+                            final typedTotal = double.tryParse(v);
+                            controller.setCustomPrice(
+                              typedTotal == null
+                                  ? null
+                                  : math.max(typedTotal - extrasTotal, 0),
+                            );
                           },
                         ),
                       ),
@@ -1389,7 +1392,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
   Widget _buildMultiEventSection(BookingDraft draft) {
     final primary = _resolvePackagePrice(draft) ?? draft.customPrice ?? 0;
     final extrasTotal =
-        _extraEvents.fold<double>(0, (s, e) => s + e.package.netPrice);
+        _extraEvents.fold<double>(0, (s, e) => s + e.price);
     final grand = primary + extrasTotal;
 
     return Column(
@@ -1425,14 +1428,14 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                   Expanded(
                     child: Text(
                       '${_extraEvents[i].date.day}/${_extraEvents[i].date.month}/${_extraEvents[i].date.year}'
-                      ' · ${_extraEvents[i].package.name}',
+                      ' · ${_extraEvents[i].label}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(color: AppColors.film, fontSize: 13.5),
                     ),
                   ),
                   Text(
-                    ActiveCurrency.value.wrap(_extraEvents[i].package.netPrice.toStringAsFixed(0)),
+                    ActiveCurrency.value.wrap(_extraEvents[i].price.toStringAsFixed(0)),
                     style: TextStyle(
                       color: AppColors.gold,
                       fontSize: 13,
@@ -1510,21 +1513,104 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     );
     if (picked == null || !mounted) return;
 
+    final isPrimaryDate = draft.date != null &&
+        picked.year == draft.date!.year &&
+        picked.month == draft.date!.month &&
+        picked.day == draft.date!.day;
+    final alreadyAdded = _extraEvents.any((e) =>
+        e.date.year == picked.year &&
+        e.date.month == picked.month &&
+        e.date.day == picked.day);
+    if (isPrimaryDate || alreadyAdded) {
+      _showSnack('This date is already in this booking.');
+      return;
+    }
+
     final result = await _PackagePickerSheet.show(
       context,
       ref: ref,
-      currentSelection: null,
+      currentSelection: draft.packageId,
     );
     if (result == null || !mounted) return;
-    final pkg = result.package;
-    if (pkg == null) {
-      _showSnack('Pick a package for the extra day.');
-      return;
-    }
-    _markDirty();
-    setState(() => _extraEvents.add((date: picked, package: pkg)));
-  }
 
+    final Package? pkg;
+    final double price;
+    final String label;
+    if (result.useCustomPrice) {
+      final custom = await _askExtraCustomPrice();
+      if (custom == null || custom <= 0 || !mounted) return;
+      pkg = null;
+      price = custom;
+      label = 'Custom price';
+    } else {
+      pkg = result.package;
+      if (pkg == null) {
+        _showSnack('Pick a package for the extra day.');
+        return;
+      }
+      price = pkg.netPrice;
+      label = pkg.name;
+    }
+
+    _markDirty();
+    setState(() {
+      _extraEvents.add(
+        (date: picked, package: pkg, price: price, label: label),
+      );
+      _extraEvents.sort((a, b) => a.date.compareTo(b.date));
+    });
+  }
+  Future<double?> _askExtraCustomPrice() async {
+    final ctrl = TextEditingController();
+    final value = await showDialog<double>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.voidElevated,
+        title: Text(
+          'Custom price',
+          style: TextStyle(color: AppColors.film, fontSize: 18),
+        ),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          style: TextStyle(color: AppColors.film),
+          decoration: InputDecoration(
+            hintText: 'Enter amount',
+            hintStyle: TextStyle(color: AppColors.filmMuted),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: AppColors.line(0.18)),
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: AppColors.orange),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text('Cancel', style: TextStyle(color: AppColors.filmDim)),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.orange,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(
+              double.tryParse(ctrl.text.trim()),
+            ),
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) => ctrl.dispose());
+    if (value == null || value <= 0) {
+      if (mounted && value != null) _showSnack('Enter a valid custom price.');
+      return null;
+    }
+    return value;
+  }
   double? _resolvePackagePrice(BookingDraft draft) {
     if (draft.packageId == null) return null;
     final packagesAsync = ref.watch(packagesProvider);
@@ -1862,7 +1948,9 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
       if (isNewBooking && _multiEventOn && _extraEvents.isNotEmpty) {
         try {
           final repo = ref.read(bookingRepositoryProvider);
+          final assignmentRepo = ref.read(assignmentRepositoryProvider);
           final policy = ref.read(bookingsPolicyProvider);
+          final copiedAssignments = draft?.assignments ?? const <Assignment>[];
           for (var i = 0; i < _extraEvents.length; i++) {
             final e = _extraEvents[i];
             final now = DateTime.now();
@@ -1884,9 +1972,12 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
               clientId: saved.clientId,
               clientName: saved.clientName,
               clientPhone: saved.clientPhone,
-              packageId: e.package.id,
-              coverageHours: e.package.coverageHours,
-              extraHourRate: e.package.extraHourRate,
+              packageId: e.package?.id,
+              customPrice: e.price,
+              coverageHours: e.package?.coverageHours,
+              extraHourRate: e.package?.extraHourRate,
+              driveLink: saved.driveLink,
+              clientRequirements: saved.clientRequirements,
               notes: saved.notes,
               chiefPhotographerUserId: saved.chiefPhotographerUserId,
               hidePaymentFromTeam: saved.hidePaymentFromTeam,
@@ -1897,6 +1988,24 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
               pending: true,
             );
             final savedClone = await repo.save(clone, policy: policy);
+            for (var j = 0; j < copiedAssignments.length; j++) {
+              final assignment = copiedAssignments[j];
+              final stamped = DateTime.now();
+              await assignmentRepo.add(
+                Assignment(
+                  id: 'a-${stamped.microsecondsSinceEpoch}-${i + 1}-$j',
+                  bookingId: savedClone.id,
+                  userId: assignment.userId,
+                  role: assignment.role,
+                  payout: assignment.payout,
+                  notes: assignment.notes,
+                  createdAt: stamped,
+                  updatedAt: stamped,
+                  pending: true,
+                ),
+                policy: policy,
+              );
+            }
             EventReminderService.instance.scheduleForBooking(
               bookingId: savedClone.id,
               title: savedClone.clientName?.trim().isNotEmpty == true
@@ -1909,6 +2018,9 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
               clientName: savedClone.clientName,
               clientPhone: savedClone.clientPhone,
             );
+            if (await CalendarSyncService.isAutoSyncEnabled()) {
+              await _syncBookingToDeviceCalendar(savedClone);
+            }
           }
           if (mounted) {
             _showSnack(
@@ -1920,43 +2032,11 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
           if (mounted) _showSnack('Extra days not saved: $e');
         }
       }
-      // MOD-61: a new booking is auto-added to the device calendar. When the
-      // user has Auto-sync ON we ONLY do the silent device-calendar write —
-      // no Google web page, no manual "Save" tap. With Auto-sync OFF we keep
-      // the old behaviour (open the pre-filled page) as a manual fallback.
-      if (isNewBooking) {
-        final autoSync = await CalendarSyncService.isAutoSyncEnabled();
-        final description = [
-          if (saved.clientName != null) 'Client: ${saved.clientName}',
-          if (saved.clientPhone != null) 'Phone: ${saved.clientPhone}',
-          'Booked via GRAPHY7',
-        ].join('\n');
-        // With auto-sync ON we first try the SILENT device-calendar write
-        // (which is what syncs to the phone's Google account). If that
-        // fails — most often because calendar permission was denied or no
-        // writable calendar exists — we don't give up silently anymore;
-        // we fall back to the pre-filled Google Calendar page so the event
-        // still lands. This is the "auto-sync doesn't work" fix.
-        final added = await CalendarSyncService.openGoogleCalendar(
-          title: saved.title,
-          date: saved.date,
-          startTime: saved.startTime,
-          endTime: saved.endTime,
-          venue: saved.venue,
-          description: description,
-          allowWebFallback: !autoSync,
-        );
-        if (autoSync && !added) {
-          await CalendarSyncService.openGoogleCalendar(
-            title: saved.title,
-            date: saved.date,
-            startTime: saved.startTime,
-            endTime: saved.endTime,
-            venue: saved.venue,
-            description: description,
-            allowWebFallback: true,
-          );
-        }
+      // Auto-sync confirmed/new bookings silently to the device calendar.
+      // No Google Calendar page and no manual Save tap: if permission is
+      // granted, the event is inserted into the phone calendar database.
+      if (isNewBooking && await CalendarSyncService.isAutoSyncEnabled()) {
+        await _syncBookingToDeviceCalendar(saved);
       }
       if (!mounted) return;
       Navigator.of(context).pop<Booking>(saved);
@@ -2056,13 +2136,32 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     if (shouldDiscard) Navigator.of(context).maybePop();
   }
 
+  Future<void> _syncBookingToDeviceCalendar(Booking booking) async {
+    final description = [
+      if (booking.clientName != null) 'Client: ${booking.clientName}',
+      if (booking.clientPhone != null) 'Phone: ${booking.clientPhone}',
+      'Booked via GRAPHY7',
+    ].join('\n');
+
+    final added = await CalendarSyncService.openGoogleCalendar(
+      title: booking.title,
+      date: booking.date,
+      startTime: booking.startTime,
+      endTime: booking.endTime,
+      venue: booking.venue,
+      description: description,
+      allowWebFallback: false,
+      bookingId: booking.id,
+    );
+    if (mounted && added) _showSnack('Added to device calendar');
+  }
   void _showSnack(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: AppColors.voidElevated,
+          backgroundColor: const Color(0xFF101828),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
         ),

@@ -1,10 +1,10 @@
 ﻿// lib/features/auth/presentation/reset_password_screen.dart
 //
-// Clicker Pro — Reset Password (Dark Luxury Lens)
+// Graphy7 — Reset Password (Dark Luxury Lens)
 //
 // Two password fields (new + confirm). On submit calls
 // authRepository.resetPassword(token, newPassword). Success snackbar +
-// pushAndRemoveUntil to LoginScreen. Error → inline error.
+// pushAndRemoveUntil to LoginScreen. Error ? inline error.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

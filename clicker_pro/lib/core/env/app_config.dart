@@ -90,9 +90,11 @@ class AppConfig {
         host == 'localhost' || host == '127.0.0.1' || host == '10.0.2.2';
     if (isLocal) return 'http://127.0.0.1:3000';
 
-    final webHost = host.startsWith('api.')
-        ? 'app.${host.substring(4)}'
-        : host;
+    final webHost = host == 'graphy7.tech'
+        ? 'web.graphy7.tech'
+        : host.startsWith('api.')
+            ? 'app.${host.substring(4)}'
+            : host;
     final origin = StringBuffer('${uri.scheme}://$webHost');
     if (uri.hasPort) origin.write(':${uri.port}');
     return origin.toString();
@@ -107,10 +109,10 @@ class AppConfig {
 
   static const String appName = 'GRAPHY7';
   static const String companyName = 'waLidu Tech';
-  static const String appVersionLabel = 'v3.8';
+  static const String appVersionLabel = 'v1.0.0';
 
   /// Numeric build number — MUST match the `+NN` in pubspec.yaml `version:`.
   /// The OTA update check compares this against the server's versionCode.
   /// Bump it on every release you publish to the landing-site APK.
-  static const int appVersionCode = 39;
+  static const int appVersionCode = 1;
 }

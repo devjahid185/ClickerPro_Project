@@ -25,13 +25,13 @@ class AppVersionController extends Controller
         return response()->json([
             'data' => [
                 // Integer build number — the app compares this against its own.
-                'versionCode' => (int) AppSetting::getValue('app_version_code', 40),
+                'versionCode' => (int) AppSetting::getValue('app_version_code', 1),
                 // Human label shown in the dialog.
-                'versionName' => AppSetting::getValue('app_version_name', '3.10'),
+                'versionName' => AppSetting::getValue('app_version_name', '1.0.0'),
                 // Where to download the latest APK.
                 'apkUrl' => AppSetting::getValue(
                     'app_apk_url',
-                    'https://deyalghori.com/ClickerPro.apk'
+                    'https://graphy7.tech/Graphy7.apk'
                 ),
                 // When true, the user cannot dismiss the update (forced).
                 'forceUpdate' => (bool) AppSetting::getValue('app_force_update', false),

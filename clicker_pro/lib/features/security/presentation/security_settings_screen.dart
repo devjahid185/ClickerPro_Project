@@ -1,6 +1,6 @@
 ﻿// lib/features/security/presentation/security_settings_screen.dart
 //
-// Clicker Pro — Security Settings screen (PROD-04)
+// Graphy7 — Security Settings screen (PROD-04)
 //
 // Sections: Change password, 2FA placeholder, Active sessions placeholder,
 // Last login info, Privacy settings.
@@ -97,7 +97,7 @@ class _SecuritySettingsScreenState
     } catch (_) {/* offline — keep cached value */}
   }
 
-  /// Toggle 2FA: enabling runs setup→verify (code dialog); disabling calls API.
+  /// Toggle 2FA: enabling runs setup?verify (code dialog); disabling calls API.
   Future<void> _handleToggle2FA(bool enable) async {
     final client = ref.read(apiClientProvider);
     if (!enable) {
@@ -353,7 +353,7 @@ class _SecuritySettingsScreenState
     );
   }
 
-  // ── Visual primitives ──────────────────────────────────────────
+  // -- Visual primitives ------------------------------------------
 
   Widget _sectionHeader(String title) {
     return Padding(

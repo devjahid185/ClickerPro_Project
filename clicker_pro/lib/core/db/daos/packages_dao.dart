@@ -25,6 +25,11 @@ class PackagesDao extends DatabaseAccessor<AppDatabase>
     await into(packagesTable).insertOnConflictUpdate(row);
   }
 
+  Future<PackageRow?> getById(String id) {
+    return (select(packagesTable)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+  }
+
   Future<void> deleteById(String id) async {
     await (delete(packagesTable)..where((t) => t.id.equals(id))).go();
   }

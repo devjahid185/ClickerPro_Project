@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 /**
- * Admin → Users (Blade). Ports the Next.js users screen onto the Laravel
+ * Admin Ã¢â€ â€™ Users (Blade). Ports the Next.js users screen onto the Laravel
  * console. List/filter/export reuse the API's AdminController so behaviour
  * stays identical; mutations (role/plan/suspend/create) post back here and
  * apply through the same guarded model paths.
@@ -36,7 +36,7 @@ class UsersController extends Controller
 
     public function show($id, AdminController $api)
     {
-        // Reuse the API detail endpoint → { user, stats, bookings }.
+        // Reuse the API detail endpoint Ã¢â€ â€™ { user, stats, bookings }.
         $resp = $api->userDetail($id);
         if ($resp->getStatusCode() === 404) {
             abort(404);
@@ -57,7 +57,7 @@ class UsersController extends Controller
             'role' => ['required', 'string', 'in:' . implode(',', self::ROLES)],
         ]);
         $user = User::findOrFail($id);
-        // role is a guarded field — set it explicitly via forceFill.
+        // role is a guarded field Ã¢â‚¬â€ set it explicitly via forceFill.
         $user->forceFill(['role' => $data['role']])->save();
 
         return back()->with('status', "Role updated to {$data['role']} for {$user->email}.");
@@ -76,13 +76,38 @@ class UsersController extends Controller
     {
         $data = $request->validate(['suspended' => ['required', 'boolean']]);
         $user = User::findOrFail($id);
-        // suspended=true → deactivate; false → reactivate.
+        // suspended=true Ã¢â€ â€™ deactivate; false Ã¢â€ â€™ reactivate.
         $user->forceFill(['is_active' => ! $data['suspended']])->save();
 
         $verb = $data['suspended'] ? 'suspended' : 'reactivated';
         return back()->with('status', "{$user->email} {$verb}.");
     }
 
+    public function destroy(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        if ((int) $request->user()->id === (int) $user->id) {
+            return back()->withErrors(['user' => 'You cannot delete your own admin account.']);
+        }
+
+        if (strtoupper((string) $user->role) === 'ADMIN') {
+            return back()->withErrors(['user' => 'Admin accounts cannot be deleted from this screen.']);
+        }
+
+        $recentlyActive = $user->last_active_at !== null
+            && $user->last_active_at->diffInDays(now()) < 30;
+        if ($user->is_active && $recentlyActive) {
+            return back()->withErrors(['user' => 'Recently active users must be suspended before deletion.']);
+        }
+
+        $email = $user->email;
+        $user->tokens()->delete();
+        $user->forceDelete();
+
+        return redirect()->route('admin.users')
+            ->with('status', "User {$email} permanently deleted.");
+    }
     public function store(Request $request)
     {
         // The Next.js panel POSTed to a /api/admin/users endpoint that never

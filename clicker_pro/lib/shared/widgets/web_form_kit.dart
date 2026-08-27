@@ -1,6 +1,6 @@
 // lib/shared/widgets/web_form_kit.dart
 //
-// Clicker Pro — WEB-ONLY form building blocks (Sunset Studio).
+// Graphy7 — WEB-ONLY form building blocks (Sunset Studio).
 //
 // Shared by the web-native New Booking form, Event Details, Client
 // Self-Booking and the Auth overlay so they all speak the exact same
@@ -657,7 +657,7 @@ class WebAuthCard extends StatelessWidget {
   }
 }
 
-/// Mono "← BACK" style link.
+/// Mono "â† BACK" style link.
 class WebBackLink extends StatefulWidget {
   const WebBackLink({super.key, required this.label, required this.onTap});
 

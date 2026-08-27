@@ -1,6 +1,6 @@
 // lib/shared/widgets/pill_toggle.dart
 //
-// PillToggle — the on/off switch used across Clicker Pro, drawn to match the
+// PillToggle — the on/off switch used across Graphy7, drawn to match the
 // .dc.html mockup EXACTLY rather than Material's default Switch (which is
 // taller, wider, and has different thumb proportions).
 //

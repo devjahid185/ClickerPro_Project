@@ -41,7 +41,7 @@ class ClickerProApp extends ConsumerWidget {
         ? ActivePalette.noirDark
         : ActivePalette.clickerPro;
 
-    // Mobile ThemeData for the active theme (ClickerPro default or Noir dark).
+    // Mobile ThemeData for the active theme (Graphy7 default or Noir dark).
     final mobileTheme = activeTheme == AppThemeMode.noirDark
         ? AppTheme.noirDark()
         : AppTheme.clickerPro();

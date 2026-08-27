@@ -184,7 +184,7 @@ final bookingSearchProvider = StateProvider<String>((ref) => '');
 final bookingListProvider = StreamProvider.family<List<Booking>, BookingFilter>(
   (ref, filter) {
     final user = ref.watch(currentUserProvider).value;
-    if (user == null) return const Stream<List<Booking>>.empty();
+    if (user == null) return Stream.value(const <Booking>[]);
     final policy = ref.watch(rolePolicyProvider);
     final page = ref.watch(bookingListPageProvider);
     return ref
@@ -201,7 +201,7 @@ final bookingListProvider = StreamProvider.family<List<Booking>, BookingFilter>(
 final bookingListAllProvider =
     StreamProvider.family<List<Booking>, BookingFilter>((ref, filter) {
       final user = ref.watch(currentUserProvider).value;
-      if (user == null) return const Stream<List<Booking>>.empty();
+      if (user == null) return Stream.value(const <Booking>[]);
       final policy = ref.watch(rolePolicyProvider);
       return ref
           .read(bookingRepositoryProvider)
@@ -251,7 +251,7 @@ final calendarMonthProvider = StateProvider<({int year, int month})>((ref) {
 final calendarBookingsProvider =
     StreamProvider.family<List<Booking>, ({int year, int month})>((ref, key) {
       final user = ref.watch(currentUserProvider).value;
-      if (user == null) return const Stream<List<Booking>>.empty();
+      if (user == null) return Stream.value(const <Booking>[]);
       final policy = ref.watch(rolePolicyProvider);
       return ref
           .read(bookingRepositoryProvider)

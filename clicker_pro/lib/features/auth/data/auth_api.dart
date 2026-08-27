@@ -66,6 +66,14 @@ class AuthApi {
       body: {'email': email, 'password': password},
       authenticated: false,
     );
+    final d = _data(r);
+    if (d['requiresOtp'] == true) {
+      throw ApiException(
+        statusCode: 428,
+        message: 'Email verification required',
+        body: r.toString(),
+      );
+    }
     return _session(r);
   }
 

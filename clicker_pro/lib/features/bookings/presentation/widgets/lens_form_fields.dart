@@ -114,7 +114,7 @@ class LensTextField extends StatelessWidget {
   }
 }
 
-/// Mono uppercase micro-label above each field — the signature ClickerPro
+/// Mono uppercase micro-label above each field — the signature Graphy7
 /// form label (.dc.html): IBM Plex Mono, 10px, 0.12em tracking, ink text.
 class _FieldLabel extends StatelessWidget {
   const _FieldLabel(this.text);

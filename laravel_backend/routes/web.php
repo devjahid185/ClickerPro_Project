@@ -15,12 +15,15 @@ use App\Http\Controllers\Admin\SupportController;
 use App\Http\Controllers\Admin\SecurityController;
 use App\Http\Controllers\Admin\AuditController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\ProfileController;
 
 Route::get('/', [LandingController::class, 'index'])->name('landing');
+Route::get('/privacy', [LandingController::class, 'privacy'])->name('privacy');
+Route::get('/data-deletion', [LandingController::class, 'dataDeletion'])->name('data-deletion');
 
 /*
 |--------------------------------------------------------------------------
-| Admin Console (Laravel Blade — replaces the Next.js admin panel)
+| Admin Console (Laravel Blade Ã¢â‚¬â€ replaces the Next.js admin panel)
 |--------------------------------------------------------------------------
 | Session-based auth via the web guard. Only ADMIN-role users may enter.
 | Phase 0 ships Dashboard; remaining modules are stubbed so the sidebar
@@ -42,8 +45,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('logout', [AdminAuthController::class, 'logout'])->name('logout');
 
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('profile', [ProfileController::class, 'edit'])->name('profile');
+        Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
+        Route::put('profile/security', [ProfileController::class, 'updateSecurity'])->name('profile.security');
 
-        // --- Users module (Phase 1 — ported from Next.js) ---
+        // --- Users module (Phase 1 Ã¢â‚¬â€ ported from Next.js) ---
         Route::get('users', [UsersController::class, 'index'])->name('users');
         Route::get('users/export', [UsersController::class, 'exportCsv'])->name('users.export');
         Route::post('users', [UsersController::class, 'store'])->name('users.store');
@@ -51,15 +57,17 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::patch('users/{id}/role', [UsersController::class, 'setRole'])->name('users.role');
         Route::patch('users/{id}/plan', [UsersController::class, 'setPlan'])->name('users.plan');
         Route::patch('users/{id}/suspend', [UsersController::class, 'suspend'])->name('users.suspend');
+        Route::delete('users/{id}', [UsersController::class, 'destroy'])->name('users.destroy');
 
         // --- Bookings / Payments / Finance ---
-        // Re-enabled 2026-07-12 by Heaven's request ("সব কিছু এডমিন পেনেল থেকে
-        // কন্ট্রোল করতে চাই") — reversing the earlier privacy removal. These are
+        // Re-enabled 2026-07-12 by Heaven's request ("Ã Â¦Â¸Ã Â¦Â¬ Ã Â¦â€¢Ã Â¦Â¿Ã Â¦â€ºÃ Â§Â Ã Â¦ÂÃ Â¦Â¡Ã Â¦Â®Ã Â¦Â¿Ã Â¦Â¨ Ã Â¦ÂªÃ Â§â€¡Ã Â¦Â¨Ã Â§â€¡Ã Â¦Â² Ã Â¦Â¥Ã Â§â€¡Ã Â¦â€¢Ã Â§â€¡
+        // Ã Â¦â€¢Ã Â¦Â¨Ã Â§ÂÃ Â¦Å¸Ã Â§ÂÃ Â¦Â°Ã Â§â€¹Ã Â¦Â² Ã Â¦â€¢Ã Â¦Â°Ã Â¦Â¤Ã Â§â€¡ Ã Â¦Å¡Ã Â¦Â¾Ã Â¦â€¡") Ã¢â‚¬â€ reversing the earlier privacy removal. These are
         // READ-ONLY platform-wide lists; owner-side actions (approve/decline,
         // freelancer payouts, dues reminders) deliberately stay in the owner app.
         Route::get('bookings', [\App\Http\Controllers\Admin\BookingsController::class, 'index'])->name('bookings');
         Route::get('payments', [\App\Http\Controllers\Admin\PaymentsController::class, 'index'])->name('payments');
         Route::get('finance', [\App\Http\Controllers\Admin\FinanceController::class, 'index'])->name('finance');
+        Route::get('finance/export', [\App\Http\Controllers\Admin\FinanceController::class, 'exportCsv'])->name('finance.export');
 
         // --- Analytics ---
         Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics');
@@ -80,6 +88,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // --- Broadcasts / Notifications ---
         Route::get('broadcasts', [BroadcastsController::class, 'index'])->name('broadcasts');
         Route::post('broadcasts', [BroadcastsController::class, 'store'])->name('broadcasts.store');
+        Route::patch('broadcasts/{id}', [BroadcastsController::class, 'update'])->name('broadcasts.update');
         Route::patch('broadcasts/{id}/toggle', [BroadcastsController::class, 'toggle'])->name('broadcasts.toggle');
         Route::delete('broadcasts/{id}', [BroadcastsController::class, 'destroy'])->name('broadcasts.destroy');
 

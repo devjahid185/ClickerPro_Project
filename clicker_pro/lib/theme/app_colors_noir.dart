@@ -1,6 +1,6 @@
 // lib/theme/app_colors_noir.dart
 //
-// Clicker Pro — "Noir" DARK theme palette.
+// Graphy7 — "Noir" DARK theme palette.
 //
 // Extracted EXACTLY from CLICKERPRO_DARK_FLUTTER_SPEC.md §1 (the finished dark
 // handoff in "Professional Modern Design dark/handoff"). Do NOT substitute or
@@ -20,7 +20,7 @@ class AppColorsNoir {
 
   // ============================================================
   // 🖤 SURFACES (darkest → lightest)
-  // EXACT values from ClickerPro App Dark.dc.html — the source-of-truth mockup.
+  // EXACT values from Graphy7 App Dark.dc.html — the source-of-truth mockup.
   // Do NOT lift these toward charcoal; the handoff is near-pure-black by design.
   //   body #060708 · phone/page #0C0E11 · card #14171C · inset #1B1F26
   // ============================================================
@@ -77,7 +77,7 @@ class AppColorsNoir {
   static const Color tealGlow = primaryGlow;
 
   // ============================================================
-  // 📝 TEXT — spec §1
+  // ðŸ“ TEXT — spec §1
   // ============================================================
   // Nudged the two dimmer tiers brighter than the raw handoff so labels and
   // secondary text stay legible on the near-black canvas (Heaven feedback:

@@ -61,6 +61,42 @@ class PushService
         return $tokens->count();
     }
 
+    /** Send a notification to a selected set of users' registered devices. */
+    public function sendToUsers(iterable $userIds, string $title, string $body, array $data = []): int
+    {
+        if (!$this->enabled()) {
+            Log::warning('FCM sendToUsers skipped: credentials not enabled.');
+            return 0;
+        }
+
+        $ids = collect($userIds)
+            ->filter(fn ($id) => $id !== null && $id !== '')
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn (int $id) => $id > 0)
+            ->unique()
+            ->values();
+
+        if ($ids->isEmpty()) {
+            Log::info('FCM sendToUsers skipped: no target users.');
+            return 0;
+        }
+
+        $tokens = DeviceToken::whereIn('user_id', $ids)
+            ->pluck('token')
+            ->unique()
+            ->values();
+        if ($tokens->isEmpty()) {
+            Log::info('FCM sendToUsers skipped: no device tokens.', [
+                'user_ids' => $ids->all(),
+            ]);
+        }
+        foreach ($tokens as $token) {
+            $this->sendToToken($token, $title, $body, $data);
+        }
+
+        return $tokens->count();
+    }
+
     private function sendToToken(string $token, string $title, string $body, array $data): void
     {
         try {

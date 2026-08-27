@@ -1,6 +1,6 @@
 ﻿// lib/features/auth/presentation/role_change_dialog.dart
 //
-// Clicker Pro — Role Change Dialog (Dark Luxury Lens)
+// Graphy7 — Role Change Dialog (Dark Luxury Lens)
 //
 // Stateful dialog. Shows the current role at top, a list of selectable
 // target roles (excluding current and Manager — Manager is invite-only),
@@ -98,7 +98,7 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
         return 'Generate team invites';
       case Capability.deleteOwnAccount:
         return 'Delete own account';
-      // ── Bookings module ──────────────────────────────────
+      // -- Bookings module ----------------------------------
       case Capability.viewAllBookings:
         return 'View all bookings';
       case Capability.viewAssignedBookings:
@@ -141,7 +141,7 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
         return 'Create announcements';
       case Capability.viewAnnouncements:
         return 'View announcements';
-      // ── Studio-management surfaces ───────────────────────
+      // -- Studio-management surfaces -----------------------
       case Capability.accessTeam:
         return 'Access team & staff';
       case Capability.accessInvoice:
@@ -190,7 +190,7 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── Header (fixed) ────────────────────────────────
+              // -- Header (fixed) --------------------------------
               Text(
                 'Change role',
                 style: TextStyle(
@@ -212,7 +212,7 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
               ),
               const SizedBox(height: 16),
 
-              // ── Scrollable middle: roles + lost-capabilities ──
+              // -- Scrollable middle: roles + lost-capabilities --
               // Without this, a long "you will lose access to" list pushed
               // the Cancel/Confirm buttons off-screen so role change was
               // impossible. The buttons below now stay fixed and visible.
@@ -222,7 +222,7 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-              // ── Target list ───────────────────────────────────
+              // -- Target list -----------------------------------
               for (final r in _targets) ...[
                 _RoleOption(
                   role: r,
@@ -232,7 +232,7 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
                 const SizedBox(height: 8),
               ],
 
-              // ── Disclosure: capabilities lost ─────────────────
+              // -- Disclosure: capabilities lost -----------------
               AnimatedSize(
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeOutCubic,
@@ -321,7 +321,7 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
 
               const SizedBox(height: 20),
 
-              // ── Buttons (fixed, always visible) ───────────────
+              // -- Buttons (fixed, always visible) ---------------
               Row(
                 children: [
                   Expanded(
@@ -359,7 +359,7 @@ class _RoleChangeDialogState extends State<RoleChangeDialog> {
   }
 }
 
-// ─── Role option row ─────────────────────────────────────────────
+// --- Role option row ---------------------------------------------
 class _RoleOption extends StatelessWidget {
   const _RoleOption({
     required this.role,
@@ -463,7 +463,7 @@ class _RoleOption extends StatelessWidget {
   }
 }
 
-// ─── Confirm button ──────────────────────────────────────────────
+// --- Confirm button ----------------------------------------------
 class _ConfirmButton extends StatelessWidget {
   const _ConfirmButton({required this.enabled, required this.onTap});
 

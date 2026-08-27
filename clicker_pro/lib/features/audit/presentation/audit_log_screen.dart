@@ -1,6 +1,6 @@
 ﻿// lib/features/audit/presentation/audit_log_screen.dart
 //
-// Clicker Pro — Audit Log Viewer (Dark Luxury Lens)
+// Graphy7 — Audit Log Viewer (Dark Luxury Lens)
 //
 // Displays audit trail with filtering by action type and date range.
 // Each entry shows actor name, action, entity, timestamp, and diff view.
@@ -339,7 +339,7 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
                 ),
                 Expanded(
                   child: Text(
-                    '${before[key]} → ${after[key]}',
+                    '${before[key]} ? ${after[key]}',
                     style: TextStyle(
                       color: AppColors.teal,
                       fontSize: 11,

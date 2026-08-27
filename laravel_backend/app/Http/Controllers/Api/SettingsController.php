@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 class SettingsController extends Controller
 {
-    // Keys containing any of these are treated as secret — their value is
+    // Keys containing any of these are treated as secret â€” their value is
     // masked on read and only overwritten on save when a new value is sent.
     private const SECRET_HINTS = ['password', 'secret', 'key', 'token', 'apikey', 'api_key'];
 
@@ -17,7 +17,7 @@ class SettingsController extends Controller
         return [
             'landing.hero_title' => 'Run Your Photography Business With Confidence.',
             'landing.hero_subtitle' => 'Built for Bangladesh studios that want bookings, teams and money managed in a single, modern platform.',
-            'landing.hero_description' => 'Clicker Pro gives you the mobile app and web dashboard to run your photography company like a pro.',
+            'landing.hero_description' => 'Graphy7 gives you the mobile app and web dashboard to run your photography company like a pro.',
             'landing.feature_headline' => 'Smart tools for booking, team, finance and delivery.',
             'landing.feature_subheadline' => 'Everything your photography company needs with a premium, professional user experience.',
             'landing.detail_mobile_title' => 'Mobile App',
@@ -30,23 +30,23 @@ class SettingsController extends Controller
             'landing.detail_team_text' => 'Invite managers and freelancers with a 6-digit passcode. Everyone sees exactly the bookings, payouts and permissions their role allows.',
             'landing.detail_team_cta' => 'See Features',
             'landing.detail_finance_title' => 'Built for BDT',
-            'landing.detail_finance_text' => 'Bookings, invoices, dues and payouts in Bangladeshi Taka — with bKash, bank transfer and cash all tracked in one finance dashboard.',
+            'landing.detail_finance_text' => 'Bookings, invoices, dues and payouts in Bangladeshi Taka â€” with bKash, bank transfer and cash all tracked in one finance dashboard.',
             'landing.detail_finance_cta' => 'See Screens',
             'landing.review_1_name' => 'Ayesha Rahman',
             'landing.review_1_role' => 'Studio Owner',
-            'landing.review_1_text' => 'Clicker Pro replaced our paper bookings and WhatsApp chaos. Now every shoot is organised and the team knows exactly what to do.',
+            'landing.review_1_text' => 'Graphy7 replaced our paper bookings and WhatsApp chaos. Now every shoot is organised and the team knows exactly what to do.',
             'landing.review_2_name' => 'Shakib Hasan',
             'landing.review_2_role' => 'Lead Shooter',
             'landing.review_2_text' => 'The event reminders and finance summary mean I never miss a payment or a shoot date anymore. It feels like the studio finally has one brain.',
             'landing.review_3_name' => 'Nadia Akter',
             'landing.review_3_role' => 'Studio Manager',
             'landing.review_3_text' => 'Our clients love the new invoices and team assignments. Everything looks premium and professional in one place.',
-            'app.android_url' => asset('ClickerPro.apk'),
+            'app.android_url' => asset('Graphy7.apk'),
             'app.web_url' => url('/'),
             'app.admin_url' => route('admin.login'),
             // Help & Support contact channels shown in the mobile app. Edit
             // these from the admin Settings page. WhatsApp is a full
-            // international number (e.g. 8801XXXXXXXXX) — the app opens a
+            // international number (e.g. 8801XXXXXXXXX) â€” the app opens a
             // wa.me chat and never displays the raw number to the user.
             'support.email' => 'support@graphy7.app',
             'support.whatsapp' => '',
@@ -65,9 +65,9 @@ class SettingsController extends Controller
     }
 
     /**
-     * Admin settings grouped by key prefix ("smtp.fromEmail" → group "smtp").
+     * Admin settings grouped by key prefix ("smtp.fromEmail" â†’ group "smtp").
      * The admin panel renders `{ data: { group: [{key, value, isSecret,
-     * hasValue}] } }`; the old flat key→value map crashed the Settings page
+     * hasValue}] } }`; the old flat keyâ†’value map crashed the Settings page
      * (`items.map` ran on a string). Secret values are never sent in clear.
      */
     public function index()
@@ -107,7 +107,7 @@ class SettingsController extends Controller
 
         foreach ($data['settings'] as $key => $value) {
             // Don't wipe a stored secret when the client sends back the empty
-            // masked field — only update secrets when a real value is given.
+            // masked field â€” only update secrets when a real value is given.
             if ($this->isSecret((string) $key) && ($value === null || $value === '')) {
                 continue;
             }

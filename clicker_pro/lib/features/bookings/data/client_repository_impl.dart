@@ -127,14 +127,22 @@ class ClientRepositoryImpl implements ClientRepository {
     }
   }
 
-  /// Reconciles a pulled server client with its local counterpart (matched
-  /// by `remoteId`) so the pull updates the existing row instead of
-  /// inserting a duplicate under the server id. Local-only fields
-  /// (address, dob, anniversary) are preserved.
+  /// Reconciles a pulled server client with its local counterpart. Prefer the
+  /// remote id, then fall back to the table's unique key (`studioId`+`phone`)
+  /// so server pulls do not insert a duplicate row under a different id.
+  /// Local-only fields (address, dob, anniversary) are preserved.
   Future<Client> _mergeWithLocal(Client incoming) async {
     final remoteId = incoming.remoteId;
-    if (remoteId == null) return incoming;
-    final existingRow = await _clients.getByRemoteId(remoteId);
+    final existingRow = remoteId == null
+        ? await _clients.getByStudioPhone(
+            studioId: incoming.studioId,
+            phone: incoming.phone,
+          )
+        : await _clients.getByRemoteId(remoteId) ??
+              await _clients.getByStudioPhone(
+                studioId: incoming.studioId,
+                phone: incoming.phone,
+              );
     if (existingRow == null) return incoming;
     if (existingRow.pending) {
       // Local unsynced edits win until the outbox drains them.

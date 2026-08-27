@@ -1,6 +1,6 @@
 ﻿// lib/features/crash_reporting/presentation/crash_settings_screen.dart
 //
-// Clicker Pro — Crash Reporting Settings (Dark Luxury Lens)
+// Graphy7 — Crash Reporting Settings (Dark Luxury Lens)
 //
 // Toggle crash reporting on/off, view last crash count, send test crash (dev only).
 

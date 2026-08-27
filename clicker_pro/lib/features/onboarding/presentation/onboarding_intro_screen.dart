@@ -1,11 +1,11 @@
 // lib/features/onboarding/presentation/onboarding_intro_screen.dart
 //
-// MOD-02 three-slide intro — full-bleed photo slides matching the ClickerPro
-// design (ClickerPro App.dc.html · MOD-02 Onboarding). Each slide is a
+// MOD-02 three-slide intro — full-bleed photo slides matching the Graphy7
+// design (Graphy7 App.dc.html · MOD-02 Onboarding). Each slide is a
 // background photo under a dark bottom scrim, with a mono eyebrow, a large
-// 800-weight white headline and body copy. The final slide adds a language
-// selector and a full-width "Get Started" button; earlier slides use a round
-// orange forward FAB. Skip (top-right) and dot indicators throughout.
+// 800-weight white headline and body copy. The final slide adds a full-width
+// "Get Started" button; earlier slides use a round orange forward FAB. Skip
+// (top-right) and dot indicators throughout.
 //
 // Motion tokens (MOD-04):
 //   • Page indicator width tween : 240ms
@@ -20,7 +20,6 @@ import '../../../screens/login_screen.dart';
 import '../../../shared/widgets/web_shell.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_theme.dart';
-import '../../settings/application/language_controller.dart';
 import '../application/onboarding_controller.dart';
 
 class OnboardingIntroScreen extends ConsumerStatefulWidget {
@@ -137,7 +136,7 @@ class _OnboardingIntroScreenState extends ConsumerState<OnboardingIntroScreen> {
             ),
           ),
 
-          // Bottom controls: language (last) / dots + forward FAB.
+          // Bottom controls: dots + forward or final CTA.
           SafeArea(
             child: Align(
               alignment: Alignment.bottomCenter,
@@ -189,22 +188,11 @@ class _OnboardingIntroScreenState extends ConsumerState<OnboardingIntroScreen> {
     );
   }
 
-  // Slide 3: language chips + full-width Get Started, dots centred below.
+  // Slide 3: full-width Get Started, dots centred below.
   Widget _lastControls() {
-    final lang = ref
-        .watch(languageControllerProvider)
-        .maybeWhen(data: (c) => c, orElse: () => 'en');
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          children: [
-            Expanded(child: _langChip('English', 'en', lang == 'en')),
-            const SizedBox(width: 10),
-            Expanded(child: _langChip('বাংলা', 'bn', lang == 'bn')),
-          ],
-        ),
-        const SizedBox(height: 11),
         SizedBox(
           width: double.infinity,
           child: GestureDetector(
@@ -239,35 +227,6 @@ class _OnboardingIntroScreenState extends ConsumerState<OnboardingIntroScreen> {
         const SizedBox(height: 18),
         _dots(),
       ],
-    );
-  }
-
-  Widget _langChip(String label, String code, bool selected) {
-    return GestureDetector(
-      onTap: () =>
-          ref.read(languageControllerProvider.notifier).setLanguage(code),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 13),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: selected
-              ? Colors.white
-              : Colors.white.withValues(alpha: 0.18),
-          borderRadius: BorderRadius.circular(13),
-          border: selected
-              ? null
-              : Border.all(color: Colors.white.withValues(alpha: 0.4)),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: AppText.bodyFontFamily,
-            fontSize: 13.5,
-            fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-            color: selected ? const Color(0xFF1A1A18) : Colors.white,
-          ),
-        ),
-      ),
     );
   }
 

@@ -27,6 +27,12 @@ class NotificationRow extends StatelessWidget {
     AppLocalizations loc,
   ) {
     switch (notification.category.toUpperCase()) {
+      case 'ASSIGNMENT':
+        return (
+          icon: Icons.event_available_outlined,
+          colour: AppColors.indigo,
+          label: 'Booking assignment',
+        );
       case 'OPERATIONS':
         return (
           icon: Icons.assignment_outlined,

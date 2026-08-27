@@ -1,6 +1,6 @@
 // lib/features/dashboard/presentation/web_dashboard.dart
 //
-// Clicker Pro — WEB-ONLY dashboard (Sunset Studio, from
+// Graphy7 — WEB-ONLY dashboard (Sunset Studio, from
 // design_handoff_clickerpro_web — Screen 1).
 //
 // Rendered ONLY on wide web (DashboardScreen routes here when kIsWeb &&
@@ -9,7 +9,7 @@
 // this screen:
 //
 //   main column                          right panel (316px)
-//   ┌──────────────────────────────┐     ┌──────────────────────┐
+//   ┌──────────────────────────────â”     ┌──────────────────────â”
 //   │ Week strip (7 day cards)      │     │ Finance · month      │
 //   │ Split hero (03 + 2 stats)     │     │  (role-aware)        │
 //   │ Delivered strip (mini bars)   │     │ Announcement (dark)  │
@@ -79,7 +79,7 @@ class WebDashboard extends ConsumerWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════ MAIN COLUMN
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• MAIN COLUMN
 class _MainColumn extends StatelessWidget {
   const _MainColumn({this.user});
   final UserModel? user;
@@ -264,8 +264,8 @@ class _SplitHero extends ConsumerWidget {
     return LayoutBuilder(builder: (context, constraints) {
       final narrow = constraints.maxWidth < 640;
       // Tapping the hero opens today's bookings — same as the mobile
-      // dashboard's today card (parity: "মোবাইল এপের ফিচার যা কাজ করে ওয়েব
-      // এপ ও সেই কাজ করবে").
+      // dashboard's today card (parity: "মোবাইল à¦পের ফিচার যা কাজ করে ওয়েব
+      // à¦প ও সেই কাজ করবে").
       final hero = _HoverTranslate(
         dy: -2,
         onTap: () => DashboardNav.openToday(ref, context),
@@ -1012,7 +1012,7 @@ class _ActionCardState extends State<_ActionCard> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════ RIGHT PANEL
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• RIGHT PANEL
 class _RightPanel extends StatelessWidget {
   const _RightPanel({this.user});
   final UserModel? user;
@@ -1550,7 +1550,7 @@ class _MiniCalendarState extends ConsumerState<_MiniCalendar> {
   }
 }
 
-// ═══════════════════════════════════════════════════════ SHARED PIECES
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SHARED PIECES
 /// Space-Mono orange micro-link ("VIEW ALL →").
 class _MonoLink extends StatelessWidget {
   const _MonoLink({required this.label, required this.onTap});

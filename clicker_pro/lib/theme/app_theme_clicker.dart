@@ -1,6 +1,6 @@
 // lib/theme/app_theme_clicker.dart
 //
-// Clicker Pro — "ClickerPro" theme ThemeData (the current DEFAULT).
+// Graphy7 — "Graphy7" theme ThemeData (the current DEFAULT).
 //
 // Built EXACTLY to CLICKERPRO_DESIGN_SPEC.md:
 //   • Body / UI  : Hanken Grotesk (400/500/600/700/800)
@@ -17,7 +17,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors_clicker.dart';
 
-/// Typography for the ClickerPro theme.
+/// Typography for the Graphy7 theme.
 class AppTextClicker {
   AppTextClicker._();
 
@@ -167,7 +167,7 @@ class AppTextClicker {
   );
 }
 
-/// ThemeData for the ClickerPro theme.
+/// ThemeData for the Graphy7 theme.
 class AppThemeClicker {
   AppThemeClicker._();
 
@@ -275,6 +275,8 @@ class AppThemeClicker {
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColorsClicker.textPrimary,
         contentTextStyle: const TextStyle(color: Colors.white, fontSize: 13),
+        actionTextColor: AppColorsClicker.primary,
+        closeIconColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
         behavior: SnackBarBehavior.floating,
       ),

@@ -18,7 +18,7 @@ class ClickerLogo extends StatelessWidget {
 
   final double size;
 
-  static const String _asset = 'assets/brand/graphy7_mark.png';
+  static const String _asset = 'assets/brand/graphy7_mark_v2.png';
 
   @override
   Widget build(BuildContext context) {

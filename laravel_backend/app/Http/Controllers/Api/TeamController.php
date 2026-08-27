@@ -3,15 +3,28 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use App\Models\TeamInviteCode;
 use App\Models\User;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class TeamController extends Controller
 {
+    private function ensureCanInvite(Request $request): void
+    {
+        if (!in_array(strtoupper((string) $request->user()->role), ['OWNER', 'BOTH'], true)) {
+            throw new HttpResponseException(response()->json([
+                'message' => 'Only studio owners can invite team members.',
+            ], 403));
+        }
+    }
+
     public function getInvite(Request $request)
     {
+        $this->ensureCanInvite($request);
+
         $user = $request->user();
         $invite = TeamInviteCode::where('owner_id', $user->id)
             ->where('expires_at', '>', now())
@@ -23,6 +36,8 @@ class TeamController extends Controller
 
     public function invite(Request $request)
     {
+        $this->ensureCanInvite($request);
+
         $user = $request->user();
 
         // Numbers only — letters in the passcode were hard to share over
@@ -73,7 +88,10 @@ class TeamController extends Controller
         $this->attachToTeam($user, (int) $invite->owner_id);
         $invite->update(['used_by' => $user->id, 'used_at' => now()]);
 
-        return response()->json(['message' => 'ok']);
+        return response()->json([
+            'message' => 'ok',
+            'data' => ['user' => new UserResource($user->fresh())],
+        ]);
     }
 
     /**
@@ -82,6 +100,8 @@ class TeamController extends Controller
      */
     public function inviteByEmail(Request $request)
     {
+        $this->ensureCanInvite($request);
+
         $data = $request->validate(['email' => 'required|email']);
         $owner = $request->user();
         $email = strtolower(trim($data['email']));
@@ -170,7 +190,10 @@ class TeamController extends Controller
         }
         $invite->update(['used_by' => $user->id, 'used_at' => now()]);
 
-        return response()->json(['message' => 'ok']);
+        return response()->json([
+            'message' => 'ok',
+            'data' => ['user' => new UserResource($user->fresh())],
+        ]);
     }
 
     /** Links a user to an owner's team, preserving any permission set. */
@@ -185,9 +208,17 @@ class TeamController extends Controller
     public function members(Request $request)
     {
         $user = $request->user();
+        $linkedOwnerId = is_array($user->manager_permissions)
+            ? ($user->manager_permissions['ownerId'] ?? null)
+            : null;
+
+        if ($user->role === 'FREELANCER' && $linkedOwnerId === null) {
+            return response()->json(['data' => []]);
+        }
+
         // The team is anchored to its OWNER: members resolve their
         // owner's id so "My Team" works from both sides of the link.
-        $teamOwnerId = (int) ($user->manager_permissions['ownerId'] ?? 0)
+        $teamOwnerId = (int) ($linkedOwnerId ?? 0)
             ?: (int) $user->id;
 
         // Engine-agnostic + 500-proof: a raw `manager_permissions->>'ownerId'`

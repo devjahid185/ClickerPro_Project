@@ -13,6 +13,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/env/app_config.dart';
 import '../../../core/logging/app_logger.dart';
+import '../../../core/notifications/event_reminder_service.dart';
+import '../../announcements/application/announcement_providers.dart';
+import '../../notifications/application/notification_providers.dart';
 import 'push_token_providers.dart';
 
 bool _fcmInitialized = false;
@@ -49,8 +52,35 @@ Future<void> initPushNotifications(WidgetRef ref) async {
           )
           .catchError((Object e) {
         AppLogger.w('push', 'token refresh registration failed: $e');
-      });
+          });
     });
+
+    void refreshForMessage(RemoteMessage message) {
+      final type = message.data['type']?.toString().toLowerCase();
+      if (type == 'announcement') {
+        ref.invalidate(announcementListControllerProvider);
+      }
+      ref.invalidate(notificationInboxControllerProvider);
+    }
+
+    FirebaseMessaging.onMessage.listen((message) {
+      refreshForMessage(message);
+      final title = message.notification?.title ?? message.data['title'];
+      final body = message.notification?.body ?? message.data['body'];
+      if (title != null && body != null) {
+        EventReminderService.instance.showServerPush(
+          title: title.toString(),
+          body: body.toString(),
+          payload: message.data['type']?.toString(),
+        );
+      }
+    });
+    FirebaseMessaging.onMessageOpenedApp.listen(refreshForMessage);
+
+    final initialMessage = await messaging.getInitialMessage();
+    if (initialMessage != null) {
+      refreshForMessage(initialMessage);
+    }
   } catch (e) {
     // Missing google-services config, emulator without Play services, …
     AppLogger.w('push', 'FCM init failed: $e');

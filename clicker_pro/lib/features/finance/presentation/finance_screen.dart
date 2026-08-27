@@ -1,4 +1,4 @@
-﻿// lib/features/finance/presentation/finance_screen.dart
+// lib/features/finance/presentation/finance_screen.dart
 //
 // Finance Dashboard — "Aura" bento layout on the warm-porcelain theme.
 //
@@ -30,11 +30,13 @@ import '../../../shared/widgets/web_shell.dart';
 import '../../auth/domain/user_role.dart';
 import '../../bookings/application/booking_providers.dart';
 import '../../bookings/domain/booking.dart';
+import '../../bookings/domain/package.dart' as booking_pkg;
 import '../../bookings/domain/booking_filter.dart';
 import '../../dashboard/application/dashboard_providers.dart';
 import '../../expenses/application/expense_providers.dart';
 import '../../expenses/domain/expense.dart';
 import '../../freelancer/presentation/fl_earnings_screen.dart';
+import '../../payments/application/payment_providers.dart' as pay_app;
 import '../../petty_cash/domain/petty_cash_entry.dart';
 import '../../petty_cash/presentation/petty_cash_screen.dart';
 import '../../profile/application/profile_controllers.dart';
@@ -93,12 +95,17 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     final expenses =
         ref.watch(expenseListControllerProvider).valueOrNull ??
         const <Expense>[];
+    final packages = ref.watch(packagesProvider).valueOrNull ??
+        const <booking_pkg.Package>[];
+    final packageById = _packageLookup(packages);
     // Petty cash counts as expense (per product decision) — it reduces net
     // profit and feeds the same monthly bars as regular expenses.
     final pettyCash =
         ref.watch(pettyCashListProvider).valueOrNull ??
         const <PettyCashEntry>[];
     final dueEntries = ref.watch(dueBreakdownProvider).valueOrNull;
+    final paymentRecords = ref.watch(pay_app.paymentListControllerProvider).valueOrNull ??
+        const [];
 
     final now = DateTime.now();
     bool inPeriod(DateTime d) => _isYearly
@@ -108,10 +115,16 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     final periodBookings = bookings
         .where((b) => b.status != BookingStatus.cancelled && inPeriod(b.date))
         .toList(growable: false);
-    final booked = periodBookings.fold<double>(
+    final bookingValue = periodBookings.fold<double>(
       0,
-      (s, b) => s + (b.customPrice ?? 0),
+      (s, b) => s + _bookingTotal(b, packageById),
     );
+    final collectedFromPayments = paymentRecords
+        .where((p) => p.type.toLowerCase() != 'payout' && inPeriod(p.createdAt))
+        .fold<double>(0, (s, p) => s + p.amount);
+    final booked = bookingValue < collectedFromPayments
+        ? collectedFromPayments
+        : bookingValue;
 
     final dueById = <String, double>{
       for (final e in dueEntries ?? const <DueEntry>[]) e.bookingId: e.due,
@@ -120,7 +133,9 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
       0,
       (s, b) => s + (dueById[b.id] ?? 0),
     );
-    final collected = booked - periodDue;
+    final collected = collectedFromPayments > 0
+        ? collectedFromPayments
+        : booked - periodDue;
 
     final periodExpense =
         expenses
@@ -183,6 +198,9 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         color: AppColors.orange,
         backgroundColor: AppColors.surface,
         onRefresh: () async {
+          await ref.read(bookingRepositoryProvider).refreshFromRemote();
+          await ref.read(packageRepositoryProvider).refreshFromRemote();
+          await ref.read(pay_app.paymentListControllerProvider.notifier).refresh();
           ref.invalidate(dueBreakdownProvider);
           await ref.read(expenseListControllerProvider.notifier).refresh();
         },
@@ -212,8 +230,6 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                 ),
               ),
               const SizedBox(height: 18),
-              _FadeUp(order: 2, child: _buildQuickActions(isManager)),
-              const SizedBox(height: 22),
               _FadeUp(
                 order: 3,
                 child: _buildIncomeExpensePair(
@@ -233,7 +249,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
               const SizedBox(height: 14),
               _FadeUp(
                 order: 5,
-                child: _buildBarChart(bookings, expenses, pettyCash),
+                child: _buildBarChart(bookings, expenses, pettyCash, packageById),
               ),
               const SizedBox(height: 22),
             ],
@@ -243,6 +259,28 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         ),
       ),
     );
+  }
+
+  static Map<String, booking_pkg.Package> _packageLookup(
+    List<booking_pkg.Package> packages,
+  ) {
+    return <String, booking_pkg.Package>{
+      for (final p in packages) p.id: p,
+      for (final p in packages)
+        if (p.remoteId != null) p.remoteId!: p,
+    };
+  }
+
+  static double _bookingTotal(
+    Booking booking,
+    Map<String, booking_pkg.Package> packageById,
+  ) {
+    final custom = booking.customPrice;
+    if (custom != null && custom > 0) return custom;
+    final packageId = booking.packageId;
+    if (packageId == null || packageId.isEmpty) return 0;
+    final package = packageById[packageId];
+    return package == null ? 0 : package.netPrice;
   }
 
   // ── Both-role Studio | Freelancer tab bar ───────────────────────────
@@ -483,6 +521,8 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   }
 
   // ── Circular quick-action pills ─────────────────────────────────────
+  // Hidden from the Finance page UI; kept for easy restore.
+  // ignore: unused_element
   Widget _buildQuickActions(bool isManager) {
     final actions = <({String label, IconData icon, String route})>[
       (
@@ -786,6 +826,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     List<Booking> bookings,
     List<Expense> expenses,
     List<PettyCashEntry> pettyCash,
+    Map<String, booking_pkg.Package> packageById,
   ) {
     final now = DateTime.now();
     final months = List.generate(6, (i) {
@@ -800,7 +841,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
       if (b.status == BookingStatus.cancelled) continue;
       final key = DateTime(b.date.year, b.date.month, 1);
       if (incomeByMonth.containsKey(key)) {
-        incomeByMonth[key] = incomeByMonth[key]! + (b.customPrice ?? 0);
+        incomeByMonth[key] = incomeByMonth[key]! + _bookingTotal(b, packageById);
       }
     }
     for (final e in expenses) {

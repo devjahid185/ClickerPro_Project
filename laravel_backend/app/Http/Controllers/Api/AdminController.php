@@ -18,13 +18,13 @@ class AdminController extends Controller
 {
     // Admin dashboard aggregates are recomputed at most once per minute.
     // 60s is fresh enough for an operator dashboard and removes the repeated
-    // ~8–10 aggregate queries on every refresh. Same response shape/values.
+    // ~8â€“10 aggregate queries on every refresh. Same response shape/values.
     private const DASHBOARD_TTL = 60;
 
     public function stats()
     {
         $data = Cache::remember('admin.stats', self::DASHBOARD_TTL, function () {
-            // Booking count re-enabled 2026-07-12 by Heaven's request — the
+            // Booking count re-enabled 2026-07-12 by Heaven's request â€” the
             // admin console now surfaces platform-wide booking/finance lists
             // (read-only; owner actions stay in the owner app).
             return [
@@ -43,19 +43,26 @@ class AdminController extends Controller
         return response()->json(['data' => $data]);
     }
 
+    private function monthExpression(string $column): string
+    {
+        return DB::connection()->getDriverName() === 'pgsql'
+            ? "TO_CHAR($column, 'YYYY-MM')"
+            : "DATE_FORMAT($column, '%Y-%m')";
+    }
+
     public function analytics()
     {
         $data = Cache::remember('admin.analytics', self::DASHBOARD_TTL, function () {
             $signups = User::select(
-                    DB::raw("TO_CHAR(created_at, 'YYYY-MM') as month"),
+                    DB::raw($this->monthExpression('created_at') . ' as month'),
                     DB::raw('COUNT(*) as count')
                 )
                 ->groupBy('month')->orderBy('month')->limit(12)->get();
 
             // Monthly bookings series re-enabled 2026-07-12 (Heaven's request)
-            // — feeds the admin Finance page's bookings-per-month bar chart.
+            // â€” feeds the admin Finance page's bookings-per-month bar chart.
             $bookings = Event::select(
-                    DB::raw("TO_CHAR(date, 'YYYY-MM') as month"),
+                    DB::raw($this->monthExpression('date') . ' as month'),
                     DB::raw('COUNT(*) as count')
                 )
                 ->groupBy('month')->orderBy('month', 'desc')->limit(12)->get()
@@ -72,7 +79,7 @@ class AdminController extends Controller
 
     public function users(Request $request)
     {
-        // PRIVACY: no booking/payment/revenue data — the admin sees accounts
+        // PRIVACY: no booking/payment/revenue data â€” the admin sees accounts
         // and whether they're used, never what's done inside them.
         $query = User::orderBy('created_at', 'desc');
 
@@ -113,7 +120,7 @@ class AdminController extends Controller
 
     // Shape a User into the camelCase form the admin UI expects.
     //
-    // PRIVACY: still no bookings / payments / revenue — the admin sees who
+    // PRIVACY: still no bookings / payments / revenue â€” the admin sees who
     // registered, their contact details, plan, and *whether* they use the
     // app (last active), but not what they do inside it.
     private function userRow($u): array
@@ -151,7 +158,7 @@ class AdminController extends Controller
 
         // PRIVACY: the admin must NOT see this user's bookings, payments,
         // income, or expenses. The booking list and all payment/revenue stats
-        // were intentionally removed — only the profile and a non-financial
+        // were intentionally removed â€” only the profile and a non-financial
         // client count remain.
         return response()->json(['data' => [
             'user' => array_merge($this->userRow($user), [
@@ -188,7 +195,7 @@ class AdminController extends Controller
         return response()->json(['data' => $user->fresh()]);
     }
 
-    // ── Per-field user actions used by the admin Users page ──
+    // â”€â”€ Per-field user actions used by the admin Users page â”€â”€
     public function setRole(Request $request, $id)
     {
         $data = $request->validate(['role' => 'required|string|in:OWNER,FREELANCER,BOTH,MANAGER,ADMIN']);
@@ -209,11 +216,11 @@ class AdminController extends Controller
     {
         $data = $request->validate(['suspended' => 'required|boolean']);
         $user = User::findOrFail($id);
-        // suspended=true → soft-deactivate; false → reactivate
+        // suspended=true â†’ soft-deactivate; false â†’ reactivate
         $user->forceFill(['is_active' => !$data['suspended']])->save();
 
         // Revoke all Sanctum tokens so an already-logged-in session ends
-        // immediately — without this, suspension only blocks a fresh login
+        // immediately â€” without this, suspension only blocks a fresh login
         // while the user's existing token keeps every API call working. The
         // `active` middleware is the safety net; this makes it instant.
         if ($data['suspended']) {
@@ -223,7 +230,7 @@ class AdminController extends Controller
         return response()->json(['data' => $user->fresh()]);
     }
 
-    // ── Admin bookings list (all studios) ──
+    // â”€â”€ Admin bookings list (all studios) â”€â”€
     public function bookings(Request $request)
     {
         $query = Event::with(['client:id,name', 'owner:id,name,business_name'])
@@ -256,7 +263,7 @@ class AdminController extends Controller
         return response()->json(['data' => $items, 'total' => $total]);
     }
 
-    // ── Admin payments list (all studios) ──
+    // â”€â”€ Admin payments list (all studios) â”€â”€
     public function payments(Request $request)
     {
         $query = Payment::with(['event:id,title,owner_id,client_id', 'event.owner:id,name,business_name,email', 'event.client:id,name'])
@@ -301,12 +308,12 @@ class AdminController extends Controller
     public function exportCsv(Request $request, $file = null)
     {
         // PRIVACY: only the non-financial USERS export is allowed. The old
-        // bookings/payments CSV (price, advance_paid, due_amount…) exposed
-        // every studio's finance data and is intentionally disabled — any
+        // bookings/payments CSV (price, advance_paid, due_amountâ€¦) exposed
+        // every studio's finance data and is intentionally disabled â€” any
         // non-"users" type is rejected rather than served.
         $type = $request->get('type');
         if (!$type && $file) {
-            $type = pathinfo($file, PATHINFO_FILENAME); // "bookings.csv" → "bookings"
+            $type = pathinfo($file, PATHINFO_FILENAME); // "bookings.csv" â†’ "bookings"
         }
         $type = $type ?: 'users';
 

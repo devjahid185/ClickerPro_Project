@@ -15,6 +15,13 @@ class DeviceTokenController extends Controller
             'platform' => 'nullable|string|in:android,ios,web',
         ]);
 
+        // A physical device has one FCM token. When a tester/user logs out
+        // and signs into another account on the same phone, move that token
+        // to the current user instead of leaving duplicate rows behind.
+        DeviceToken::where('token', $data['token'])
+            ->where('user_id', '!=', $request->user()->id)
+            ->delete();
+
         $deviceToken = DeviceToken::updateOrCreate(
             ['user_id' => $request->user()->id, 'token' => $data['token']],
             ['platform' => $data['platform'] ?? 'android']

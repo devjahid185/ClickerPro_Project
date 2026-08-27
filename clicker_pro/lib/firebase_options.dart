@@ -1,6 +1,6 @@
-import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
+﻿import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 
-/// `FirebaseOptions` for Clicker Pro Android app
+/// `FirebaseOptions` for Graphy7 Android app
 class DefaultFirebaseOptions {
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyAoQlUokjk8MsM82YUjQY9LRovmTc1x4C8',

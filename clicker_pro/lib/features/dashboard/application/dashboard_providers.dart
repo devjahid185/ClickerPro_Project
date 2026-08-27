@@ -8,8 +8,32 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/format/bd_holidays.dart';
 import '../../../core/booking_status/booking_status.dart';
 import '../../bookings/application/booking_providers.dart';
+import '../../bookings/domain/booking.dart';
 import '../../bookings/domain/booking_filter.dart';
+import '../../bookings/domain/package.dart' as booking_pkg;
 import '../../bookings/domain/shift.dart';
+
+Map<String, booking_pkg.Package> _packageLookup(
+  List<booking_pkg.Package> packages,
+) {
+  return <String, booking_pkg.Package>{
+    for (final p in packages) p.id: p,
+    for (final p in packages)
+      if (p.remoteId != null) p.remoteId!: p,
+  };
+}
+
+double _bookingTotal(
+  Booking booking,
+  Map<String, booking_pkg.Package> packageById,
+) {
+  final custom = booking.customPrice;
+  if (custom != null && custom > 0) return custom;
+  final packageId = booking.packageId;
+  if (packageId == null || packageId.isEmpty) return 0;
+  final package = packageById[packageId];
+  return package == null ? 0 : package.netPrice;
+}
 
 class DashboardMetrics {
   const DashboardMetrics({
@@ -57,6 +81,9 @@ final dashboardMetricsProvider = StreamProvider<DashboardMetrics>((ref) {
     loading: () => Stream.value(DashboardMetrics.placeholder),
     error: (_, _) => Stream.value(DashboardMetrics.placeholder),
     data: (bookings) {
+      final packages = ref.watch(packagesProvider).valueOrNull ??
+          const <booking_pkg.Package>[];
+      final packageById = _packageLookup(packages);
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
 
@@ -85,7 +112,7 @@ final dashboardMetricsProvider = StreamProvider<DashboardMetrics>((ref) {
             todayDayEvents++;
             todayNightEvents++;
           }
-          final price = b.customPrice ?? 0;
+          final price = _bookingTotal(b, packageById);
           todayRevenue += (price * 100).round();
         }
         // "Upcoming" = every future event that is NOT yet finished, however
@@ -244,13 +271,15 @@ final dueBreakdownProvider = FutureProvider<List<DueEntry>>((ref) async {
   final bookings = await ref.watch(
     bookingListAllProvider(const BookingFilter()).future,
   );
+  final packages = await ref.watch(packagesProvider.future);
+  final packageById = _packageLookup(packages);
   final payRepo = ref.read(paymentRepositoryProvider);
 
   final entries = <DueEntry>[];
   for (final b in bookings) {
     if (b.status == BookingStatus.cancelled) continue;
-    final total = b.customPrice;
-    if (total == null || total <= 0) continue;
+    final total = _bookingTotal(b, packageById);
+    if (total <= 0) continue;
     final agg = await payRepo.aggregateForBooking(b.id);
     final due = total - agg.total;
     if (due <= 0.5) continue;

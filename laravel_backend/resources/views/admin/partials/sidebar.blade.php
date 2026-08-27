@@ -24,6 +24,7 @@
             ['route' => 'admin.support',    'label' => 'Support & FAQ', 'icon' => 'support_agent'],
         ]],
         ['label' => 'System', 'items' => [
+            ['route' => 'admin.profile', 'label' => 'My Profile', 'icon' => 'account_circle'],
             ['route' => 'admin.security', 'label' => 'Security',  'icon' => 'shield_lock'],
             ['route' => 'admin.audit',    'label' => 'Audit Log', 'icon' => 'receipt_long'],
             ['route' => 'admin.settings', 'label' => 'Settings',  'icon' => 'tune'],
@@ -33,7 +34,7 @@
 
 <aside class="sidebar">
     <div class="sidebar__brand">
-        <div class="sidebar__brand-mark">G7</div>
+        <img class="sidebar__brand-mark sidebar__brand-mark--image" src="{{ asset('admin-assets/img/logo.png') }}" alt="Graphy7">
         <div>
             <div class="sidebar__brand-name">Graphy<span>7</span></div>
             <div class="sidebar__brand-sub">Admin Control</div>

@@ -1,4 +1,4 @@
-﻿// lib/features/broadcasts/presentation/broadcast_popup.dart
+// lib/features/broadcasts/presentation/broadcast_popup.dart
 //
 // Premium modal popup for admin broadcasts (created from the Admin Panel).
 //
@@ -9,15 +9,12 @@
 //   • Each broadcast is shown once; seen ids persist in KvStore.
 
 import 'dart:async';
-import 'dart:convert';
-
 import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../core/storage/kv_store.dart';
 import '../../../theme/app_colors.dart';
 import '../application/broadcast_providers.dart';
 import '../domain/broadcast.dart';
@@ -25,16 +22,9 @@ import '../domain/broadcast.dart';
 /// How long the popup stays before auto-closing.
 const Duration kBroadcastPopupDuration = Duration(seconds: 10);
 
-String _today() {
-  final n = DateTime.now();
-  return '${n.year}-${n.month.toString().padLeft(2, '0')}-${n.day.toString().padLeft(2, '0')}';
-}
-
-/// Presents every active broadcast the user hasn't yet hit its daily cap for,
-/// one after another. Each broadcast may pop up `timesPerDay` times per day
-/// (set per broadcast in the admin panel); counts reset at midnight and are
-/// tracked per broadcast id in KvStore. Safe to call on every app open — any
-/// network error silently no-ops.
+/// Presents active broadcasts every time the user opens the app. This is
+/// intentionally not persisted as "seen" because admin broadcasts should keep
+/// appearing on each app entry while they remain active.
 Future<void> showBroadcastPopupIfNeeded(
   BuildContext context,
   WidgetRef ref,
@@ -47,35 +37,10 @@ Future<void> showBroadcastPopupIfNeeded(
   }
   if (items.isEmpty) return;
 
-  final kv = KvStore();
-  final counts = await _readCounts(kv);
-  final today = _today();
-
-  // Newest first; show each broadcast still under its per-day cap.
-  final due = items
-      .where((b) => b.id.isNotEmpty)
-      .where((b) {
-        final rec = counts[b.id];
-        final shownToday = (rec != null && rec['date'] == today)
-            ? (rec['count'] as int? ?? 0)
-            : 0;
-        return shownToday < b.timesPerDay;
-      })
-      .toList()
+  final due = items.where((b) => b.id.isNotEmpty).toList()
     ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-  if (due.isEmpty) return;
-
   for (final broadcast in due) {
-    if (!context.mounted) return;
-
-    // Count it BEFORE showing so a crash/hot-restart can't loop forever.
-    final rec = counts[broadcast.id];
-    final shownToday = (rec != null && rec['date'] == today)
-        ? (rec['count'] as int? ?? 0)
-        : 0;
-    counts[broadcast.id] = {'date': today, 'count': shownToday + 1};
-    await _writeCounts(kv, counts);
     if (!context.mounted) return;
 
     await showGeneralDialog<void>(
@@ -98,30 +63,6 @@ Future<void> showBroadcastPopupIfNeeded(
       },
     );
   }
-}
-
-/// Per-broadcast daily show counts: `{ id: {date: 'yyyy-mm-dd', count: n} }`.
-Future<Map<String, Map<String, dynamic>>> _readCounts(KvStore kv) async {
-  final raw = await kv.readString(KvKeys.broadcastShowCounts) ?? '';
-  if (raw.isEmpty) return {};
-  try {
-    final decoded = jsonDecode(raw) as Map<String, dynamic>;
-    return decoded.map(
-      (k, v) => MapEntry(k, Map<String, dynamic>.from(v as Map)),
-    );
-  } catch (_) {
-    return {};
-  }
-}
-
-Future<void> _writeCounts(
-  KvStore kv,
-  Map<String, Map<String, dynamic>> counts,
-) async {
-  // Drop stale (not-today) entries so storage doesn't grow unbounded.
-  final today = _today();
-  counts.removeWhere((_, v) => v['date'] != today);
-  await kv.writeString(KvKeys.broadcastShowCounts, jsonEncode(counts));
 }
 
 class _BroadcastPopupDialog extends StatefulWidget {
@@ -200,8 +141,8 @@ class _BroadcastPopupDialogState extends State<_BroadcastPopupDialog>
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // ── Header: ONLY the banner image (if one is set), with the
-                  // (×) on top. No accent band, no ANNOUNCEMENT badge. ──
+                  // -- Header: ONLY the banner image (if one is set), with the
+                  // (×) on top. No accent band, no ANNOUNCEMENT badge. --
                   if (b.imageUrl != null && b.imageUrl!.trim().isNotEmpty)
                     Stack(
                       children: [
@@ -223,7 +164,7 @@ class _BroadcastPopupDialogState extends State<_BroadcastPopupDialog>
                       ],
                     ),
 
-                  // ── Body ──
+                  // -- Body --
                   Padding(
                     padding: EdgeInsets.fromLTRB(
                       22,
@@ -296,7 +237,7 @@ class _BroadcastPopupDialogState extends State<_BroadcastPopupDialog>
                     ),
                   ),
 
-                  // ── Auto-close countdown bar ──
+                  // -- Auto-close countdown bar --
                   AnimatedBuilder(
                     animation: _countdown,
                     builder: (context, _) {

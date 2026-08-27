@@ -3,7 +3,7 @@
 // Web-only presentation shell. On mobile it is a pass-through (returns the
 // child untouched) so the phone UI is NEVER affected.
 //
-// ClickerPro Design canvas: a subtle warm gradient with two faint glows for
+// Graphy7 Design canvas: a subtle warm gradient with two faint glows for
 // depth. The WebNavShell owns the sidebar + content layout on top of this
 // backdrop. All colours read from WebTheme.
 //

@@ -74,17 +74,29 @@ class BookingController extends Controller
     }
     public function index(Request $request)
     {
-        $query = Event::where('owner_id', $request->user()->studioId())
-            ->with('client')
+        $user = $request->user();
+        $query = Event::query()
+            ->where(function ($q) use ($user) {
+                $q->where('owner_id', $user->studioId())
+                  ->orWhereHas('assignments', function ($a) use ($user) {
+                      $a->where('user_id', $user->id);
+                  });
+            })
+            ->with(['client', 'assignments.user', 'payments', 'package'])
             ->orderBy('date', 'desc');
 
         // Keep each role's bookings separate. A Freelancer sees only the
         // bookings they created as a freelancer; the Owner view sees OWNER
         // bookings plus legacy rows (booking_context NULL, created before this
         // feature) so nothing already saved disappears. BOTH sees everything.
-        $context = $request->user()->bookingContext();
+        $context = $user->bookingContext();
         if ($context === 'FREELANCER') {
-            $query->where('booking_context', 'FREELANCER');
+            $query->where(function ($q) use ($user) {
+                $q->where('booking_context', 'FREELANCER')
+                  ->orWhereHas('assignments', function ($a) use ($user) {
+                      $a->where('user_id', $user->id);
+                  });
+            });
         } elseif ($context === 'OWNER') {
             $query->where(function ($q) {
                 $q->where('booking_context', 'OWNER')
@@ -143,43 +155,21 @@ class BookingController extends Controller
         // Auto-append the new booking to the owner's Google Sheet (if the
         // integration is configured). Fail-safe: any Sheets error is swallowed
         // inside the service so it can never block the booking from saving.
-        $this->syncBookingToSheet($event->load('client'));
+        app(GoogleSheetsService::class)->appendBooking($event->load('client'), 'CREATED');
 
         return response()->json(['data' => $this->flatten($event->load('client'))], 201);
     }
 
-    /**
-     * Append a flat row for [$event] to the configured Google Sheet. No-op when
-     * the integration is disabled. Column order is documented in
-     * GOOGLE_SHEETS_SETUP.md so the sheet header can match.
-     */
-    private function syncBookingToSheet(Event $event): void
-    {
-        $sheets = app(GoogleSheetsService::class);
-        if (!$sheets->isEnabled()) {
-            return;
-        }
-
-        $sheets->appendRow([
-            $event->id,
-            optional($event->created_at)->toDateTimeString(),
-            $event->title,
-            $event->event_type,
-            optional($event->client)->name,
-            optional($event->client)->phone,
-            $event->date,
-            $event->shift,
-            $event->venue,
-            $event->status,
-            $event->price,
-            $event->advance_paid,
-            $event->due_amount,
-        ], (string) config('services.google_sheets.tab', 'Bookings'));
-    }
 
     public function show(Request $request, $id)
     {
-        $event = Event::where('owner_id', $request->user()->studioId())
+        $user = $request->user();
+        $event = Event::where(function ($q) use ($user) {
+                $q->where('owner_id', $user->studioId())
+                  ->orWhereHas('assignments', function ($a) use ($user) {
+                      $a->where('user_id', $user->id);
+                  });
+            })
             ->with(['client', 'assignments.user', 'payments', 'statusHistories', 'package'])
             ->find($id);
 
@@ -206,15 +196,24 @@ class BookingController extends Controller
         $before = $this->auditSnapshot($event);
         $event->update(array_filter($data, fn($v) => $v !== null));
 
+        $fresh = $event->fresh()->load('client');
         $this->audit($request, 'UPDATE', 'booking', $event->id,
-            before: $before, after: $this->auditSnapshot($event->fresh()));
+            before: $before, after: $this->auditSnapshot($fresh));
+        app(GoogleSheetsService::class)->appendBooking($fresh, 'UPDATED');
 
-        return response()->json(['data' => $this->flatten($event->fresh()->load('client'))]);
+        return response()->json(['data' => $this->flatten($fresh)]);
     }
 
     public function updateStatus(Request $request, $id)
     {
-        $event = Event::where('owner_id', $request->user()->studioId())->find($id);
+        $user = $request->user();
+        $event = Event::where(function ($q) use ($user) {
+                $q->where('owner_id', $user->studioId())
+                  ->orWhereHas('assignments', function ($a) use ($user) {
+                      $a->where('user_id', $user->id);
+                  });
+            })
+            ->find($id);
 
         if (!$event) {
             return response()->json(['message' => 'Not found'], 404);
@@ -231,7 +230,6 @@ class BookingController extends Controller
         //  • An assigned studio event → SHOT_COMPLETE only, and only when
         //    actually assigned. One assignee marking the shoot done completes
         //    it for the whole crew.
-        $user = $request->user();
         if ($user->role === 'FREELANCER') {
             $target = strtoupper($data['status']);
             // A freelancer's own logged booking carries booking_context
@@ -279,11 +277,13 @@ class BookingController extends Controller
             'note' => $data['note'] ?? null,
         ]);
 
+        $fresh = $event->fresh()->load('client');
         $this->audit($request, 'UPDATE', 'booking', $event->id,
             before: ['status' => $oldStatus],
             after: ['status' => $data['status']]);
+        app(GoogleSheetsService::class)->appendBooking($fresh, 'STATUS_UPDATED');
 
-        return response()->json(['data' => $event->fresh()]);
+        return response()->json(['data' => $fresh]);
     }
 
     public function destroy(Request $request, $id)

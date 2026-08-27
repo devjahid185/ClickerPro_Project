@@ -74,8 +74,8 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
       setState(() => _submitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Could not submit deletion request. Try again.'),
-          backgroundColor: AppColors.voidElevated,
+          content: const Text('Could not submit deletion request. Try again.'),
+          backgroundColor: const Color(0xFF101828),
           behavior: SnackBarBehavior.floating,
         ),
       );

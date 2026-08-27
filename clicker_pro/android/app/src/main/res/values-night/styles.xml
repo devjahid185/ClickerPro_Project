@@ -1,8 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Theme applied to the Android Window while the process is starting when the OS's Dark Mode setting is on -->
-    <!-- The ClickerPro app UI is always the light "paper" theme, so even in the
-         OS's dark mode the native launch window uses the light launch drawable —
+    <!-- The Graphy7 app UI is always the light "paper" theme, so even in the
+         OS's dark mode the native launch window uses the light launch drawable â€”
          no black flash before the Dart splash paints. -->
     <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <!-- Show a splash screen on the activity. Automatically removed when

@@ -1,6 +1,6 @@
-﻿// lib/features/auth/presentation/register_screen.dart
+// lib/features/auth/presentation/register_screen.dart
 //
-// Clicker Pro — Register Screen (Dark Luxury Lens)
+// Graphy7 — Register Screen (Dark Luxury Lens)
 //
 // Visual: matches LoginScreen 1:1 — Void Black background, ambient blobs,
 // camera-in-luxury-circle brand mark, Cormorant Garamond headline,
@@ -27,7 +27,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/navigation/route_names.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../core/providers.dart';
 import '../../../core/validation/phone_validator.dart';
 import '../../../shared/widgets/auth_glass_field.dart';
 import '../../../shared/widgets/clicker_logo.dart';
@@ -156,17 +155,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
       if (!mounted) return;
 
-      // Fire the 6-digit code (fail-soft — a mail hiccup must not strand the
-      // user; they can resend on the OTP screen) and route to OTP. The OTP
-      // screen completes the signup and lands on the Dashboard after verify.
+      // The backend now creates and sends the signup OTP inside /register.
+      // The OTP screen's Resend action still calls requestOtp when needed.
       final email = _emailController.text.trim();
-      try {
-        await ref
-            .read(authRepositoryProvider)
-            .requestOtp(identifier: email, purpose: OtpPurpose.signup);
-      } catch (_) {
-        // Code email failed — continue; user can resend from the screen.
-      }
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(

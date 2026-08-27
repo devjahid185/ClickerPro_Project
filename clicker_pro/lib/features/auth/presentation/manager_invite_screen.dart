@@ -1,6 +1,6 @@
 ﻿// lib/features/auth/presentation/manager_invite_screen.dart
 //
-// Clicker Pro — Accept Invite (Manager onboarding) (Dark Luxury Lens)
+// Graphy7 — Accept Invite (Manager onboarding) (Dark Luxury Lens)
 //
 // Code (6 mono cells like OTP) + name + email + password + confirm.
 // Submit calls sessionController.acceptInvite(...). On 404/410 inline
@@ -269,7 +269,7 @@ class _ManagerInviteScreenState extends ConsumerState<ManagerInviteScreen> {
                       ),
                       const SizedBox(height: 22),
 
-                      // ── Invite code cells ──────────────────────
+                      // -- Invite code cells ----------------------
                       Text(
                         '6-DIGIT INVITE CODE',
                         textAlign: TextAlign.center,
@@ -566,10 +566,10 @@ class _ManagerInviteScreenState extends ConsumerState<ManagerInviteScreen> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------
 // Internal digit cell (mirror of OtpScreen's cell, kept private here
 // so manager invite is self-contained).
-// ─────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------
 class _DigitCell extends StatefulWidget {
   const _DigitCell({
     required this.controller,

@@ -1,6 +1,6 @@
 // lib/features/security/data/security_service.dart
 //
-// Clicker Pro — Security utilities (PROD-04)
+// Graphy7 — Security utilities (PROD-04)
 //
 // Input validation, sanitization, and hashing helpers.
 // No external dependencies — pure Dart implementations.

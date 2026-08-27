@@ -1,7 +1,7 @@
 // lib/theme/app_theme.dart
 //
-// Clicker Pro — Theme entry point
-// Two mobile themes: ClickerPro (light, default) and Noir (dark).
+// Graphy7 — Theme entry point
+// Two mobile themes: Graphy7 (light, default) and Noir (dark).
 // Sunset Studio / Sunrise Pulse / Deep Ocean are retired (kept only as
 // backward-compat shims below).
 
@@ -43,7 +43,7 @@ class AppRadius {
 
 /// ============================================================
 /// TYPOGRAPHY — theme-aware shared accessor.
-///   • ClickerPro (default): brand + body = Hanken Grotesk · mono = IBM Plex Mono
+///   • Graphy7 (default): brand + body = Hanken Grotesk · mono = IBM Plex Mono
 ///   • Noir (dark)         : brand + body = Space Grotesk · mono = JetBrains Mono
 ///
 /// Fonts resolve per the active palette so shared widgets and auth/onboarding
@@ -59,11 +59,11 @@ class AppText {
 
   static bool get _noir => AppColors.active == ActivePalette.noirDark;
 
-  // ClickerPro uses Hanken for both brand + body; Noir uses Space Grotesk for
+  // Graphy7 uses Hanken for both brand + body; Noir uses Space Grotesk for
   // both (its mono/grotesk pairing is the theme's signature).
   static String? get _brandFont => _noir ? _spaceGrotesk : _hanken;
   static String? get _bodyFont => _noir ? _spaceGrotesk : _hanken;
-  // Mono: JetBrains Mono on Noir, IBM Plex Mono on ClickerPro.
+  // Mono: JetBrains Mono on Noir, IBM Plex Mono on Graphy7.
   static String? get _monoFont => _noir ? _jetMono : _ibmMono;
 
   /// Public theme-aware font families — use these instead of hardcoded
@@ -73,15 +73,15 @@ class AppText {
   static String? get bodyFontFamily => _bodyFont;
   static String? get monoFontFamily => _monoFont;
 
-  /// Fixed ClickerPro (Hanken) family — for the auth/onboarding brand chrome
-  /// that must always read as the ClickerPro spec regardless of the saved
+  /// Fixed Graphy7 (Hanken) family — for the auth/onboarding brand chrome
+  /// that must always read as the Graphy7 spec regardless of the saved
   /// theme (those screens show before/around the theme toggle).
   static String? get clickerBrandFontFamily => _hanken;
 
   static TextStyle get brand => TextStyle(
     fontFamily: _brandFont,
     fontSize: 22,
-    // ClickerPro: Hanken 800, tight. Noir: Space Grotesk 700, tight.
+    // Graphy7: Hanken 800, tight. Noir: Space Grotesk 700, tight.
     fontWeight: _noir ? FontWeight.w700 : FontWeight.w800,
     color: AppColors.film,
     height: 1.1,
@@ -305,7 +305,7 @@ class AppFilters {
 class AppTheme {
   AppTheme._();
 
-  /// ClickerPro — the DEFAULT mobile theme (Hanken Grotesk + #E2620E, per
+  /// Graphy7 — the DEFAULT mobile theme (Hanken Grotesk + #E2620E, per
   /// CLICKERPRO_DESIGN_SPEC.md). Delegates to AppThemeClicker.
   static ThemeData clickerPro() => AppThemeClicker.theme();
 

@@ -1,6 +1,6 @@
 // lib/theme/app_colors_clicker.dart
 //
-// Clicker Pro — "ClickerPro" theme palette (the v-current DEFAULT).
+// Graphy7 — "Graphy7" theme palette (the v-current DEFAULT).
 //
 // Extracted EXACTLY from CLICKERPRO_DESIGN_SPEC.md §1 (the finished, hand-tuned
 // mockup). Do NOT substitute or "improve" these values — they are the source of
@@ -43,7 +43,7 @@ class AppColorsClicker {
   static const Color tealGlow = primaryGlow;
 
   // ============================================================
-  // ☀️ SURFACES
+  // ☀ï¸ SURFACES
   // ============================================================
   static const Color background = Color(0xFFFBFAF7); // App canvas (warm off-white)
   static const Color surface = Color(0xFFFFFFFF); // Cards, inputs, sheets
@@ -56,7 +56,7 @@ class AppColorsClicker {
   static const Color glass = surface;
 
   // ============================================================
-  // 📝 TEXT
+  // ðŸ“ TEXT
   // ============================================================
   static const Color textPrimary = Color(0xFF1A1A18); // Headings, primary text
   static const Color textSecondary = Color(0xFF3A3A36); // Body labels

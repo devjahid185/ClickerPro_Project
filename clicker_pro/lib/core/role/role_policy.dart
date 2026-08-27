@@ -23,6 +23,7 @@ class RolePolicy {
       UserRole.owner,
       UserRole.both,
       UserRole.manager,
+      UserRole.freelancer,
     },
     // Distribution lifts the freelancer 1-event-per-shift cap, so it is only
     // relevant to users who take freelance work. Owners are never limited and
@@ -115,7 +116,12 @@ class RolePolicy {
       UserRole.freelancer,
     },
     // Studio-management surfaces — never shown to a pure Freelancer.
-    Capability.accessTeam: {UserRole.owner, UserRole.both, UserRole.manager},
+    Capability.accessTeam: {
+      UserRole.owner,
+      UserRole.both,
+      UserRole.manager,
+      UserRole.freelancer,
+    },
     Capability.accessInvoice: {UserRole.owner, UserRole.both, UserRole.manager},
     Capability.accessTax: {UserRole.owner, UserRole.both},
     Capability.accessPackages: {UserRole.owner, UserRole.both, UserRole.manager},

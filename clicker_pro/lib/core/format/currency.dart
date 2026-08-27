@@ -1,6 +1,6 @@
 // lib/core/format/currency.dart
 //
-// Multi-country currency support. ClickerPro is used by studios worldwide,
+// Multi-country currency support. Graphy7 is used by studios worldwide,
 // so every money value must render in the studio's own currency instead of
 // a hardcoded ৳ (BDT). This file is the single source of truth for:
 //

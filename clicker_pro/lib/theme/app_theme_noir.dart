@@ -1,6 +1,6 @@
 // lib/theme/app_theme_noir.dart
 //
-// Clicker Pro — "Noir" DARK theme ThemeData + typography.
+// Graphy7 — "Noir" DARK theme ThemeData + typography.
 //
 // Built EXACTLY to CLICKERPRO_DARK_FLUTTER_SPEC.md:
 //   • Body / UI  : Space Grotesk (400/500/600/700) — headings, numbers, content
@@ -300,11 +300,13 @@ class AppThemeNoir {
         foregroundColor: AppColorsNoir.onAccent,
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: AppColorsNoir.card,
+        backgroundColor: AppColorsNoir.surface,
         contentTextStyle: const TextStyle(
           color: AppColorsNoir.text,
           fontSize: 13,
         ),
+        actionTextColor: AppColorsNoir.accent,
+        closeIconColor: AppColorsNoir.text,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
         behavior: SnackBarBehavior.floating,
       ),

@@ -1,6 +1,6 @@
 ﻿// lib/features/auth/presentation/otp_screen.dart
 //
-// Clicker Pro — OTP Verification (Dark Luxury Lens)
+// Graphy7 — OTP Verification (Dark Luxury Lens)
 //
 // 6 individual mono-numeric digit cells (48 × 56) with:
 //   • auto-advance to the next cell on input
@@ -11,9 +11,9 @@
 // authRepository.requestOtp again.
 //
 // On success:
-//   • signup / login → pushAndRemoveUntil to DashboardScreen (root flow)
-//   • forgotPassword → push ResetPasswordScreen with the returned token
-// On 400/410 → inline error + a single shake animation on the cell row.
+//   • signup / login ? pushAndRemoveUntil to DashboardScreen (root flow)
+//   • forgotPassword ? push ResetPasswordScreen with the returned token
+// On 400/410 ? inline error + a single shake animation on the cell row.
 
 import 'dart:async';
 
@@ -420,7 +420,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                     ),
                     const SizedBox(height: 24),
 
-                    // ── Digit cells (with shake) ────────────────
+                    // -- Digit cells (with shake) ----------------
                     AnimatedBuilder(
                       animation: _shake,
                       builder: (_, child) => Transform.translate(
@@ -466,7 +466,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
 
                     const SizedBox(height: 18),
 
-                    // ── Resend ─────────────────────────────────
+                    // -- Resend ---------------------------------
                     Center(
                       child: _resendSecondsLeft > 0
                           ? Text(

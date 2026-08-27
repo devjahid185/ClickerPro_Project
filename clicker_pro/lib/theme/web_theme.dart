@@ -1,16 +1,16 @@
 // lib/theme/web_theme.dart
 //
-// Clicker Pro — WEB-ONLY design system.
+// Graphy7 — WEB-ONLY design system.
 //
 // This file is imported ONLY by web widgets (WebShell, WebNavShell, web
 // dashboard, calendar/booking polish). Mobile never touches it, so the phone
 // UI is 100% unaffected — Heaven's requirement.
 //
-// ┌──────────────────────────────────────────────────────────────────────┐
+// ┌──────────────────────────────────────────────────────────────────────â”
 // │ STATUS: SUNSET STUDIO WEB — warm cream canvas (#FBF6F0), white cards   │
 // │         with warm sand borders, dark-brown sidebar (#2B1D12), Signal   │
 // │         Orange (#EA5B0C) actions and Gold (#F5B02E) accents. Values    │
-// │         ported from `design_handoff_clickerpro_web/` (ClickerPro       │
+// │         ported from `design_handoff_clickerpro_web/` (Graphy7       │
 // │         Dashboard v2.dc.html — high-fidelity, recreate exactly).       │
 // │                                                                        │
 // │ Token NAMES are unchanged from the previous skin (referenced ~170×     │

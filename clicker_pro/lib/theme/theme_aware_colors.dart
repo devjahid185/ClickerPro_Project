@@ -1,6 +1,6 @@
 // lib/theme/theme_aware_colors.dart
 //
-// Clicker Pro v15 — Theme-aware color accessor
+// Graphy7 v15 — Theme-aware color accessor
 // v15 ships a single theme (Sunset Studio), so every accessor resolves to
 // AppColorsLight. The type is retained so existing call sites keep working
 // and a future second theme can branch here again.

@@ -1,16 +1,16 @@
 // lib/theme/app_colors.dart
 //
-// Clicker Pro — AppColors (two-theme static accessor: ClickerPro + Noir).
+// Graphy7 — AppColors (two-theme static accessor: Graphy7 + Noir).
 //
 // This class is the single static colour accessor used across the mobile
 // codebase (custom-painted widgets read it without a BuildContext). It
 // delegates to one of two palettes based on the active theme:
-//   • AppColorsClicker — the DEFAULT ClickerPro theme (LIGHT · #E2620E, per spec)
+//   • AppColorsClicker — the DEFAULT Graphy7 theme (LIGHT · #E2620E, per spec)
 //   • AppColorsNoir    — the "Noir" DARK theme (near-black · lime #C8F252)
 //
 // app.dart sets `AppColors.active` whenever the theme changes so every getter
 // resolves to the right palette. `const` fields cannot switch at runtime, so
-// those keep the ClickerPro (default) values for legacy const call sites;
+// those keep the Graphy7 (default) values for legacy const call sites;
 // prefer the getters below in new code.
 
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -33,13 +33,13 @@ class AppColors {
 
   /// Backward-compat: some old code toggled `isDark`. `true` now selects the
   /// Noir dark theme (the app's only genuinely dark theme); `false` restores
-  /// the ClickerPro default.
+  /// the Graphy7 default.
   static bool get isDark => _noir;
   static set isDark(bool v) =>
       active = v ? ActivePalette.noirDark : ActivePalette.clickerPro;
 
   // ============================================================
-  // ☀️ SURFACES
+  // ☀ï¸ SURFACES
   // ============================================================
   static Color get appBg =>
       _noir ? AppColorsNoir.background : AppColorsClicker.background;
@@ -64,16 +64,16 @@ class AppColors {
 
   // ============================================================
   // 🎨 PRIMARY ACCENT
-  // ClickerPro = #E2620E · Noir = lime #C8F252
+  // Graphy7 = #E2620E · Noir = lime #C8F252
   // ============================================================
 
-  // Static const ramp — ClickerPro brand orange (used in const contexts).
+  // Static const ramp — Graphy7 brand orange (used in const contexts).
   static const Color primary50 = Color(0xFFFDF0E7);
   static const Color primary100 = Color(0xFFFAD9C2);
   static const Color primary200 = Color(0xFFF3B98C);
   static const Color primary300 = Color(0xFFEE9A56);
   static const Color primary400 = Color(0xFFF89A2B); // primary light
-  static const Color primary500 = Color(0xFFE2620E); // ClickerPro brand orange
+  static const Color primary500 = Color(0xFFE2620E); // Graphy7 brand orange
   static const Color primary600 = Color(0xFFC9560C);
   static const Color primary700 = Color(0xFFB84E0A); // primary dark
   static const Color primary800 = Color(0xFF8F3D08);
@@ -89,7 +89,7 @@ class AppColors {
   static Color get orangeGlow =>
       _noir ? AppColorsNoir.primaryGlow : AppColorsClicker.primaryGlow;
 
-  // Static const fallbacks — ClickerPro (default) values for const call sites.
+  // Static const fallbacks — Graphy7 (default) values for const call sites.
   static const Color orangeConst = AppColorsClicker.primary;
   static const Color redConst = AppColorsClicker.danger;
   static const Color greenConst = AppColorsClicker.success;
@@ -106,7 +106,7 @@ class AppColors {
   static Color get signalOrange => orange;
 
   /// The correct text/icon colour to place ON the primary accent fill.
-  /// ClickerPro's orange takes white; Noir's lime takes near-black — using this
+  /// Graphy7's orange takes white; Noir's lime takes near-black — using this
   /// instead of a hardcoded `Colors.white` keeps labels legible on both themes.
   static Color get onAccent =>
       _noir ? AppColorsNoir.onAccent : Colors.white;
@@ -133,7 +133,7 @@ class AppColors {
   static const Color infoSoft = indigoSoft;
 
   // ============================================================
-  // 📝 TEXT
+  // ðŸ“ TEXT
   // ============================================================
   static Color get film =>
       _noir ? AppColorsNoir.text : AppColorsClicker.textPrimary;
@@ -184,7 +184,7 @@ class AppColors {
 
   // ============================================================
   // 🎨 DATA / STAT CARD COLOURS (dashboard — multi-colour)
-  // ClickerPro keeps its intentional data palette; Noir maps them onto its own
+  // Graphy7 keeps its intentional data palette; Noir maps them onto its own
   // shift/semantic set so the stat cards stay legible on the near-black canvas.
   // ============================================================
   static Color get infoTeal =>

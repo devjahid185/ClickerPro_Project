@@ -1,6 +1,6 @@
 // lib/theme/app_theme_mode.dart
 //
-// Clicker Pro — Theme mode manager.
+// Graphy7 — Theme mode manager.
 // Two mobile themes:
 //   • clickerPro — the default (LIGHT · Hanken Grotesk + #E2620E)
 //   • noirDark   — the "Noir" dark theme (DARK · Space Grotesk + lime #C8F252)
@@ -10,7 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/providers.dart';
 
-/// The named app themes: the ClickerPro light default and the Noir dark theme.
+/// The named app themes: the Graphy7 light default and the Noir dark theme.
 enum AppThemeMode {
   clickerPro, // DEFAULT — editorial paper, orange #E2620E, Hanken Grotesk
   noirDark, // dark — near-black canvas, lime #C8F252, Space Grotesk

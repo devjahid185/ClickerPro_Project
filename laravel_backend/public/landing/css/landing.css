@@ -1,7 +1,7 @@
 /* ============================================================
-   Clicker Pro — Landing Page
+   Clicker Pro â€” Landing Page
    Reference palette: dark slate (#0f172a). Primary: brand orange.
-   Pure CSS · minimal JS · premium enterprise feel.
+   Pure CSS Â· minimal JS Â· premium enterprise feel.
    ============================================================ */
 
 :root {
@@ -160,6 +160,54 @@ img { max-width: 100%; display: block; }
   padding: 18px 22px 0;
 }
 .visual-card img { width: 100%; height: auto; display: block; }
+.screenshot-showcase {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 34px;
+  align-items: start;
+}
+.screenshot-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.025));
+  box-shadow: 0 24px 70px rgba(0,0,0,.22);
+  transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+}
+.screenshot-card:nth-child(even) { margin-top: 0; }
+.screenshot-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(244,136,28,.36);
+  box-shadow: 0 34px 90px rgba(0,0,0,.30);
+}
+.screenshot-card__media {
+  background: transparent;
+}
+.screenshot-card__media img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: auto;
+  object-fit: initial;
+  border-radius: 22px 22px 0 0;
+  background: transparent;
+}
+.screenshot-card__copy {
+  display: grid;
+  gap: 6px;
+  padding: 22px 24px 24px;
+}
+.screenshot-card__copy h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 1.2;
+}
+.screenshot-card__copy p {
+  color: var(--text-dim);
+  font-size: 15px;
+  line-height: 1.65;
+}
 .screens-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
 .phone-card {
   background: var(--surface); border: 1px solid var(--border); border-radius: 26px;
@@ -183,7 +231,7 @@ img { max-width: 100%; display: block; }
   display: flex; flex-direction: column; gap: 18px;
 }
 .detail-card__icon {
-  width: 56px; height: 56px; border-radius: 18px;
+  width: 56px; height: 56px; border-radius: 22px;
   background: rgba(255,107,0,.15); display: grid; place-items: center;
   font-size: 24px; color: var(--primary);
 }
@@ -257,6 +305,8 @@ img { max-width: 100%; display: block; }
   .reviews-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 32px 20px; }
   .visual-grid { grid-template-columns: 1fr; }
+  .screenshot-showcase { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 980px; margin: 0 auto; gap: 24px; }
+  .screenshot-card:nth-child(even) { margin-top: 0; }
 
   .section { padding: 80px 0; }
   .cta-band { padding: 48px 24px; }
@@ -274,13 +324,18 @@ img { max-width: 100%; display: block; }
   .details-grid,
   .screens-grid,
   .reviews-grid,
-  .stats-grid { grid-template-columns: 1fr; }
+  .stats-grid,
+  .screenshot-showcase { grid-template-columns: 1fr; }
 
   /* Tighten oversized cards / type on small screens. */
   .feature-card,
   .detail-card,
   .review-card,
   .phone-card { padding: 24px; }
+  .screenshot-showcase { max-width: 360px; }
+  .screenshot-card__copy { padding: 16px 16px 18px; }
+  .screenshot-card__copy h3 { font-size: 20px; }
+  .screenshot-card__copy p { font-size: 14px; }
   .hero__content { padding: 0 18px; }
   .hero__support { font-size: 16px; line-height: 1.75; }
   .hero__actions { gap: 10px; }
@@ -293,4 +348,56 @@ img { max-width: 100%; display: block; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .reveal { transition: none; opacity: 1; transform: none; }
+}
+
+.brand-logo { width: 34px; height: 34px; object-fit: contain; border-radius: 8px; background: #fff; }
+.footer__brand .brand-logo { width: 30px; height: 30px; }
+
+
+/* Graphy7 clean header patch */
+.nav {
+  min-height: 74px;
+  gap: 24px;
+}
+.nav__brand {
+  flex: 0 0 auto;
+  min-width: 0;
+  white-space: nowrap;
+}
+.nav__links {
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  min-width: 0;
+}
+.nav__menu {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+.brand-logo {
+  flex: 0 0 auto;
+  padding: 3px;
+}
+.detail-card__icon,
+.feature-card__icon {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+@media (max-width: 980px) {
+  .nav__links { gap: 18px; }
+}
+@media (max-width: 860px) {
+  .nav__links.is-open {
+    box-shadow: 0 18px 34px rgba(0,0,0,.26);
+  }
+  .nav__links.is-open .nav__link,
+  .nav__links.is-open .nav__cta {
+    width: 100%;
+    text-align: center;
+  }
 }

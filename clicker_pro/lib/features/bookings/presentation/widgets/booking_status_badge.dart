@@ -75,30 +75,20 @@ class _StatusTone {
 _StatusTone _toneFor(BookingStatus status) {
   switch (status) {
     case BookingStatus.pending:
-      return _StatusTone(
-        background: AppColors.indigo.withValues(alpha: 0.18),
-        foreground: AppColors.indigo,
-        border: AppColors.indigo.withValues(alpha: 0.45),
-      );
     case BookingStatus.confirmed:
     case BookingStatus.inProgress:
       return _StatusTone(
-        background: AppColors.orange.withValues(alpha: 0.18),
-        foreground: AppColors.orange,
-        border: AppColors.orange.withValues(alpha: 0.45),
+        background: AppColors.infoTeal.withValues(alpha: 0.18),
+        foreground: AppColors.infoTeal,
+        border: AppColors.infoTeal.withValues(alpha: 0.45),
       );
     case BookingStatus.shotComplete:
     case BookingStatus.delivered:
-      return _StatusTone(
-        background: AppColors.gold.withValues(alpha: 0.18),
-        foreground: AppColors.gold,
-        border: AppColors.gold.withValues(alpha: 0.5),
-      );
     case BookingStatus.completed:
       return _StatusTone(
-        background: AppColors.green.withValues(alpha: 0.18),
-        foreground: AppColors.green,
-        border: AppColors.green.withValues(alpha: 0.45),
+        background: AppColors.sageData.withValues(alpha: 0.18),
+        foreground: AppColors.sageData,
+        border: AppColors.sageData.withValues(alpha: 0.45),
       );
     case BookingStatus.cancelled:
       return _StatusTone(
@@ -130,7 +120,6 @@ String _labelFor(BookingStatus status) {
       return 'CANCELLED';
   }
 }
-
 /// Public helper for callers that want only the indicator dot color
 /// (calendar day cells, timeline pending dot, etc.). Keeps the
 /// status-color contract centralized.

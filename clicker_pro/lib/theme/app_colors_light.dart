@@ -1,6 +1,6 @@
 // lib/theme/app_colors_light.dart
 //
-// Clicker Pro — Sunset Studio Light Theme (MOD-64)
+// Graphy7 — Sunset Studio Light Theme (MOD-64)
 // Warm cream & terracotta palette — NOT a color swap of dark.
 // Same API surface as AppColors for easy theme-aware swapping.
 
@@ -10,7 +10,7 @@ class AppColorsLight {
   AppColorsLight._();
 
   // ============================================================
-  // ☀️ SURFACE COLORS (Warm Creams)
+  // ☀ï¸ SURFACE COLORS (Warm Creams)
   // ============================================================
   static const Color cream = Color(0xFFF4EBDD); // Main BG
   static const Color creamDark = Color(0xFFE8DCC8); // Elevated surface
@@ -104,7 +104,7 @@ class AppColorsLight {
   static const Color warning = yellow;
 
   // ============================================================
-  // 📝 TEXT COLORS (Dark Browns on Light)
+  // ðŸ“ TEXT COLORS (Dark Browns on Light)
   // ============================================================
   static const Color textPrimary = Color(0xFF2D1810); // Dark brown
   static const Color textSecondary = Color(0xFF6B5A4E); // Medium brown

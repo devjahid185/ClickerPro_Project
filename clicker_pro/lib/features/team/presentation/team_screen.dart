@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../core/role/capability.dart';
+import '../../profile/application/profile_controllers.dart';
 import '../../../shared/states/empty_state.dart';
 import '../../../shared/states/error_state.dart';
 import '../../../shared/states/lens_loader.dart';
@@ -24,6 +26,9 @@ class TeamScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final loc = AppLocalizations.of(context);
     final membersAsync = ref.watch(teamMembersProvider);
+    final canGenerateInvite = ref
+        .watch(rolePolicyProvider)
+        .can(Capability.generateTeamInvite);
 
     // On wide web the WebNavShell owns the chrome; render the dedicated desktop
     // members grid instead of the mobile body. Mobile + narrow web unchanged.
@@ -32,7 +37,9 @@ class TeamScreen extends ConsumerWidget {
       return Scaffold(
         backgroundColor: Colors.transparent,
         body: WebTeam(
-          onInvite: () => _showInviteSheet(context, ref),
+          onInvite: canGenerateInvite
+              ? () => _showInviteSheet(context, ref)
+              : null,
           onTapMember: (m) => showModalBottomSheet<void>(
             context: context,
             backgroundColor: AppColors.voidLight,
@@ -67,42 +74,43 @@ class TeamScreen extends ConsumerWidget {
         ),
         actions: [
           // Solid orange "Invite" pill from the .dc.html header.
-          Padding(
-            padding: const EdgeInsets.only(right: 18),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(11),
-              onTap: () => _showInviteSheet(context, ref),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.orange,
-                  borderRadius: BorderRadius.circular(11),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.person_add_alt_1_rounded,
-                      size: 17,
-                      color: AppColors.onAccent,
-                    ),
-                    const SizedBox(width: 5),
-                    Text(
-                      'Invite',
-                      style: TextStyle(
+          if (canGenerateInvite)
+            Padding(
+              padding: const EdgeInsets.only(right: 18),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(11),
+                onTap: () => _showInviteSheet(context, ref),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.orange,
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.person_add_alt_1_rounded,
+                        size: 17,
                         color: AppColors.onAccent,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 5),
+                      Text(
+                        'Invite',
+                        style: TextStyle(
+                          color: AppColors.onAccent,
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
       body: Column(
@@ -121,7 +129,9 @@ class TeamScreen extends ConsumerWidget {
                     icon: Icons.people_outline,
                     message: loc.team_empty,
                     actionLabel: loc.team_invite_member,
-                    onAction: () => _showInviteSheet(context, ref),
+                    onAction: canGenerateInvite
+                        ? () => _showInviteSheet(context, ref)
+                        : null,
                   );
                 }
                 final groups = _groupByRole(members);
@@ -136,6 +146,7 @@ class TeamScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _InviteMethodsRow(
+                            showPasscode: canGenerateInvite,
                             onPasscode: () => _showInviteSheet(context, ref),
                             onJoin: () => _showJoinSheet(context),
                           ),
@@ -253,8 +264,13 @@ List<_RoleGroup> _groupByRole(List<TeamMember> members) {
 
 /// Invite-method tiles row (.dc.html): white cards, orange icon, 11px label.
 class _InviteMethodsRow extends StatelessWidget {
-  const _InviteMethodsRow({required this.onPasscode, required this.onJoin});
+  const _InviteMethodsRow({
+    required this.showPasscode,
+    required this.onPasscode,
+    required this.onJoin,
+  });
 
+  final bool showPasscode;
   final VoidCallback onPasscode;
   final VoidCallback onJoin;
 
@@ -291,8 +307,10 @@ class _InviteMethodsRow extends StatelessWidget {
 
     return Row(
       children: [
-        tile(Icons.pin_outlined, 'Passcode', onPasscode),
-        const SizedBox(width: 9),
+        if (showPasscode) ...[
+          tile(Icons.pin_outlined, 'Passcode', onPasscode),
+          const SizedBox(width: 9),
+        ],
         tile(Icons.key_outlined, 'Join Team', onJoin),
       ],
     );

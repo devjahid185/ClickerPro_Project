@@ -25,6 +25,11 @@ class UserResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $teamOwnerId = is_array($this->manager_permissions)
+            ? ($this->manager_permissions['ownerId'] ?? null)
+            : null;
+        $teamOwnerId = $teamOwnerId === null ? null : (int) $teamOwnerId;
+
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -35,6 +40,14 @@ class UserResource extends JsonResource
             'role' => $this->role,
             'plan' => $this->plan,
             'is_active' => (bool) $this->is_active,
+
+            // Team/studio link for managers and freelancers. Owner/BOTH users
+            // resolve their studio to their own id; linked teammates resolve to
+            // the owner account they joined via team invite.
+            'owner_id' => $teamOwnerId,
+            'ownerId' => $teamOwnerId,
+            'studio_id' => $this->studioId(),
+            'studioId' => $this->studioId(),
 
             // Business profile (snake_case + camelCase aliases for both clients)
             'business_name' => $this->business_name,

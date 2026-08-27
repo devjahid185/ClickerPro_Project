@@ -1743,3 +1743,15 @@ table.data-table {
     max-width: 100%;
   }
 }
+
+.sidebar__brand-mark--image {
+  object-fit: contain;
+  padding: 3px;
+  background: #ffffff;
+}
+
+.auth-brand__mark--image {
+  object-fit: contain;
+  padding: 4px;
+  background: #ffffff;
+}

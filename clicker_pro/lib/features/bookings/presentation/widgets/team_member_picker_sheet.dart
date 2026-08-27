@@ -27,12 +27,14 @@ class TeamMemberPickerSheet extends ConsumerStatefulWidget {
     super.key,
     required this.title,
     this.excludedUserIds = const <String>{},
+    this.hiddenUserIds = const <String>{},
     this.multiSelect = true,
     this.accentColor,
   });
 
   final String title;
   final Set<String> excludedUserIds;
+  final Set<String> hiddenUserIds;
   final bool multiSelect;
   final Color? accentColor;
 
@@ -40,6 +42,7 @@ class TeamMemberPickerSheet extends ConsumerStatefulWidget {
     BuildContext context, {
     required String title,
     Set<String> excludedUserIds = const <String>{},
+    Set<String> hiddenUserIds = const <String>{},
     bool multiSelect = true,
     Color? accentColor,
   }) {
@@ -53,6 +56,7 @@ class TeamMemberPickerSheet extends ConsumerStatefulWidget {
       builder: (_) => TeamMemberPickerSheet(
         title: title,
         excludedUserIds: excludedUserIds,
+        hiddenUserIds: hiddenUserIds,
         multiSelect: multiSelect,
         accentColor: accentColor,
       ),
@@ -135,6 +139,7 @@ class _TeamMemberPickerSheetState extends ConsumerState<TeamMemberPickerSheet> {
                 ),
                 data: (members) {
                   final filtered = members.where((m) {
+                    if (widget.hiddenUserIds.contains(m.userId)) return false;
                     if (_query.isEmpty) return true;
                     return m.fullName.toLowerCase().contains(_query) ||
                         m.email.toLowerCase().contains(_query) ||

@@ -1,6 +1,6 @@
 // lib/theme/app_theme_light.dart
 //
-// Clicker Pro — Sunset Studio Light Theme ThemeData
+// Graphy7 — Sunset Studio Light Theme ThemeData
 // Playfair Display + Outfit + IBM Plex Mono + Hind Siliguri
 // Dark and Light are completely different looks — not just a color swap.
 
@@ -314,11 +314,13 @@ class AppThemeLight {
         ),
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: AppColorsLight.creamDeep,
+        backgroundColor: AppColorsLight.textPrimary,
         contentTextStyle: const TextStyle(
-          color: AppColorsLight.textPrimary,
+          color: Colors.white,
           fontSize: 13,
         ),
+        actionTextColor: AppColorsLight.terracotta,
+        closeIconColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         behavior: SnackBarBehavior.floating,
       ),

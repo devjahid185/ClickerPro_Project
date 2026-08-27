@@ -77,8 +77,20 @@ class ProfileController extends Controller
         }
 
         $user = $request->user();
-        // role is guarded — set explicitly for this validated flow.
-        $user->forceFill(['role' => $requested])->save();
+        $currentRole = strtoupper((string) $user->role);
+        $managerPermissions = is_array($user->manager_permissions)
+            ? $user->manager_permissions
+            : [];
+
+        if ($requested === 'FREELANCER' && in_array($currentRole, ['OWNER', 'BOTH'], true)) {
+            unset($managerPermissions['ownerId']);
+        }
+
+        // role is guarded - set explicitly for this validated flow.
+        $user->forceFill([
+            'role' => $requested,
+            'manager_permissions' => empty($managerPermissions) ? null : $managerPermissions,
+        ])->save();
 
         return response()->json(['data' => ['user' => new UserResource($user->fresh())]]);
     }

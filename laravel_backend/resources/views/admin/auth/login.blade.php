@@ -5,6 +5,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Sign In | Graphy7 Admin</title>
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('landing/img/apple-touch-icon.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -15,7 +17,7 @@
     <div class="auth-wrap">
         <section class="auth-hero">
             <div class="auth-brand auth-brand--hero">
-                <div class="auth-brand__mark">G7</div>
+                <img class="auth-brand__mark auth-brand__mark--image" src="{{ asset('admin-assets/img/logo.png') }}" alt="Graphy7">
                 <div>
                     <h1>Graphy<span style="color:var(--primary)">7</span></h1>
                     <div class="section-label auth-brand__subtitle">Admin Control</div>
@@ -60,7 +62,7 @@
 
         <div class="auth-card">
             <div class="auth-brand auth-brand--compact">
-                <div class="auth-brand__mark">G7</div>
+                <img class="auth-brand__mark auth-brand__mark--image" src="{{ asset('admin-assets/img/logo.png') }}" alt="Graphy7">
                 <h1>Graphy<span style="color:var(--primary)">7</span></h1>
                 <div class="section-label auth-brand__subtitle">Admin Console</div>
             </div>

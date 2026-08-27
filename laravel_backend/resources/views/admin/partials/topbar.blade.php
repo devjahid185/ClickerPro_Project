@@ -17,13 +17,13 @@
             <input type="search" name="search" placeholder="Search users — name, phone, email">
         </form>
         @if ($admin)
-            <div class="topbar__profile">
+            <a class="topbar__profile" href="{{ route('admin.profile') }}" style="text-decoration:none;color:inherit">
                 <div class="avatar">{{ strtoupper(substr($admin->name ?? $admin->email, 0, 1)) }}</div>
                 <div>
                     <div class="topbar__profile-name">{{ $admin->name ?? $admin->full_name ?? 'Admin' }}</div>
                     <div class="text-muted mono" style="font-size:11px">{{ $admin->email }}</div>
                 </div>
-            </div>
+            </a>
         @endif
     </div>
 </header>

@@ -11,29 +11,84 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
+
+    private function sendSignupOtp(User $user, string $source): void
+    {
+        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        OtpCode::create([
+            'user_id' => $user->id,
+            'code' => $code,
+            'purpose' => 'signup',
+            'expires_at' => now()->addMinutes(10),
+            'used' => false,
+        ]);
+
+        Log::info('Signup OTP created.', [
+            'email' => $user->email,
+            'purpose' => 'signup',
+            'source' => $source,
+            'mailer' => config('mail.default'),
+        ]);
+
+        try {
+            Log::info('Signup OTP mail send attempt.', [
+                'email' => $user->email,
+                'purpose' => 'signup',
+                'source' => $source,
+            ]);
+            Mail::send('emails.auth-code', [
+                'subjectLine' => 'Your Graphy7 verification code',
+                'preheader' => 'Use this secure code to verify your Graphy7 account.',
+                'headline' => 'Verify your email',
+                'subhead' => 'One more step to secure your studio account.',
+                'intro' => 'Enter this verification code in Graphy7 to finish setting up your account.',
+                'contextLabel' => 'Verification code',
+                'code' => $code,
+                'expiresIn' => '10 minutes',
+                'securityNote' => "If you did not try to create or verify a Graphy7 account, you can safely ignore this email.",
+            ], function ($message) use ($user) {
+                $message->to($user->email)->subject('Your Graphy7 verification code');
+            });
+            Log::info('Signup OTP mail send completed.', [
+                'email' => $user->email,
+                'purpose' => 'signup',
+                'source' => $source,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Signup OTP mail send failed.', [
+                'email' => $user->email,
+                'purpose' => 'signup',
+                'source' => $source,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
     public function register(Request $request)
     {
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            // One account per phone number (Heaven 2026-07-15: "এক নাম্বার বা
-            // মেইল দিয়ে দুবার রেজিষ্ট্রেশন করা যাবে না").
+            // One account per phone number (Heaven 2026-07-15: "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¢ ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¨ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â®ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â° ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¾
+            // ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â®ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â² ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¼ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¡ ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â° ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â°ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â·ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â°ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¶ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¨ ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â°ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¾ ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¡ ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¨ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¾").
             'phone' => 'nullable|string|max:30|unique:users,phone',
             'password' => 'required|string|min:6',
             // Self-service signup may only pick a self-service role. ADMIN and
             // MANAGER are privileged and must NEVER be assignable from public
             // registration (MANAGER comes via the invite flow). Anything else
             // falls back to OWNER.
-            // OFFICE_STAFF removed (Heaven 2026-07-15) — Owner carries all
+            // OFFICE_STAFF removed (Heaven 2026-07-15) ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Owner carries all
             // office-staff capabilities; staff no longer use the app.
             'role' => 'nullable|string|in:OWNER,FREELANCER,BOTH',
             // Owner/Both provide the company name at registration so they
-            // never have to re-enter it — the app was sending this all
+            // never have to re-enter it ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â the app was sending this all
             // along but it was silently dropped here.
             'business_name' => 'nullable|string|max:255',
         ]);
@@ -49,7 +104,7 @@ class AuthController extends Controller
             'public_booking_token' => Str::uuid(),
         ]);
         // SECURITY / OTP GATE: a freshly registered account is created but NOT
-        // logged in. We intentionally do NOT issue an auth token here — the
+        // logged in. We intentionally do NOT issue an auth token here ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â the
         // account is "unverified" until the email OTP is confirmed. Only
         // verifyOtp() (purpose=signup) issues the token. This closes the hole
         // where registering returned a token immediately, so OTP was optional
@@ -61,7 +116,9 @@ class AuthController extends Controller
             'email_verified_at' => null, // verified on OTP success
         ])->save();
 
-        // No token — the client must complete OTP, then receive the token from
+        $this->sendSignupOtp($user, 'register');
+
+        // No token ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â the client must complete OTP, then receive the token from
         // verifyOtp. The user object is returned only so the app can show the
         // email on the OTP screen.
         return response()->json([
@@ -86,7 +143,7 @@ class AuthController extends Controller
         $user = User::withTrashed()->where('email', $data['email'])->first();
 
         if ($user && $user->trashed() && now()->gte($user->deleted_at)) {
-            // Grace expired — erase the account (FKs cascade) and treat the
+            // Grace expired ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â erase the account (FKs cascade) and treat the
             // login as unknown credentials.
             $user->forceDelete();
             $user = null;
@@ -108,6 +165,21 @@ class AuthController extends Controller
 
         if (!$user->is_active) {
             return response()->json(['message' => 'Account is disabled'], 403);
+        }
+
+        if ($user->email_verified_at === null) {
+            $this->sendSignupOtp($user, 'login');
+
+            return response()->json([
+                'message' => 'Email verification required',
+                'data' => [
+                    'token' => null,
+                    'requiresOtp' => true,
+                    'purpose' => 'signup',
+                    'email' => $user->email,
+                    'user' => new UserResource($user),
+                ],
+            ]);
         }
 
         // Logging in during the 7-day grace window cancels the pending
@@ -134,9 +206,14 @@ class AuthController extends Controller
         ]);
 
         $user = User::where('email', $data['email'])->first();
+        Log::info('Password reset code requested.', [
+            'email' => $data['email'],
+            'user_found' => (bool) $user,
+            'mailer' => config('mail.default'),
+        ]);
 
         if ($user) {
-            // 6-digit numeric code — the app shows six OTP-style boxes, so a
+            // 6-digit numeric code ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â the app shows six OTP-style boxes, so a
             // long random string here reads as a garbage code to the user.
             $token = (string) random_int(100000, 999999);
             DB::table('password_reset_tokens')->updateOrInsert(
@@ -147,15 +224,26 @@ class AuthController extends Controller
             // Email the reset code out-of-band (log mailer in dev). The code
             // is valid for 60 minutes (enforced in resetPassword).
             try {
-                Mail::raw(
-                    "Your ClickerPro password reset code is:\n\n{$token}\n\n"
-                    . "It expires in 60 minutes. If you didn't request this, ignore this email.",
-                    function ($message) use ($data) {
-                        $message->to($data['email'])->subject('Your ClickerPro reset code');
-                    }
-                );
+                Log::info('Password reset mail send attempt.', ['email' => $data['email']]);
+                Mail::send('emails.auth-code', [
+                    'subjectLine' => 'Your Graphy7 password reset code',
+                    'preheader' => 'Use this secure code to reset your Graphy7 password.',
+                    'headline' => 'Reset your password',
+                    'subhead' => 'Secure access for your studio workspace.',
+                    'intro' => 'Use the code below to reset your Graphy7 account password.',
+                    'contextLabel' => 'Password reset code',
+                    'code' => $token,
+                    'expiresIn' => '60 minutes',
+                    'securityNote' => "If you did not request a password reset, ignore this email. Your current password will stay unchanged.",
+                ], function ($message) use ($data) {
+                    $message->to($data['email'])->subject('Your Graphy7 password reset code');
+                });
+                Log::info('Password reset mail send completed.', ['email' => $data['email']]);
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning('Reset mail send failed: ' . $e->getMessage());
+                Log::warning('Reset mail send failed.', [
+                    'email' => $data['email'],
+                    'error' => $e->getMessage(),
+                ]);
             }
         }
 
@@ -224,6 +312,12 @@ class AuthController extends Controller
         ]);
 
         $user = User::where('email', $data['email'])->first();
+        Log::info('OTP requested.', [
+            'email' => $data['email'],
+            'purpose' => $data['purpose'],
+            'user_found' => (bool) $user,
+            'mailer' => config('mail.default'),
+        ]);
         if (!$user) {
             return response()->json(['message' => 'ok']);
         }
@@ -243,16 +337,28 @@ class AuthController extends Controller
         // in production set real SMTP creds in .env and the same code emails it.
         // SECURITY: the code is never returned in the HTTP response.
         try {
-            Mail::raw(
-                "Your ClickerPro verification code is: {$code}\n\n"
-                . "It expires in 10 minutes. If you didn't request this, ignore this email.",
-                function ($message) use ($user) {
-                    $message->to($user->email)->subject('Your ClickerPro verification code');
-                }
-            );
+            Log::info('OTP mail send attempt.', ['email' => $user->email, 'purpose' => $data['purpose']]);
+            Mail::send('emails.auth-code', [
+                'subjectLine' => 'Your Graphy7 verification code',
+                'preheader' => 'Use this secure code to verify your Graphy7 account.',
+                'headline' => 'Verify your email',
+                'subhead' => 'One more step to secure your studio account.',
+                'intro' => 'Enter this verification code in Graphy7 to finish setting up your account.',
+                'contextLabel' => 'Verification code',
+                'code' => $code,
+                'expiresIn' => '10 minutes',
+                'securityNote' => "If you did not try to create or verify a Graphy7 account, you can safely ignore this email.",
+            ], function ($message) use ($user) {
+                $message->to($user->email)->subject('Your Graphy7 verification code');
+            });
+            Log::info('OTP mail send completed.', ['email' => $user->email, 'purpose' => $data['purpose']]);
         } catch (\Throwable $e) {
             // Never let a mail failure break OTP issuance; log and continue.
-            \Illuminate\Support\Facades\Log::warning('OTP mail send failed: ' . $e->getMessage());
+            Log::warning('OTP mail send failed.', [
+                'email' => $user->email,
+                'purpose' => $data['purpose'],
+                'error' => $e->getMessage(),
+            ]);
         }
 
         return response()->json(['message' => 'ok']);
@@ -273,7 +379,7 @@ class AuthController extends Controller
 
         // Find the latest active OTP for this user+purpose (independent of the
         // submitted code) so we can count failed attempts against it and lock
-        // it after too many tries — preventing brute-force of the 6-digit code.
+        // it after too many tries ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â preventing brute-force of the 6-digit code.
         $otp = OtpCode::where('user_id', $user->id)
             ->where('purpose', $data['purpose'])
             ->where('used', false)
@@ -300,7 +406,7 @@ class AuthController extends Controller
 
         // For a signup verification, THIS is the moment the account becomes
         // usable: mark the email verified and issue the auth token. Returning
-        // the token here (and nowhere earlier) is what makes OTP mandatory —
+        // the token here (and nowhere earlier) is what makes OTP mandatory ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â
         // without completing this step the user has no session at all.
         if (strtolower((string) $data['purpose']) === 'signup') {
             if ($user->email_verified_at === null) {
@@ -322,7 +428,7 @@ class AuthController extends Controller
     public function acceptInvite(Request $request)
     {
         // The invitee registers a NEW manager account by redeeming a code.
-        // SECURITY: the account is created from the validated signup fields —
+        // SECURITY: the account is created from the validated signup fields ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â
         // we never trust a client-supplied user_id (which previously let an
         // attacker promote an arbitrary existing account to MANAGER).
         $data = $request->validate([
@@ -350,7 +456,7 @@ class AuthController extends Controller
             'password' => $data['password'],
             'public_booking_token' => Str::uuid(),
         ]);
-        // Privilege fields are guarded — set explicitly for this trusted flow.
+        // Privilege fields are guarded ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â set explicitly for this trusted flow.
         $invitee->forceFill([
             'role' => 'MANAGER',
             'plan' => 'FREE',
@@ -363,7 +469,7 @@ class AuthController extends Controller
             'used_at' => now(),
         ]);
 
-        // Issue a token so the new manager is logged in immediately — matches
+        // Issue a token so the new manager is logged in immediately ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â matches
         // the existing register/login response shape the clients expect.
         $token = $invitee->createToken('auth_token')->plainTextToken;
 

@@ -18,9 +18,11 @@ import 'dart:convert';
 import '../../../core/booking_status/booking_status.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
+import '../domain/assignment.dart';
 import '../domain/booking.dart';
 import '../domain/booking_detail_envelope.dart';
 import '../domain/booking_filter.dart';
+import '../domain/payment.dart';
 import '../domain/status_history_entry.dart';
 import 'booking_api_exceptions.dart';
 import 'server_wire.dart';
@@ -35,7 +37,12 @@ class BookingApi {
   /// The Laravel endpoint returns the full (optionally status/search
   /// filtered) set under `data`; paging values are echoed locally since
   /// the server does not paginate this endpoint yet.
-  Future<({List<Booking> items, int page, int total})> list(
+  Future<({
+    List<Booking> items,
+    List<BookingDetailEnvelope> envelopes,
+    int page,
+    int total,
+  })> list(
     BookingFilter filter, {
     int page = 0,
     int pageSize = 20,
@@ -44,10 +51,10 @@ class BookingApi {
       '/api/bookings',
       query: _filterToQuery(filter),
     );
-    final items = unwrapServerList(r)
-        .map((e) => bookingFromServer(e))
-        .toList(growable: false);
-    return (items: items, page: page, total: items.length);
+    final rows = unwrapServerList(r);
+    final envelopes = rows.map(_envelopeFromServer).toList(growable: false);
+    final items = envelopes.map((e) => e.booking).toList(growable: false);
+    return (items: items, envelopes: envelopes, page: page, total: items.length);
   }
 
   /// `GET /api/bookings/:id` — detail envelope.
@@ -61,8 +68,11 @@ class BookingApi {
     final r = await _client.get('/api/bookings/$remoteId');
     final j = unwrapServerMap(r);
 
-    final booking = bookingFromServer(j);
+    return _envelopeFromServer(j);
+  }
 
+  BookingDetailEnvelope _envelopeFromServer(Map<String, dynamic> j) {
+    final booking = bookingFromServer(j);
     final clientRaw = j['client'];
     final client = clientRaw is Map
         ? clientFromServer(clientRaw.cast<String, dynamic>())
@@ -82,12 +92,43 @@ class BookingApi {
               .toList(growable: false)
         : const <StatusHistoryEntry>[];
 
+    final assignmentsRaw = j['assignments'];
+    final assignments = assignmentsRaw is List
+        ? assignmentsRaw
+              .whereType<Map>()
+              .map(
+                (e) => assignmentFromServer(
+                  e.cast<String, dynamic>(),
+                  bookingLocalId: booking.id,
+                ),
+              )
+              .toList(growable: false)
+        : const <Assignment>[];
+
+    final paymentsRaw = j['payments'];
+    final payments = paymentsRaw is List
+        ? paymentsRaw
+              .whereType<Map>()
+              .map(
+                (e) => paymentFromServer(
+                  e.cast<String, dynamic>(),
+                  bookingLocalId: booking.id,
+                ),
+              )
+              .toList(growable: false)
+        : const <Payment>[];
+
+    final packageRaw = j['package'];
+    final package = packageRaw is Map
+        ? packageFromServer(packageRaw.cast<String, dynamic>())
+        : null;
+
     return BookingDetailEnvelope(
       booking: booking,
       client: client,
-      assignments: const [],
-      payments: const [],
-      package: null,
+      assignments: assignments,
+      payments: payments,
+      package: package,
       statusHistory: history,
       reEditRequests: const [],
       taskProgress: const [],

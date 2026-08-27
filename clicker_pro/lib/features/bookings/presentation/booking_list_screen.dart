@@ -1,12 +1,12 @@
-﻿// lib/features/bookings/presentation/booking_list_screen.dart
+// lib/features/bookings/presentation/booking_list_screen.dart
 //
 // First end-to-end booking surface. Subscribes to `bookingListProvider`
 // keyed by the active filter, renders one of the four shared async
 // states (LensLoader / EmptyState / ErrorState / content), shows the
-// shared OfflineBanner, and exposes a "+" FAB that — for now — surfaces
+// shared OfflineBanner, and exposes a "+" FAB that � for now � surfaces
 // a non-blocking SnackBar; the New/Edit screen lands in a later wave.
 //
-// Source of truth: `.kiro/specs/bookings-module/design.md` →
+// Source of truth: `.kiro/specs/bookings-module/design.md` ?
 // "Booking List" + "Visual Design Notes". Validates Requirements
 // 1.1, 1.2, 1.9, 1.10, 1.12, 1.13, 1.14, 11.3.
 
@@ -47,8 +47,35 @@ enum _StatusChip { all, complete, delivered, cancelled }
 enum _DateRangePreset { any, today, week, month, lastMonth }
 
 /// Which edge a booking card's shift accent sits on. Day cards accent the
-/// left edge, Night cards the right — matching the .dc.html "Booking List".
+/// left edge, Night cards the right � matching the .dc.html "Booking List".
 enum _AccentSide { left, right }
+
+Color _statusChipColor(_StatusChip chip) {
+  switch (chip) {
+    case _StatusChip.all:
+      return AppColors.infoTeal;
+    case _StatusChip.complete:
+    case _StatusChip.delivered:
+      return AppColors.sageData;
+    case _StatusChip.cancelled:
+      return AppColors.red;
+  }
+}
+
+Color _bookingLifecycleAccent(Booking booking) {
+  switch (booking.status) {
+    case BookingStatus.shotComplete:
+    case BookingStatus.delivered:
+    case BookingStatus.completed:
+      return AppColors.sageData;
+    case BookingStatus.cancelled:
+      return AppColors.red;
+    case BookingStatus.pending:
+    case BookingStatus.confirmed:
+    case BookingStatus.inProgress:
+      return AppColors.infoTeal;
+  }
+}
 
 class BookingListScreen extends ConsumerStatefulWidget {
   const BookingListScreen({super.key});
@@ -63,7 +90,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   // Captured in initState so `dispose()` can reset the shared filter without
-  // touching `ref` — `ref` is invalid once the element is being finalized
+  // touching `ref` � `ref` is invalid once the element is being finalized
   // (e.g. when the whole tree is torn down), which throws "Cannot use ref
   // after the widget was disposed". The StateController itself stays alive.
   late final StateController<BookingFilter> _filterController;
@@ -75,7 +102,14 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
     // Pull fresh self-booking requests so the pending badge is accurate
     // as soon as the list opens (fail-soft inside refreshPending).
     Future.microtask(
-      () => ref.read(publicBookingRepositoryProvider).refreshPending(),
+      () async {
+        try {
+          await ref.read(publicBookingRepositoryProvider).refreshPending();
+        } catch (_) {}
+        try {
+          await ref.read(bookingRepositoryProvider).refreshFromRemote();
+        } catch (_) {}
+      },
     );
   }
 
@@ -86,7 +120,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
     // `bookingFilterProvider` is shared app-wide so a dashboard card (Today /
     // Upcoming / Delivered / Cancelled) can preset it before navigating here.
     // Left in place after the screen closes, it silently scoped the NEXT
-    // visit to whatever the last card tap set — a newly created booking
+    // visit to whatever the last card tap set � a newly created booking
     // outside that date/status window then looked like it "didn't save"
     // until the filter was noticed and cleared by hand. Reset on the way
     // out so every fresh entry starts unfiltered unless a card sets it again.
@@ -98,7 +132,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
     final statuses = ref.read(bookingFilterProvider).statuses;
     if (statuses.isEmpty) return _StatusChip.all;
     // Resolve the active chip by matching the filter's status set against each
-    // chip's status set — the exact inverse of [_statusesForChip]. This must
+    // chip's status set � the exact inverse of [_statusesForChip]. This must
     // cover EVERY chip (including the multi-status `successful` and the
     // single-status `cancelled`); missing one made that tab fall back to
     // "all", which then hid its own rows (cancelled never rendered).
@@ -112,7 +146,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
   static bool _setEquals(Set<BookingStatus> a, Set<BookingStatus> b) =>
       a.length == b.length && a.containsAll(b);
 
-  /// Date with the time stripped — so same-day events group together
+  /// Date with the time stripped � so same-day events group together
   /// regardless of their shift start time.
   static DateTime _dayOnly(DateTime d) => DateTime(d.year, d.month, d.day);
 
@@ -124,7 +158,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
       case _StatusChip.all:
         return {};
       // "Complete" = the shoot is done but not yet handed over: covers the
-      // whole in-progress → shot-complete → completed run. Delivered has its
+      // whole in-progress ? shot-complete ? completed run. Delivered has its
       // own tab, so it is intentionally excluded here.
       case _StatusChip.complete:
         return {
@@ -156,7 +190,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
     );
   }
 
-  /// Shares the studio's public self-booking web link — the client
+  /// Shares the studio's public self-booking web link � the client
   /// fills the form themselves and the booking lands as PENDING.
   Future<void> _shareBookingLink(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
@@ -166,7 +200,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
         policy: ref.read(bookingsPolicyProvider),
       );
       // An empty token means the account has no public_booking_token yet
-      // (older accounts) — sharing would produce a dead ".../book/" link.
+      // (older accounts) � sharing would produce a dead ".../book/" link.
       // Surface a clear message instead of a broken link.
       if (issued.token.trim().isEmpty) {
         messenger.showSnackBar(
@@ -188,7 +222,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
       );
     } catch (_) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Could not fetch the link — please try again.')),
+        SnackBar(content: Text('Could not fetch the link � please try again.')),
       );
     }
   }
@@ -198,7 +232,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
     final filter = ref.watch(bookingFilterProvider);
     // Use the UNPAGINATED stream. The old paginated provider re-keyed its
     // stream every time infinite-scroll bumped the page cursor, which rebuilt
-    // the whole scroll view and snapped the position back — on the "Total"
+    // the whole scroll view and snapped the position back � on the "Total"
     // card (every booking, well past one 20-row page) that made the list feel
     // un-scrollable, while "Delivery" (a short list, never past page 0) stayed
     // smooth. Reading the full set renders one stable list that scrolls
@@ -222,8 +256,8 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
 
     return Scaffold(
       // WEB readability fix: the screen previously used `voidBlack` which on
-      // web resolves to a dark-cream (#F4EBDD) — combined with the glass cards
-      // it made text hard to read ("লেখা বুঝা যায় না"). On web we use a clean
+      // web resolves to a dark-cream (#F4EBDD) � combined with the glass cards
+      // it made text hard to read ("???? ???? ???? ??"). On web we use a clean
       // transparent scaffold so the WebShell's light backdrop shows through and
       // the dark `film` text sits on a bright surface. Mobile is untouched.
       backgroundColor: kIsWeb ? Colors.transparent : AppColors.voidBlack,
@@ -293,7 +327,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
           if (listAsync.hasValue)
             Center(
               // Design (.dc.html "Booking List"): count badge sits inline next
-              // to the title — soft orange tint fill (#FBEBDE) with the darker
+              // to the title � soft orange tint fill (#FBEBDE) with the darker
               // brand-orange text (#B84E0A), in the mono label face.
               child: Container(
                 margin: const EdgeInsets.only(right: 4),
@@ -360,7 +394,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
               _SearchBar(
                 controller: _searchController,
                 onChanged: (value) {
-                  // Searching means "find it anywhere" — drop any date range
+                  // Searching means "find it anywhere" � drop any date range
                   // or status scope a dashboard card tap (Today/Upcoming/
                   // Delivered) left on the shared filter. Keeping them made
                   // search silently return only today's events.
@@ -381,9 +415,16 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
               selected: _activeChip,
               showDelivery: policy.role != UserRole.freelancer,
               onSelected: (chip) {
+                final statuses = _statusesForChip(chip);
                 ref.read(bookingFilterProvider.notifier).state = ref
                     .read(bookingFilterProvider)
-                    .copyWith(statuses: _statusesForChip(chip));
+                    .copyWith(
+                      statuses: statuses,
+                      clearFrom: chip == _StatusChip.all,
+                      clearTo: chip == _StatusChip.all,
+                      clearShift: chip == _StatusChip.all,
+                      clearClientId: chip == _StatusChip.all,
+                    );
               },
             ),
             Expanded(
@@ -411,14 +452,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                     ),
                   ),
                   data: (bookings) {
-                    // The "All" tab shows only active bookings — cancelled ones
-                    // live exclusively on the Cancelled tab so a cancelled
-                    // booking disappears from the main list once cancelled.
-                    final base = _activeChip == _StatusChip.all
-                        ? bookings
-                              .where((b) => b.status != BookingStatus.cancelled)
-                              .toList()
-                        : bookings;
+                    final base = bookings;
 
                     // Shift filter is applied in-memory: a Day (or Night)
                     // filter also keeps Both bookings, because a full-day
@@ -443,7 +477,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                           a.date,
                         ).compareTo(_dayOnly(b.date));
                         if (byDate != 0) return byDate;
-                        // Same day → Day shift before Night shift.
+                        // Same day ? Day shift before Night shift.
                         return _shiftRank(a.shift).compareTo(
                           _shiftRank(b.shift),
                         );
@@ -528,12 +562,12 @@ class _StatusChips extends StatelessWidget {
   final _StatusChip selected;
   final ValueChanged<_StatusChip> onSelected;
 
-  /// Delivery is an Owner-side pipeline — the Freelancer list shows only
-  /// All · Complete · Cancel (Heaven 2026-07-15: "delivery বাদ যাবে.
-  /// ডেলিভারি অউনার করবে").
+  /// Delivery is an Owner-side pipeline � the Freelancer list shows only
+  /// All � Complete � Cancel (Heaven 2026-07-15: "delivery ??? ????.
+  /// ???????? ????? ????").
   final bool showDelivery;
 
-  // Booking List tabs (Heaven 2026-07-12): All · Complete · Delivery · Cancel.
+  // Booking List tabs (Heaven 2026-07-12): All � Complete � Delivery � Cancel.
   // "All" hides cancelled; Cancel keeps them reachable.
   static const _allChips = [
     (_StatusChip.all, 'All'),
@@ -561,6 +595,7 @@ class _StatusChips extends StatelessWidget {
         itemBuilder: (context, index) {
           final (chip, label) = _chips[index];
           final isSelected = chip == selected;
+          final chipColor = _statusChipColor(chip);
           return GestureDetector(
             onTap: () => onSelected(chip),
             child: AnimatedContainer(
@@ -570,12 +605,10 @@ class _StatusChips extends StatelessWidget {
               decoration: BoxDecoration(
                 // Design: active chip = solid orange fill + white text;
                 // inactive = white surface with a soft hairline border.
-                color: isSelected ? AppColors.orange : AppColors.glass,
+                color: isSelected ? chipColor : AppColors.glass,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: isSelected
-                      ? AppColors.orange
-                      : AppColors.line(0.10),
+                  color: isSelected ? chipColor : AppColors.line(0.10),
                   width: 1,
                 ),
               ),
@@ -653,7 +686,7 @@ class _BookingListColumn extends StatelessWidget {
               color: AppColors.gold,
               bookings: dayBookings,
               // Design: Day cards carry the accent as a left edge, Night as a
-              // right edge — so the two columns visually "face" each other.
+              // right edge � so the two columns visually "face" each other.
               accentSide: _AccentSide.left,
             ),
           ),
@@ -693,7 +726,7 @@ class _ShiftColumn extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Design (.dc.html): a small filled dot + a mono "DAY · 5" caption —
+        // Design (.dc.html): a small filled dot + a mono "DAY � 5" caption �
         // no boxed pill. The dot carries the shift colour.
         Padding(
           padding: const EdgeInsets.only(bottom: 10, left: 2),
@@ -706,7 +739,7 @@ class _ShiftColumn extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                '$title · ${bookings.length}',
+                '$title � ${bookings.length}',
                 style: TextStyle(
                   fontFamily: AppText.monoFontFamily,
                   color: AppColors.film,
@@ -733,8 +766,8 @@ class _ShiftColumn extends StatelessWidget {
         else
           for (var i = 0; i < bookings.length; i++)
             // RepaintBoundary isolates each card's paint layer so scrolling
-            // only repaints what actually moves, not the whole column — this
-            // is the fix for the "scroll করলে কেঁপে ওঠে" jank. Only the first
+            // only repaints what actually moves, not the whole column � this
+            // is the fix for the "scroll ???? ????? ???" jank. Only the first
             // screenful gets the staggered entrance; rows past that render in
             // place so a long list doesn't animate every card on first paint.
             RepaintBoundary(
@@ -775,12 +808,12 @@ class _BookingColumnRow extends ConsumerWidget {
         .watch(languageControllerProvider)
         .maybeWhen(data: (c) => c, orElse: () => 'en');
 
-    // A Freelancer works FOR companies, not for end clients — each booking is
+    // A Freelancer works FOR companies, not for end clients � each booking is
     // for whichever COMPANY hired them. That company name is what the
     // freelancer types into the "Company Name" field of the freelancer booking
     // form, which is persisted in `clientName` (see booking_edit_screen). So
-    // the row shows that typed company name — NOT the client's name and NOT the
-    // freelancer's own studio (Heaven: "ফ্রিলান্সার তো অনেক কোম্পানির কাজ করবে").
+    // the row shows that typed company name � NOT the client's name and NOT the
+    // freelancer's own studio (Heaven: "??????????? ?? ???? ????????? ??? ????").
     // For events the owner assigned to this freelancer (no typed company), fall
     // back to the studio owner's name from the earnings overview, then to a
     // neutral label so a row always shows *who* it's for.
@@ -812,36 +845,37 @@ class _BookingColumnRow extends ConsumerWidget {
           : booking.title;
     }
 
-    // Design (.dc.html): mono date "APR 12" on top, client name, then a
-    // "Wedding · 12–5" meta line (event type + compact time range).
-    final dateText = DateFormat('MMM d', lang).format(booking.date).toUpperCase();
-    final metaText = '${booking.eventType.vibe.label} · '
-        '${BookingFormat.clockRange(booking.startTime, booking.endTime, lang: lang, separator: '–')}';
+    // Design (.dc.html): compact date block, client name, then a
+    // "Wedding � 12�5" meta line (event type + compact time range).
+    final dayText = DateFormat('d', lang).format(booking.date);
+    final monthText = DateFormat('MMM', lang).format(booking.date).toUpperCase();
+    final metaText = '${booking.eventType.vibe.label} � '
+        '${BookingFormat.clockRange(booking.startTime, booking.endTime, lang: lang, separator: '�')}';
 
-    // Day cards accent the left edge, Night the right — the 3px coloured rule
-    // from the mockup.
-    final accentBorder = BorderSide(color: accentColor, width: 3);
-
+    final isNoir = AppColors.active == ActivePalette.noirDark;
+    final lifecycleAccent = _bookingLifecycleAccent(booking);
+    final cardColor = lifecycleAccent.withValues(alpha: isNoir ? 0.12 : 0.16);
+    final lineColor = lifecycleAccent.withValues(alpha: isNoir ? 0.34 : 0.24);
     return Container(
       margin: const EdgeInsets.only(bottom: 9),
       decoration: BoxDecoration(
-        color: AppColors.glass,
-        borderRadius: BorderRadius.circular(12),
-        border: Border(
-          top: BorderSide(color: AppColors.line(0.06)),
-          bottom: BorderSide(color: AppColors.line(0.06)),
-          left: accentSide == _AccentSide.left
-              ? accentBorder
-              : BorderSide(color: AppColors.line(0.06)),
-          right: accentSide == _AccentSide.right
-              ? accentBorder
-              : BorderSide(color: AppColors.line(0.06)),
-        ),
+        color: cardColor,
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(color: lineColor),
+        boxShadow: isNoir
+            ? const []
+            : [
+                BoxShadow(
+                  color: const Color(0x141A1A18),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+              ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(13),
           onTap: () => Navigator.of(
             context,
           ).pushNamed(RouteNames.bookingDetail, arguments: booking.id),
@@ -850,55 +884,114 @@ class _BookingColumnRow extends ConsumerWidget {
             arguments: 'duplicate:${booking.id}',
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            padding: const EdgeInsets.fromLTRB(10, 10, 9, 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Row(
-                  children: [
-                    Text(
-                      dateText,
-                      style: TextStyle(
-                        fontFamily: AppText.monoFontFamily,
-                        color: AppColors.filmMuted,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                      ),
+                if (accentSide == _AccentSide.left) ...[
+                  Container(
+                    width: 3,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: lifecycleAccent,
+                      borderRadius: BorderRadius.circular(99),
                     ),
-                    const Spacer(),
-                    if (booking.pending)
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: AppColors.orange,
-                          shape: BoxShape.circle,
+                  ),
+                  const SizedBox(width: 7),
+                ],
+                Container(
+                  width: 42,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: lifecycleAccent.withValues(alpha: isNoir ? 0.14 : 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: lifecycleAccent.withValues(alpha: isNoir ? 0.35 : 0.18),
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        dayText,
+                        style: TextStyle(
+                          color: AppColors.film,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          height: 1,
                         ),
                       ),
-                  ],
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  displayName.trim().isEmpty ? 'Untitled' : displayName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: AppColors.film,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
+                      const SizedBox(height: 3),
+                      Text(
+                        monthText,
+                        style: TextStyle(
+                          fontFamily: AppText.monoFontFamily,
+                          color: AppColors.filmMuted,
+                          fontSize: 8,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.7,
+                          height: 1,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  metaText,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: AppColors.filmMuted,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        displayName.trim().isEmpty ? 'Untitled' : displayName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: AppColors.film,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        metaText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: AppColors.filmMuted,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                const SizedBox(width: 6),
+                if (booking.pending)
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      color: AppColors.orange,
+                      shape: BoxShape.circle,
+                    ),
+                  )
+                else
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.filmMuted.withValues(alpha: 0.55),
+                    size: 18,
+                  ),
+                if (accentSide == _AccentSide.right) ...[
+                  const SizedBox(width: 7),
+                  Container(
+                    width: 3,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: lifecycleAccent,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -1174,7 +1267,7 @@ bool shouldShowPayment({
 ///
 /// Default is OFF: shared details never expose money. Payment is included
 /// only when the owner has explicitly turned on [showPaymentInShare] for
-/// this booking — and then everyone who receives the share (team and
+/// this booking � and then everyone who receives the share (team and
 /// freelancers alike) sees it. The client invoice ignores this flag and
 /// always shows payment.
 bool shouldShowPaymentInShare({required bool showPaymentInShare}) {

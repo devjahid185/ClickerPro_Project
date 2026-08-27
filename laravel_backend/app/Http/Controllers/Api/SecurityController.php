@@ -63,9 +63,9 @@ class SecurityController extends Controller
         return response()->json(['data' => $ips]);
     }
 
-    // ──────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     //  Two-Factor Auth (TOTP, Google-Authenticator compatible)
-    // ──────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public function twoFaStatus(Request $request)
     {
@@ -78,7 +78,7 @@ class SecurityController extends Controller
         $secret = $this->randomBase32(32);
         $user->update(['totp_secret' => $secret, 'totp_enabled' => false]);
 
-        $issuer = rawurlencode('ClickerPro');
+        $issuer = rawurlencode('Graphy7');
         $label = rawurlencode($user->email);
         $otpauth = "otpauth://totp/{$issuer}:{$label}?secret={$secret}&issuer={$issuer}";
 
@@ -107,7 +107,7 @@ class SecurityController extends Controller
         return response()->json(['data' => ['enabled' => false]]);
     }
 
-    // ── TOTP helpers (RFC 6238 / 4226) ──
+    // â”€â”€ TOTP helpers (RFC 6238 / 4226) â”€â”€
     private function randomBase32(int $length): string
     {
         $alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';

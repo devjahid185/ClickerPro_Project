@@ -1,7 +1,7 @@
 // lib/shared/widgets/web_nav_shell.dart
 //
-// Clicker Pro — Web navigation shell (Sunset Studio, from
-// design_handoff_clickerpro_web / ClickerPro Dashboard v2.dc.html).
+// Graphy7 — Web navigation shell (Sunset Studio, from
+// design_handoff_clickerpro_web / Graphy7 Dashboard v2.dc.html).
 //
 // On wide web screens this wraps the routed app in the handoff's chrome:
 //   • warm-cream page (#FBF6F0), 24px padding, content centered at 1440px;
@@ -115,7 +115,7 @@ class WebNavShell extends ConsumerStatefulWidget {
   ];
 
   // Everything else the mobile app can reach stays reachable on web — feature
-  // parity is a hard requirement ("মোবাইল এপের সব ফিচার ওয়েব এপ এ থাকবে").
+  // parity is a hard requirement ("মোবাইল à¦পের সব ফিচার ওয়েব à¦প à¦ থাকবে").
   // These render below the primary nav under a "MORE" micro-label, in the
   // same pill language.
   static const List<_NavDest> _more = [
@@ -125,20 +125,11 @@ class WebNavShell extends ConsumerStatefulWidget {
         capability: Capability.viewBookingPayments),
     _NavDest(Icons.bar_chart_rounded, 'Reports', RouteNames.reports,
         capability: Capability.viewFinancials),
-    _NavDest(Icons.insights_rounded, 'Performance', RouteNames.performance,
-        capability: Capability.viewFinancials),
-    _NavDest(Icons.edit_note_rounded, 'Re-edit Requests',
-        RouteNames.reEditRequests,
-        capability: Capability.requestReEdit),
     _NavDest(Icons.hourglass_bottom_rounded, 'Waitlist', RouteNames.waitlist,
         capability: Capability.accessWaitlist),
     _NavDest(Icons.camera_alt_outlined, 'Gear', RouteNames.gear),
     _NavDest(Icons.local_shipping_outlined, 'Delivery', RouteNames.delivery,
         capability: Capability.accessDelivery),
-    _NavDest(Icons.follow_the_signs_rounded, 'Follow-up', RouteNames.followup,
-        capability: Capability.accessFollowup),
-    _NavDest(Icons.alarm_rounded, 'Reminders', RouteNames.reminders,
-        capability: Capability.accessReminders),
     _NavDest(Icons.swap_horiz_rounded, 'Rent Tracking', RouteNames.rent,
         capability: Capability.accessRentTracking),
     _NavDest(Icons.cell_tower_rounded, 'Updates', RouteNames.broadcasts),
@@ -267,8 +258,8 @@ class _WebNavShellState extends ConsumerState<WebNavShell> {
     final primary = WebNavShell._primary.where(visible).toList();
     final more = WebNavShell._more.where(visible).toList();
     // A Freelancer has no Finance hub, but still logs their own expenses and
-    // petty cash (Heaven 2026-07-15: "ফ্রিলান্সার রোল এ খরচ এড করো.
-    // প্রিটি ক্যাস এড করো").
+    // petty cash (Heaven 2026-07-15: "ফà§রিলানà§সার রোল à¦ খরচ à¦ড করো.
+    // পà§রিটি কà§যাস à¦ড করো").
     if (!policy.can(Capability.viewFinancials)) {
       more.insertAll(0, const [
         _NavDest(Icons.money_off_rounded, 'Expenses',
@@ -585,7 +576,7 @@ class _NotificationsPanel extends ConsumerWidget {
     }
     if (c.contains('deliver') || c.contains('deadline') ||
         c.contains('reminder')) {
-      return (glyph: '⏰', bg: WebTheme.orangeTint);
+      return (glyph: '?', bg: WebTheme.orangeTint);
     }
     if (c.contains('weather')) {
       return (glyph: '🌦', bg: WebTheme.nightTint);
@@ -848,19 +839,14 @@ class _Sidebar extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Row(
                     children: [
-                      Container(
-                        width: 34,
-                        height: 34,
-                        decoration: BoxDecoration(
-                          color: WebTheme.orange,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Center(
-                          child: Text('G',
-                              style: WebTheme.displayStyle(
-                                  size: 16,
-                                  weight: FontWeight.w800,
-                                  color: WebTheme.chromeInk)),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.asset(
+                          'assets/brand/graphy7_mark_v2.png',
+                          width: 34,
+                          height: 34,
+                          fit: BoxFit.contain,
+                          filterQuality: FilterQuality.medium,
                         ),
                       ),
                       const SizedBox(width: 10),

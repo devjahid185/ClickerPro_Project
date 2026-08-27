@@ -1,11 +1,11 @@
 ﻿// lib/features/auth/presentation/forgot_password_screen.dart
 //
-// Clicker Pro — Forgot Password (Dark Luxury Lens)
+// Graphy7 — Forgot Password (Dark Luxury Lens)
 //
 // Single-page flow (no extra screens):
-//   1. Enter email → "Send Reset Code" (backend emails a 6-digit code)
+//   1. Enter email ? "Send Reset Code" (backend emails a 6-digit code)
 //   2. The code + new-password fields expand BELOW on the same page
-//   3. "Reset Password" → success snackbar → back to Login
+//   3. "Reset Password" ? success snackbar ? back to Login
 //
 // Password must be at least 8 characters (matches backend min:8).
 // Always shows a generic acknowledgement on send per Requirement 1.10
@@ -106,7 +106,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Password changed ✓ — log in with your new password.',
+            'Password changed ? — log in with your new password.',
             style: TextStyle(color: AppColors.film, fontSize: 13),
           ),
           backgroundColor: AppColors.voidElevated,
@@ -167,7 +167,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       backgroundColor: AppColors.voidBlack,
       body: Stack(
         children: [
-          // ─── BACKGROUND BLOBS ────────────────────────────────────
+          // --- BACKGROUND BLOBS ------------------------------------
           Positioned(
             top: -100,
             right: -100,
@@ -272,7 +272,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                         onTap: _isSending ? null : _handleSend,
                       ),
 
-                      // ── CODE + NEW PASSWORD (same page) ───────────
+                      // -- CODE + NEW PASSWORD (same page) -----------
                       AnimatedSize(
                         duration: const Duration(milliseconds: 240),
                         curve: Curves.easeOutCubic,
@@ -327,7 +327,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               ),
             ),
           ),
-          // ─── BACK BUTTON ─────────────────────────────────────────
+          // --- BACK BUTTON -----------------------------------------
           Positioned(
             top: 12,
             left: 8,

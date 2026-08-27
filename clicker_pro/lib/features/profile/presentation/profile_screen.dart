@@ -1,6 +1,6 @@
-﻿// lib/features/profile/presentation/profile_screen.dart
+// lib/features/profile/presentation/profile_screen.dart
 //
-// Clicker Pro — Profile Screen (Claude Design · light "paper" theme)
+// Graphy7 — Profile Screen (Claude Design · light "paper" theme)
 //
 // Visual: white surface section cards on the paper canvas, gradient avatar
 // circle, role chip, mono section headers, gear/company pill rows.
@@ -15,7 +15,7 @@
 //   • languageControllerProvider          — i18n labels
 //
 // Animation tokens used:
-//   • AnimatedSwitcher 200ms              — Save → spinner swap
+//   • AnimatedSwitcher 200ms              — Save ? spinner swap
 //   • Curves.easeOutCubic 220ms           — section card mount
 //   • slideFromRightRoute (from login)    — manager invite navigation
 
@@ -116,7 +116,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  // ── App bar with overflow menu ────────────────────────────────
+  // -- App bar with overflow menu --------------------------------
   PreferredSizeWidget _buildAppBar() {
     final policy = ref.watch(rolePolicyProvider);
     return AppBar(
@@ -211,7 +211,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
-  // ── Main body ──────────────────────────────────────────────────
+  // -- Main body --------------------------------------------------
   Widget _buildBody(UserModel user) {
     final policy = ref.watch(rolePolicyProvider);
     final view = _isEditing ? (_draft ?? user) : user;
@@ -285,33 +285,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
           ]),
 
-          const SizedBox(height: 25),
-          _buildSectionTitle('Financial Details'),
-          _buildProfileCard([
-            _buildInfoField(
-              label: 'bKash Number',
-              value: view.bkash ?? '',
-              icon: Icons.payment,
-              keyboardType: TextInputType.phone,
-              onChanged: (val) => _updateDraft((d) => d.copyWith(bkash: val)),
-            ),
-            // Bank account lives behind one tile: collapsed = just the
-            // bank name; tap = form sheet with the 4 payout fields.
-            _buildBankTile(view),
-          ]),
 
-          // ── Gear inventory + companies (Freelancer / Both) ────
+          // -- Gear inventory + companies (Freelancer / Both) ----
           if (policy.can(Capability.editGearInventory)) ...[
-            const SizedBox(height: 25),
-            _buildSectionTitle('Professional Skills'),
-            _buildProfileCard([_buildSpecializationChips(view)]),
+
             const SizedBox(height: 25),
             _buildGearSection(user.id),
             const SizedBox(height: 25),
             _buildCompanySection(user),
           ],
 
-          // ── Studio branding (Owner / Both) ────────────────────
+          // -- Studio branding (Owner / Both) --------------------
           if (policy.can(Capability.editStudioBranding)) ...[
             const SizedBox(height: 25),
             _buildSectionTitle('Company & Business'),
@@ -371,7 +355,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ]),
           ],
 
-          // ── Team Invite (Owner / Both) ───────────────────────────────
+          // -- Team Invite (Owner / Both) -------------------------------
           if (policy.can(Capability.generateTeamInvite)) ...[
             const SizedBox(height: 25),
             _buildSectionTitle('Team Invite'),
@@ -387,7 +371,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  // ── Header (avatar + role chip) ───────────────────────────────
+  // -- Header (avatar + role chip) -------------------------------
   Widget _buildHeader(UserModel user) {
     final hasPhoto = user.avatarUrl != null && user.avatarUrl!.isNotEmpty;
     final avatar = Container(
@@ -440,7 +424,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Stack(
             children: [
               // Hero tag matches the dashboard avatar so the gradient circle
-              // morphs into place when navigating Dashboard → Profile
+              // morphs into place when navigating Dashboard ? Profile
               // (Task 20.9 / Req 5.1).
               Hero(tag: 'user-avatar-${user.id}', child: avatar),
               if (_isEditing)
@@ -544,7 +528,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  // ── Specialization role chips (Photographer / Cinematographer / etc.) ──
+  // -- Specialization role chips (Photographer / Cinematographer / etc.) --
   /// Bank details live in ONE backend column; the UI splits them into
   /// "bank | account | branch | holder". Legacy free-text values (no
   /// pipes) surface in the Bank Name field so nothing is lost.
@@ -556,6 +540,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   /// Collapsed bank tile: bank name only (or an "add" prompt). Tapping
   /// opens the 4-field form sheet so details stay hidden until asked.
+  // Hidden from Profile UI; kept for easy restore.
+  // ignore: unused_element
   Widget _buildBankTile(UserModel view) {
     final bankName = _bankPart(view.bankDetails, 0);
     final hasBank = bankName.isNotEmpty;
@@ -751,6 +737,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
+  // Hidden from Profile UI; kept for easy restore.
+  // ignore: unused_element
   Widget _buildSpecializationChips(UserModel view) {
     const options = <({String value, String label, IconData icon})>[
       (
@@ -896,7 +884,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  // ── Editable field row ────────────────────────────────────────
+  // -- Editable field row ----------------------------------------
   Widget _buildInfoField({
     required String label,
     required String value,
@@ -987,7 +975,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
-  // ── Gear section (real Drift stream) ──────────────────────────
+  // -- Gear section (real Drift stream) --------------------------
   Widget _buildGearSection(String userId) {
     final gearAsync = ref.watch(gearListProvider(userId));
     return Column(
@@ -1091,7 +1079,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
-  // ── Companies section ─────────────────────────────────────────
+  // -- Companies section -----------------------------------------
   Widget _buildCompanySection(UserModel user) {
     // Companies aren't yet on the canonical UserModel — surface empty list as
     // the legacy contract did. Real companies arrive in Phase 2.
@@ -1159,7 +1147,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  // ── Team invite card (visible for Owner / Both) ───────────────
+  // -- Team invite card (visible for Owner / Both) ---------------
   Widget _buildInviteCard() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1252,7 +1240,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  // ── Edit / Save / Cancel buttons ──────────────────────────────
+  // -- Edit / Save / Cancel buttons ------------------------------
   Widget _buildEditActions(UserModel user) {
     // Edit is now started from the three-dot menu, so outside an edit session
     // there is no bottom action button — only the Save/Cancel row shows while
@@ -1394,7 +1382,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return null;
   }
 
-  // ── Add gear dialog ───────────────────────────────────────────
+  // -- Add gear dialog -------------------------------------------
   Future<void> _showAddGearDialog(String userId) async {
     final controller = TextEditingController();
     String? errorText;
@@ -1476,7 +1464,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     controller.dispose();
   }
 
-  // ── Change role flow ──────────────────────────────────────────
+  // -- Change role flow ------------------------------------------
   Future<void> _handleChangeRole() async {
     final user = ref.read(currentUserProvider).value;
     if (user == null) return;
@@ -1503,7 +1491,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
-  // ── Generate invite flow ──────────────────────────────────────
+  // -- Generate invite flow --------------------------------------
   Future<void> _handleGenerateInvite() async {
     showDialog<void>(
       context: context,
@@ -1632,7 +1620,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 }
 
-// ── Popup-menu row (icon + label, optional danger tint) ────────
+// -- Popup-menu row (icon + label, optional danger tint) --------
 class _MenuRow extends StatelessWidget {
   const _MenuRow({
     required this.icon,
@@ -1694,7 +1682,7 @@ class _JoinByPasscodeSheetState extends ConsumerState<_JoinByPasscodeSheet> {
       if (!mounted) return;
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Joined the team ✓')),
+        const SnackBar(content: Text('Joined the team ?')),
       );
     } catch (_) {
       if (!mounted) return;

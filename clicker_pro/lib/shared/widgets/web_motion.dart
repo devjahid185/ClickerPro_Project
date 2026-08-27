@@ -1,6 +1,6 @@
 // lib/shared/widgets/web_motion.dart
 //
-// Clicker Pro — WEB-ONLY motion primitives (v17, "Rich but smooth").
+// Graphy7 — WEB-ONLY motion primitives (v17, "Rich but smooth").
 //
 // A small kit of reusable, 60fps-friendly animation widgets used across the
 // web shell and screens. Every one of them honours the user's reduce-motion

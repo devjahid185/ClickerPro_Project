@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Announcement;
+use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Owner→team announcements. The OWNER (or BOTH) creates them; every
@@ -16,9 +19,29 @@ class AnnouncementController extends Controller
     /** The studio scope: a member's owner id, or the user's own id. */
     private function scopeOwnerId(Request $request): int
     {
-        $user = $request->user();
-        $memberOwner = $user->manager_permissions['ownerId'] ?? null;
-        return $memberOwner !== null ? (int) $memberOwner : (int) $user->id;
+        return (int) $request->user()->studioId();
+    }
+
+    /** Owner + every linked member in that owner's team. */
+    private function teamUserIds(int $ownerId)
+    {
+        return User::where('id', $ownerId)
+            ->orWhereNotNull('manager_permissions')
+            ->get(['id', 'manager_permissions'])
+            ->filter(function (User $user) use ($ownerId) {
+                if ((int) $user->id === $ownerId) {
+                    return true;
+                }
+
+                $permissions = is_array($user->manager_permissions)
+                    ? $user->manager_permissions
+                    : [];
+
+                $linkedOwnerId = $permissions['ownerId'] ?? null;
+                return $linkedOwnerId !== null && (int) $linkedOwnerId === $ownerId;
+            })
+            ->pluck('id')
+            ->values();
     }
 
     public function index(Request $request)
@@ -57,12 +80,34 @@ class AnnouncementController extends Controller
             'read_by' => [],
         ]);
 
-        // Heads-up push to the whole team (fail-soft).
-        app(\App\Services\PushService::class)->sendToAll(
+        $teamUserIds = $this->teamUserIds((int) $announcement->owner_id);
+
+        foreach ($teamUserIds as $userId) {
+            if ((int) $userId === (int) $request->user()->id) {
+                continue;
+            }
+
+            Notification::create([
+                'user_id' => (int) $userId,
+                'category' => 'ANNOUNCEMENT',
+                'message' => $announcement->title . "\n" . $announcement->body,
+                'deeplink' => '/announcements',
+            ]);
+        }
+
+        // Heads-up push to the team (fail-soft).
+        $pushed = app(\App\Services\PushService::class)->sendToUsers(
+            $teamUserIds,
             $announcement->title,
             $announcement->body,
             ['type' => 'announcement', 'id' => $announcement->id]
         );
+        Log::info('Announcement pushed to team.', [
+            'announcement_id' => $announcement->id,
+            'owner_id' => $announcement->owner_id,
+            'team_user_ids' => $teamUserIds->all(),
+            'tokens_attempted' => $pushed,
+        ]);
 
         return response()->json(['data' => $announcement], 201);
     }

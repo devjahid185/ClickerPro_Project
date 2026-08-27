@@ -44,7 +44,7 @@ class _WebBookingForm extends ConsumerWidget {
         _companyCard(),
         _scheduleCard(context, ref, policy, freelancer: true),
         _eventTypeCard(),
-        _notesCard(freelancer: true),
+        // Notes are hidden from booking forms for now.
       ] else ...[
         _clientCard(),
         _scheduleCard(context, ref, policy, freelancer: false),
@@ -508,7 +508,7 @@ class _WebBookingForm extends ConsumerWidget {
         : packages.where((p) => p.id == draft.packageId).firstOrNull;
     final primary = draft.customPrice ?? primaryPkg?.netPrice ?? 0;
     final extrasTotal =
-        state._extraEvents.fold<double>(0, (s, e) => s + e.package.netPrice);
+        state._extraEvents.fold<double>(0, (s, e) => s + e.price);
     final grand = primary + extrasTotal;
 
     return WebFormCard(
@@ -549,7 +549,7 @@ class _WebBookingForm extends ConsumerWidget {
                     Expanded(
                       child: Text(
                         '${DateFormat('d MMM yyyy').format(state._extraEvents[i].date)}'
-                        ' · ${state._extraEvents[i].package.name}',
+                        ' · ${state._extraEvents[i].label}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: WebTheme.bodyStyle(
@@ -557,9 +557,7 @@ class _WebBookingForm extends ConsumerWidget {
                       ),
                     ),
                     Text(
-                      ActiveCurrency.value.wrap(state._extraEvents[i]
-                          .package.netPrice
-                          .toStringAsFixed(0)),
+                      ActiveCurrency.value.wrap(state._extraEvents[i].price.toStringAsFixed(0)),
                       style: WebTheme.bodyStyle(
                         size: 13,
                         color: WebTheme.orangeDeep,
@@ -1036,7 +1034,11 @@ class _WebBookingForm extends ConsumerWidget {
     final pkgNet = draft.packageId == null
         ? null
         : packages.where((p) => p.id == draft.packageId).firstOrNull?.netPrice;
-    final total = draft.customPrice ?? pkgNet;
+    final primaryTotal = draft.customPrice ?? pkgNet;
+    final extrasTotal = state._multiEventOn
+        ? state._extraEvents.fold<double>(0, (s, e) => s + e.price)
+        : 0.0;
+    final total = primaryTotal == null ? null : primaryTotal + extrasTotal;
     if (total != null) {
       final txt = total.toStringAsFixed(0);
       if (state._totalCtrl.text != txt) state._totalCtrl.text = txt;
@@ -1158,7 +1160,12 @@ class _WebBookingForm extends ConsumerWidget {
                             WebTheme.orangeDeep,
                             onChanged: (v) {
                               state._markDirty();
-                              _controller.setCustomPrice(double.tryParse(v));
+                              final typedTotal = double.tryParse(v);
+                              _controller.setCustomPrice(
+                                typedTotal == null
+                                    ? null
+                                    : math.max(typedTotal - extrasTotal, 0),
+                              );
                             },
                           ),
                         ),
@@ -1268,59 +1275,18 @@ class _WebBookingForm extends ConsumerWidget {
 
   // ───────────────────────────────────────────────── NOTES
   Widget _notesCard({required bool freelancer}) {
+    if (freelancer) return const SizedBox.shrink();
     return WebFormCard(
-      label: 'Notes',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (!freelancer) ...[
-            WebTextInput(
-              label: 'Client Requirements (optional)',
-              controller: state._requirementsCtrl,
-              hint: 'Print, album, pendrive, delivery system…',
-              maxLines: 3,
-              onChanged: (v) {
-                state._markDirty();
-                _controller.setRequirementsNote(v.isEmpty ? null : v);
-              },
-            ),
-            const SizedBox(height: 16),
-          ],
-          WebTextInput(
-            label: 'Notes',
-            controller: state._notesCtrl,
-            hint: 'Anything the team should know…',
-            maxLines: 3,
-            onChanged: (v) {
-              state._markDirty();
-              _controller.setNotes(v.isEmpty ? null : v);
-            },
-          ),
-          if (freelancer) ...[
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Container(
-                  width: 7,
-                  height: 7,
-                  decoration: const BoxDecoration(
-                    color: WebTheme.amber,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'One event per shift — turn on Settings → Distribution '
-                    'to stack more events in a day.',
-                    style: WebTheme.bodyStyle(
-                        size: 11.5, color: WebTheme.inkMuted),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
+      label: 'Client Requirements',
+      child: WebTextInput(
+        label: 'Client Requirements (optional)',
+        controller: state._requirementsCtrl,
+        hint: 'Print, album, pendrive, delivery system...',
+        maxLines: 3,
+        onChanged: (v) {
+          state._markDirty();
+          _controller.setRequirementsNote(v.isEmpty ? null : v);
+        },
       ),
     );
   }

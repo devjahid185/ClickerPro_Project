@@ -245,6 +245,50 @@ class EventReminderService {
     }
   }
 
+  /// Shows an immediate heads-up notification for server push messages while
+  /// the app is open. FCM displays `notification` payloads automatically only
+  /// when the app is backgrounded; foreground messages need a local mirror.
+  Future<void> showServerPush({
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    await init();
+    if (!_ready) return;
+    if (!_notificationsAllowed) await _refreshPermission();
+    if (!_notificationsAllowed) return;
+
+    try {
+      await _plugin.show(
+        DateTime.now().microsecondsSinceEpoch & 0x7fffffff,
+        title,
+        body,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            _channelId,
+            _channelName,
+            channelDescription: _channelDesc,
+            importance: Importance.max,
+            priority: Priority.high,
+            category: AndroidNotificationCategory.message,
+            visibility: NotificationVisibility.public,
+            styleInformation: BigTextStyleInformation(
+              body,
+              contentTitle: title,
+            ),
+          ),
+          iOS: const DarwinNotificationDetails(
+            interruptionLevel: InterruptionLevel.active,
+          ),
+        ),
+        payload: payload,
+      );
+    } catch (e, st) {
+      AppLogger.w('reminder', 'server push display failed: $e');
+      AppLogger.e('reminder', e, st);
+    }
+  }
+
   /// Re-reads the live notification permission from the OS and, if it isn't
   /// granted yet, requests it again. Updates [_notificationsAllowed] so a
   /// "Try again" after the user flips the toggle in phone Settings sees the

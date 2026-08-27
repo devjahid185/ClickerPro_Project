@@ -1,6 +1,6 @@
 // lib/features/dashboard/application/dashboard_preferences.dart
 //
-// Clicker Pro — Dashboard section preferences (MOD-62)
+// Graphy7 — Dashboard section preferences (MOD-62)
 //
 // Persists section order + visibility via SharedPreferences.
 // Riverpod StateNotifier exposes the state as an immutable list.
@@ -14,11 +14,10 @@ import '../domain/dashboard_section.dart';
 
 const String _kDashSectionsKey = 'dashboard_sections_v1';
 
-// One-time migration flag. Existing installs persisted the Weather section
-// as enabled, so a plain default change wouldn't reach them — their old
-// prefs still show the (fake) weather card. On first load after this
-// update we force Weather off once; afterwards the user's own choice wins.
-const String _kWeatherMigratedKey = 'dashboard_weather_hidden_v1';
+// One-time migration flag. Existing installs may have Weather hidden because
+// the old card used fake time-of-day data. Now that the card uses live GPS
+// weather, turn it back on once; afterwards the user's own choice wins.
+const String _kWeatherMigratedKey = 'dashboard_weather_live_enabled_v1';
 
 class DashboardPrefsNotifier extends StateNotifier<List<DashboardSection>> {
   DashboardPrefsNotifier() : super(DashboardSection.defaultOrder) {
@@ -44,12 +43,12 @@ class DashboardPrefsNotifier extends StateNotifier<List<DashboardSection>> {
           )
           .toList();
       if (list.length == DashboardSectionType.values.length) {
-        // One-time: hide the (fake) weather card on existing installs.
+        // One-time: enable the live weather card on existing installs.
         if (!(prefs.getBool(_kWeatherMigratedKey) ?? false)) {
           list = [
             for (final s in list)
               if (s.type == DashboardSectionType.weather)
-                s.copyWith(enabled: false)
+                s.copyWith(enabled: true)
               else
                 s,
           ];

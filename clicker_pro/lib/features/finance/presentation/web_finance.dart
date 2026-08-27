@@ -32,10 +32,12 @@ import '../../../theme/web_theme.dart';
 import '../../bookings/application/booking_providers.dart';
 import '../../bookings/domain/booking.dart';
 import '../../bookings/domain/booking_filter.dart';
+import '../../bookings/domain/package.dart' as booking_pkg;
 import '../../dashboard/application/dashboard_providers.dart';
 import '../../expenses/application/expense_providers.dart';
 import '../../expenses/domain/expense.dart';
 import '../../expenses/presentation/dialogs/add_expense_sheet.dart';
+import '../../payments/application/payment_providers.dart' as pay_app;
 import '../../petty_cash/domain/petty_cash_entry.dart';
 import '../../petty_cash/presentation/petty_cash_screen.dart'
     show pettyCashListProvider, pettyCashBalanceProvider;
@@ -185,6 +187,11 @@ class _OverviewTab extends ConsumerWidget {
             const <PettyCashEntry>[];
     final dueEntries =
         ref.watch(dueBreakdownProvider).valueOrNull ?? const <DueEntry>[];
+    final paymentRecords = ref.watch(pay_app.paymentListControllerProvider).valueOrNull ??
+        const [];
+    final packages = ref.watch(packagesProvider).valueOrNull ??
+        const <booking_pkg.Package>[];
+    final packageById = _packageLookup(packages);
 
     final now = DateTime.now();
     bool inPeriod(DateTime d) => yearly
@@ -196,12 +203,20 @@ class _OverviewTab extends ConsumerWidget {
     final periodBookings = bookings
         .where((b) => b.status != BookingStatus.cancelled && inPeriod(b.date))
         .toList(growable: false);
-    final booked =
-        periodBookings.fold<double>(0, (s, b) => s + (b.customPrice ?? 0));
+    final bookingValue = periodBookings.fold<double>(
+        0, (s, b) => s + _bookingTotal(b, packageById));
+    final collectedFromPayments = paymentRecords
+        .where((p) => p.type.toLowerCase() != 'payout' && inPeriod(p.createdAt))
+        .fold<double>(0, (s, p) => s + p.amount);
+    final booked = bookingValue < collectedFromPayments
+        ? collectedFromPayments
+        : bookingValue;
     final dueById = {for (final e in dueEntries) e.bookingId: e.due};
     final periodDue =
         periodBookings.fold<double>(0, (s, b) => s + (dueById[b.id] ?? 0));
-    final collected = booked - periodDue;
+    final collected = collectedFromPayments > 0
+        ? collectedFromPayments
+        : booked - periodDue;
     final periodExpense = expenses
             .where((e) => inPeriod(e.incurredAt))
             .fold<double>(0, (s, e) => s + e.amount) +
@@ -293,6 +308,7 @@ class _OverviewTab extends ConsumerWidget {
             bookings: bookings,
             expenses: expenses,
             petty: petty,
+            packageById: packageById,
           ),
         ),
         const SizedBox(height: 18),
@@ -396,11 +412,13 @@ class _IncomeExpenseChart extends StatelessWidget {
     required this.bookings,
     required this.expenses,
     required this.petty,
+    required this.packageById,
   });
 
   final List<Booking> bookings;
   final List<Expense> expenses;
   final List<PettyCashEntry> petty;
+  final Map<String, booking_pkg.Package> packageById;
 
   @override
   Widget build(BuildContext context) {
@@ -416,7 +434,7 @@ class _IncomeExpenseChart extends StatelessWidget {
               b.status != BookingStatus.cancelled &&
               b.date.year == m.year &&
               b.date.month == m.month)
-          .fold<double>(0, (s, b) => s + (b.customPrice ?? 0)));
+          .fold<double>(0, (s, b) => s + _bookingTotal(b, packageById)));
       expense.add(expenses
               .where((e) =>
                   e.incurredAt.year == m.year &&
@@ -964,6 +982,9 @@ class _CashFlowTab extends ConsumerWidget {
     final petty =
         ref.watch(pettyCashListProvider).valueOrNull ??
             const <PettyCashEntry>[];
+    final cashFlowPackages = ref.watch(packagesProvider).valueOrNull ??
+        const <booking_pkg.Package>[];
+    final cashFlowPackageById = _packageLookup(cashFlowPackages);
 
     final now = DateTime.now();
     // Projected expense = average of the last 3 months (incl. petty cash).
@@ -989,7 +1010,7 @@ class _CashFlowTab extends ConsumerWidget {
       double pending = 0;
       for (final b in bookings) {
         if (b.date.year != m.year || b.date.month != m.month) continue;
-        final price = b.customPrice ?? 0;
+        final price = _bookingTotal(b, cashFlowPackageById);
         switch (b.status) {
           case BookingStatus.confirmed:
           case BookingStatus.inProgress:
@@ -2115,6 +2136,28 @@ class _HatchPainter extends CustomPainter {
 }
 
 // ───────────────────────────────────────────────────────────── HELPERS
+Map<String, booking_pkg.Package> _packageLookup(
+  List<booking_pkg.Package> packages,
+) {
+  return <String, booking_pkg.Package>{
+    for (final p in packages) p.id: p,
+    for (final p in packages)
+      if (p.remoteId != null) p.remoteId!: p,
+  };
+}
+
+double _bookingTotal(
+  Booking booking,
+  Map<String, booking_pkg.Package> packageById,
+) {
+  final custom = booking.customPrice;
+  if (custom != null && custom > 0) return custom;
+  final packageId = booking.packageId;
+  if (packageId == null || packageId.isEmpty) return 0;
+  final package = packageById[packageId];
+  return package == null ? 0 : package.netPrice;
+}
+
 final NumberFormat _moneyFmt = NumberFormat.decimalPattern('en');
 
 /// "৳ 2,84,500"-style with the active currency symbol.

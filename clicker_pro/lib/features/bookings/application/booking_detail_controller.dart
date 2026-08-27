@@ -28,6 +28,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/booking_status/booking_status.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../auth/application/session_controller.dart';
+import '../../calendar_sync/data/calendar_sync_service.dart';
 import '../domain/booking_detail_envelope.dart';
 import '../domain/booking_repository.dart';
 import 'booking_providers.dart';
@@ -104,6 +105,27 @@ class BookingDetailController
     // in the screen immediately.
     final envelope = await ref.read(bookingRepositoryProvider).getDetail(arg);
     state = AsyncValue.data(envelope);
+
+    if (to == BookingStatus.confirmed &&
+        current.booking.status != BookingStatus.confirmed &&
+        await CalendarSyncService.isAutoSyncEnabled()) {
+      final booking = envelope.booking;
+      final description = [
+        if (booking.clientName != null) 'Client: ${booking.clientName}',
+        if (booking.clientPhone != null) 'Phone: ${booking.clientPhone}',
+        'Booked via GRAPHY7',
+      ].join('\n');
+      await CalendarSyncService.openGoogleCalendar(
+        title: booking.title,
+        date: booking.date,
+        startTime: booking.startTime,
+        endTime: booking.endTime,
+        venue: booking.venue,
+        description: description,
+        allowWebFallback: false,
+        bookingId: booking.id,
+      );
+    }
   }
 
   /// Convenience for the cancel flow — the cancel reason is required

@@ -266,55 +266,57 @@ class _PackageCard extends ConsumerWidget {
       decoration: BoxDecoration(
         color: AppColors.glass,
         borderRadius: BorderRadius.circular(16),
-        border: Border(
-          // Design (.dc.html "Packages"): the accent is a 3px top rule; the
-          // other three edges are the usual hairline.
-          top: BorderSide(color: accentColor, width: 3),
-          left: BorderSide(color: AppColors.glassBorder),
-          right: BorderSide(color: AppColors.glassBorder),
-          bottom: BorderSide(color: AppColors.glassBorder),
-        ),
+        border: Border.all(color: AppColors.glassBorder),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    package.name,
-                    style: TextStyle(
-                      color: AppColors.film,
-                      fontFamily: AppText.brandFontFamily,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
+            Container(height: 3, color: accentColor),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          package.name,
+                          style: TextStyle(
+                            color: AppColors.film,
+                            fontFamily: AppText.brandFontFamily,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      if (canManage) ...[
+                        _ActionChip(
+                          icon: Icons.edit_rounded,
+                          onTap: () => _edit(context, ref),
+                        ),
+                        const SizedBox(width: 6),
+                        _ActionChip(
+                          icon: Icons.delete_outline_rounded,
+                          color: AppColors.red,
+                          onTap: () => _delete(context, ref),
+                        ),
+                      ],
+                    ],
                   ),
-                ),
-                if (canManage) ...[
-                  _ActionChip(
-                    icon: Icons.edit_rounded,
-                    onTap: () => _edit(context, ref),
-                  ),
-                  const SizedBox(width: 6),
-                  _ActionChip(
-                    icon: Icons.delete_outline_rounded,
-                    color: AppColors.red,
-                    onTap: () => _delete(context, ref),
-                  ),
+                  const SizedBox(height: 10),
+                  _PriceRow(package: package, accentColor: accentColor),
+                  const SizedBox(height: 10),
+                  _SpecGrid(package: package, accentColor: accentColor),
+                  if (package.items != null && package.items!.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    _ItemsList(items: package.items!),
+                  ],
                 ],
-              ],
+              ),
             ),
-            const SizedBox(height: 10),
-            _PriceRow(package: package, accentColor: accentColor),
-            const SizedBox(height: 10),
-            _SpecGrid(package: package, accentColor: accentColor),
-            if (package.items != null && package.items!.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              _ItemsList(items: package.items!),
-            ],
           ],
         ),
       ),
@@ -377,8 +379,8 @@ class _PackageCard extends ConsumerWidget {
           ..hideCurrentSnackBar()
           ..showSnackBar(
             SnackBar(
-              content: Text('Package deleted.'),
-              backgroundColor: AppColors.voidElevated,
+              content: const Text('Package deleted.'),
+              backgroundColor: const Color(0xFF101828),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -390,7 +392,7 @@ class _PackageCard extends ConsumerWidget {
           ..showSnackBar(
             SnackBar(
               content: Text('Delete failed: $e'),
-              backgroundColor: AppColors.voidElevated,
+              backgroundColor: const Color(0xFF101828),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -1239,8 +1241,8 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
         ..hideCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
-            content: Text('Package name is required.'),
-            backgroundColor: AppColors.voidElevated,
+            content: const Text('Package name is required.'),
+            backgroundColor: const Color(0xFF101828),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -1308,7 +1310,7 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
               content: Text(
                 _isEditing ? 'Package updated.' : 'Package created.',
               ),
-              backgroundColor: AppColors.voidElevated,
+              backgroundColor: const Color(0xFF101828),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -1321,7 +1323,7 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
           ..showSnackBar(
             SnackBar(
               content: Text('Save failed: $e'),
-              backgroundColor: AppColors.voidElevated,
+              backgroundColor: const Color(0xFF101828),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -1375,8 +1377,8 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
           ..hideCurrentSnackBar()
           ..showSnackBar(
             SnackBar(
-              content: Text('Package deleted.'),
-              backgroundColor: AppColors.voidElevated,
+              content: const Text('Package deleted.'),
+              backgroundColor: const Color(0xFF101828),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -1388,7 +1390,7 @@ class _PackageEditSheetState extends ConsumerState<_PackageEditSheet> {
           ..showSnackBar(
             SnackBar(
               content: Text('Delete failed: $e'),
-              backgroundColor: AppColors.voidElevated,
+              backgroundColor: const Color(0xFF101828),
               behavior: SnackBarBehavior.floating,
             ),
           );

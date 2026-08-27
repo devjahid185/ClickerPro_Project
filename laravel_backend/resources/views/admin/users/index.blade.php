@@ -30,7 +30,7 @@
         <select class="select" name="activity" onchange="this.form.submit()">
             <option value="" @selected($activity === '')>All users</option>
             <option value="active" @selected($activity === 'active')>Active (30d)</option>
-            <option value="inactive" @selected($activity === 'inactive')>Inactive</option>
+            <option value="inactive" @selected($activity === 'inactive')>Inactive / no recent activity</option>
         </select>
         <button type="submit" class="btn btn--ghost">
             <span class="material-symbols-rounded" aria-hidden="true">filter_alt</span>
@@ -65,6 +65,8 @@
                             $registered = !empty($u['createdAt']) ? \Illuminate\Support\Carbon::parse($u['createdAt']) : null;
                             $lastActive = !empty($u['lastActiveAt']) ? \Illuminate\Support\Carbon::parse($u['lastActiveAt']) : null;
                             $recentlyActive = $u['recentlyActive'] ?? false;
+                            $isAdminUser = strtoupper((string) ($u['role'] ?? '')) === 'ADMIN';
+                            $isCurrentUser = (string) auth()->id() === (string) $u['id'];
                         @endphp
                         <tr>
                             <td class="cell-link" onclick="location.href='{{ route('admin.users.show', $u['id']) }}'">
@@ -93,7 +95,7 @@
                                 <span class="badge {{ $u['plan'] === 'PRO' ? 'badge--warning' : 'badge--neutral' }}">{{ $u['plan'] }}</span>
                             </td>
                             <td style="font-size:13px" title="{{ $registered?->toDayDateTimeString() }}">
-                                {{ $registered ? $registered->format('d M Y') : '—' }}
+                                {{ $registered ? $registered->format('d M Y') : '-' }}
                             </td>
                             <td style="font-size:13px" title="{{ $lastActive?->toDayDateTimeString() ?? 'Never used the app' }}">
                                 {{ $lastActive ? $lastActive->diffForHumans() : 'Never' }}
@@ -104,7 +106,7 @@
                                 @elseif ($recentlyActive)
                                     <span class="badge badge--success">Active</span>
                                 @else
-                                    <span class="badge badge--neutral">Inactive</span>
+                                    <span class="badge badge--neutral">No recent activity</span>
                                 @endif
                             </td>
                             <td>
@@ -116,11 +118,18 @@
                                         <button type="submit" class="btn btn--ghost btn--sm">{{ $u['plan'] === 'PRO' ? 'Downgrade' : 'Make PRO' }}</button>
                                     </form>
                                     <form method="POST" action="{{ route('admin.users.suspend', $u['id']) }}"
-                                          onsubmit="return confirm('{{ $suspended ? 'Reactivate' : 'Suspend' }} {{ $u['email'] }}?')">
+                                          onsubmit="return confirm(@js(($suspended ? 'Reactivate ' : 'Suspend ') . $u['email'] . '?'))">
                                         @csrf @method('PATCH')
                                         <input type="hidden" name="suspended" value="{{ $suspended ? 0 : 1 }}">
                                         <button type="submit" class="btn btn--ghost btn--sm">{{ $suspended ? 'Reactivate' : 'Suspend' }}</button>
                                     </form>
+                                    @if (($suspended || ! $recentlyActive) && ! $isAdminUser && ! $isCurrentUser)
+                                        <form method="POST" action="{{ route('admin.users.destroy', $u['id']) }}"
+                                              onsubmit="return confirm(@js('Permanently delete ' . $u['email'] . '? This removes the account from the database and allows signup again with the same email/phone.'))">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="btn btn--ghost btn--sm">Delete</button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

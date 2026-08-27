@@ -1,4 +1,4 @@
-class CalendarEvent {
+﻿class CalendarEvent {
   const CalendarEvent({
     required this.title,
     required this.startTime,
@@ -67,6 +67,6 @@ class CalendarEvent {
 
   static String _generateUid() {
     final now = DateTime.now().millisecondsSinceEpoch;
-    return '$now@clickerpro';
+    return '$now@graphy7';
   }
 }

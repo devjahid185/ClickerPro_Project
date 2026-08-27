@@ -30,6 +30,9 @@ class BroadcastsController extends Controller
         // Map the simple Blade form to the fields the API store expects.
         $request->merge([
             'is_active' => $request->boolean('is_active', true),
+            'target_role' => $request->input('target_role') === 'ALL'
+                ? null
+                : $request->input('target_role'),
         ]);
         $resp = $api->adminStore($request);
 
@@ -37,6 +40,24 @@ class BroadcastsController extends Controller
             return back()->withInput()->with('error', 'Could not create broadcast.');
         }
         return redirect()->route('admin.broadcasts')->with('status', 'Broadcast sent.');
+    }
+
+    public function update(Request $request, $id, BroadcastController $api)
+    {
+        $request->merge([
+            'is_active' => $request->boolean('is_active'),
+            'target_role' => $request->input('target_role') === 'ALL'
+                ? null
+                : $request->input('target_role'),
+        ]);
+
+        $resp = $api->adminUpdate($request, $id);
+
+        if ($resp->getStatusCode() >= 400) {
+            return back()->withInput()->with('error', 'Could not update broadcast.');
+        }
+
+        return redirect()->route('admin.broadcasts')->with('status', 'Broadcast updated.');
     }
 
     public function toggle($id, BroadcastController $api)

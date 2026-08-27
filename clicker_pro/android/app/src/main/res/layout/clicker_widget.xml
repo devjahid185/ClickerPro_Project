@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- CLICKER PRO home widget (RemoteViews-safe: LinearLayout + TextView only).
-     Brand row · next event · today's events count + due row. -->
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- Graphy7 home widget (RemoteViews-safe: LinearLayout + TextView only).
+     Brand row Â· next event Â· today's events count + due row. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
@@ -13,7 +13,7 @@
         android:id="@+id/widget_brand"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="CLICKER PRO"
+        android:text="Graphy7"
         android:textColor="#FF6200"
         android:textSize="11sp"
         android:textStyle="bold"
