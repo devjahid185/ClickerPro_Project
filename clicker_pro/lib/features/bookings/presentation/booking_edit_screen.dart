@@ -120,7 +120,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
   /// due/collection math all keep working per event.
   bool _multiEventOn = false;
   final List<({DateTime date, Package? package, double price, String label})>
-      _extraEvents = [];
+  _extraEvents = [];
 
   /// Whether the hide-payment eye is toggled on.
   bool _hidePaymentVisible = true;
@@ -227,8 +227,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     // create, a Freelancer is allowed through here and routed to the
     // freelancer form below; the capability gate only applies to edits and to
     // the full owner/manager create form.
-    final isFreelancerCreate =
-        isCreate && policy.role == UserRole.freelancer;
+    final isFreelancerCreate = isCreate && policy.role == UserRole.freelancer;
     final required = isCreate
         ? Capability.createBooking
         : Capability.editBooking;
@@ -270,54 +269,56 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
               ),
             )
           : Scaffold(
-        backgroundColor: AppColors.voidBlack,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(Icons.close_rounded, color: AppColors.film),
-            tooltip: loc.bookings_cancel,
-            onPressed: () async {
-              final shouldDiscard = !_dirty || await _confirmDiscard();
-              if (!mounted) return;
-              if (shouldDiscard) Navigator.of(this.context).maybePop();
-            },
-          ),
-          title: Text(
-            isCreate
-                ? loc.bookings_new_booking_screen
-                : loc.bookings_edit_booking_screen,
-            style: TextStyle(
-              color: AppColors.film,
-              fontFamily: AppText.brandFontFamily,
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          // Saving happens only through the sticky "Create Booking" /
-          // "Save Changes" bar below — the duplicate appbar SAVE was removed.
-        ),
-        body: SafeArea(
-          child: draftAsync.when(
-            loading: () => const Center(child: LensLoader()),
-            error: (err, _) => Center(
-              child: ErrorState(
-                message: 'Could not open the booking editor.',
-                onRetry: () => ref.invalidate(controllerProv),
+              backgroundColor: AppColors.voidBlack,
+              appBar: AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                leading: IconButton(
+                  icon: Icon(Icons.close_rounded, color: AppColors.film),
+                  tooltip: loc.bookings_cancel,
+                  onPressed: () async {
+                    final shouldDiscard = !_dirty || await _confirmDiscard();
+                    if (!mounted) return;
+                    if (shouldDiscard) Navigator.of(this.context).maybePop();
+                  },
+                ),
+                title: Text(
+                  isCreate
+                      ? loc.bookings_new_booking_screen
+                      : loc.bookings_edit_booking_screen,
+                  style: TextStyle(
+                    color: AppColors.film,
+                    fontFamily: AppText.brandFontFamily,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                // Saving happens only through the sticky "Create Booking" /
+                // "Save Changes" bar below — the duplicate appbar SAVE was removed.
+              ),
+              body: SafeArea(
+                child: draftAsync.when(
+                  loading: () => const Center(child: LensLoader()),
+                  error: (err, _) => Center(
+                    child: ErrorState(
+                      message: 'Could not open the booking editor.',
+                      onRetry: () => ref.invalidate(controllerProv),
+                    ),
+                  ),
+                  data: (draft) {
+                    if (!_seeded) _seedFrom(draft);
+                    return Column(
+                      children: [
+                        _buildStickySaveBar(draft, loc, policy),
+                        Expanded(
+                          child: _buildForm(context, draft, policy.role),
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ),
             ),
-            data: (draft) {
-              if (!_seeded) _seedFrom(draft);
-              return Column(
-                children: [
-                  _buildStickySaveBar(draft, loc, policy),
-                  Expanded(child: _buildForm(context, draft, policy.role)),
-                ],
-              );
-            },
-          ),
-        ),
-      ),
     );
   }
 
@@ -335,10 +336,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
       decoration: BoxDecoration(
         color: AppColors.voidElevated,
         border: Border(
-          bottom: BorderSide(
-            color: AppColors.line(0.06),
-            width: 0.5,
-          ),
+          bottom: BorderSide(color: AppColors.line(0.06), width: 0.5),
         ),
       ),
       child: Row(
@@ -424,14 +422,14 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     return WebFormWidth(
       maxWidth: 560,
       child: ListView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
-      children: [
-        if (isBothRole) ...[_buildModePicker(), const SizedBox(height: 12)],
-        if (showFreelancer)
-          _buildFreelancerForm(context, draft, policy)
-        else
-          _buildOwnerForm(context, draft, policy),
-      ],
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+        children: [
+          if (isBothRole) ...[_buildModePicker(), const SizedBox(height: 12)],
+          if (showFreelancer)
+            _buildFreelancerForm(context, draft, policy)
+          else
+            _buildOwnerForm(context, draft, policy),
+        ],
       ),
     );
   }
@@ -753,9 +751,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                   color: isSelected ? AppColors.orange : AppColors.surface,
                   borderRadius: BorderRadius.circular(11),
                   border: Border.all(
-                    color: isSelected
-                        ? AppColors.orange
-                        : AppColors.line(0.08),
+                    color: isSelected ? AppColors.orange : AppColors.line(0.08),
                     width: isSelected ? 1.2 : 1,
                   ),
                 ),
@@ -1121,6 +1117,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     if (ownerId == null || ownerId.isEmpty) return const <String>{};
     return <String>{ownerId};
   }
+
   Future<void> _pickChiefFromTeam(BookingEditController controller) async {
     final picked = await TeamMemberPickerSheet.show(
       context,
@@ -1147,11 +1144,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
       keyboardType: TextInputType.url,
       suffix: IconButton(
         tooltip: 'Open in maps',
-        icon: Icon(
-          Icons.location_on_outlined,
-          color: AppColors.teal,
-          size: 20,
-        ),
+        icon: Icon(Icons.location_on_outlined, color: AppColors.teal, size: 20),
         onPressed: () => _openMapLink(_mapLinkCtrl.text),
       ),
       onChanged: (v) {
@@ -1340,8 +1333,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                           ),
-                          errorText:
-                              _validation.errorFor(BookingField.advance),
+                          errorText: _validation.errorFor(BookingField.advance),
                           onChanged: (v) {
                             _markDirty();
                             // Clear the advance error as soon as a valid
@@ -1350,8 +1342,9 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                                 _validation.errorFor(BookingField.advance) !=
                                     null) {
                               setState(() {
-                                _validation = _validation
-                                    .withoutField(BookingField.advance);
+                                _validation = _validation.withoutField(
+                                  BookingField.advance,
+                                );
                               });
                             }
                           },
@@ -1363,15 +1356,25 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                   Row(
                     children: [
                       Expanded(
-                        child: Text(
-                          total != null
-                              ? 'Due: ৳${(total - (double.tryParse(_advanceCtrl.text) ?? 0)).toStringAsFixed(0)}'
-                              : 'Due: ৳0',
-                          style: TextStyle(
-                            color: AppColors.filmDim.withValues(alpha: 0.85),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        child: ValueListenableBuilder<TextEditingValue>(
+                          valueListenable: _advanceCtrl,
+                          builder: (context, advanceValue, _) {
+                            final advance =
+                                double.tryParse(advanceValue.text.trim()) ?? 0;
+                            final due = total == null
+                                ? 0.0
+                                : math.max(total - advance, 0.0);
+                            return Text(
+                              'Due: ৳${due.toStringAsFixed(0)}',
+                              style: TextStyle(
+                                color: AppColors.filmDim.withValues(
+                                  alpha: 0.85,
+                                ),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ],
@@ -1391,8 +1394,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
   /// পেমেন্ট কাউন্ট হবে").
   Widget _buildMultiEventSection(BookingDraft draft) {
     final primary = _resolvePackagePrice(draft) ?? draft.customPrice ?? 0;
-    final extrasTotal =
-        _extraEvents.fold<double>(0, (s, e) => s + e.price);
+    final extrasTotal = _extraEvents.fold<double>(0, (s, e) => s + e.price);
     final grand = primary + extrasTotal;
 
     return Column(
@@ -1422,8 +1424,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
               ),
               child: Row(
                 children: [
-                  Icon(Icons.event_outlined,
-                      color: AppColors.orange, size: 18),
+                  Icon(Icons.event_outlined, color: AppColors.orange, size: 18),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -1435,7 +1436,9 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                     ),
                   ),
                   Text(
-                    ActiveCurrency.value.wrap(_extraEvents[i].price.toStringAsFixed(0)),
+                    ActiveCurrency.value.wrap(
+                      _extraEvents[i].price.toStringAsFixed(0),
+                    ),
                     style: TextStyle(
                       color: AppColors.gold,
                       fontSize: 13,
@@ -1444,8 +1447,11 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                   ),
                   IconButton(
                     visualDensity: VisualDensity.compact,
-                    icon: Icon(Icons.close_rounded,
-                        color: AppColors.filmDim, size: 18),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: AppColors.filmDim,
+                      size: 18,
+                    ),
                     onPressed: () {
                       _markDirty();
                       setState(() => _extraEvents.removeAt(i));
@@ -1457,9 +1463,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.orange,
-              side: BorderSide(
-                color: AppColors.orange.withValues(alpha: 0.5),
-              ),
+              side: BorderSide(color: AppColors.orange.withValues(alpha: 0.5)),
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -1513,14 +1517,17 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     );
     if (picked == null || !mounted) return;
 
-    final isPrimaryDate = draft.date != null &&
+    final isPrimaryDate =
+        draft.date != null &&
         picked.year == draft.date!.year &&
         picked.month == draft.date!.month &&
         picked.day == draft.date!.day;
-    final alreadyAdded = _extraEvents.any((e) =>
-        e.date.year == picked.year &&
-        e.date.month == picked.month &&
-        e.date.day == picked.day);
+    final alreadyAdded = _extraEvents.any(
+      (e) =>
+          e.date.year == picked.year &&
+          e.date.month == picked.month &&
+          e.date.day == picked.day,
+    );
     if (isPrimaryDate || alreadyAdded) {
       _showSnack('This date is already in this booking.');
       return;
@@ -1554,12 +1561,16 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
 
     _markDirty();
     setState(() {
-      _extraEvents.add(
-        (date: picked, package: pkg, price: price, label: label),
-      );
+      _extraEvents.add((
+        date: picked,
+        package: pkg,
+        price: price,
+        label: label,
+      ));
       _extraEvents.sort((a, b) => a.date.compareTo(b.date));
     });
   }
+
   Future<double?> _askExtraCustomPrice() async {
     final ctrl = TextEditingController();
     final value = await showDialog<double>(
@@ -1596,9 +1607,8 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
               backgroundColor: AppColors.orange,
               foregroundColor: Colors.white,
             ),
-            onPressed: () => Navigator.of(ctx).pop(
-              double.tryParse(ctrl.text.trim()),
-            ),
+            onPressed: () =>
+                Navigator.of(ctx).pop(double.tryParse(ctrl.text.trim())),
             child: const Text('Add'),
           ),
         ],
@@ -1611,6 +1621,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     }
     return value;
   }
+
   double? _resolvePackagePrice(BookingDraft draft) {
     if (draft.packageId == null) return null;
     final packagesAsync = ref.watch(packagesProvider);
@@ -1642,9 +1653,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
             surface: AppColors.surface,
             onSurface: AppColors.film,
           ),
-          dialogTheme: DialogThemeData(
-            backgroundColor: AppColors.voidElevated,
-          ),
+          dialogTheme: DialogThemeData(backgroundColor: AppColors.voidElevated),
         ),
         child: child!,
       ),
@@ -1854,7 +1863,9 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     // ── Scheduling conflict guard (v12 Key Decisions) ──
     // Freelancer = strict 1 event/shift (hard block). Owner/Both = warning
     // unless Distribution mode is on.
-    final draft = ref.read(bookingEditControllerProvider(widget.bookingId)).valueOrNull;
+    final draft = ref
+        .read(bookingEditControllerProvider(widget.bookingId))
+        .valueOrNull;
     if (draft != null) {
       final policy = ref.read(bookingsPolicyProvider);
       final existing =
@@ -2102,10 +2113,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: AppColors.filmDim),
-            ),
+            child: Text('Cancel', style: TextStyle(color: AppColors.filmDim)),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
@@ -2155,6 +2163,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     );
     if (mounted && added) _showSnack('Added to device calendar');
   }
+
   void _showSnack(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -2236,10 +2245,8 @@ class _PackagePickerSheet extends ConsumerWidget {
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: packages.length,
-                separatorBuilder: (_, _) => Container(
-                  height: 1,
-                  color: AppColors.line(0.04),
-                ),
+                separatorBuilder: (_, _) =>
+                    Container(height: 1, color: AppColors.line(0.04)),
                 itemBuilder: (_, i) {
                   final p = packages[i];
                   return ListTile(

@@ -289,6 +289,47 @@ class BookingRepositoryImpl implements BookingRepository {
     );
   }
 
+  /// Reconciles payments from a detail pull with locally-created rows.
+  ///
+  /// Creating an advance inserts a local `p-...` row first; the server then
+  /// returns its numeric id as `remoteId`. Later detail refreshes carry the
+  /// server id as the row id, which would otherwise upsert as a second payment
+  /// and double the advance/collected totals.
+  Future<Payment> _mergeEnvelopePayment(Payment incoming) async {
+    final remoteId = incoming.remoteId;
+    if (remoteId == null || remoteId.isEmpty) return incoming;
+
+    final matches = await _payments.listByRemoteId(remoteId);
+    if (matches.isEmpty) return incoming;
+
+    final preferred = matches.firstWhere(
+      (row) => row.id != incoming.id,
+      orElse: () => matches.first,
+    );
+    for (final row in matches) {
+      if (row.id != preferred.id) {
+        await _payments.deleteById(row.id);
+      }
+    }
+
+    final local = _rowToPayment(preferred);
+    if (preferred.pending) {
+      return local.copyWith(bookingId: incoming.bookingId, remoteId: remoteId);
+    }
+    return local.copyWith(
+      remoteId: remoteId,
+      bookingId: incoming.bookingId,
+      kind: incoming.kind,
+      amount: incoming.amount,
+      method: incoming.method,
+      note: incoming.note,
+      paidAt: incoming.paidAt,
+      createdAt: incoming.createdAt,
+      updatedAt: incoming.updatedAt,
+      pending: false,
+    );
+  }
+
   // ───────────────────────── Writes ─────────────────────────
 
   @override
@@ -490,12 +531,10 @@ class BookingRepositoryImpl implements BookingRepository {
       );
     }
     for (final p in envelope.payments) {
-      await _payments.upsert(
-        _paymentToCompanion(
-          p.copyWith(bookingId: booking.id),
-          pending: false,
-        ),
+      final payment = await _mergeEnvelopePayment(
+        p.copyWith(bookingId: booking.id),
       );
+      await _payments.upsert(_paymentToCompanion(payment, pending: false));
     }
     for (final h in envelope.statusHistory) {
       // Re-point at the merged LOCAL booking id (the wire entry carries

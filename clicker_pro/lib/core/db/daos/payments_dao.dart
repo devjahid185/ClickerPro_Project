@@ -47,6 +47,13 @@ class PaymentsDao extends DatabaseAccessor<AppDatabase>
         .watch();
   }
 
+  Future<List<PaymentRow>> listByRemoteId(String remoteId) {
+    return (select(paymentsTable)
+          ..where((t) => t.remoteId.equals(remoteId))
+          ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
+        .get();
+  }
+
   Future<void> upsert(PaymentsTableCompanion row) async {
     await into(paymentsTable).insertOnConflictUpdate(row);
   }
@@ -90,7 +97,7 @@ class PaymentsDao extends DatabaseAccessor<AppDatabase>
   /// the SUM of payments of the matching `kind`; `total = advance + due +
   /// extra`. Returns zeroed components when the booking has no payments.
   Future<({double advance, double due, double extra, double total})>
-      aggregateForBooking(String bookingId) async {
+  aggregateForBooking(String bookingId) async {
     final amount = paymentsTable.amount;
     final sumExpr = amount.sum();
     final query = selectOnly(paymentsTable)

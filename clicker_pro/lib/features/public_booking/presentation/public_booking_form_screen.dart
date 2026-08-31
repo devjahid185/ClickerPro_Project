@@ -1,4 +1,4 @@
-﻿// lib/features/public_booking/presentation/public_booking_form_screen.dart
+// lib/features/public_booking/presentation/public_booking_form_screen.dart
 //
 // Unauthenticated public booking form. The visitor reaches this screen
 // via a deep link — `clickerpro://public/booking?token=...` or the
@@ -98,7 +98,6 @@ class _Form extends ConsumerStatefulWidget {
 }
 
 class _FormState extends ConsumerState<_Form> {
-  final _titleCtrl = TextEditingController();
   final _venueCtrl = TextEditingController();
   final _brideCtrl = TextEditingController();
   final _groomCtrl = TextEditingController();
@@ -127,7 +126,6 @@ class _FormState extends ConsumerState<_Form> {
 
   @override
   void dispose() {
-    _titleCtrl.dispose();
     _venueCtrl.dispose();
     _brideCtrl.dispose();
     _groomCtrl.dispose();
@@ -147,157 +145,153 @@ class _FormState extends ConsumerState<_Form> {
     return WebFormWidth(
       maxWidth: 560,
       child: ListView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
-      children: [
-        _Header(meta: widget.meta),
-        const SizedBox(height: 12),
-        if (_topLevelError != null)
-          Container(
-            padding: const EdgeInsets.all(12),
-            margin: const EdgeInsets.only(bottom: 8),
-            decoration: BoxDecoration(
-              color: AppColors.red.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.red.withValues(alpha: 0.4)),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+        children: [
+          _Header(meta: widget.meta),
+          const SizedBox(height: 12),
+          if (_topLevelError != null)
+            Container(
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                color: AppColors.red.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.red.withValues(alpha: 0.4)),
+              ),
+              child: Text(
+                _topLevelError!,
+                style: TextStyle(color: AppColors.red, fontSize: 13),
+              ),
             ),
-            child: Text(
-              _topLevelError!,
-              style: TextStyle(color: AppColors.red, fontSize: 13),
-            ),
+          const _SectionLabel('Your contact details'),
+          LensTextField(
+            label: 'Your name',
+            controller: _clientNameCtrl,
+            errorText: _fieldErrors['clientName'],
           ),
-        LensTextField(
-          label: 'Event title',
-          controller: _titleCtrl,
-          hint: 'e.g. Anwar & Sumaiya Wedding',
-          errorText: _fieldErrors['title'],
-          maxLength: 120,
-        ),
-        LensSelector<EventType>(
-          label: 'Event type',
-          value: _eventType,
-          items: supportedTypes,
-          itemLabel: (e) => _titleCase(e.name),
-          onChanged: (v) {
-            if (v == null) return;
-            setState(() => _eventType = v);
-          },
-        ),
-        LensPickerRow(
-          label: 'Date',
-          icon: Icons.event_outlined,
-          valueText: _date == null ? null : DateFormat.yMMMEd().format(_date!),
-          placeholder: 'Pick the event date',
-          errorText: _fieldErrors['date'],
-          onTap: _pickDate,
-        ),
-        Row(
-          children: [
-            Expanded(
-              child: LensPickerRow(
-                label: 'Start',
-                icon: Icons.schedule_outlined,
-                valueText: BookingFormat.clockTime(_startTime),
-                onTap: () => _pickTime(
-                  _startTime,
-                  (t) => setState(() => _startTime = t),
+          LensTextField(
+            label: 'Phone',
+            controller: _clientPhoneCtrl,
+            keyboardType: TextInputType.phone,
+            errorText: _fieldErrors['clientPhone'],
+          ),
+          LensTextField(
+            label: 'Email (optional)',
+            controller: _clientEmailCtrl,
+            keyboardType: TextInputType.emailAddress,
+          ),
+          const SizedBox(height: 16),
+          LensSelector<EventType>(
+            label: 'Event type',
+            value: _eventType,
+            items: supportedTypes,
+            itemLabel: (e) => _titleCase(e.name),
+            onChanged: (v) {
+              if (v == null) return;
+              setState(() => _eventType = v);
+            },
+          ),
+          LensPickerRow(
+            label: 'Date',
+            icon: Icons.event_outlined,
+            valueText: _date == null
+                ? null
+                : DateFormat.yMMMEd().format(_date!),
+            placeholder: 'Pick the event date',
+            errorText: _fieldErrors['date'],
+            onTap: _pickDate,
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: LensPickerRow(
+                  label: 'Start',
+                  icon: Icons.schedule_outlined,
+                  valueText: BookingFormat.clockTime(_startTime),
+                  onTap: () => _pickTime(
+                    _startTime,
+                    (t) => setState(() => _startTime = t),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: LensPickerRow(
-                label: 'End',
-                icon: Icons.schedule_outlined,
-                valueText: BookingFormat.clockTime(_endTime),
-                errorText: _fieldErrors['endTime'],
-                onTap: () =>
-                    _pickTime(_endTime, (t) => setState(() => _endTime = t)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: LensPickerRow(
+                  label: 'End',
+                  icon: Icons.schedule_outlined,
+                  valueText: BookingFormat.clockTime(_endTime),
+                  errorText: _fieldErrors['endTime'],
+                  onTap: () =>
+                      _pickTime(_endTime, (t) => setState(() => _endTime = t)),
+                ),
               ),
+            ],
+          ),
+          LensSelector<Shift>(
+            label: 'Shift',
+            value: _shift,
+            items: Shift.values,
+            itemLabel: (s) => _titleCase(s.name),
+            onChanged: (v) {
+              if (v == null) return;
+              setState(() => _shift = v);
+            },
+          ),
+          LensTextField(
+            label: 'Venue',
+            controller: _venueCtrl,
+            hint: 'Banquet hall name or address',
+          ),
+          if (_eventType.requiresBrideGroom) ...[
+            LensTextField(
+              label: 'Bride',
+              controller: _brideCtrl,
+              errorText: _fieldErrors['bride'],
+            ),
+            LensTextField(
+              label: 'Groom',
+              controller: _groomCtrl,
+              errorText: _fieldErrors['groom'],
             ),
           ],
-        ),
-        LensSelector<Shift>(
-          label: 'Shift',
-          value: _shift,
-          items: Shift.values,
-          itemLabel: (s) => _titleCase(s.name),
-          onChanged: (v) {
-            if (v == null) return;
-            setState(() => _shift = v);
-          },
-        ),
-        LensTextField(
-          label: 'Venue',
-          controller: _venueCtrl,
-          hint: 'Banquet hall name or address',
-        ),
-        if (_eventType.requiresBrideGroom) ...[
+          const SizedBox(height: 16),
           LensTextField(
-            label: 'Bride',
-            controller: _brideCtrl,
-            errorText: _fieldErrors['bride'],
+            label: 'Notes',
+            controller: _notesCtrl,
+            maxLines: 3,
+            maxLength: 1000,
           ),
-          LensTextField(
-            label: 'Groom',
-            controller: _groomCtrl,
-            errorText: _fieldErrors['groom'],
+          const SizedBox(height: 16),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.orange,
+              foregroundColor: AppColors.onAccent,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            onPressed: _submitting ? null : _onSubmit,
+            child: _submitting
+                ? SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.onAccent,
+                    ),
+                  )
+                : const Text(
+                    'Submit request',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
           ),
         ],
-        const SizedBox(height: 16),
-        const _SectionLabel('Your contact details'),
-        LensTextField(
-          label: 'Your name',
-          controller: _clientNameCtrl,
-          errorText: _fieldErrors['clientName'],
-        ),
-        LensTextField(
-          label: 'Phone',
-          controller: _clientPhoneCtrl,
-          keyboardType: TextInputType.phone,
-          errorText: _fieldErrors['clientPhone'],
-        ),
-        LensTextField(
-          label: 'Email (optional)',
-          controller: _clientEmailCtrl,
-          keyboardType: TextInputType.emailAddress,
-        ),
-        LensTextField(
-          label: 'Notes',
-          controller: _notesCtrl,
-          maxLines: 3,
-          maxLength: 1000,
-        ),
-        const SizedBox(height: 16),
-        FilledButton(
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.orange,
-            foregroundColor: AppColors.onAccent,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ),
-          onPressed: _submitting ? null : _onSubmit,
-          child: _submitting
-              ? SizedBox(
-                  height: 18,
-                  width: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: AppColors.onAccent,
-                  ),
-                )
-              : const Text(
-                  'Submit request',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-        ),
-      ],
       ),
     );
   }
@@ -317,9 +311,7 @@ class _FormState extends ConsumerState<_Form> {
             surface: AppColors.surface,
             onSurface: AppColors.film,
           ),
-          dialogTheme: DialogThemeData(
-            backgroundColor: AppColors.surface,
-          ),
+          dialogTheme: DialogThemeData(backgroundColor: AppColors.surface),
         ),
         child: child!,
       ),
@@ -364,10 +356,6 @@ class _FormState extends ConsumerState<_Form> {
 
   Map<String, String> _validate() {
     final errors = <String, String>{};
-    final title = _titleCtrl.text.trim();
-    if (title.isEmpty || title.length > 120) {
-      errors['title'] = 'Title is required (max 120 chars).';
-    }
     if (_date == null) errors['date'] = 'Pick a date.';
     if (_toMinutes(_endTime) < _toMinutes(_startTime)) {
       errors['endTime'] = 'End time cannot be before start time.';
@@ -411,7 +399,7 @@ class _FormState extends ConsumerState<_Form> {
     final payload = PublicBookingRequest(
       id: 'pending', // server assigns the real id; required field on the wire
       studioId: '', // server fills from token
-      title: _titleCtrl.text.trim(),
+      title: _derivedTitle(),
       eventType: _eventType,
       date: _date!,
       startTime: _startTime,
@@ -468,6 +456,12 @@ class _FormState extends ConsumerState<_Form> {
     return t.isEmpty ? null : t;
   }
 
+  String _derivedTitle() {
+    final name = _clientNameCtrl.text.trim();
+    final event = _titleCase(_eventType.name);
+    return name.isEmpty ? event : '$name - $event';
+  }
+
   int _toMinutes(String hhmm) {
     final parts = hhmm.split(':');
     return int.parse(parts[0]) * 60 + int.parse(parts[1]);
@@ -492,11 +486,7 @@ class _Header extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: 26,
-                height: 1.5,
-                color: AppColors.orange,
-              ),
+              Container(width: 26, height: 1.5, color: AppColors.orange),
               const SizedBox(width: 10),
               Text(
                 'BOOK YOUR EVENT',
@@ -547,11 +537,7 @@ class _SectionLabel extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(4, 12, 4, 8),
       child: Row(
         children: [
-          Container(
-            width: 26,
-            height: 1.5,
-            color: AppColors.orange,
-          ),
+          Container(width: 26, height: 1.5, color: AppColors.orange),
           const SizedBox(width: 10),
           Text(
             label.toUpperCase(),

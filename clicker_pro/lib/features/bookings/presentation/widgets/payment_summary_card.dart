@@ -1,4 +1,4 @@
-﻿// lib/features/bookings/presentation/widgets/payment_summary_card.dart
+// lib/features/bookings/presentation/widgets/payment_summary_card.dart
 //
 // Renders the four-line payment summary for the booking detail screen:
 // advance / due / extra / total. Reads the aggregate from the payment
@@ -85,30 +85,45 @@ class PaymentSummaryCard extends ConsumerWidget {
         data: (agg) {
           // Outstanding = agreed price − everything collected so far.
           final collected = agg.total;
-          final outstanding = bookingTotal == null
-              ? agg.due
-              : (bookingTotal! - collected);
+          final outstanding =
+              (bookingTotal == null
+                      ? agg.due
+                      : (bookingTotal! - collected).clamp(0.0, double.infinity))
+                  .toDouble();
           final hasOutstanding = outstanding > 0.5;
           return Column(
             children: [
-              _row('Advance', agg.advance, lang, amountColor: AppColors.green),
-              _divider(),
               _row(
-                'Collected',
-                collected,
+                'Advance paid',
+                agg.advance,
                 lang,
                 amountColor: AppColors.green,
               ),
               _divider(),
-              _row(
-                'Due',
-                hasOutstanding ? outstanding : 0,
-                lang,
-                amountColor: hasOutstanding ? AppColors.red : AppColors.filmDim,
-              ),
+              _row('Due paid', agg.due, lang, amountColor: AppColors.green),
+              if (agg.extra > 0.5) ...[
+                _divider(),
+                _row(
+                  'Extra paid',
+                  agg.extra,
+                  lang,
+                  amountColor: AppColors.green,
+                ),
+              ],
+              _divider(),
+              _row('Total paid', collected, lang, amountColor: AppColors.green),
               if (bookingTotal != null) ...[
                 _divider(),
-                _row('Total', bookingTotal!, lang, emphasized: true),
+                _row(
+                  'Remaining due',
+                  hasOutstanding ? outstanding : 0,
+                  lang,
+                  amountColor: hasOutstanding
+                      ? AppColors.red
+                      : AppColors.filmDim,
+                ),
+                _divider(),
+                _row('Booking total', bookingTotal!, lang, emphasized: true),
               ],
               if (canEditPayments && hasOutstanding) ...[
                 const SizedBox(height: 12),
@@ -186,8 +201,7 @@ class PaymentSummaryCard extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text('Cancel',
-                style: TextStyle(color: AppColors.filmDim)),
+            child: Text('Cancel', style: TextStyle(color: AppColors.filmDim)),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
@@ -291,12 +305,7 @@ class PaymentSummaryCard extends ConsumerWidget {
     );
 
     if (amount == null || !context.mounted) return;
-    await _savePayment(
-      context,
-      ref,
-      amount,
-      note: 'Partial payment',
-    );
+    await _savePayment(context, ref, amount, note: 'Partial payment');
   }
 
   /// Shared save path for both full and partial due collection: logs a
@@ -331,12 +340,14 @@ class PaymentSummaryCard extends ConsumerWidget {
       // 🪙 payment received — coin-pop celebration.
       if (context.mounted) Celebration.coinPop(context);
       messenger.showSnackBar(
-        SnackBar(content: Text('${ActiveCurrency.value.wrap(amount.toStringAsFixed(0))} added to collection ✓')),
+        SnackBar(
+          content: Text(
+            '${ActiveCurrency.value.wrap(amount.toStringAsFixed(0))} added to collection ✓',
+          ),
+        ),
       );
     } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text('Could not mark: $e')),
-      );
+      messenger.showSnackBar(SnackBar(content: Text('Could not mark: $e')));
     }
   }
 
