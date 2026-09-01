@@ -7,6 +7,8 @@
         $name = $user['fullName'] ?: 'Unnamed User';
         $plan = $user['plan'] ?? 'FREE';
         $role = $user['role'] ?? 'OWNER';
+        $isAdminUser = strtoupper((string) $role) === 'ADMIN';
+        $isCurrentUser = (string) auth()->id() === (string) ($user['id'] ?? '');
         $fields = [
             'Email' => $user['email'] ?? '-',
             'Phone' => $user['phone'] ?? '-',
@@ -85,7 +87,72 @@
                         </div>
                     </div>
                 </form>
+
+                <form method="POST" action="{{ route('admin.users.password', $user['id']) }}" class="mt-4">
+                    @csrf @method('PATCH')
+                    <input type="hidden" name="form_context" value="detail_password">
+                    <div class="field">
+                        <label class="field__label">Change password</label>
+                        <input class="input" type="password" name="password" minlength="8" autocomplete="new-password" placeholder="New password" required>
+                    </div>
+                    <div class="field">
+                        <input class="input" type="password" name="password_confirmation" minlength="8" autocomplete="new-password" placeholder="Confirm password" required>
+                    </div>
+                    <button type="submit" class="btn btn--primary">Update password</button>
+                </form>
+
+                @if (! $isAdminUser && ! $isCurrentUser)
+                    <button type="button" class="btn btn--danger mt-4"
+                            onclick="openDetailDeleteModal(@js([
+                                'name' => $name,
+                                'email' => $user['email'] ?? '',
+                            ]))">
+                        Soft delete user
+                    </button>
+                @endif
             </div>
         </section>
     </div>
+
+    @if (! $isAdminUser && ! $isCurrentUser)
+        <div class="modal-backdrop" id="detailDeleteUserModal" onclick="if(event.target===this)this.classList.remove('is-open')">
+            <div class="modal">
+                <h2>Soft Delete User</h2>
+                <form method="POST" action="{{ route('admin.users.destroy', $user['id']) }}" id="detailDeleteUserForm">
+                    @csrf @method('DELETE')
+                    <p class="field__help" id="detailDeleteUserSummary" style="margin-bottom:var(--sp-4)"></p>
+                    <div class="flash flash--danger" style="margin-bottom:var(--sp-4)">
+                        This will revoke active sessions and hide the account from user management. Existing records stay in the database.
+                    </div>
+                    <div class="field">
+                        <label class="field__label">Type DELETE to confirm</label>
+                        <input class="input mono" type="text" id="detailDeleteUserConfirmInput" autocomplete="off" required>
+                    </div>
+                    <div class="modal__actions">
+                        <button type="button" class="btn btn--ghost" onclick="document.getElementById('detailDeleteUserModal').classList.remove('is-open')">Cancel</button>
+                        <button type="submit" class="btn btn--danger" id="detailDeleteUserSubmit" disabled>Soft delete</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
 @endsection
+
+@push('scripts')
+<script>
+    function openDetailDeleteModal(user) {
+        const input = document.getElementById('detailDeleteUserConfirmInput');
+        const submit = document.getElementById('detailDeleteUserSubmit');
+        document.getElementById('detailDeleteUserSummary').textContent =
+            `Soft delete ${user.name} (${user.email})?`;
+        input.value = '';
+        submit.disabled = true;
+        document.getElementById('detailDeleteUserModal').classList.add('is-open');
+        setTimeout(() => input.focus(), 80);
+    }
+
+    document.getElementById('detailDeleteUserConfirmInput')?.addEventListener('input', function () {
+        document.getElementById('detailDeleteUserSubmit').disabled = this.value !== 'DELETE';
+    });
+</script>
+@endpush

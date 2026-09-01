@@ -83,6 +83,23 @@ class UsersController extends Controller
         return back()->with('status', "{$user->email} {$verb}.");
     }
 
+    public function updatePassword(Request $request, $id)
+    {
+        $data = $request->validate([
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $user = User::findOrFail($id);
+        $user->forceFill([
+            'password' => Hash::make($data['password']),
+        ])->save();
+
+        // End existing app sessions so the new credential takes effect cleanly.
+        $user->tokens()->delete();
+
+        return back()->with('status', "Password changed for {$user->email}.");
+    }
+
     public function destroy(Request $request, $id)
     {
         $user = User::findOrFail($id);
@@ -95,18 +112,12 @@ class UsersController extends Controller
             return back()->withErrors(['user' => 'Admin accounts cannot be deleted from this screen.']);
         }
 
-        $recentlyActive = $user->last_active_at !== null
-            && $user->last_active_at->diffInDays(now()) < 30;
-        if ($user->is_active && $recentlyActive) {
-            return back()->withErrors(['user' => 'Recently active users must be suspended before deletion.']);
-        }
-
         $email = $user->email;
         $user->tokens()->delete();
-        $user->forceDelete();
+        $user->delete();
 
         return redirect()->route('admin.users')
-            ->with('status', "User {$email} permanently deleted.");
+            ->with('status', "User {$email} soft deleted.");
     }
     public function store(Request $request)
     {

@@ -56,6 +56,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('users/{id}', [UsersController::class, 'show'])->name('users.show');
         Route::patch('users/{id}/role', [UsersController::class, 'setRole'])->name('users.role');
         Route::patch('users/{id}/plan', [UsersController::class, 'setPlan'])->name('users.plan');
+        Route::patch('users/{id}/password', [UsersController::class, 'updatePassword'])->name('users.password');
         Route::patch('users/{id}/suspend', [UsersController::class, 'suspend'])->name('users.suspend');
         Route::delete('users/{id}', [UsersController::class, 'destroy'])->name('users.destroy');
 

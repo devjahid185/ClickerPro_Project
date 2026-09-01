@@ -117,18 +117,29 @@
                                         <input type="hidden" name="plan" value="{{ $u['plan'] === 'PRO' ? 'FREE' : 'PRO' }}">
                                         <button type="submit" class="btn btn--ghost btn--sm">{{ $u['plan'] === 'PRO' ? 'Downgrade' : 'Make PRO' }}</button>
                                     </form>
+                                    <button type="button" class="btn btn--ghost btn--sm"
+                                            onclick="openPasswordModal(@js([
+                                                'id' => $u['id'],
+                                                'name' => $u['fullName'] ?: 'Unnamed User',
+                                                'email' => $u['email'],
+                                            ]))">
+                                        Password
+                                    </button>
                                     <form method="POST" action="{{ route('admin.users.suspend', $u['id']) }}"
                                           onsubmit="return confirm(@js(($suspended ? 'Reactivate ' : 'Suspend ') . $u['email'] . '?'))">
                                         @csrf @method('PATCH')
                                         <input type="hidden" name="suspended" value="{{ $suspended ? 0 : 1 }}">
                                         <button type="submit" class="btn btn--ghost btn--sm">{{ $suspended ? 'Reactivate' : 'Suspend' }}</button>
                                     </form>
-                                    @if (($suspended || ! $recentlyActive) && ! $isAdminUser && ! $isCurrentUser)
-                                        <form method="POST" action="{{ route('admin.users.destroy', $u['id']) }}"
-                                              onsubmit="return confirm(@js('Permanently delete ' . $u['email'] . '? This removes the account from the database and allows signup again with the same email/phone.'))">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" class="btn btn--ghost btn--sm">Delete</button>
-                                        </form>
+                                    @if (! $isAdminUser && ! $isCurrentUser)
+                                        <button type="button" class="btn btn--danger btn--sm"
+                                                onclick="openDeleteUserModal(@js([
+                                                    'id' => $u['id'],
+                                                    'name' => $u['fullName'] ?: 'Unnamed User',
+                                                    'email' => $u['email'],
+                                                ]))">
+                                            Soft delete
+                                        </button>
                                     @endif
                                 </div>
                             </td>
@@ -153,6 +164,7 @@
             <h2>New User</h2>
             <form method="POST" action="{{ route('admin.users.store') }}">
                 @csrf
+                <input type="hidden" name="form_context" value="create_user">
                 <div class="field">
                     <label class="field__label">Full name</label>
                     <input class="input" type="text" name="name" value="{{ old('name') }}" required>
@@ -180,12 +192,96 @@
             </form>
         </div>
     </div>
+
+    <div class="modal-backdrop" id="passwordUserModal" onclick="if(event.target===this)this.classList.remove('is-open')">
+        <div class="modal">
+            <h2>Change Password</h2>
+            <form method="POST" id="passwordUserForm">
+                @csrf @method('PATCH')
+                <input type="hidden" name="form_context" value="password_user">
+                <input type="hidden" name="password_user_id" id="passwordUserId">
+                <input type="hidden" name="password_user_name" id="passwordUserName">
+                <input type="hidden" name="password_user_email" id="passwordUserEmail">
+                <p class="field__help" id="passwordUserSummary" style="margin-bottom:var(--sp-4)"></p>
+                <div class="field">
+                    <label class="field__label">New password</label>
+                    <input class="input" type="password" name="password" minlength="8" autocomplete="new-password" required>
+                </div>
+                <div class="field">
+                    <label class="field__label">Confirm password</label>
+                    <input class="input" type="password" name="password_confirmation" minlength="8" autocomplete="new-password" required>
+                </div>
+                <div class="modal__actions">
+                    <button type="button" class="btn btn--ghost" onclick="document.getElementById('passwordUserModal').classList.remove('is-open')">Cancel</button>
+                    <button type="submit" class="btn btn--primary">Update password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="deleteUserModal" onclick="if(event.target===this)this.classList.remove('is-open')">
+        <div class="modal">
+            <h2>Soft Delete User</h2>
+            <form method="POST" id="deleteUserForm">
+                @csrf @method('DELETE')
+                <p class="field__help" id="deleteUserSummary" style="margin-bottom:var(--sp-4)"></p>
+                <div class="flash flash--danger" style="margin-bottom:var(--sp-4)">
+                    This will revoke active sessions and hide the account from user management. Existing records stay in the database.
+                </div>
+                <div class="field">
+                    <label class="field__label">Type DELETE to confirm</label>
+                    <input class="input mono" type="text" id="deleteUserConfirmInput" autocomplete="off" required>
+                </div>
+                <div class="modal__actions">
+                    <button type="button" class="btn btn--ghost" onclick="document.getElementById('deleteUserModal').classList.remove('is-open')">Cancel</button>
+                    <button type="submit" class="btn btn--danger" id="deleteUserSubmit" disabled>Soft delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
 <script>
+    function openPasswordModal(user) {
+        const form = document.getElementById('passwordUserForm');
+        form.action = `{{ url('/admin/users') }}/${user.id}/password`;
+        form.reset();
+        document.getElementById('passwordUserId').value = user.id || '';
+        document.getElementById('passwordUserName').value = user.name || 'User';
+        document.getElementById('passwordUserEmail').value = user.email || '';
+        document.getElementById('passwordUserSummary').textContent =
+            `Set a new password for ${user.name} (${user.email}). Existing app sessions will be signed out.`;
+        document.getElementById('passwordUserModal').classList.add('is-open');
+    }
+
+    function openDeleteUserModal(user) {
+        const form = document.getElementById('deleteUserForm');
+        const input = document.getElementById('deleteUserConfirmInput');
+        const submit = document.getElementById('deleteUserSubmit');
+        form.action = `{{ url('/admin/users') }}/${user.id}`;
+        document.getElementById('deleteUserSummary').textContent =
+            `Soft delete ${user.name} (${user.email})?`;
+        input.value = '';
+        submit.disabled = true;
+        document.getElementById('deleteUserModal').classList.add('is-open');
+        setTimeout(() => input.focus(), 80);
+    }
+
+    document.getElementById('deleteUserConfirmInput')?.addEventListener('input', function () {
+        document.getElementById('deleteUserSubmit').disabled = this.value !== 'DELETE';
+    });
+
     @if ($errors->any())
-        document.getElementById('createUserModal').classList.add('is-open');
+        @if (old('form_context') === 'password_user')
+            openPasswordModal(@js([
+                'id' => old('password_user_id'),
+                'name' => old('password_user_name', 'User'),
+                'email' => old('password_user_email', ''),
+            ]));
+        @else
+            document.getElementById('createUserModal').classList.add('is-open');
+        @endif
     @endif
 </script>
 @endpush
