@@ -84,7 +84,9 @@ class PaymentRepositoryImpl implements PaymentRepository {
   }
 
   @override
-  Future<({double advance, double due, double extra, double total})>
+  Future<
+    ({double advance, double due, double paid, double extra, double total})
+  >
   aggregateForBooking(String bookingId) {
     return _payments.aggregateForBooking(bookingId);
   }

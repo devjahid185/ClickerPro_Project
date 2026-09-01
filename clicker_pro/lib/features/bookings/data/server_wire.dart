@@ -353,7 +353,8 @@ Map<String, dynamic> bookingToServer(Booking b) {
     'shift': shiftToServer(b.shift),
     'status': bookingStatusToServer(b.status),
     if (b.venue != null) 'venue': b.venue,
-    if (b.packageId != null) 'package_id': int.tryParse(b.packageId!) ?? b.packageId,
+    if (b.packageId != null)
+      'package_id': int.tryParse(b.packageId!) ?? b.packageId,
     if (b.customPrice != null) 'price': b.customPrice,
     if (b.notes != null) 'notes': b.notes,
     if (b.clientName != null) 'client_name': b.clientName,
@@ -438,6 +439,8 @@ String paymentKindToServer(PaymentKind k) {
       return 'ADVANCE';
     case PaymentKind.due:
       return 'DUE';
+    case PaymentKind.paid:
+      return 'PAID';
     case PaymentKind.extra:
       return 'EXTRA';
   }
@@ -468,8 +471,7 @@ Payment paymentFromServer(
       fallback: fallback?.kind ?? PaymentKind.advance,
     ),
     amount: serverDouble(j['amount']) ?? fallback?.amount ?? 0,
-    method:
-        serverString(j, ['method'])?.toLowerCase() ?? fallback?.method,
+    method: serverString(j, ['method'])?.toLowerCase() ?? fallback?.method,
     note: serverString(j, ['note']) ?? fallback?.note,
     paidAt: serverDate(j['paid_at'] ?? j['paidAt']) ?? fallback?.paidAt,
     createdAt:
@@ -526,8 +528,7 @@ Assignment assignmentFromServer(
     id: fallback?.id ?? serverId ?? '',
     remoteId: serverId ?? fallback?.remoteId,
     bookingId: bookingLocalId,
-    userId:
-        serverString(j, ['user_id', 'userId']) ?? fallback?.userId ?? '',
+    userId: serverString(j, ['user_id', 'userId']) ?? fallback?.userId ?? '',
     role: assignmentRoleFromServer(
       j['role'],
       fallback: fallback?.role ?? AssignmentRole.assistant,
@@ -585,8 +586,8 @@ Package packageFromServer(Map<String, dynamic> j, {Package? fallback}) {
     extraHourRate:
         serverDouble(j['extra_hour_rate'] ?? j['extraHourRate']) ??
         fallback?.extraHourRate,
-    printSize: serverString(j, ['print_size', 'printSize']) ??
-        fallback?.printSize,
+    printSize:
+        serverString(j, ['print_size', 'printSize']) ?? fallback?.printSize,
     printQuantity:
         serverInt(j['print_quantity'] ?? j['printQuantity']) ??
         fallback?.printQuantity,
@@ -632,26 +633,22 @@ Map<String, dynamic> packageToServer(Package p) {
     'base_price': p.basePrice,
     'price': p.basePrice,
     'discount': p.discount,
-    if (p.coverageHours != null)
-      'coverage_hours': p.coverageHours!.round(),
+    if (p.coverageHours != null) 'coverage_hours': p.coverageHours!.round(),
     if (p.extraHourRate != null) 'extra_hour_rate': p.extraHourRate,
     if (p.printSize != null) 'print_size': p.printSize,
     if (p.printQuantity != null) 'print_quantity': p.printQuantity,
     if (p.albumText != null) 'album_text': p.albumText,
     if (p.deliveryMethod != null) 'delivery_method': p.deliveryMethod,
-    if (p.trailersPerEvent != null)
-      'trailers_per_event': p.trailersPerEvent,
+    if (p.trailersPerEvent != null) 'trailers_per_event': p.trailersPerEvent,
     if (p.fullVideosPerEvent != null)
       'full_videos_per_event': p.fullVideosPerEvent,
-    if (p.photographerCount != null)
-      'photographer_count': p.photographerCount,
+    if (p.photographerCount != null) 'photographer_count': p.photographerCount,
     if (p.cinematographerCount != null)
       'cinematographer_count': p.cinematographerCount,
     'includes_chief': p.includesChief,
     if (p.items != null) 'items': p.items,
     if (p.inclusions != null) 'inclusions': p.inclusions,
-    if (p.fullVideosPerEvent != null)
-      'has_video': p.fullVideosPerEvent! > 0,
+    if (p.fullVideosPerEvent != null) 'has_video': p.fullVideosPerEvent! > 0,
     if (p.albumText != null && p.albumText!.trim().isNotEmpty)
       'has_album': true,
   };
@@ -673,7 +670,11 @@ StatusHistoryEntry statusEntryFromServer(
     fromStatus: bookingStatusFromServer(j['from_status'] ?? j['fromStatus']),
     toStatus: bookingStatusFromServer(j['to_status'] ?? j['toStatus']),
     changedByUserId:
-        serverString(j, ['changed_by', 'changedByUserId', 'changed_by_user_id']) ??
+        serverString(j, [
+          'changed_by',
+          'changedByUserId',
+          'changed_by_user_id',
+        ]) ??
         '',
     note: serverString(j, ['note']),
     at: serverDate(j['created_at'] ?? j['at']) ?? DateTime.now(),

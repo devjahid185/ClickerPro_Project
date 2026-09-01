@@ -15,8 +15,10 @@ abstract class PaymentRepository {
   /// One-shot aggregate of payments for a booking.
   ///
   /// Returns a record with the per-kind totals plus the grand total,
-  /// satisfying the invariant `advance + due + extra == total`.
-  Future<({double advance, double due, double extra, double total})>
+  /// satisfying the invariant `advance + due + paid + extra == total`.
+  Future<
+    ({double advance, double due, double paid, double extra, double total})
+  >
   aggregateForBooking(String bookingId);
 
   /// Amounts collected in `[from, to)` grouped by payment method

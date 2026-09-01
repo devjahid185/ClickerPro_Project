@@ -28,16 +28,7 @@ class PaymentService
 
         $payment = DB::transaction(function () use ($data) {
             $payment = Payment::create($data);
-
-            $event = Event::find($data['event_id']);
-            if ($event) {
-                if ($data['kind'] === 'ADVANCE') {
-                    $event->increment('advance_paid', $data['amount']);
-                    $event->decrement('due_amount', $data['amount']);
-                } elseif ($data['kind'] === 'DUE') {
-                    $event->decrement('due_amount', $data['amount']);
-                }
-            }
+            $this->syncEventBalance((int) $data['event_id']);
 
             return $payment;
         });
@@ -54,20 +45,9 @@ class PaymentService
     public function update(Payment $payment, array $data): Payment
     {
         $payment = DB::transaction(function () use ($payment, $data) {
-            $this->reverseBalanceEffect($payment);
-
             $payment->update($data);
             $payment->refresh();
-
-            $event = Event::find($payment->event_id);
-            if ($event) {
-                if ($payment->kind === 'ADVANCE') {
-                    $event->increment('advance_paid', $payment->amount);
-                    $event->decrement('due_amount', $payment->amount);
-                } elseif ($payment->kind === 'DUE') {
-                    $event->decrement('due_amount', $payment->amount);
-                }
-            }
+            $this->syncEventBalance((int) $payment->event_id);
 
             return $payment;
         });
@@ -85,24 +65,32 @@ class PaymentService
         $snapshot = $payment->fresh()->load('event.client');
 
         DB::transaction(function () use ($payment) {
-            $this->reverseBalanceEffect($payment);
+            $eventId = (int) $payment->event_id;
             $payment->delete();
+            $this->syncEventBalance($eventId);
         });
 
         app(GoogleSheetsService::class)->appendPayment($snapshot, 'DELETED');
     }
 
-    private function reverseBalanceEffect(Payment $payment): void
+    private function syncEventBalance(int $eventId): void
     {
-        $event = Event::find($payment->event_id);
+        $event = Event::find($eventId);
         if (!$event) {
             return;
         }
-        if ($payment->kind === 'ADVANCE') {
-            $event->decrement('advance_paid', $payment->amount);
-            $event->increment('due_amount', $payment->amount);
-        } elseif ($payment->kind === 'DUE') {
-            $event->increment('due_amount', $payment->amount);
-        }
+
+        $advance = (float) Payment::where('event_id', $eventId)
+            ->where('kind', 'ADVANCE')
+            ->sum('amount');
+        $receivedAgainstBooking = (float) Payment::where('event_id', $eventId)
+            ->whereIn('kind', ['ADVANCE', 'DUE', 'PAID'])
+            ->sum('amount');
+        $price = (float) $event->price;
+
+        $event->forceFill([
+            'advance_paid' => $advance,
+            'due_amount' => max($price - $receivedAgainstBooking, 0),
+        ])->save();
     }
 }

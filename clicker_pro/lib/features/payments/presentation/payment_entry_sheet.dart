@@ -7,7 +7,7 @@
 // Fields:
 //   - Amount (required, > 0)
 //   - Method: bKash / Bank / Cash with icons
-//   - Type: Advance / Due / Extra
+//   - Type: Advance / Due / Paid / Extra
 //   - Hide from team toggle
 //
 // Submit posts to `paymentListControllerProvider.add()` and propagates
@@ -229,6 +229,7 @@ class _PaymentEntrySheetState extends ConsumerState<PaymentEntrySheet> {
                 children: [
                   _typeChip('advance', 'Advance'),
                   _typeChip('due', 'Due'),
+                  _typeChip('paid', 'Paid'),
                   _typeChip('extra', 'Extra'),
                 ],
               ),

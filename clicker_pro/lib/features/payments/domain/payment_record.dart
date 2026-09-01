@@ -47,7 +47,7 @@ class PaymentRecord {
 
   /// Payload for `POST /api/payments`. The Laravel PaymentController
   /// validates snake_case `event_id`, an UPPERCASE `kind`
-  /// (ADVANCE/DUE/EXTRA/PAYOUT) and an UPPERCASE `method`
+  /// (ADVANCE/DUE/PAID/EXTRA/PAYOUT) and an UPPERCASE `method`
   /// (CASH/BKASH/NAGAD/BANK/CARD/OTHER), so map the local lowercase values
   /// up here.
   Map<String, dynamic> toCreateJson() {

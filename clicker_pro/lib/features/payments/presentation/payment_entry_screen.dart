@@ -1,4 +1,4 @@
-﻿// lib/features/payments/presentation/payment_entry_screen.dart
+// lib/features/payments/presentation/payment_entry_screen.dart
 //
 // Unified Payments screen with two tabs:
 //   • Receipts — money received FROM clients (advance / due / extra), recorded
@@ -123,10 +123,7 @@ class _PaymentEntryScreenState extends ConsumerState<PaymentEntryScreen>
           : null,
       body: TabBarView(
         controller: _tabs,
-        children: const [
-          _ReceiptsTab(),
-          StaffPayoutsBody(),
-        ],
+        children: const [_ReceiptsTab(), StaffPayoutsBody()],
       ),
     );
   }
@@ -223,7 +220,10 @@ class _SummaryCard extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                ActiveCurrency.value.wrap(total.toStringAsFixed(2), spaced: true),
+                ActiveCurrency.value.wrap(
+                  total.toStringAsFixed(2),
+                  spaced: true,
+                ),
                 style: TextStyle(
                   color: AppColors.teal,
                   fontSize: 22,
@@ -256,14 +256,17 @@ class _PaymentRow extends ConsumerWidget {
     final eventId = record.eventId.trim();
     if (eventId.isEmpty) return;
     try {
-      final booking =
-          await ref.read(bookingRepositoryProvider).getByRemoteId(eventId);
+      final booking = await ref
+          .read(bookingRepositoryProvider)
+          .getByRemoteId(eventId);
       if (!context.mounted) return;
       if (booking != null) {
         navigator.pushNamed(RouteNames.bookingDetail, arguments: booking.id);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('This booking is not on this device yet')),
+          const SnackBar(
+            content: Text('This booking is not on this device yet'),
+          ),
         );
       }
     } catch (_) {
@@ -300,6 +303,8 @@ class _PaymentRow extends ConsumerWidget {
     switch (record.type) {
       case 'advance':
         return AppColors.green;
+      case 'paid':
+        return AppColors.teal;
       case 'extra':
         return AppColors.purple;
       default:
@@ -330,7 +335,10 @@ class _PaymentRow extends ConsumerWidget {
           child: Icon(_methodIcon(), color: methodColor, size: 20),
         ),
         title: Text(
-          ActiveCurrency.value.wrap(record.amount.toStringAsFixed(2), spaced: true),
+          ActiveCurrency.value.wrap(
+            record.amount.toStringAsFixed(2),
+            spaced: true,
+          ),
           style: TextStyle(
             color: AppColors.film,
             fontSize: 15,

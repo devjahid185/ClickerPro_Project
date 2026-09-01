@@ -38,7 +38,7 @@ class PaymentController extends Controller
         $data = $request->validate([
             'event_id' => 'required|integer|exists:events,id',
             'amount' => 'required|numeric|min:0',
-            'kind' => 'required|string|in:ADVANCE,DUE,EXTRA,PAYOUT',
+            'kind' => 'required|string|in:ADVANCE,DUE,PAID,EXTRA,PAYOUT',
             'method' => 'nullable|string|in:CASH,BKASH,NAGAD,BANK,CARD,OTHER',
             'note' => 'nullable|string',
             'paid_at' => 'nullable|date',
@@ -95,7 +95,7 @@ class PaymentController extends Controller
 
         $data = $request->validate([
             'amount' => 'nullable|numeric|min:0',
-            'kind' => 'nullable|string|in:ADVANCE,DUE,EXTRA,PAYOUT',
+            'kind' => 'nullable|string|in:ADVANCE,DUE,PAID,EXTRA,PAYOUT',
             'method' => 'nullable|string|in:CASH,BKASH,NAGAD,BANK,CARD,OTHER',
             'note' => 'nullable|string',
             'paid_at' => 'nullable|date',
@@ -150,6 +150,7 @@ class PaymentController extends Controller
             'data' => [
                 'ADVANCE' => $earnings->get('ADVANCE')?->total ?? 0,
                 'DUE' => $earnings->get('DUE')?->total ?? 0,
+                'PAID' => $earnings->get('PAID')?->total ?? 0,
                 'EXTRA' => $earnings->get('EXTRA')?->total ?? 0,
                 'PAYOUT' => $earnings->get('PAYOUT')?->total ?? 0,
                 'total' => Payment::whereIn('event_id', $eventIds)->sum('amount'),

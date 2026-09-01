@@ -1,7 +1,7 @@
 // lib/features/bookings/domain/payment_kind.dart
 //
 // The kind of payment recorded against a booking. Distinguishes the
-// standard advance / due split from out-of-band extras so the finance
+// standard advance / due / paid split from out-of-band extras so the finance
 // summary can break them out separately.
 //
 // Pure Dart enum — no Flutter, Drift, or Riverpod imports.
@@ -16,11 +16,12 @@
 enum PaymentKind {
   advance,
   due,
+  paid,
   extra;
 
   /// Parses a camelCase payment-kind string back into a [PaymentKind].
   ///
-  /// Accepts exactly the three enum [name] strings: `'advance'`, `'due'`,
+  /// Accepts exactly the enum [name] strings: `'advance'`, `'due'`, `'paid'`,
   /// `'extra'`. Throws [ArgumentError] for any other input so callers fail
   /// fast on corrupt data.
   static PaymentKind fromString(String value) {

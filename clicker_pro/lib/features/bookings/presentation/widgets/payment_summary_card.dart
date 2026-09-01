@@ -32,7 +32,7 @@ import 'detail_section.dart';
 /// so each booking's summary caches independently.
 final paymentAggregateProvider =
     FutureProvider.family<
-      ({double advance, double due, double extra, double total}),
+      ({double advance, double due, double paid, double extra, double total}),
       String
     >((ref, bookingId) {
       return ref.read(paymentRepositoryProvider).aggregateForBooking(bookingId);
@@ -101,6 +101,10 @@ class PaymentSummaryCard extends ConsumerWidget {
               ),
               _divider(),
               _row('Due paid', agg.due, lang, amountColor: AppColors.green),
+              if (agg.paid > 0.5) ...[
+                _divider(),
+                _row('Paid', agg.paid, lang, amountColor: AppColors.green),
+              ],
               if (agg.extra > 0.5) ...[
                 _divider(),
                 _row(

@@ -17,12 +17,14 @@ part 'payments_dao.g.dart';
 class BookingPaymentAggregate {
   final double advance;
   final double due;
+  final double paid;
   final double extra;
   final double total;
 
   const BookingPaymentAggregate({
     required this.advance,
     required this.due,
+    required this.paid,
     required this.extra,
     required this.total,
   });
@@ -30,6 +32,7 @@ class BookingPaymentAggregate {
   static const empty = BookingPaymentAggregate(
     advance: 0,
     due: 0,
+    paid: 0,
     extra: 0,
     total: 0,
   );
@@ -93,10 +96,13 @@ class PaymentsDao extends DatabaseAccessor<AppDatabase>
     await (delete(paymentsTable)..where((t) => t.id.equals(id))).go();
   }
 
-  /// Returns `(advance, due, extra, total)` for [bookingId]. Each component is
-  /// the SUM of payments of the matching `kind`; `total = advance + due +
-  /// extra`. Returns zeroed components when the booking has no payments.
-  Future<({double advance, double due, double extra, double total})>
+  /// Returns `(advance, due, paid, extra, total)` for [bookingId]. Each
+  /// component is the SUM of payments of the matching `kind`; `total` is all
+  /// client money received. Returns zeroed components when the booking has no
+  /// payments.
+  Future<
+    ({double advance, double due, double paid, double extra, double total})
+  >
   aggregateForBooking(String bookingId) async {
     final amount = paymentsTable.amount;
     final sumExpr = amount.sum();
@@ -107,6 +113,7 @@ class PaymentsDao extends DatabaseAccessor<AppDatabase>
 
     double advance = 0;
     double due = 0;
+    double paid = 0;
     double extra = 0;
     final rows = await query.get();
     for (final row in rows) {
@@ -119,6 +126,9 @@ class PaymentsDao extends DatabaseAccessor<AppDatabase>
         case 'due':
           due = value;
           break;
+        case 'paid':
+          paid = value;
+          break;
         case 'extra':
           extra = value;
           break;
@@ -127,8 +137,9 @@ class PaymentsDao extends DatabaseAccessor<AppDatabase>
     return (
       advance: advance,
       due: due,
+      paid: paid,
       extra: extra,
-      total: advance + due + extra,
+      total: advance + due + paid + extra,
     );
   }
 }

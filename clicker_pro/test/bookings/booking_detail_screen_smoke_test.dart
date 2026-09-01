@@ -138,7 +138,8 @@ void main() {
           // through the payment repository; with payments empty the
           // aggregate is zero across the board.
           paymentAggregateProvider('b1').overrideWith(
-            (_) async => (advance: 0.0, due: 0.0, extra: 0.0, total: 0.0),
+            (_) async =>
+                (advance: 0.0, due: 0.0, paid: 0.0, extra: 0.0, total: 0.0),
           ),
         ],
         child: MaterialApp(
