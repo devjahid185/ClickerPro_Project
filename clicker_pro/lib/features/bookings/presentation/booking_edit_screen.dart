@@ -30,6 +30,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/booking_status/booking_status.dart';
+import '../../../core/format/booking_format.dart';
 import '../../../core/format/currency.dart';
 import '../../../core/notifications/event_reminder_service.dart';
 import '../../../core/role/capability.dart';
@@ -119,7 +120,9 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
   /// its own date and package price — so the calendar, reminders and
   /// due/collection math all keep working per event.
   bool _multiEventOn = false;
-  final List<({DateTime date, Package? package, double price, String label})>
+  final List<
+    ({DateTime date, Package? package, double price, String label, Shift shift})
+  >
   _extraEvents = [];
 
   /// Whether the hide-payment eye is toggled on.
@@ -1427,12 +1430,33 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                   Icon(Icons.event_outlined, color: AppColors.orange, size: 18),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Text(
-                      '${_extraEvents[i].date.day}/${_extraEvents[i].date.month}/${_extraEvents[i].date.year}'
-                      ' · ${_extraEvents[i].label}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: AppColors.film, fontSize: 13.5),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${_extraEvents[i].date.day}/${_extraEvents[i].date.month}/${_extraEvents[i].date.year}'
+                          ' · ${_extraEvents[i].label}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: AppColors.film,
+                            fontSize: 13.5,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          '${_titleCase(_extraEvents[i].shift.name)} shift · '
+                          '${BookingFormat.clockTime(_extraEvents[i].shift.defaultStartTime)}-'
+                          '${BookingFormat.clockTime(_extraEvents[i].shift.defaultEndTime)}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: AppColors.filmDim,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   Text(
@@ -1540,6 +1564,9 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     );
     if (result == null || !mounted) return;
 
+    final shift = await _pickExtraShift(initial: draft.shift);
+    if (shift == null || !mounted) return;
+
     final Package? pkg;
     final double price;
     final String label;
@@ -1566,9 +1593,111 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
         package: pkg,
         price: price,
         label: label,
+        shift: shift,
       ));
       _extraEvents.sort((a, b) => a.date.compareTo(b.date));
     });
+  }
+
+  Future<Shift?> _pickExtraShift({required Shift initial}) async {
+    var selected = initial;
+    return showDialog<Shift>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: AppColors.voidElevated,
+          title: Text(
+            'Select shift',
+            style: TextStyle(color: AppColors.film, fontSize: 18),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: Shift.values
+                .map((shift) {
+                  final active = selected == shift;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => setDialogState(() => selected = shift),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 160),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 11,
+                        ),
+                        decoration: BoxDecoration(
+                          color: active
+                              ? AppColors.orange.withValues(alpha: 0.14)
+                              : AppColors.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: active
+                                ? AppColors.orange
+                                : AppColors.line(0.12),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              active
+                                  ? Icons.radio_button_checked
+                                  : Icons.radio_button_off,
+                              color: active
+                                  ? AppColors.orange
+                                  : AppColors.filmDim,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${_titleCase(shift.name)} shift',
+                                    style: TextStyle(
+                                      color: AppColors.film,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${BookingFormat.clockTime(shift.defaultStartTime)} - '
+                                    '${BookingFormat.clockTime(shift.defaultEndTime)}',
+                                    style: TextStyle(
+                                      color: AppColors.filmDim,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                })
+                .toList(growable: false),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text('Cancel', style: TextStyle(color: AppColors.filmDim)),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.orange,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.of(ctx).pop(selected),
+              child: const Text('Add shift'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<double?> _askExtraCustomPrice() async {
@@ -1973,9 +2102,9 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
               title: saved.title,
               eventType: saved.eventType,
               date: e.date,
-              startTime: saved.startTime,
-              endTime: saved.endTime,
-              shift: saved.shift,
+              startTime: e.shift.defaultStartTime,
+              endTime: e.shift.defaultEndTime,
+              shift: e.shift,
               venue: saved.venue,
               outdoor: saved.outdoor,
               brideName: saved.brideName,
