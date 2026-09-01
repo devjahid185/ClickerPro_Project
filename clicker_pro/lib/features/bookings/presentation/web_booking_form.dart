@@ -25,8 +25,8 @@ class _WebBookingForm extends ConsumerWidget {
   final BookingDraft draft;
 
   BookingEditController get _controller => state.ref.read(
-        bookingEditControllerProvider(state.widget.bookingId).notifier,
-      );
+    bookingEditControllerProvider(state.widget.bookingId).notifier,
+  );
 
   bool get _isCreate => state.widget.bookingId == null;
 
@@ -124,7 +124,10 @@ class _WebBookingForm extends ConsumerWidget {
           ),
           const SizedBox(width: 18),
           WebPillButton(
-            label: _isCreate ? 'Save Booking' : 'Save Changes',
+            label: state._saving
+                ? 'Saving...'
+                : (_isCreate ? 'Save Booking' : 'Save Changes'),
+            enabled: !state._saving,
             onTap: () => state._onSave(),
           ),
         ],
@@ -378,10 +381,16 @@ class _WebBookingForm extends ConsumerWidget {
       final selected = draft.shift == shift;
       final (label, icon, fill) = switch (shift) {
         Shift.day => ('DAY · 12–5', Icons.wb_sunny_outlined, WebTheme.orange),
-        Shift.night =>
-          ('NIGHT · 6–11', Icons.nightlight_outlined, WebTheme.night),
-        Shift.both =>
-          ('FULL DAY', Icons.brightness_6_outlined, WebTheme.amberDeep),
+        Shift.night => (
+          'NIGHT · 6–11',
+          Icons.nightlight_outlined,
+          WebTheme.night,
+        ),
+        Shift.both => (
+          'FULL DAY',
+          Icons.brightness_6_outlined,
+          WebTheme.amberDeep,
+        ),
       };
       return Expanded(
         child: MouseRegion(
@@ -399,9 +408,7 @@ class _WebBookingForm extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: selected ? fill : WebTheme.pageBg,
                 borderRadius: BorderRadius.circular(WebTheme.rFull),
-                border: Border.all(
-                  color: selected ? fill : WebTheme.hairline,
-                ),
+                border: Border.all(color: selected ? fill : WebTheme.hairline),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -416,8 +423,7 @@ class _WebBookingForm extends ConsumerWidget {
                     label,
                     style: WebTheme.label(
                       size: 10,
-                      color:
-                          selected ? WebTheme.chromeInk : WebTheme.inkSoft,
+                      color: selected ? WebTheme.chromeInk : WebTheme.inkSoft,
                       weight: FontWeight.w700,
                     ),
                   ),
@@ -439,9 +445,8 @@ class _WebBookingForm extends ConsumerWidget {
     if (draft.date == null) return const SizedBox.shrink();
     final bookings =
         ref.watch(bookingListAllProvider(const BookingFilter())).valueOrNull ??
-            const <Booking>[];
-    final day =
-        DateTime(draft.date!.year, draft.date!.month, draft.date!.day);
+        const <Booking>[];
+    final day = DateTime(draft.date!.year, draft.date!.month, draft.date!.day);
     bool shiftsClash(Shift a, Shift b) =>
         a == Shift.both || b == Shift.both || a == b;
     final clash = bookings.where((b) {
@@ -456,11 +461,11 @@ class _WebBookingForm extends ConsumerWidget {
         policy.role == UserRole.freelancer || draft.freelancerMode;
     final text = freelancerRule
         ? 'Conflict: a booking already exists on this date/shift — '
-            '"${clash.title}". One event per shift; turn on Settings → '
-            'Distribution to allow more, otherwise this will block save.'
+              '"${clash.title}". One event per shift; turn on Settings → '
+              'Distribution to allow more, otherwise this will block save.'
         : 'Heads up: "${clash.title}" is already booked on this date/shift. '
-            'Owners can stack events — saving will add another booking to '
-            'the same slot.';
+              'Owners can stack events — saving will add another booking to '
+              'the same slot.';
 
     return Padding(
       padding: const EdgeInsets.only(top: 14),
@@ -507,8 +512,10 @@ class _WebBookingForm extends ConsumerWidget {
         ? null
         : packages.where((p) => p.id == draft.packageId).firstOrNull;
     final primary = draft.customPrice ?? primaryPkg?.netPrice ?? 0;
-    final extrasTotal =
-        state._extraEvents.fold<double>(0, (s, e) => s + e.price);
+    final extrasTotal = state._extraEvents.fold<double>(
+      0,
+      (s, e) => s + e.price,
+    );
     final grand = primary + extrasTotal;
 
     return WebFormCard(
@@ -534,8 +541,10 @@ class _WebBookingForm extends ConsumerWidget {
             for (var i = 0; i < state._extraEvents.length; i++)
               Container(
                 margin: const EdgeInsets.only(bottom: 8),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: WebTheme.pageBg,
                   borderRadius: BorderRadius.circular(WebTheme.rRow),
@@ -543,8 +552,11 @@ class _WebBookingForm extends ConsumerWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.event_outlined,
-                        size: 16, color: WebTheme.orange),
+                    const Icon(
+                      Icons.event_outlined,
+                      size: 16,
+                      color: WebTheme.orange,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -553,11 +565,15 @@ class _WebBookingForm extends ConsumerWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: WebTheme.bodyStyle(
-                            size: 13, weight: FontWeight.w600),
+                          size: 13,
+                          weight: FontWeight.w600,
+                        ),
                       ),
                     ),
                     Text(
-                      ActiveCurrency.value.wrap(state._extraEvents[i].price.toStringAsFixed(0)),
+                      ActiveCurrency.value.wrap(
+                        state._extraEvents[i].price.toStringAsFixed(0),
+                      ),
                       style: WebTheme.bodyStyle(
                         size: 13,
                         color: WebTheme.orangeDeep,
@@ -570,11 +586,13 @@ class _WebBookingForm extends ConsumerWidget {
                       child: GestureDetector(
                         onTap: () {
                           state._markDirty();
-                          state._webSet(
-                              () => state._extraEvents.removeAt(i));
+                          state._webSet(() => state._extraEvents.removeAt(i));
                         },
-                        child: const Icon(Icons.close_rounded,
-                            size: 16, color: WebTheme.inkMuted),
+                        child: const Icon(
+                          Icons.close_rounded,
+                          size: 16,
+                          color: WebTheme.inkMuted,
+                        ),
                       ),
                     ),
                   ],
@@ -623,8 +641,7 @@ class _WebBookingForm extends ConsumerWidget {
       WebTheme.night,
       WebTheme.tan,
     ];
-    final customSelected =
-        draft.packageId == null && draft.customPrice != null;
+    final customSelected = draft.packageId == null && draft.customPrice != null;
 
     Widget tile({
       required String name,
@@ -669,7 +686,9 @@ class _WebBookingForm extends ConsumerWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: WebTheme.displayStyle(
-                            size: 13.5, weight: FontWeight.w700),
+                          size: 13.5,
+                          weight: FontWeight.w700,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -686,8 +705,11 @@ class _WebBookingForm extends ConsumerWidget {
                   ),
                 ),
                 if (selected)
-                  const Icon(Icons.check_circle_rounded,
-                      size: 18, color: WebTheme.orange),
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    size: 18,
+                    color: WebTheme.orange,
+                  ),
               ],
             ),
           ),
@@ -727,8 +749,9 @@ class _WebBookingForm extends ConsumerWidget {
                       width: w,
                       child: tile(
                         name: packages[i].name,
-                        price: ActiveCurrency.value
-                            .wrap(packages[i].netPrice.toStringAsFixed(0)),
+                        price: ActiveCurrency.value.wrap(
+                          packages[i].netPrice.toStringAsFixed(0),
+                        ),
                         accent: accents[i % accents.length],
                         selected: draft.packageId == packages[i].id,
                         onTap: () {
@@ -764,10 +787,10 @@ class _WebBookingForm extends ConsumerWidget {
                 label: 'Custom Price',
                 controller: state._customPriceCtrl,
                 hint: 'e.g. 30000',
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                errorText:
-                    state._validation.errorFor(BookingField.customPrice),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                errorText: state._validation.errorFor(BookingField.customPrice),
                 onChanged: (v) {
                   state._markDirty();
                   _controller.setCustomPrice(double.tryParse(v));
@@ -797,8 +820,7 @@ class _WebBookingForm extends ConsumerWidget {
       required Color tint,
       required Color tintBorder,
     }) {
-      final assigned =
-          draft.assignments.where((a) => a.role == role).toList();
+      final assigned = draft.assignments.where((a) => a.role == role).toList();
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -812,8 +834,7 @@ class _WebBookingForm extends ConsumerWidget {
               ),
               const SizedBox(width: 8),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
                   color: tint,
                   borderRadius: BorderRadius.circular(WebTheme.rFull),
@@ -822,7 +843,10 @@ class _WebBookingForm extends ConsumerWidget {
                 child: Text(
                   '${assigned.length}',
                   style: WebTheme.label(
-                      size: 9, color: accent, weight: FontWeight.w700),
+                    size: 9,
+                    color: accent,
+                    weight: FontWeight.w700,
+                  ),
                 ),
               ),
             ],
@@ -835,7 +859,9 @@ class _WebBookingForm extends ConsumerWidget {
               for (final a in assigned)
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 7),
+                    horizontal: 12,
+                    vertical: 7,
+                  ),
                   decoration: BoxDecoration(
                     color: tint,
                     borderRadius: BorderRadius.circular(WebTheme.rFull),
@@ -860,8 +886,11 @@ class _WebBookingForm extends ConsumerWidget {
                             state._markDirty();
                             _controller.removeAssignment(a.id);
                           },
-                          child: Icon(Icons.close_rounded,
-                              size: 13, color: accent),
+                          child: Icon(
+                            Icons.close_rounded,
+                            size: 13,
+                            color: accent,
+                          ),
                         ),
                       ),
                     ],
@@ -870,8 +899,7 @@ class _WebBookingForm extends ConsumerWidget {
               WebSelectChip(
                 label: '+ Add',
                 selected: false,
-                onTap: () =>
-                    state._addTeamMember(context, _controller, role),
+                onTap: () => state._addTeamMember(context, _controller, role),
               ),
             ],
           ),
@@ -889,8 +917,9 @@ class _WebBookingForm extends ConsumerWidget {
             subtitle: 'Designate a lead photographer for this event.',
             value: state._chiefEnabled,
             activeColor: WebTheme.amber,
-            background:
-                state._chiefEnabled ? WebTheme.amberTint : WebTheme.pageBg,
+            background: state._chiefEnabled
+                ? WebTheme.amberTint
+                : WebTheme.pageBg,
             border: state._chiefEnabled
                 ? WebTheme.amberTintBorder
                 : WebTheme.hairline,
@@ -1070,14 +1099,17 @@ class _WebBookingForm extends ConsumerWidget {
     }
 
     TextStyle amountStyle(Color color) => TextStyle(
-          fontFamily: WebTheme.mono,
-          fontSize: 17,
-          fontWeight: FontWeight.w700,
-          color: color,
-        );
+      fontFamily: WebTheme.mono,
+      fontSize: 17,
+      fontWeight: FontWeight.w700,
+      color: color,
+    );
 
-    Widget amountField(TextEditingController ctrl, Color color,
-        {required ValueChanged<String> onChanged}) {
+    Widget amountField(
+      TextEditingController ctrl,
+      Color color, {
+      required ValueChanged<String> onChanged,
+    }) {
       return TextField(
         controller: ctrl,
         onChanged: onChanged,
@@ -1102,8 +1134,9 @@ class _WebBookingForm extends ConsumerWidget {
               child: GestureDetector(
                 onTap: () {
                   state._markDirty();
-                  _controller
-                      .setHidePaymentFromTeam(!draft.hidePaymentFromTeam);
+                  _controller.setHidePaymentFromTeam(
+                    !draft.hidePaymentFromTeam,
+                  );
                 },
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -1211,8 +1244,9 @@ class _WebBookingForm extends ConsumerWidget {
           // (Heaven 2026-07-15: "কোথায় এরর সেটা দেখাবে").
           Builder(
             builder: (_) {
-              final priceErr =
-                  state._validation.errorFor(BookingField.customPrice);
+              final priceErr = state._validation.errorFor(
+                BookingField.customPrice,
+              );
               final advErr = state._validation.errorFor(BookingField.advance);
               final msg = priceErr ?? advErr;
               if (msg == null) return const SizedBox.shrink();

@@ -104,6 +104,7 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
   BookingValidation _validation = const BookingValidation({});
   bool _seeded = false;
   bool _dirty = false;
+  bool _saving = false;
 
   /// Whether the Chief Photographer section is toggled on. Kept as
   /// local UI state — deriving it from `chiefPhotographerUserId` made
@@ -354,10 +355,18 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
                 return Transform.translate(
                   offset: Offset(shake, 0),
                   child: FilledButton.icon(
-                    onPressed: _onSave,
-                    icon: const Icon(Icons.check_rounded, size: 18),
+                    onPressed: _saving ? null : _onSave,
+                    icon: _saving
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.check_rounded, size: 18),
                     label: Text(
-                      widget.bookingId == null
+                      _saving
+                          ? 'Saving...'
+                          : widget.bookingId == null
                           ? loc.bookings_create
                           : loc.bookings_save_changes,
                     ),
@@ -1951,84 +1960,89 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
   }
 
   Future<void> _onSave() async {
+    if (_saving) return;
+    setState(() => _saving = true);
+
     final controller = ref.read(
       bookingEditControllerProvider(widget.bookingId).notifier,
     );
-    // Validate the controller-owned fields (name / phone / date / package).
-    final baseErrors = Map<BookingField, String>.from(
-      controller.validate().errors,
-    );
-
-    // Owner rule (Heaven 2026-07-15): a NEW studio booking must also carry an
-    // advance amount — the advance field lives on THIS screen (recorded as a
-    // Payment after save), so it's validated here and merged into the same
-    // error map, then surfaced inline under the Advance field.
-    final draftForAdvance = ref
-        .read(bookingEditControllerProvider(widget.bookingId))
-        .valueOrNull;
-    if (widget.bookingId == null &&
-        draftForAdvance != null &&
-        !draftForAdvance.freelancerMode) {
-      final advance = double.tryParse(_advanceCtrl.text.trim()) ?? 0;
-      if (advance <= 0) {
-        baseErrors[BookingField.advance] = 'Advance is required.';
-      }
-    }
-
-    if (baseErrors.isNotEmpty) {
-      setState(() => _validation = BookingValidation(baseErrors));
-      _shakeCtrl.forward(from: 0);
-      // Name each missing field so the user knows exactly what to fill —
-      // not just a generic "fix the fields" (Heaven 2026-07-15: "কোথায়
-      // এরর সেটা দেখাবে").
-      _showSnack(_missingFieldsMessage(baseErrors));
-      return;
-    }
-    // Clear any stale inline errors before the save attempt.
-    if (_validation.errors.isNotEmpty) {
-      setState(() => _validation = const BookingValidation({}));
-    }
-
-    // ── Scheduling conflict guard (v12 Key Decisions) ──
-    // Freelancer = strict 1 event/shift (hard block). Owner/Both = warning
-    // unless Distribution mode is on.
-    final draft = ref
-        .read(bookingEditControllerProvider(widget.bookingId))
-        .valueOrNull;
-    if (draft != null) {
-      final policy = ref.read(bookingsPolicyProvider);
-      final existing =
-          ref.read(bookingListAllProvider(const BookingFilter())).valueOrNull ??
-          const [];
-      // Distribution mode lives in the per-user preferences (Settings).
-      final userId = ref.read(currentUserProvider).valueOrNull?.id;
-      final distributionOn = userId == null
-          ? false
-          : await ref
-                .read(preferencesRepositoryProvider)
-                .getDistributionEnabled(userId);
-      if (!mounted) return;
-      final conflict = BookingConflict.evaluate(
-        role: policy.role,
-        freelancerMode: draft.freelancerMode,
-        date: draft.date,
-        shift: draft.shift,
-        candidateId: draft.localId,
-        existing: existing,
-        distributionOn: distributionOn,
+    try {
+      // Validate the controller-owned fields (name / phone / date / package).
+      final baseErrors = Map<BookingField, String>.from(
+        controller.validate().errors,
       );
-      if (conflict.isBlock) {
+
+      // Owner rule (Heaven 2026-07-15): a NEW studio booking must also carry an
+      // advance amount — the advance field lives on THIS screen (recorded as a
+      // Payment after save), so it's validated here and merged into the same
+      // error map, then surfaced inline under the Advance field.
+      final draftForAdvance = ref
+          .read(bookingEditControllerProvider(widget.bookingId))
+          .valueOrNull;
+      if (widget.bookingId == null &&
+          draftForAdvance != null &&
+          !draftForAdvance.freelancerMode) {
+        final advance = double.tryParse(_advanceCtrl.text.trim()) ?? 0;
+        if (advance <= 0) {
+          baseErrors[BookingField.advance] = 'Advance is required.';
+        }
+      }
+
+      if (baseErrors.isNotEmpty) {
+        setState(() => _validation = BookingValidation(baseErrors));
         _shakeCtrl.forward(from: 0);
-        _showConflictBlocked(conflict.clashingTitle);
+        // Name each missing field so the user knows exactly what to fill —
+        // not just a generic "fix the fields" (Heaven 2026-07-15: "কোথায়
+        // এরর সেটা দেখাবে").
+        _showSnack(_missingFieldsMessage(baseErrors));
         return;
       }
-      if (conflict.isWarning) {
-        final proceed = await _showConflictWarning(conflict.clashingTitle);
-        if (!mounted || !proceed) return;
+      // Clear any stale inline errors before the save attempt.
+      if (_validation.errors.isNotEmpty) {
+        setState(() => _validation = const BookingValidation({}));
       }
-    }
 
-    try {
+      // ── Scheduling conflict guard (v12 Key Decisions) ──
+      // Freelancer = strict 1 event/shift (hard block). Owner/Both = warning
+      // unless Distribution mode is on.
+      final draft = ref
+          .read(bookingEditControllerProvider(widget.bookingId))
+          .valueOrNull;
+      if (draft != null) {
+        final policy = ref.read(bookingsPolicyProvider);
+        final existing =
+            ref
+                .read(bookingListAllProvider(const BookingFilter()))
+                .valueOrNull ??
+            const [];
+        // Distribution mode lives in the per-user preferences (Settings).
+        final userId = ref.read(currentUserProvider).valueOrNull?.id;
+        final distributionOn = userId == null
+            ? false
+            : await ref
+                  .read(preferencesRepositoryProvider)
+                  .getDistributionEnabled(userId);
+        if (!mounted) return;
+        final conflict = BookingConflict.evaluate(
+          role: policy.role,
+          freelancerMode: draft.freelancerMode,
+          date: draft.date,
+          shift: draft.shift,
+          candidateId: draft.localId,
+          existing: existing,
+          distributionOn: distributionOn,
+        );
+        if (conflict.isBlock) {
+          _shakeCtrl.forward(from: 0);
+          _showConflictBlocked(conflict.clashingTitle);
+          return;
+        }
+        if (conflict.isWarning) {
+          final proceed = await _showConflictWarning(conflict.clashingTitle);
+          if (!mounted || !proceed) return;
+        }
+      }
+
       final saved = await controller.save();
       if (!mounted) return;
       final isNewBooking = widget.bookingId == null;
@@ -2188,6 +2202,10 @@ class _BookingEditScreenState extends ConsumerState<BookingEditScreen>
     } catch (e) {
       if (!mounted) return;
       _showSnack('Could not save: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
     }
   }
 

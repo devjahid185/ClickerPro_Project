@@ -145,8 +145,10 @@ class WebTextInput extends StatelessWidget {
             fillColor: WebTheme.pageBg,
             isDense: true,
             suffixIcon: suffix,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 13,
+            ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(WebTheme.rButton),
               borderSide: const BorderSide(color: WebTheme.hairline),
@@ -211,8 +213,7 @@ class WebPickerField extends StatelessWidget {
           child: GestureDetector(
             onTap: onTap,
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
               decoration: BoxDecoration(
                 color: WebTheme.pageBg,
                 borderRadius: BorderRadius.circular(WebTheme.rButton),
@@ -232,8 +233,11 @@ class WebPickerField extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const Icon(Icons.expand_more_rounded,
-                      size: 18, color: WebTheme.inkMuted),
+                  const Icon(
+                    Icons.expand_more_rounded,
+                    size: 18,
+                    color: WebTheme.inkMuted,
+                  ),
                 ],
               ),
             ),
@@ -267,6 +271,7 @@ class WebPillButton extends StatefulWidget {
     this.foreground = WebTheme.chromeInk,
     this.fontSize = 13,
     this.padding = const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+    this.enabled = true,
   });
 
   final String label;
@@ -277,6 +282,7 @@ class WebPillButton extends StatefulWidget {
   final Color foreground;
   final double fontSize;
   final EdgeInsetsGeometry padding;
+  final bool enabled;
 
   @override
   State<WebPillButton> createState() => _WebPillButtonState();
@@ -287,37 +293,44 @@ class _WebPillButtonState extends State<WebPillButton> {
 
   @override
   Widget build(BuildContext context) {
+    final enabled = widget.enabled;
     return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hover = true),
+      cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      onEnter: (_) {
+        if (enabled) setState(() => _hover = true);
+      },
       onExit: (_) => setState(() => _hover = false),
       child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
+        onTap: enabled ? widget.onTap : null,
+        child: AnimatedOpacity(
           duration: WebTheme.fast,
-          curve: WebTheme.ease,
-          padding: widget.padding,
-          decoration: BoxDecoration(
-            color: _hover ? widget.hoverColor : widget.color,
-            borderRadius: BorderRadius.circular(WebTheme.rFull),
-            boxShadow: _hover ? WebTheme.buttonGlow : null,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (widget.icon != null) ...[
-                Icon(widget.icon, size: 15, color: widget.foreground),
-                const SizedBox(width: 7),
-              ],
-              Text(
-                widget.label,
-                style: WebTheme.bodyStyle(
-                  size: widget.fontSize,
-                  color: widget.foreground,
-                  weight: FontWeight.w700,
+          opacity: enabled ? 1 : 0.66,
+          child: AnimatedContainer(
+            duration: WebTheme.fast,
+            curve: WebTheme.ease,
+            padding: widget.padding,
+            decoration: BoxDecoration(
+              color: enabled && _hover ? widget.hoverColor : widget.color,
+              borderRadius: BorderRadius.circular(WebTheme.rFull),
+              boxShadow: enabled && _hover ? WebTheme.buttonGlow : null,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.icon != null) ...[
+                  Icon(widget.icon, size: 15, color: widget.foreground),
+                  const SizedBox(width: 7),
+                ],
+                Text(
+                  widget.label,
+                  style: WebTheme.bodyStyle(
+                    size: widget.fontSize,
+                    color: widget.foreground,
+                    weight: FontWeight.w700,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -365,9 +378,16 @@ class _WebTintButtonState extends State<WebTintButton> {
         ? WebTheme.chromeInk
         : (widget.textColor ?? widget.accent);
     final style = widget.mono
-        ? WebTheme.label(size: widget.fontSize, color: fg, weight: FontWeight.w700)
+        ? WebTheme.label(
+            size: widget.fontSize,
+            color: fg,
+            weight: FontWeight.w700,
+          )
         : WebTheme.bodyStyle(
-            size: widget.fontSize, color: fg, weight: FontWeight.w700);
+            size: widget.fontSize,
+            color: fg,
+            weight: FontWeight.w700,
+          );
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hover = true),
@@ -488,10 +508,7 @@ class WebToggleRow extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: WebTheme.bodyStyle(
-                    size: 13,
-                    weight: FontWeight.w700,
-                  ),
+                  style: WebTheme.bodyStyle(size: 13, weight: FontWeight.w700),
                 ),
                 if (subtitle != null) ...[
                   const SizedBox(height: 2),
@@ -507,7 +524,11 @@ class WebToggleRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          WebToggle(value: value, onChanged: onChanged, activeColor: activeColor),
+          WebToggle(
+            value: value,
+            onChanged: onChanged,
+            activeColor: activeColor,
+          ),
         ],
       ),
     );
@@ -591,18 +612,18 @@ class WebAuthBackdrop extends StatelessWidget {
   const WebAuthBackdrop({super.key});
 
   Widget _blob(Color color, double size, double alpha) => Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [
-              color.withValues(alpha: alpha),
-              color.withValues(alpha: 0),
-            ],
-          ),
-        ),
-      );
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      gradient: RadialGradient(
+        colors: [
+          color.withValues(alpha: alpha),
+          color.withValues(alpha: 0),
+        ],
+      ),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
