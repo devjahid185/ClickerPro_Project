@@ -36,6 +36,8 @@
                                         "image_url" => $b["image_url"] ?? $b["imageUrl"] ?? "",
                                         "link" => $b["link"] ?? "",
                                         "button_label" => $b["buttonLabel"] ?? "",
+                                        "times_per_day" => $b["times_per_day"] ?? $b["timesPerDay"] ?? 1,
+                                        "scheduled_at" => $b["scheduled_at"] ?? "",
                                         "is_active" => ($status === "ACTIVE"),
                                     ]))">Edit</button>
                                     <form method="POST" action="{{ route('admin.broadcasts.toggle', $b['id']) }}">
@@ -73,15 +75,48 @@
                 <div class="field">
                     <label class="field__label">Audience</label>
                     <select class="select" name="target_role">
-                        @foreach ($roles as $r)<option value="{{ $r }}" @selected(old('target_role')===$r)>{{ $r }}</option>@endforeach
+                        @foreach ($roles as $r)<option value="{{ $r }}" @selected(old('target_role', 'ALL')===$r)>{{ $r }}</option>@endforeach
                     </select>
                 </div>
+                <div class="field">
+                    <label class="field__label">Type</label>
+                    <input class="input" type="text" name="type" value="{{ old('type', 'Announcement') }}">
+                </div>
+                <div class="field">
+                    <label class="field__label">Priority</label>
+                    <select class="select" name="priority">
+                        @foreach (['Normal', 'Important', 'Emergency'] as $priority)
+                            <option value="{{ $priority }}" @selected(old('priority', 'Normal')===$priority)>{{ $priority }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="field__label">Image URL</label>
+                    <input class="input" type="text" name="image_url" value="{{ old('image_url') }}" placeholder="https://...">
+                </div>
+                <div class="field">
+                    <label class="field__label">Link</label>
+                    <input class="input" type="text" name="link" value="{{ old('link') }}" placeholder="https://...">
+                </div>
+                <div class="field">
+                    <label class="field__label">Button label</label>
+                    <input class="input" type="text" name="button_label" value="{{ old('button_label') }}" placeholder="Learn more">
+                </div>
+                <div class="field">
+                    <label class="field__label">Times per day</label>
+                    <input class="input" type="number" name="times_per_day" min="1" max="20" value="{{ old('times_per_day', 1) }}">
+                </div>
+                <div class="field">
+                    <label class="field__label">Scheduled at</label>
+                    <input class="input" type="datetime-local" name="scheduled_at" value="{{ old('scheduled_at') }}">
+                </div>
                 <label class="flex items-center gap-2" style="font-size:13px;color:var(--text-dim)">
-                    <input type="checkbox" name="is_active" value="1" checked> Send immediately (push to all devices)
+                    <input type="hidden" name="is_active" value="0">
+                    <input type="checkbox" name="is_active" value="1" @checked(old('is_active', '1'))> Active / send push now
                 </label>
                 <div class="modal__actions">
                     <button type="button" class="btn btn--ghost" onclick="document.getElementById('createBroadcastModal').classList.remove('is-open')">Cancel</button>
-                    <button type="submit" class="btn btn--primary">Send</button>
+                    <button type="submit" class="btn btn--primary">Create broadcast</button>
                 </div>
             </form>
         </div>
@@ -130,7 +165,16 @@
                     <label class="field__label">Button label</label>
                     <input class="input" type="text" name="button_label" id="editBroadcastButtonLabel">
                 </div>
+                <div class="field">
+                    <label class="field__label">Times per day</label>
+                    <input class="input" type="number" name="times_per_day" id="editBroadcastTimesPerDay" min="1" max="20">
+                </div>
+                <div class="field">
+                    <label class="field__label">Scheduled at</label>
+                    <input class="input" type="datetime-local" name="scheduled_at" id="editBroadcastScheduledAt">
+                </div>
                 <label class="flex items-center gap-2" style="font-size:13px;color:var(--text-dim)">
+                    <input type="hidden" name="is_active" value="0">
                     <input type="checkbox" name="is_active" id="editBroadcastActive" value="1"> Active
                 </label>
                 <div class="modal__actions">
@@ -155,8 +199,22 @@
         document.getElementById('editBroadcastImageUrl').value = broadcast.image_url || '';
         document.getElementById('editBroadcastLink').value = broadcast.link || '';
         document.getElementById('editBroadcastButtonLabel').value = broadcast.button_label || '';
+        document.getElementById('editBroadcastTimesPerDay').value = broadcast.times_per_day || 1;
+        document.getElementById('editBroadcastScheduledAt').value = toDateTimeLocalValue(broadcast.scheduled_at);
         document.getElementById('editBroadcastActive').checked = !!broadcast.is_active;
         document.getElementById('editBroadcastModal').classList.add('is-open');
+    }
+
+    function toDateTimeLocalValue(value) {
+        if (!value) return '';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return String(value).slice(0, 16);
+        const pad = (n) => String(n).padStart(2, '0');
+        return [
+            date.getFullYear(),
+            pad(date.getMonth() + 1),
+            pad(date.getDate()),
+        ].join('-') + 'T' + [pad(date.getHours()), pad(date.getMinutes())].join(':');
     }
 
     @if ($errors->any() || session('error'))
