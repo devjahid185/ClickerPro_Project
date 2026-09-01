@@ -60,7 +60,7 @@
     </div>
 
     <div class="modal-backdrop" id="createBroadcastModal" onclick="if(event.target===this)this.classList.remove('is-open')">
-        <div class="modal">
+        <div class="modal modal--wide">
             <h2>New Broadcast</h2>
             <form method="POST" action="{{ route('admin.broadcasts.store') }}">
                 @csrf
@@ -123,7 +123,7 @@
     </div>
 
     <div class="modal-backdrop" id="editBroadcastModal" onclick="if(event.target===this)this.classList.remove('is-open')">
-        <div class="modal">
+        <div class="modal modal--wide">
             <h2>Edit Broadcast</h2>
             <form method="POST" id="editBroadcastForm">
                 @csrf @method('PATCH')

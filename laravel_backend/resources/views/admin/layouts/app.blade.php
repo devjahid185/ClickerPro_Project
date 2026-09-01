@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0&display=block" rel="stylesheet">
 
-    <link rel="stylesheet" href="{{ asset('admin-assets/css/design-system.css') }}">
+    <link rel="stylesheet" href="{{ asset('admin-assets/css/design-system.css') }}?v=20260901-2">
     @stack('styles')
 </head>
 <body>
@@ -41,7 +41,7 @@
     </div>
 
     <div class="scrim"></div>
-    <script src="{{ asset('admin-assets/js/admin.js') }}"></script>
+    <script src="{{ asset('admin-assets/js/admin.js') }}?v=20260901-2"></script>
     @stack('scripts')
 </body>
 </html>

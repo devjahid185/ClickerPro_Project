@@ -1284,7 +1284,7 @@ table.data-table {
 .modal {
   width: 100%;
   max-width: 460px;
-  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
   padding: 22px;
   margin: auto 0;
   overflow-y: auto;
@@ -1293,6 +1293,10 @@ table.data-table {
   border: 1px solid var(--border-strong);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-lg);
+}
+
+.modal--wide {
+  max-width: 720px;
 }
 
 .modal h2 {
